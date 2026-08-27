@@ -126,7 +126,7 @@ IS2_REPO/
 |---|---|---|
 | `DEBUG` | `True` (ves errores detallados) | `False` (oculta detalles internos) |
 | Base de datos | sqlite (archivo local) | PostgreSQL |
-| Servidor | `runserver` (liviano, solo dev) | `waitress` (servidor WSGI real) |
+| Servidor | `runserver` (liviano, solo dev) | Nginx + Uvicorn (proxy reverso + servidor ASGI real) |
 
 **Cómo se usa cada uno:**
 ```bash
@@ -137,15 +137,97 @@ python manage.py runserver
 # Producción (para probar que el ambiente "real" funciona)
 # 1. En el .env, cambiar DJANGO_SETTINGS_MODULE a global_exchange.settings.prod
 # 2. python manage.py collectstatic --noinput
-# 3. waitress-serve --host=127.0.0.1 --port=8000 global_exchange.wsgi:application
-# 4. Al terminar, volver el .env a .dev
+# 3. Levantar Uvicorn (sirve la app Django):
+uvicorn global_exchange.asgi:application --host 127.0.0.1 --port 8000
+# 4. Levantar Nginx (proxy reverso adelante de Uvicorn), en otra terminal:
+C:\nginx\nginx.exe
+# 5. Entrar a http://localhost (sin puerto, Nginx escucha en el 80)
+# 6. Al terminar: C:\nginx\nginx.exe -s stop, y volver el .env a .dev
 ```
 
-En el día a día vas a estar siempre en modo desarrollo. El de producción se prueba puntualmente para demostrar que el sistema también funciona con `DEBUG=False` y Postgres.
+**Cómo se conectan entre sí:**
+```
+navegador → Nginx (puerto 80) → Uvicorn (puerto 8000) → Django (asgi.py)
+```
+Nginx recibe la petición primero y se la reenvía a Uvicorn "por detrás" — el navegador nunca habla directo con Uvicorn. Nginx también sirve los archivos estáticos (`/static/`) directamente desde la carpeta `staticfiles/`, sin pasarle esa carga a Django.
+
+**Qué NO cambia con este servidor:** ni `base.py`, ni `dev.py`, ni `prod.py`, ni `wsgi.py`, ni `asgi.py` se modifican para esto — Django ya genera `asgi.py` automáticamente al crear el proyecto, listo para usar. Solo cambia *cómo* se sirve lo que Django ya devuelve.
+
+**Nginx no vive dentro del repo:** se instala aparte en el sistema (ej. `C:\nginx`), no es una librería de Python y no aparece en `requirements.txt`. Sí conviene guardar una copia del archivo de configuración usado (`nginx.conf`) dentro de `docs/`, por ejemplo `docs/nginx.conf.example`, para que el equipo pueda replicarlo. Ejemplo del bloque `server` usado:
+```nginx
+server {
+    listen       80;
+    server_name  localhost;
+
+    location /static/ {
+        alias   RUTA/A/TU/PROYECTO/staticfiles/;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+En el día a día vas a estar siempre en modo desarrollo. El de producción se prueba puntualmente para demostrar que el sistema también funciona con `DEBUG=False`, Postgres, y la stack Nginx+Uvicorn que especifican los diagramas de arquitectura del proyecto.
 
 ---
 
-## 7. `.env` y `python-decouple`
+## 7. Keycloak (autenticación/autorización)
+
+**Qué es:** el servidor externo que va a manejar todo lo relacionado a usuarios, login y roles — Django no va a tener su propia tabla de usuarios con contraseñas, todo eso vive en Keycloak.
+
+**Instalación (sin Docker, standalone):**
+
+```bash
+# 1. Descargar el .zip desde https://www.keycloak.org/downloads y descomprimir
+#    (ej. en C:\Herramientas_IS2\keycloak)
+
+# 2. Requiere Java (JDK 17 o superior). Verificar:
+java -version
+
+# 3. Levantarlo en modo desarrollo:
+cd C:\Herramientas_IS2\keycloak\bin
+.\kc.bat start-dev
+# Queda escuchando en http://localhost:8080
+```
+
+> **Ojo con `JAVA_HOME`:** si te tira "Could not create the Java Virtual Machine", revisá que `JAVA_HOME` esté configurado apuntando al JDK correcto, y que hayas abierto una terminal **nueva** después de configurarlo (las terminales ya abiertas no ven variables de entorno agregadas después de abrirlas).
+
+**Configuración inicial (una sola vez):**
+
+1. **Crear el Realm** del proyecto (ej. `global-exchange`) — es el espacio aislado donde viven tus usuarios y roles, separado del Realm `master` que es solo para administrar Keycloak en sí. El campo "Resource file" se deja vacío (solo sirve para importar un Realm ya existente desde un JSON).
+
+2. **Crear el Client** para Django, dentro del Realm:
+   - Clients → Create client → Client ID: `global-exchange-django` (el "Name" es solo un texto descriptivo, opcional, sin efecto funcional)
+   - Activar "Client authentication" (lo hace confidencial, con secret propio — correcto para una app backend)
+   - Dejar tildado "Standard flow" y "Direct access grants"
+   - Valid redirect URIs: `http://localhost:8000/*` y `http://127.0.0.1:8000/*`
+   - Guardar, y copiar el **Client Secret** desde la pestaña "Credentials" del Client — va al `.env`, nunca en el código.
+
+3. **Crear roles y usuario de prueba** — esto es evidencia/entregable propia del alcance del sprint (no una HU de código, es una acción administrativa en la consola de Keycloak):
+   - Realm roles → Create role: crear al menos `admin` y `cliente`
+   - Users → Add user: crear un usuario de prueba, ponerle contraseña en la pestaña "Credentials"
+   - En la pestaña "Role mapping" del usuario, asignarle uno de los roles creados
+   - Sacar una captura de esto (Realm con roles + usuario con su rol) y guardarla en `docs/` como evidencia — por ejemplo `docs/evidencia-keycloak-roles.png`
+
+**Variables que van al `.env`:**
+```dotenv
+# Keycloak
+KEYCLOAK_SERVER_URL=http://localhost:8080
+KEYCLOAK_REALM=global-exchange
+KEYCLOAK_CLIENT_ID=global-exchange-django
+KEYCLOAK_CLIENT_SECRET=<el-secret-que-copiaste>
+```
+Y en `.env.example`, las mismas claves sin los valores reales.
+
+**Qué es config de entorno y qué es HU:** levantar el servidor, crear el Realm/Client/roles/usuario de prueba es preparación de infraestructura (como instalar Postgres o Nginx) — no se testea con pytest ni se mergea como código. Conectar Django con esto (instalar `mozilla-django-oidc`, programar las vistas de login/callback/registro) sí es desarrollo real de las HU del Epic 1, con sus tests correspondientes.
+
+---
+
+## 8. `.env` y `python-decouple`
 
 **Qué es `.env`:** un archivo con datos sensibles o que cambian según la máquina (contraseñas, claves secretas, hosts). **Nunca se sube a Git** (está en `.gitignore`).
 
@@ -155,7 +237,7 @@ En el día a día vas a estar siempre en modo desarrollo. El de producción se p
 
 ---
 
-## 8. `pytest` y `pytest.ini`
+## 9. `pytest` y `pytest.ini`
 
 **Qué es pytest:** el framework que ejecuta tus pruebas unitarias (PUN).
 
@@ -174,13 +256,13 @@ pytest -v                 # modo detallado, muestra cada test por nombre
 
 ---
 
-## 9. `staticfiles/` y `collectstatic`
+## 10. `staticfiles/` y `collectstatic`
 
 Django separa dos cosas: los archivos estáticos que cada app trae por defecto (como los estilos del panel de administración) y los que sumás vos. El comando `collectstatic` los junta a todos en una sola carpeta (`staticfiles/`) para que un servidor de producción los sirva eficientemente. Esta carpeta se regenera con el comando, por eso no se versiona en Git.
 
 ---
 
-## 10. Docstrings y la extensión autoDocstring
+## 11. Docstrings y la extensión autoDocstring
 
 **Qué es un docstring:** un comentario especial dentro de una función/clase que explica qué hace, qué recibe y qué devuelve. A diferencia de un comentario común (`# esto es un comentario`), el docstring queda "adjunto" al código, y herramientas como VSCode o Sphinx lo leen automáticamente.
 
@@ -215,7 +297,7 @@ def registrar_cliente(nombre, documento, email):
 
 ---
 
-## 11. Sphinx (documentación automática — PDO)
+## 12. Sphinx (documentación automática — PDO)
 
 **Qué es:** una herramienta que lee los **docstrings** de tu código (ver sección de autoDocstring más abajo si no la tenés) y genera automáticamente un sitio HTML navegable con toda la documentación técnica del proyecto — sin que tengas que escribir esa documentación por separado.
 
@@ -265,7 +347,7 @@ Si solo agregaste funciones o docstrings nuevos a una app que **ya existía**, n
 
 ---
 
-## 12. Cómo preparan el entorno tus compañeros (paso a paso)
+## 13. Cómo preparan el entorno tus compañeros (paso a paso)
 
 Esto es lo que cada compañero debe hacer la primera vez que clona el repo:
 
@@ -297,7 +379,7 @@ Con esto, cada integrante tiene un entorno idéntico al tuyo en su propia máqui
 
 ---
 
-## 13. Resumen de comandos del día a día
+## 14. Resumen de comandos del día a día
 
 ```bash
 # Al empezar a trabajar
