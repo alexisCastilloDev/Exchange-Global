@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'mozilla_django_oidc',
 ]
 
 MIDDLEWARE = [
@@ -59,7 +60,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Asuncion'
 USE_I18N = True
 USE_TZ = True
 
@@ -68,8 +69,29 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+AUTHENTICATION_BACKENDS = (
+    'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',  # login por admin de Django, útil en dev
+)
+
+# --- Keycloak / OIDC ---
+OIDC_RP_CLIENT_ID = env('KEYCLOAK_CLIENT_ID')
+OIDC_RP_CLIENT_SECRET = env('KEYCLOAK_CLIENT_SECRET')
+
+_keycloak_base = env('KEYCLOAK_SERVER_URL')
+_keycloak_realm = env('KEYCLOAK_REALM')
+_keycloak_realm_url = f'{_keycloak_base}/realms/{_keycloak_realm}'
+
+OIDC_OP_AUTHORIZATION_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/auth'
+OIDC_OP_TOKEN_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/token'
+OIDC_OP_USER_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/userinfo'
+OIDC_OP_JWKS_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/certs'
+
+OIDC_RP_SIGN_ALGO = 'RS256'
+OIDC_RP_SCOPES = 'openid email profile'
+
+# A dónde redirige después de login/logout exitoso
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
