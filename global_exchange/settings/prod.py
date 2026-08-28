@@ -1,18 +1,5 @@
 from .base import *
 
-from decouple import config
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
-    }
-}
-
 DEBUG = False
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
@@ -21,7 +8,7 @@ SECRET_KEY = env('SECRET_KEY')  # django-environ ya lanza error claro si falta
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME'),
+        'NAME': env('DB_NAME_PROD'),
         'USER': env('DB_USER'),
         'PASSWORD': env('DB_PASSWORD'),
         'HOST': env('DB_HOST'),

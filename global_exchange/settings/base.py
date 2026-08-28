@@ -1,11 +1,6 @@
 """
 Configuración base compartida entre dev y prod.
 """
-from decouple import config
-
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-
 from pathlib import Path
 import environ
 
@@ -15,6 +10,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Inicializa django-environ y lee el .env desde la raíz del proyecto
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
+
+SECRET_KEY = env('SECRET_KEY')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
