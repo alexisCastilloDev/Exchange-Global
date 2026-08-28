@@ -38,7 +38,7 @@ ROOT_URLCONF = 'global_exchange.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -72,8 +72,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 AUTHENTICATION_BACKENDS = (
-    'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
-    'django.contrib.auth.backends.ModelBackend',  # login por admin de Django, útil en dev
+    'apps.authentication.backends.KeycloakOIDCAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
 )
 
 # --- Keycloak / OIDC ---
