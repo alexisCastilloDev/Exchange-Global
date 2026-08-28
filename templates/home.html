@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Global Exchange</title>
+</head>
+<body>
+    <h1>Bienvenido a Global Exchange</h1>
+
+    {% if user.is_authenticated %}
+        <p>Hola, <strong>{{ user.first_name }} {{ user.last_name }}</strong> ({{ user.email }})</p>
+        <form method="post" action="{% url 'oidc_logout' %}">
+            {% csrf_token %}
+            <button type="submit">Cerrar Sesión</button>
+        </form>
+    {% else %}
+        <p>No has iniciado sesión.</p>
+        <a href="{% url 'oidc_authentication_init' %}">Iniciar Sesión con Keycloak SSO</a>
+    {% endif %}
+</body>
+</html>
