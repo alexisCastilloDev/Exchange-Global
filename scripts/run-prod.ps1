@@ -6,7 +6,7 @@ $envFile = ".\.env"
 $venvActivate = ".\.venv\Scripts\Activate.ps1"
 
 # Ajusta esta ruta a donde tengas instalado Nginx
-$nginxPath = "C:\Herramientas_IS2\nginx"
+$nginxPath = "C:\herramientas_is2\nginx-1.30.4"
 
 if (-not (Test-Path $envFile)) {
     Write-Host "No se encontro .env en esta carpeta. Corre este script desde la raiz del repo." -ForegroundColor Red

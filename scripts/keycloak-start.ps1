@@ -1,7 +1,7 @@
 ﻿# Levanta Keycloak en modo desarrollo con un solo comando.
 # Ajusta la ruta de abajo a donde tengas instalado Keycloak.
 
-$keycloakBin = "C:\Herramientas_IS2\keycloak\bin"
+$keycloakBin = "C:\herramientas_is2\keycloak-26.7.2\bin"
 
 if (-not (Test-Path $keycloakBin)) {
     Write-Host "No se encontro la carpeta de Keycloak en: $keycloakBin" -ForegroundColor Red
