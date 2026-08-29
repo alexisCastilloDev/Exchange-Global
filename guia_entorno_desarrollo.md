@@ -1,15 +1,16 @@
 # Guía del Entorno de Desarrollo — Global Exchange
 
-Esta guía tiene dos partes:
+Esta guía tiene tres partes:
 
 - **Parte 1 — Preparar tu entorno paso a paso:** seguila en orden si sos nuevo en el proyecto, de punta a punta, sin saltar secciones.
 - **Parte 2 — Referencia de conceptos:** para volver a consultar el "qué es y por qué" de cada herramienta cuando lo necesites, sin tener que releer todo.
+- **Parte 3 — Solución de problemas comunes:** errores típicos que ya nos pasaron, con su causa y solución.
 
 ---
 
 # PARTE 1 — Preparar tu entorno paso a paso
 
-> **Antes de empezar:** no todos los integrantes necesitan instalar todo. Java + Keycloak solo hace falta si vas a trabajar en el **Epic 1** (autenticación). Nginx solo hace falta si vas a validar específicamente el ambiente de producción. Para el día a día de programar, con Python + Git + VSCode + PostgreSQL alcanza. Si no sabés si te toca, preguntale a quien reparte las HU.
+> **Antes de empezar:** no todos los integrantes necesitan instalar todo. Java solo hace falta si vas a trabajar en el **Epic 1** (autenticación) — y aun así, **Keycloak en sí NO hay que instalarlo en cada máquina**, el equipo decidió correrlo en una sola computadora que actúa como servidor compartido (ver Paso 3). Nginx solo hace falta si vas a validar específicamente el ambiente de producción. Para el día a día de programar, con Python + Git + VSCode + PostgreSQL alcanza.
 
 ## Paso 1 — Instalar las herramientas base
 
@@ -19,7 +20,16 @@ Esta guía tiene dos partes:
 | **Git** | git-scm.com | Instalación con las opciones por defecto está bien |
 | **VSCode** | code.visualstudio.com | Ver Paso 2 para las extensiones |
 | **git-flow** (herramienta de línea de comandos, distinta de la extensión de VSCode) | Suele venir incluida con Git for Windows. Si no, `choco install git-flow-avh` con Chocolatey | Es lo que te permite usar `git flow feature start/finish` |
-| **PostgreSQL** | postgresql.org/download (incluye pgAdmin) | Durante la instalación te va a pedir una contraseña para el usuario `postgres` — **anotala en un lugar seguro**, la vas a necesitar en tu `.env` (Paso 5) |
+| **PostgreSQL** | postgresql.org/download (incluye pgAdmin) | Durante la instalación te va a pedir una contraseña para el usuario `postgres` — **anotala en un lugar seguro**, la vas a necesitar en tu `.env` (Paso 5). Ver nota importante en el Paso 1.1 |
+
+### Paso 1.1 — Agregar PostgreSQL al PATH
+
+El instalador de Windows no siempre agrega Postgres al PATH automáticamente, y sin esto, comandos como `createdb` o `psql` no funcionan desde la terminal.
+
+1. Menú Inicio → "Variables de entorno" → "Editar las variables de entorno del sistema" → botón "Variables de entorno...".
+2. En "Variables del sistema", seleccioná `Path` → "Editar..." → "Nuevo" → agregá la ruta a la carpeta `bin` de tu instalación, típicamente `C:\Program Files\PostgreSQL\<versión>\bin` (fijate qué número de versión te quedó instalado).
+3. **Cerrá todas las terminales abiertas y abrí una nueva** (las ya abiertas no ven el PATH actualizado).
+4. Verificar: `createdb --version` debería mostrar la versión en vez de "no se reconoce el comando".
 
 ## Paso 2 — Instalar las extensiones de VSCode
 
@@ -36,17 +46,40 @@ Abrí VSCode → pestaña Extensions (ícono de cuadraditos en la barra lateral)
 
 **Confirmar el intérprete correcto:** una vez que tengas el proyecto clonado (Paso 4), fijate abajo a la derecha de VSCode que diga `Python (...): ('.venv': venv)`. Si dice otra cosa, hacé clic ahí (o `Ctrl+Shift+P` → "Python: Select Interpreter") y elegí el de `.venv`.
 
-## Paso 3 — Instalar Java + Keycloak (SOLO si trabajás en Epic 1)
+## Paso 3 — Keycloak (servidor compartido, NO se instala en cada máquina)
 
-Si no te toca esta parte, saltá directo al Paso 4.
+**Decisión del equipo:** Keycloak corre en **una sola computadora** designada como servidor, no en la máquina de cada integrante. Si no sos quien administra esa computadora, saltá directo al Paso 4 — solo vas a necesitar la URL, Realm y credenciales que te pase quien lo armó (ver variables `KEYCLOAK_*` en el Paso 5).
+
+**Si sos quien administra el servidor de Keycloak:**
 
 1. Instalar un **JDK 17 o superior** (recomendado: Eclipse Temurin desde adoptium.net).
 2. Configurar la variable de entorno `JAVA_HOME` apuntando a la carpeta de instalación del JDK (Panel de Control → Variables de entorno).
 3. **Cerrar todas las terminales abiertas y abrir una nueva** — las terminales ya abiertas no ven variables de entorno agregadas después de abrirlas, es la causa más común de que "no funcione" cuando en realidad sí quedó bien configurado.
 4. Verificar: `java -version` debería mostrar la versión del JDK que instalaste (si te sigue mostrando una versión vieja como 1.8, revisá que no haya una instalación anterior de Java compitiendo en el PATH del sistema).
-5. Descargar Keycloak desde keycloak.org/downloads (versión standalone, sin Docker) y descomprimir en una carpeta simple, ej. `C:\Herramientas\keycloak`.
-6. Levantarlo: parado en la carpeta `bin` de Keycloak, `.\kc.bat start-dev`. Queda escuchando en `http://localhost:8080`.
-7. **Definir con el equipo si van a compartir una sola instancia de Keycloak o si cada uno levanta la suya** (ver el detalle de esta decisión en el Paso 5, variables `KEYCLOAK_*`).
+5. Descargar Keycloak desde keycloak.org/downloads (versión standalone, sin Docker) y descomprimir en una carpeta simple, ej. `C:\Herramientas_IS2\keycloak`.
+6. Levantarlo: parado en la carpeta `bin` de Keycloak, `.\kc.bat start-dev`. Queda escuchando en `http://localhost:8080` de esa máquina.
+7. **Crear el usuario administrador** (solo la primera vez que se levanta Keycloak): la propia consola web en `http://localhost:8080` te va a pedir crear un usuario admin la primera vez que entrás — completá usuario y contraseña y guardalo en un lugar seguro, es el que usás para entrar a administrar Keycloak en sí (no tiene nada que ver con los usuarios del sistema Django).
+8. **Crear el Realm del proyecto:**
+   - Iniciá sesión en la consola con el admin que acabás de crear.
+   - Arriba a la izquierda, donde dice "master" (o el nombre del Realm actual), desplegá y elegí "Create Realm".
+   - Nombre: `global-exchange`. El campo "Resource file" se deja vacío (solo sirve para importar un Realm ya existente desde un JSON). Crear.
+   - Confirmá que el selector de arriba a la izquierda ahora muestre `global-exchange` en vez de `master` — todo lo que sigue se hace parado en ese Realm, no en `master`.
+9. **Crear el Client para Django**, dentro del Realm `global-exchange`:
+   - Menú lateral → "Clients" → "Create client".
+   - Client type: dejar "OpenID Connect" (por defecto). Client ID: `global-exchange-django`. El campo "Name" es solo descriptivo, opcional. Siguiente.
+   - Activar el switch "Client authentication" → ON (lo hace confidencial, con secret propio — correcto para una app backend). Dejar tildado "Standard flow" y "Direct access grants". Siguiente.
+   - Valid redirect URIs: `http://localhost:8000/*` y `http://127.0.0.1:8000/*`. Web origins: los mismos dos valores, o `+` para que tome las mismas que las redirect URIs. Guardar.
+   - Entrar a la pestaña "Credentials" del Client recién creado y copiar el **Client Secret** generado — este es el valor que va al `.env` de todo el equipo (variable `KEYCLOAK_CLIENT_SECRET`), nunca en el código ni en el repo.
+10. **Crear los roles**, dentro del Realm:
+    - Menú lateral → "Realm roles" → "Create role".
+    - Crear al menos dos: `admin` y `cliente` (los roles básicos usados en las HU de autorización del Epic 1).
+11. **Crear un usuario de prueba**, dentro del Realm:
+    - Menú lateral → "Users" → "Add user". Completar username y email (ej. `usuario.prueba` / `prueba@test.com`). Guardar.
+    - Entrar a la pestaña "Credentials" de ese usuario y ponerle una contraseña — destildar "Temporary" si no querés que pida cambiarla en el primer login.
+    - Entrar a la pestaña "Role mapping" del usuario, "Assign role", y asignarle uno de los roles creados (ej. `cliente`).
+    - Esto es evidencia/entregable del alcance del sprint ("demostración de creación de usuario y roles") — sacar una captura del Realm con los roles y del usuario con su rol asignado, y guardarla en `docs/` (por ejemplo `docs/evidencia-keycloak-roles.png`).
+12. Para que el resto del equipo se conecte, necesitan la **IP local de tu máquina** en la red (no `localhost`, que en la máquina de cada uno apunta a sí misma). Verla con `ipconfig` → buscar "Dirección IPv4".
+13. Pasarle al equipo, por un canal privado (nunca por el repo): la IP, el Realm, el Client ID y el Client Secret.
 
 ## Paso 4 — Clonar el proyecto y armar el entorno virtual
 
@@ -81,6 +114,8 @@ El `.env` guarda datos que son **sensibles** (contraseñas, claves secretas) o q
 
 Lo que sí está en el repo es `.env.example`: una plantilla con las mismas claves pero sin los valores reales, para que cada uno sepa qué variables tiene que definir.
 
+> ⚠️ **Cuidado al editar el `.env`:** no dejes espacios alrededor del `=` ni al final de cada línea (`DB_NAME= global_exchange` o `DB_NAME=global_exchange ` con espacio invisible al final rompen la conexión de forma silenciosa y confusa — ya nos pasó, ver Parte 3).
+
 ### 5.2 — Copiar la plantilla
 
 ```bash
@@ -96,7 +131,7 @@ Abrí tu `.env` recién creado y completalo variable por variable:
 ```
 DJANGO_SETTINGS_MODULE=global_exchange.settings.dev
 ```
-Igual para todos — así arrancás siempre en modo desarrollo por defecto.
+Igual para todos — así arrancás siempre en modo desarrollo por defecto. (Los scripts de la Parte 1, Paso 8 cambian esta línea automáticamente al alternar entre dev y prod, no hace falta editarla a mano en el día a día.)
 
 **`SECRET_KEY` — generá la tuya propia, nunca copies la de otro integrante**
 
@@ -106,58 +141,59 @@ Para generar la tuya, con el venv activado:
 ```bash
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
-Esto te va a imprimir una cadena larga de caracteres — copiala tal cual (con backslashes, símbolos, etc., no la alteres) y pegala:
+Esto te va a imprimir una cadena larga de caracteres — copiala tal cual (con backslashes, símbolos, etc., no la alteres) y pegala, sin espacios antes ni después del `=`:
 ```
 SECRET_KEY=lo-que-te-generó-el-comando-de-arriba
 ```
 
-**`DEBUG` y `ALLOWED_HOSTS`**
+**`ALLOWED_HOSTS`**
 ```
-DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 ```
-Igual para todos, mientras trabajen en modo desarrollo.
+Igual para todos.
 
-**Datos de PostgreSQL — usá TU propia contraseña, no la de un compañero**
+**Datos de PostgreSQL — bases separadas para dev y prod, tu propia contraseña**
+
+El proyecto usa PostgreSQL tanto en desarrollo como en producción, pero con **bases separadas** para no mezclar datos de prueba con datos "reales": `global_exchange_dev` y `global_exchange`.
 
 ```
-DB_NAME=global_exchange
+DB_NAME_DEV=global_exchange_dev
+DB_NAME_PROD=global_exchange
 DB_USER=postgres
 DB_PASSWORD=la-contraseña-que-VOS-elegiste-al-instalar-postgres-en-el-paso-1
 DB_HOST=localhost
 DB_PORT=5432
 ```
 
-`DB_NAME`, `DB_USER`, `DB_HOST` y `DB_PORT` pueden coincidir entre todos sin problema (son solo convenciones de nombre, no datos secretos). Pero `DB_PASSWORD` **tiene que ser la que vos definiste** al instalar tu propio PostgreSQL en el Paso 1 — cada Postgres es una instalación independiente en cada máquina, con su propia contraseña, así que usar la de otro compañero directamente no te va a funcionar (le vas a estar apuntando a la base de datos de OTRA persona, que ni siquiera es accesible desde tu máquina).
+`DB_NAME_DEV`, `DB_NAME_PROD`, `DB_USER`, `DB_HOST` y `DB_PORT` pueden coincidir entre todos sin problema (son solo convenciones de nombre, no datos secretos). Pero `DB_PASSWORD` **tiene que ser la que vos definiste** al instalar tu propio PostgreSQL en el Paso 1 — cada Postgres es una instalación independiente en cada máquina, con su propia contraseña, así que usar la de otro compañero directamente no te va a funcionar.
 
-**Variables de Keycloak — depende de una decisión de equipo**
+**Variables de Keycloak — las mismas para todo el equipo (servidor compartido)**
 
-Antes de completar esto, el equipo tiene que definir una de estas dos opciones:
-
-| Opción | Cómo se completa el `.env` |
-|---|---|
-| **A) Un solo Keycloak compartido** (corre en la máquina de quien lo armó, en la misma red) | `KEYCLOAK_SERVER_URL` apunta a la IP local de esa máquina (ej. `http://192.168.1.15:8080`, NO `localhost`, porque `localhost` en tu máquina no es la máquina del otro). `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID` y `KEYCLOAK_CLIENT_SECRET` son **los mismos para todo el equipo** — quien armó el Client se los pasa por un canal privado (Slack, WhatsApp), **nunca por el repositorio ni por chat público** |
-| **B) Cada uno levanta su propio Keycloak** | Cada integrante sigue los pasos del Paso 3 en su propia máquina, crea su propio Realm/Client, y usa `KEYCLOAK_SERVER_URL=http://localhost:8080` con SU PROPIO `KEYCLOAK_CLIENT_SECRET` (van a ser todos distintos entre sí, y eso está bien) |
+Como Keycloak corre en una sola máquina servidor (Paso 3), estas variables **son iguales para todos**, no cada uno genera las suyas. Pedíselas a quien administra el servidor, por un canal privado:
 
 ```
-KEYCLOAK_SERVER_URL=...
-KEYCLOAK_REALM=...
-KEYCLOAK_CLIENT_ID=...
-KEYCLOAK_CLIENT_SECRET=...
+KEYCLOAK_SERVER_URL=http://<ip-de-la-máquina-servidor>:8080
+KEYCLOAK_REALM=global-exchange
+KEYCLOAK_CLIENT_ID=global-exchange-django
+KEYCLOAK_CLIENT_SECRET=<el-secret-que-te-pasaron>
 ```
 
-Si no te toca trabajar en Epic 1, podés dejar estas variables vacías por ahora.
+Si no te toca trabajar en Epic 1 todavía, podés dejar estas variables vacías por ahora.
 
-## Paso 6 — Crear la base de datos y aplicar migraciones
+## Paso 6 — Crear tu base de datos de desarrollo y aplicar migraciones
 
 ```bash
-# Crear la base de datos (con pgAdmin, gráficamente, o por comando):
-createdb -U postgres global_exchange
+# Crear la base de datos de DESARROLLO (cada integrante crea la suya local):
+createdb -U postgres --encoding UTF8 --template template0 global_exchange_dev
 # Te va a pedir la contraseña que definiste al instalar Postgres
 
 # Aplicar las migraciones del proyecto a tu base recién creada
 python manage.py migrate
 ```
+
+> **Por qué `--encoding UTF8 --template template0`:** en instalaciones de Postgres con configuración regional en español, la base puede crearse por defecto con una codificación distinta a UTF-8, lo que después rompe la conexión con un error críptico de `UnicodeDecodeError`. Especificarlo explícitamente al crear la base evita ese problema de raíz (ver Parte 3 si ya te pasó).
+
+La base `global_exchange` (prod) normalmente no la creás vos — la administra quien gestione el ambiente de producción del equipo.
 
 ## Paso 7 — Verificar que todo funciona
 
@@ -175,11 +211,11 @@ Si ambos comandos funcionan sin errores, tu entorno quedó configurado correctam
 
 ## Paso 8 — (Opcional) Instalar los scripts de atajo
 
-Para no tener que escribir todos los comandos a mano cada vez que cambiás de ambiente o levantás Keycloak, el proyecto incluye tres scripts de PowerShell y una configuración de tareas de VSCode.
+Para no tener que escribir todos los comandos a mano cada vez que cambiás de ambiente o levantás Keycloak, el proyecto incluye cuatro scripts de PowerShell y una configuración de tareas de VSCode.
 
 **8.1 — Copiar los scripts:**
 
-Creá una carpeta `scripts/` en la raíz del repo (si no existe) y poné ahí `keycloak-start.ps1`, `run-dev.ps1` y `run-prod.ps1`. Abrí `keycloak-start.ps1` y ajustá la ruta `$keycloakBin` si tu instalación de Keycloak está en otro lado.
+Creá una carpeta `scripts/` en la raíz del repo (si no existe) y poné ahí `keycloak-start.ps1`, `run-dev.ps1`, `run-prod.ps1` y `run-tests.ps1`. Ajustá las rutas (`$keycloakBin`, `$nginxPath`) al principio de cada script si tu instalación está en otro lado.
 
 **8.2 — Crear `.vscode/tasks.json`:**
 
@@ -197,19 +233,20 @@ Esto permite correr scripts locales (como los nuestros) sin comprometer la segur
 
 **8.4 — Usarlos:**
 
-Desde VSCode: `Ctrl+Shift+P` → escribir "Run Task" → Enter → elegir una de las cuatro tareas disponibles:
+Desde VSCode: `Ctrl+Shift+P` → escribir "Run Task" → Enter → elegir una de las tareas disponibles:
 
 | Tarea | Qué hace |
 |---|---|
-| **Modo Desarrollo (runserver)** | Cambia el `.env` a `dev`, levanta `runserver` |
-| **Modo Producción (Uvicorn)** | Cambia el `.env` a `prod`, corre `collectstatic`, levanta Uvicorn |
-| **Levantar Keycloak** | Corre `kc.bat start-dev` sin que tengas que recordar la ruta |
-| **Correr tests (pytest)** | Corre `pytest` directo |
+| **Modo Desarrollo (runserver)** | Activa el venv, cambia el `.env` a `dev`, levanta `runserver` |
+| **Modo Produccion (Uvicorn)** | Activa el venv, cambia el `.env` a `prod`, corre `collectstatic`, levanta Nginx (en ventana nueva) + Uvicorn |
+| **Levantar Keycloak** | Corre `kc.bat start-dev` sin que tengas que recordar la ruta (solo en la máquina servidor) |
+| **Correr tests (pytest)** | Activa el venv y corre `pytest` |
 
 También podés correrlos manualmente sin pasar por VSCode:
 ```powershell
 .\scripts\run-dev.ps1
 .\scripts\run-prod.ps1
+.\scripts\run-tests.ps1
 .\scripts\keycloak-start.ps1
 ```
 
@@ -261,18 +298,21 @@ git push origin main develop --tags
 IS2_REPO/
 ├── global_exchange/          ← el "proyecto" (config general)
 │   ├── settings/
-│   │   ├── base.py           ← configuración compartida
-│   │   ├── dev.py            ← hereda de base, para tu máquina
-│   │   └── prod.py           ← hereda de base, para producción
+│   │   ├── base.py           ← configuración compartida (SECRET_KEY, apps, middleware, etc.)
+│   │   ├── dev.py            ← hereda de base, DEBUG=True, Postgres (global_exchange_dev)
+│   │   └── prod.py           ← hereda de base, DEBUG=False, Postgres (global_exchange), seguridad extra
 │   ├── urls.py
 │   ├── wsgi.py / asgi.py
 ├── clientes/, usuarios/, etc.  ← una "app" por cada dominio de negocio
+├── scripts/                    ← scripts de atajo (Paso 8)
 ├── tests/
 ├── manage.py
 └── requirements.txt
 ```
 
 **Proyecto vs. App:** el proyecto (`global_exchange`) es el contenedor general. Las apps son módulos independientes (uno por dominio: clientes, usuarios, etc.) registrados en `INSTALLED_APPS` dentro de `base.py`.
+
+**Sobre `base.py`/`dev.py`/`prod.py` y `django-environ`:** los tres usan **exclusivamente** `django-environ` (`import environ`) para leer el `.env` — se sacó `python-decouple`, que se había usado en un momento y quedó generando código duplicado/confuso. `env = environ.Env()` se define una sola vez en `base.py`, y como `dev.py`/`prod.py` hacen `from .base import *`, pueden usar `env(...)` directamente sin volver a inicializarlo. `SECRET_KEY` vive en `base.py` (es la misma para toda la máquina); `DEBUG`, `ALLOWED_HOSTS` y `DATABASES` viven en `dev.py`/`prod.py` porque difieren entre ambientes.
 
 ## 2.5 — Ambientes: desarrollo vs. producción
 
@@ -281,8 +321,10 @@ El mismo código corre distinto según el contexto:
 | | `dev.py` | `prod.py` |
 |---|---|---|
 | `DEBUG` | `True` (errores detallados) | `False` (oculta detalles internos) |
-| Base de datos | SQLite (archivo local) | PostgreSQL |
+| Base de datos | PostgreSQL — `global_exchange_dev` | PostgreSQL — `global_exchange` |
 | Servidor | `runserver` | Nginx + Uvicorn |
+
+**Por qué Postgres en ambos y no SQLite en dev:** se decidió usar el mismo motor de base de datos en los dos ambientes (con bases separadas) para evitar diferencias de comportamiento entre SQLite y Postgres que solo aparecerían recién en producción.
 
 **Cadena en producción:**
 ```
@@ -290,22 +332,26 @@ navegador → Nginx (puerto 80) → Uvicorn (puerto 8000) → Django (asgi.py) �
 ```
 Nginx recibe la petición primero y se la reenvía a Uvicorn por detrás; también sirve los archivos estáticos directamente. Ni `base.py`, `dev.py`, `prod.py`, `wsgi.py` ni `asgi.py` se tocan para esto — Django ya genera `asgi.py` automáticamente. Nginx no vive dentro del repo (se instala aparte en el sistema); sí conviene guardar el `nginx.conf` usado en `docs/` como referencia.
 
+**Nota sobre Nginx:** cuando lo levantás (manualmente o vía script), la ventana queda "en negro" sin mostrar texto después del mensaje inicial — es normal, Nginx en Windows no imprime logs en consola por defecto, simplemente queda escuchando en segundo plano. Para ver actividad en tiempo real: `Get-Content <ruta-nginx>\logs\access.log -Tail 10 -Wait` desde otra terminal.
+
 En el día a día siempre estás en modo desarrollo. El de producción se prueba puntualmente para confirmar que el sistema también funciona con `DEBUG=False`, Postgres, y la stack Nginx+Uvicorn.
 
 ## 2.6 — Keycloak
 
-El servidor externo que maneja usuarios, login y roles — Django no tiene su propia tabla de usuarios con contraseñas, todo vive en Keycloak.
+El servidor externo que maneja usuarios, login y roles — Django no tiene su propia tabla de usuarios con contraseñas, todo vive en Keycloak. **El equipo decidió correr una sola instancia compartida**, en una máquina designada como servidor, no una por integrante. El paso a paso completo de instalación y configuración (Realm, usuario admin, Client, roles, usuario de prueba) está en la **Parte 1, Paso 3** — acá solo quedan los conceptos de referencia rápida.
 
 **Conceptos:**
-- **Realm**: el espacio aislado del proyecto (ej. `global-exchange`), separado del Realm `master` que es solo para administrar Keycloak en sí.
-- **Client**: la "aplicación" registrada dentro del Realm (en este caso, Django), con su propio Client ID y Client Secret.
-- **Roles**: permisos asignables a usuarios (ej. `admin`, `cliente`).
+- **Realm**: el espacio aislado del proyecto (`global-exchange`), separado del Realm `master` que es solo para administrar Keycloak en sí.
+- **Usuario admin de Keycloak**: se crea una única vez, la primera vez que se levanta el servidor — administra Keycloak en sí, no tiene relación con los usuarios del sistema Django.
+- **Client**: la "aplicación" registrada dentro del Realm (en este caso, Django: `global-exchange-django`), con su propio Client ID y Client Secret.
+- **Roles**: permisos asignables a usuarios (`admin`, `cliente`).
+- **Usuario de prueba**: un usuario creado dentro del Realm con un rol asignado, usado como evidencia de que la configuración funciona.
 
 **Qué es config de entorno y qué es HU real:** levantar el servidor y crear Realm/Client/roles/usuario de prueba es preparación de infraestructura (como instalar Postgres) — no se testea con pytest ni se mergea como código, es evidencia/entregable del alcance del sprint. Conectar Django con esto (`mozilla-django-oidc`, vistas de login/callback/registro) sí es desarrollo real de las HU del Epic 1, con sus tests correspondientes.
 
-## 2.7 — `.env` y `python-decouple`
+## 2.7 — `.env` y `django-environ`
 
-`.env` guarda datos sensibles o específicos de cada máquina, nunca se sube a Git. `.env.example` es la plantilla sin valores reales, que sí se sube. `python-decouple` es la librería que lee el `.env` y lo convierte en variables usables por Django (`config('SECRET_KEY')`); sin ella, Django no sabe que el `.env` existe.
+`.env` guarda datos sensibles o específicos de cada máquina, nunca se sube a Git. `.env.example` es la plantilla sin valores reales, que sí se sube. `django-environ` es la librería que lee el `.env` y lo convierte en variables usables por Django (`env('SECRET_KEY')`); sin ella, Django no sabe que el `.env` existe. (El proyecto usó brevemente `python-decouple` también, pero se unificó todo a `django-environ` — ver 2.4.)
 
 ## 2.8 — `pytest` y `pytest.ini`
 
@@ -367,9 +413,35 @@ Cada conversación relevante con una herramienta de IA que aportó a una decisi�
 
 Automatizan lo que antes había que hacer a mano cada vez que se cambiaba de ambiente:
 
-- **`scripts/run-dev.ps1`**: reemplaza automáticamente la línea `DJANGO_SETTINGS_MODULE` del `.env` por `.dev` y levanta `runserver`.
-- **`scripts/run-prod.ps1`**: la reemplaza por `.prod`, corre `collectstatic`, y levanta Uvicorn. Nginx queda aparte (proceso externo al proyecto) — puede quedar corriendo permanentemente, no hace falta reiniciarlo al cambiar de ambiente.
-- **`scripts/keycloak-start.ps1`**: evita tener que recordar la ruta de instalación y el comando `kc.bat start-dev` cada vez.
-- **`.vscode/tasks.json`**: expone estos tres scripts (más `pytest`) como tareas de VSCode, accesibles con `Ctrl+Shift+P` → "Run Task", sin pasar por la terminal manualmente.
+- **`scripts/run-dev.ps1`**: activa el venv, reemplaza automáticamente la línea `DJANGO_SETTINGS_MODULE` del `.env` por `.dev` y levanta `runserver`.
+- **`scripts/run-prod.ps1`**: activa el venv, la reemplaza por `.prod`, corre `collectstatic`, levanta Nginx en una ventana nueva y Uvicorn en la actual.
+- **`scripts/run-tests.ps1`**: activa el venv y corre `pytest`.
+- **`scripts/keycloak-start.ps1`**: evita tener que recordar la ruta de instalación y el comando `kc.bat start-dev` cada vez (solo lo usa quien administra el servidor de Keycloak).
+- **`.vscode/tasks.json`**: expone estos cuatro scripts como tareas de VSCode, accesibles con `Ctrl+Shift+P` → "Run Task", sin pasar por la terminal manualmente.
 
 Requieren una única configuración por máquina la primera vez: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` desde PowerShell como administrador, ya que Windows bloquea por defecto la ejecución de scripts `.ps1` no firmados.
+
+**Por qué cada script activa el venv explícitamente:** las tareas de VSCode abren una PowerShell nueva que no hereda el venv activado en otra terminal — sin esa línea, comandos como `python` o `pytest` fallarían con "módulo no encontrado" o "comando no reconocido" aunque el venv esté bien instalado.
+
+**Por qué los scripts no tienen acentos ni tildes en los textos:** PowerShell 5.1 (la versión clásica de Windows) espera los `.ps1` guardados en UTF-8 con BOM; si se guardan en UTF-8 sin BOM (algo común al copiar/pegar texto), los caracteres acentuados se corrompen y rompen la sintaxis del script. Para evitar ese problema de raíz, los scripts se escriben sin tildes.
+
+---
+
+# PARTE 3 — Solución de problemas comunes
+
+Errores que ya nos aparecieron mientras armábamos el entorno, con su causa real (no siempre es la que parece a primera vista).
+
+| Síntoma | Causa real | Solución |
+|---|---|---|
+| `ModuleNotFoundError: No module named 'environ'` (o cualquier otro módulo) al correr una tarea de VSCode | La tarea abrió una PowerShell nueva sin el venv activado | Usar los scripts de la Parte 1, Paso 8 (ya activan el venv), o activar manualmente antes de correr el comando |
+| `pytest.ini: unexpected value continuation` | Una línea del archivo (a veces la primera) tiene un espacio o backtick de más, generalmente por copiar el bloque de código con ` ``` ` incluido | Reescribir el archivo a mano sin backticks ni espacios al inicio de línea |
+| Errores de Pylance tipo "Expressions surrounded by backticks are not supported" en un `.py` | Se copió el bloque de código completo (con ` ```python ` y ` ``` `) en vez de solo el código | Dejar únicamente el código Python en el archivo, sin los backticks del formato Markdown |
+| `Could not create the Java Virtual Machine` al correr `kc.bat` | Falta el JDK correcto o `JAVA_HOME` no está bien configurado, o la terminal es vieja y no ve la variable nueva | Instalar JDK 17+, configurar `JAVA_HOME`, y **abrir una terminal nueva** (las ya abiertas no ven variables de entorno agregadas después) |
+| `$env:JAVA_HOME` da error de sintaxis rara | Se está usando CMD en vez de PowerShell (`$env:` es sintaxis de PowerShell) | Abrir específicamente una ventana de PowerShell, no CMD |
+| `createdb`/`psql` no reconocidos como comando | Postgres no está en el PATH de Windows | Ver Paso 1.1 |
+| `waitress`/`uvicorn` responde "conexión terminada" en `curl` pero funciona en el navegador | Antivirus o extensión del navegador (ej. Brave Shields en un perfil personal) interceptando la conexión | Probar en el navegador directamente, o en otro perfil/navegador |
+| Conexión rechazada solo en un perfil de navegador, no en otro | Extensiones de privacidad (bloqueadores de ads/trackers) activas en ese perfil interfiriendo con `localhost` | Probar en el otro perfil, o desactivar la extensión para `localhost` |
+| `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xab` al conectar a Postgres | Puede ser (a) la base se creó con una codificación distinta a UTF-8 por la configuración regional de Windows, y/o (b) valores del `.env` con espacios de más alrededor del `=` o al final de la línea | Recrear la base con `createdb --encoding UTF8 --template template0`, y revisar que ninguna línea del `.env` tenga espacios extra |
+| Nginx muestra una ventana negra sin texto después de arrancar | Comportamiento normal — Nginx en Windows no imprime logs en consola por defecto | Confirmar que funciona probando `http://localhost` en el navegador, o mirando `logs\access.log` |
+| Script `.ps1` tira error de sintaxis en una línea con acentos (ej. "Falta la cadena en el terminador") | El archivo se guardó en una codificación que no es UTF-8 con BOM, y los caracteres acentuados corrompen la cadena de texto | Guardar el archivo en UTF-8 con BOM, o evitar acentos/tildes en los textos del script |
+| Error de `nginx.conf`: `"location" directive is not allowed here` | Llaves `{ }` mal cerradas — el bloque `server { }` se cerró antes de tiempo, dejando un `location` suelto fuera de cualquier `server` | Revisar que haya exactamente un `}` de cierre después de todo el contenido del bloque `server`, no en el medio |
