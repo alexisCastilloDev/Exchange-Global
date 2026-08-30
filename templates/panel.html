@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Protegido - Global Exchange</title>
+</head>
+<body>
+    <h1>Panel protegido</h1>
+    <p>Si ves esto, tu sesión es válida.</p>
+    <p>Usuario: <strong>{{ user.first_name }} {{ user.last_name }}</strong></p>
+    <a href="{% url 'home' %}">Volver al inicio</a>
+</body>
+</html>
