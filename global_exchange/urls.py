@@ -25,6 +25,7 @@ urlpatterns = [
     path('panel/', panel_protegido, name='panel_protegido'),
     path('panel-admin/', panel_admin, name='panel_admin'),
     path('admin/', admin.site.urls),
+    path('usuarios/', include('apps.users.urls')),
     path('oidc/logout/', CustomOIDCLogoutView.as_view(), name='oidc_logout'),
     path('oidc/callback/', CustomOIDCCallbackView.as_view(), name='oidc_authentication_callback'),
     path('oidc/', include('mozilla_django_oidc.urls')),

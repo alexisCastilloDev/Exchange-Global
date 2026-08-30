@@ -17,5 +17,7 @@
         <p>No has iniciado sesión.</p>
         <a href="{% url 'oidc_authentication_init' %}">Iniciar Sesión con Keycloak SSO</a>
     {% endif %}
+    {% block content %}
+    {% endblock %}
 </body>
 </html>
