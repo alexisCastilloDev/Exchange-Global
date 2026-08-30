@@ -22,7 +22,7 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         # Extraer roles del realm de Keycloak (si vienen en las claims)
         realm_access = claims.get('realm_access', {})
         roles = realm_access.get('roles', [])
-        
+
         # Guardar roles en un atributo o sincronizar superusuario/staff si corresponde
         if 'admin' in roles:
             user.is_staff = True
@@ -30,5 +30,5 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         else:
             user.is_staff = False
             user.is_superuser = False
-            
+
         user.save()

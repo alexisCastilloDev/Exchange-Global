@@ -17,12 +17,15 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from global_exchange.views import home
-from apps.authentication.views import CustomOIDCLogoutView
+from global_exchange.views import home, panel_protegido, panel_admin
+from apps.authentication.views import CustomOIDCLogoutView, CustomOIDCCallbackView
 
 urlpatterns = [
     path('', home, name='home'),
+    path('panel/', panel_protegido, name='panel_protegido'),
+    path('panel-admin/', panel_admin, name='panel_admin'),
     path('admin/', admin.site.urls),
     path('oidc/logout/', CustomOIDCLogoutView.as_view(), name='oidc_logout'),
+    path('oidc/callback/', CustomOIDCCallbackView.as_view(), name='oidc_authentication_callback'),
     path('oidc/', include('mozilla_django_oidc.urls')),
 ]
