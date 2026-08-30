@@ -1,12 +1,32 @@
+"""
+Backend de autenticación que conecta Django con Keycloak vía OIDC.
+
+Además de autenticar, sincroniza los roles de negocio que vienen en el
+token de Keycloak (claim `realm_access.roles`) hacia Django Groups, para
+que el sistema de permisos nativo de Django (`user.has_perm(...)`) pueda
+usarse como mecanismo de autorización granular por rol.
+
+Deliberadamente NO se usa `is_superuser`: ese flag hace que Django
+ignore cualquier chequeo de permisos, lo cual anularía por completo la
+gestión de permisos por rol.
+"""
+
+from django.contrib.auth.models import Group
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+
+# Roles de negocio soportados por el proyecto. Deben coincidir exactamente
+# con los "Realm roles" creados en Keycloak.
+ROLES_DE_NEGOCIO = {'admin', 'cliente', 'analista_cambiario', 'cajero'}
+
 
 class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
     def verify_claims(self, claims):
-        # Mantiene las verificaciones básicas del paquete
+        """
+        Verifica que los claims básicos sean válidos Y que el correo
+        electrónico haya sido confirmado en Keycloak antes de permitir el acceso.
+        """
         claims_verified = super().verify_claims(claims)
-
-        # Rechaza la sesión si el correo no ha sido verificado en Keycloak
         email_verified = claims.get('email_verified', False)
 
         return claims_verified and email_verified
@@ -27,18 +47,38 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         return user
 
     def update_user_claims(self, user, claims):
+        """
+        Actualiza nombre/apellido y sincroniza el/los rol(es) de Keycloak
+        del usuario hacia sus Django Groups.
+        """
         user.first_name = claims.get('given_name', '')
         user.last_name = claims.get('family_name', '')
-        # Extraer roles del realm de Keycloak (si vienen en las claims)
+
         realm_access = claims.get('realm_access', {})
-        roles = realm_access.get('roles', [])
-        
-        # Guardar roles en un atributo o sincronizar superusuario/staff si corresponde
-        if 'admin' in roles:
-            user.is_staff = True
-            user.is_superuser = True
-        else:
-            user.is_staff = False
-            user.is_superuser = False
-            
+        roles_keycloak = set(realm_access.get('roles', []))
+        roles_negocio = roles_keycloak & ROLES_DE_NEGOCIO
+
+        # Acceso al panel /admin/ de Django solo para el rol admin.
+        user.is_staff = 'admin' in roles_negocio
+        user.is_superuser = False  # Nunca superuser: los permisos pasan por Groups
         user.save()
+
+        self._sincronizar_grupos(user, roles_negocio)
+
+    def _sincronizar_grupos(self, user, roles_negocio):
+        """
+        Deja los Django Groups del usuario exactamente iguales a sus
+        roles de negocio actuales en Keycloak.
+        """
+        grupos_actuales = set(user.groups.values_list('name', flat=True))
+        if grupos_actuales == roles_negocio:
+            return
+
+        for nombre_rol in roles_negocio - grupos_actuales:
+            grupo, _ = Group.objects.get_or_create(name=nombre_rol)
+            user.groups.add(grupo)
+
+        for nombre_rol in grupos_actuales - roles_negocio:
+            grupo = Group.objects.filter(name=nombre_rol).first()
+            if grupo:
+                user.groups.remove(grupo)
