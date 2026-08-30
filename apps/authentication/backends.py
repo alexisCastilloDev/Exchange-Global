@@ -1,6 +1,16 @@
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
+
+    def verify_claims(self, claims):
+        # Mantiene las verificaciones básicas del paquete
+        claims_verified = super().verify_claims(claims)
+
+        # Rechaza la sesión si el correo no ha sido verificado en Keycloak
+        email_verified = claims.get('email_verified', False)
+
+        return claims_verified and email_verified
+
     def filter_users_by_claims(self, claims):
         email = claims.get('email')
         if not email:
