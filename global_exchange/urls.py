@@ -11,13 +11,14 @@ from global_exchange.views import home, panel_protegido, panel_admin, gestion_ro
 from apps.authentication.views import CustomOIDCLogoutView, CustomOIDCCallbackView
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
     path('', home, name='home'),
     path('panel/', panel_protegido, name='panel_protegido'),
     path('panel-admin/', panel_admin, name='panel_admin'),
     path('roles/', gestion_roles, name='gestion_roles'),
-    path('admin/', admin.site.urls),
     path('usuarios/', include('apps.users.urls')),
     path('oidc/logout/', CustomOIDCLogoutView.as_view(), name='oidc_logout'),
     path('oidc/callback/', CustomOIDCCallbackView.as_view(), name='oidc_authentication_callback'),
     path('oidc/', include('mozilla_django_oidc.urls')),
+    path('clientes/', include('apps.clientes.urls')),
 ]

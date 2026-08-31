@@ -4,11 +4,24 @@
     <meta charset="UTF-8">
     <title>Panel Admin - Global Exchange</title>
 </head>
-<body>
-    <h1>Panel de administración</h1>
+<body style="font-family: sans-serif; padding: 20px;">
+    <h1>Panel de Administración</h1>
+    
     <p>Bienvenido, <strong>{{ user.first_name }} {{ user.last_name }}</strong> (rol admin)</p>
-    <a href="{% url 'gestion_roles' %}">Gestión de roles y permisos</a>
-    <br>
-    <a href="{% url 'home' %}">Volver al inicio</a>
+
+    <!-- Opciones de administración -->
+    <div style="margin: 20px 0;">
+        <p>
+            <a href="{% url 'cliente_create' %}" style="display: inline-block; padding: 10px 16px; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">
+                Registrar Nuevo Cliente
+            </a>
+            <a href="{% url 'gestion_roles' %}" style="display: inline-block; padding: 10px 16px; background-color: #17a2b8; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Gestión de Roles y Permisos
+            </a>
+        </p>
+    </div>
+
+    <hr style="margin: 20px 0;">
+    <p><a href="{% url 'home' %}" style="text-decoration: none; color: #007bff;">Volver al inicio</a></p>
 </body>
 </html>
