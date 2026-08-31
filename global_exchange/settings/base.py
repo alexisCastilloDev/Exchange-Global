@@ -97,3 +97,9 @@ OIDC_RP_SCOPES = 'openid email profile'
 # A dónde redirige después de login/logout exitoso
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# --- Keycloak / OIDC ---
+KEYCLOAK_SERVER_URL = env('KEYCLOAK_SERVER_URL')
+KEYCLOAK_REALM = env('KEYCLOAK_REALM')
+KEYCLOAK_CLIENT_ID = env('KEYCLOAK_CLIENT_ID')
+KEYCLOAK_CLIENT_SECRET = env('KEYCLOAK_CLIENT_SECRET')

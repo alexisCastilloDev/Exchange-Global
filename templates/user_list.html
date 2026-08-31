@@ -1,0 +1,59 @@
+{% extends 'home.html' %}  <!-- O el layout principal de tu proyecto -->
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Gestión de Usuarios</h2>
+
+  <!-- Buscador (CA4) -->
+  <form method="GET" action="" class="row mb-3">
+    <div class="col-md-6">
+      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo...">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary">Buscar</button>
+    </div>
+  </form>
+
+  <!-- Tabla de Usuarios (CA1) -->
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Estado</th>
+        <th>Rol</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td>{{ u.first_name }} {{ u.last_name }}</td>
+        <td>{{ u.email }}</td>
+        <td>
+          {% if u.is_active %}
+            <span class="badge bg-success">Activo</span>
+          {% else %}
+            <span class="badge bg-danger">Inactivo</span>
+          {% endif %}
+        </td>
+        <td>
+          {% for group in u.groups.all %}
+            <span class="badge bg-info text-dark">{{ group.name }}</span>
+          {% empty %}
+            Sin rol
+          {% endfor %}
+        </td>
+        <td>
+          <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-secondary">Editar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5">No se encontraron usuarios.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
