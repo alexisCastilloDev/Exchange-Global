@@ -1,7 +1,13 @@
+"""
+Configuración de rutas de URL para la aplicación de Clientes.
+"""
+
 from django.urls import path
-from .views import ClienteCreateView
+# ¡Aquí está la clave! Asegúrate de importar PanelAdminView
+from .views import PanelAdminView, ClienteCreateView, ClienteUpdateView
 
 urlpatterns = [
-    # Esta ruta será: localhost:8000/clientes/nuevo/
+    path('panel/', PanelAdminView.as_view(), name='panel_admin'),
     path('nuevo/', ClienteCreateView.as_view(), name='cliente_create'),
+    path('<int:pk>/editar/', ClienteUpdateView.as_view(), name='cliente_update'),
 ]

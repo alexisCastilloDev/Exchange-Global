@@ -1,3 +1,12 @@
+"""
+Módulo de formularios para la aplicación de Clientes.
+
+Este módulo define el formulario principal para la creación y modificación
+de clientes. Incluye validaciones condicionales según el tipo de persona 
+(Física o Jurídica) y verifica la correspondencia del documento con los 
+usuarios registrados en el sistema.
+"""
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -5,17 +14,46 @@ from .models import Cliente
 
 User = get_user_model()
 
+
 class ClienteForm(forms.ModelForm):
+    """
+    Formulario basado en modelo para la gestión de datos de un Cliente.
+
+    Permite capturar y validar la información esencial, asegurando que 
+    los datos requeridos coincidan con la naturaleza del cliente y que 
+    exista un usuario subyacente válido para vincular.
+    """
+
     class Meta:
         model = Cliente
         fields = ['tipo_cliente', 'identificador', 'nombre', 'apellido', 'razon_social', 'email']
 
     def __init__(self, *args, **kwargs):
+        """
+        Inicializa el formulario de cliente.
+
+        Aplica configuraciones adicionales a los campos al momento de 
+        instanciar el formulario, como forzar la obligatoriedad del 
+        número de documento (identificador).
+        """
         super().__init__(*args, **kwargs)
         # El número de documento es estrictamente obligatorio para la verificación
         self.fields['identificador'].required = True
 
     def clean(self):
+        """
+        Realiza la validación cruzada de los datos del formulario.
+
+        1. Valida que los campos (nombre/apellido o razón social) estén
+           presentes según el 'tipo_cliente' seleccionado.
+        2. Verifica que el 'identificador' (CI/RUC) corresponda a un Usuario 
+           existente en el sistema y que este no esté ya vinculado a otro 
+           perfil de cliente diferente al que se está editando.
+
+        Returns:
+            dict: Diccionario con los datos limpios y validados, incluyendo 
+                  el objeto de usuario validado ('user_obj').
+        """
         cleaned_data = super().clean()
         tipo = cleaned_data.get('tipo_cliente')
         nombre = cleaned_data.get('nombre')
@@ -51,6 +89,8 @@ class ClienteForm(forms.ModelForm):
                 )
             else:
                 cliente_existente = Cliente.objects.filter(user=usuario)
+                
+                # Excluir la instancia actual si estamos editando
                 if self.instance and self.instance.pk:
                     cliente_existente = cliente_existente.exclude(pk=self.instance.pk)
 
@@ -60,15 +100,32 @@ class ClienteForm(forms.ModelForm):
                         'El usuario con este número de documento ya tiene un perfil de cliente registrado.'
                     )
                 else:
+                    # Inyectar el objeto de usuario validado para usarlo en save()
                     cleaned_data['user_obj'] = usuario
 
         return cleaned_data
 
     def save(self, commit=True):
+        """
+        Guarda el formulario y vincula el usuario correspondiente.
+
+        Intercepta el método de guardado estándar para asignar explícitamente 
+        la relación uno a uno (user) utilizando el objeto validado en clean().
+
+        Args:
+            commit (bool): Si es True, guarda el modelo en la base de datos. 
+                           Por defecto es True.
+
+        Returns:
+            Cliente: La instancia del cliente actualizada/creada.
+        """
         cliente = super().save(commit=False)
         user_obj = self.cleaned_data.get('user_obj')
+        
         if user_obj:
             cliente.user = user_obj
+            
         if commit:
             cliente.save()
+            
         return cliente
