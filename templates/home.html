@@ -1,23 +1,182 @@
+{% load static %}
+{% load auth_extras %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Exchange</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <h1>Bienvenido a Global Exchange</h1>
 
-    {% if user.is_authenticated %}
-        <p>Hola, <strong>{{ user.first_name }} {{ user.last_name }}</strong> ({{ user.email }})</p>
-        <form method="post" action="{% url 'oidc_logout' %}">
-            {% csrf_token %}
-            <button type="submit">Cerrar Sesión</button>
-        </form>
-    {% else %}
-        <p>No has iniciado sesión.</p>
-        <a href="{% url 'oidc_authentication_init' %}">Iniciar Sesión con Keycloak SSO</a>
-    {% endif %}
-    {% block content %}
-    {% endblock %}
+    <!-- Barra de cuenta -->
+    <div class="account-bar">
+        <div class="account-bar__inner">
+            {% if user.is_authenticated %}
+                <span class="account-bar__text">
+                    Sesión iniciada como <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+                    <span class="account-bar__email">{{ user.email }}</span>
+                </span>
+                <form method="post" action="{% url 'oidc_logout' %}" class="account-bar__form">
+                    {% csrf_token %}
+                    <button type="submit" class="link-button">Cerrar sesión</button>
+                </form>
+            {% else %}
+                <span class="account-bar__text">No has iniciado sesión</span>
+                <a href="{% url 'oidc_authentication_init' %}" class="link-button">Iniciar Sesión con Keycloak SSO</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Encabezado / Menú Principal Fijo -->
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a href="/" class="logo">Global<span>Exchange</span></a>
+            
+            <nav class="main-nav">
+                <!-- CA1 & CA3: Opciones generales para todos los usuarios autenticados -->
+                <a href="/" class="nav-link">Inicio</a>
+                <a href="#cotizaciones" class="nav-link">Cotizaciones</a>
+
+                {% if user.is_authenticated %}
+                    <!-- CA2: Control de acceso por Rol / Permisos -->
+                    
+                    {# Opción visible para administradores o gestores de usuarios #}
+                    {% if user.is_superuser or user|has_group:"Administrador" %}
+                        <a href="{% url 'lista_usuarios' %}" class="nav-link">Gestión de Usuarios</a>
+                    {% endif %}
+
+                    {# Opción visible para operadores o usuarios con permisos de operaciones #}
+                    {% if user.is_superuser or perms.cambios.view_operacion %}
+                        <a href="#" class="nav-link">Operaciones</a>
+                    {% endif %}
+
+                    {# Opción de Reportes #}
+                    {% if user.is_superuser or perms.cambios.view_reportes %}
+                        <a href="#" class="nav-link">Reportes</a>
+                    {% endif %}
+                {% endif %}
+
+                <a href="#contacto" class="nav-link">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Si la vista inyecta contenido en 'content', se muestra aquí -->
+        {% block content %}
+            <!-- Contenido por defecto (Hero / Landing) solo si no se sobrescribe -->
+            <section class="hero">
+                <div class="hero__inner">
+                    <div class="hero__copy">
+                        <p class="hero__eyebrow">Casa de cambios</p>
+                        <h1 class="hero__title">Tu dinero, al valor real del día.</h1>
+                        <p class="hero__lead">
+                            Comprá y vendé divisas con cotizaciones actualizadas y sin sorpresas.
+                            Reservá tu operación en línea y retirala en la sucursal que prefieras.
+                        </p>
+                        <div class="hero__actions">
+                            <a href="#cotizaciones" class="btn btn--primary">Ver cotizaciones</a>
+                            <a href="#como-funciona" class="btn btn--ghost">Cómo funciona</a>
+                        </div>
+                    </div>
+
+                    <div class="rate-board" id="cotizaciones">
+                        <div class="rate-board__header">
+                            <span class="rate-board__title">Cotizaciones de hoy</span>
+                            <span class="rate-board__updated">Actualizado 08:00</span>
+                        </div>
+                        <div class="rate-board__row rate-board__row--head">
+                            <span>Moneda</span>
+                            <span>Compra</span>
+                            <span>Venta</span>
+                        </div>
+                        <div class="rate-board__row">
+                            <span class="rate-board__currency">USD</span>
+                            <span class="rate-board__value">7.280</span>
+                            <span class="rate-board__value">7.350</span>
+                        </div>
+                        <div class="rate-board__row">
+                            <span class="rate-board__currency">EUR</span>
+                            <span class="rate-board__value">7.910</span>
+                            <span class="rate-board__value">8.020</span>
+                        </div>
+                        <div class="rate-board__row">
+                            <span class="rate-board__currency">BRL</span>
+                            <span class="rate-board__value">1.290</span>
+                            <span class="rate-board__value">1.340</span>
+                        </div>
+                        <div class="rate-board__row">
+                            <span class="rate-board__currency">ARS</span>
+                            <span class="rate-board__value">0.0072</span>
+                            <span class="rate-board__value">0.0079</span>
+                        </div>
+                        <p class="rate-board__note">Valores en guaraníes (PYG) · ejemplo ilustrativo</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cómo funciona -->
+            <section class="steps" id="como-funciona">
+                <div class="steps__inner">
+                    <h2 class="section-title">Cómo funciona</h2>
+                    <ol class="steps__list">
+                        <li class="steps__item">
+                            <span class="steps__number">1</span>
+                            <h3>Cotizá</h3>
+                            <p>Elegí la divisa y el monto que querés comprar o vender al tipo de cambio del momento.</p>
+                        </li>
+                        <li class="steps__item">
+                            <span class="steps__number">2</span>
+                            <h3>Reservá</h3>
+                            <p>Confirmá la operación en línea y el precio queda congelado por el tiempo indicado.</p>
+                        </li>
+                        <li class="steps__item">
+                            <span class="steps__number">3</span>
+                            <h3>Retirá</h3>
+                            <p>Pasá por la sucursal que elegiste con tu documento y completá la operación.</p>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- Confianza -->
+            <section class="trust">
+                <div class="trust__inner">
+                    <div class="trust__stat">
+                        <span class="trust__number">+15</span>
+                        <span class="trust__label">años operando</span>
+                    </div>
+                    <div class="trust__stat">
+                        <span class="trust__number">8</span>
+                        <span class="trust__label">sucursales</span>
+                    </div>
+                    <div class="trust__stat">
+                        <span class="trust__number">24/7</span>
+                        <span class="trust__label">cotización en línea</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sucursales / contacto -->
+            <section class="cta-band" id="sucursales">
+                <div class="cta-band__inner">
+                    <h2 class="section-title">Encontrá tu sucursal más cercana</h2>
+                    <p>Atendemos en Asunción y ciudades del área metropolitana. Consultá horarios y direcciones.</p>
+                    <a href="#contacto" class="btn btn--primary">Ver sucursales</a>
+                </div>
+            </section>
+        {% endblock %}
+    </main>
+
+    <footer class="site-footer" id="contacto">
+        <div class="site-footer__inner">
+            <span>Global Exchange</span>
+            <span>© {% now "Y" %} · Todos los derechos reservados</span>
+        </div>
+    </footer>
 </body>
 </html>

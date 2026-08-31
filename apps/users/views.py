@@ -10,7 +10,7 @@ User = get_user_model()
 def es_administrador(user):
     return user.is_authenticated and user.groups.filter(name='admin').exists()
 
-#@user_passes_test(es_administrador)
+@user_passes_test(es_administrador)
 def lista_usuarios_view(request):
     query = request.GET.get('q', '').strip()
     usuarios = User.objects.all().prefetch_related('groups').order_by('id')
@@ -27,7 +27,7 @@ def lista_usuarios_view(request):
         'query': query
     })
 
-#@user_passes_test(es_administrador)
+@user_passes_test(es_administrador)
 def editar_usuario_view(request, user_id):
     usuario = get_object_or_404(User, id=user_id)
 
