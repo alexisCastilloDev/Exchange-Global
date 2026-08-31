@@ -31,22 +31,32 @@
         </div>
     </div>
 
+    <!-- Bloque de mensajes flash -->
+    {% if messages %}
+        <div class="messages-container" style="padding: 10px 20px;">
+            {% for message in messages %}
+                <div style="padding: 10px 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; font-weight: bold; margin-bottom: 10px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <!-- Encabezado / Menú Principal Fijo -->
     <header class="site-header">
         <div class="site-header__inner">
             <a href="/" class="logo">Global<span>Exchange</span></a>
             
             <nav class="main-nav">
-                <!-- CA1 & CA3: Opciones generales para todos los usuarios autenticados -->
+                <!-- Opciones generales -->
                 <a href="/" class="nav-link">Inicio</a>
                 <a href="#cotizaciones" class="nav-link">Cotizaciones</a>
 
                 {% if user.is_authenticated %}
-                    <!-- CA2: Control de acceso por Rol / Permisos -->
-                    
-                    {# Opción visible para administradores o gestores de usuarios #}
-                    {% if user.is_superuser or user|has_group:"Administrador" %}
+                    {# Opción visible para administradores #}
+                    {% if user.is_superuser or user.is_staff or user|has_group:"admin" %}
                         <a href="{% url 'lista_usuarios' %}" class="nav-link">Gestión de Usuarios</a>
+                        <a href="{% url 'panel_admin' %}" class="nav-link">Panel de Administración</a>
                     {% endif %}
 
                     {# Opción visible para operadores o usuarios con permisos de operaciones #}
@@ -66,9 +76,8 @@
     </header>
 
     <main>
-        <!-- Si la vista inyecta contenido en 'content', se muestra aquí -->
         {% block content %}
-            <!-- Contenido por defecto (Hero / Landing) solo si no se sobrescribe -->
+            <!-- Contenido por defecto (Hero / Landing) -->
             <section class="hero">
                 <div class="hero__inner">
                     <div class="hero__copy">

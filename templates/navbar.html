@@ -1,0 +1,31 @@
+<nav style="background-color: #1e293b; padding: 1rem; color: white; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <a href="{% url 'home' %}" style="color: white; font-weight: bold; text-decoration: none; font-size: 1.2rem;">Global Exchange</a>
+    </div>
+
+    <ul style="list-style: none; display: flex; gap: 15px; margin: 0; padding: 0; align-items: center;">
+        {% if user.is_authenticated %}
+            <li><a href="{% url 'panel' %}" style="color: #cbd5e1; text-decoration: none;">Panel General</a></li>
+
+            <!-- OPCIONES DE ADMINISTRADOR / STAFF -->
+            {% if user.is_staff or user.is_superuser %}
+                <!-- Gestión/Creación de Clientes -->
+                <li><a href="{% url 'cliente_create' %}" style="color: #cbd5e1; text-decoration: none;">+ Nuevo Cliente</a></li>
+                <!-- Panel de Administración de Clientes y Segmentos -->
+                <li><a href="{% url 'panel_admin' %}" style="color: #cbd5e1; text-decoration: none;">Gestión Clientes</a></li>
+            {% endif %}
+
+            <li style="border-left: 1px solid #475569; padding-left: 15px;">
+                <span style="font-size: 0.9rem; color: #94a3b8;">Hola, <strong>{{ user.first_name|default:user.username }}</strong></span>
+                <a href="/oidc/logout/" style="margin-left: 10px; color: #f87171; text-decoration: none;">Cerrar Sesión</a>
+            </li>
+        {% else %}
+            <!-- BOTÓN SSO PARA USUARIO ANÓNIMO -->
+            <li>
+                <a href="/oidc/authenticate/" class="link-button" style="background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none;">
+                    Iniciar sesión con Keycloak SSO
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>

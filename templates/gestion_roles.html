@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Roles - Global Exchange</title>
+</head>
+<body>
+    <h1>Gestión de roles y permisos</h1>
+    <p>Administrador: <strong>{{ user.first_name }} {{ user.last_name }}</strong></p>
+    <a href="{% url 'panel_admin' %}">Volver al panel</a>
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% for grupo in grupos %}
+        <fieldset style="margin-bottom: 24px;">
+            <legend><strong>{{ grupo.name }}</strong></legend>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="grupo_id" value="{{ grupo.id }}">
+
+                {% for recurso in recursos %}
+                    <label style="display: block;">
+                        <input
+                            type="checkbox"
+                            name="recursos"
+                            value="{{ recurso.codigo }}"
+                            {% if recurso.codigo in grupo.permisos_codigos %}checked{% endif %}
+                        >
+                        {{ recurso.nombre }}
+                    </label>
+                {% endfor %}
+
+                <button type="submit">Guardar permisos de "{{ grupo.name }}"</button>
+            </form>
+        </fieldset>
+    {% empty %}
+        <p>No hay roles (grupos) creados todavía. Se crean automáticamente cuando un usuario con ese rol inicia sesión por primera vez.</p>
+    {% endfor %}
+</body>
+</html>
