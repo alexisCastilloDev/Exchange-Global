@@ -36,7 +36,8 @@ def editar_usuario_view(request, user_id):
         last_name = request.POST.get('last_name', '').strip()
         
         # Validar el checkbox: evalúa True si está presente en request.POST
-        is_active = 'is_active' in request.POST
+        raw_is_active = request.POST.get('is_active')
+        is_active = raw_is_active in ['on', 'true', 'True', True]
 
         try:
             # 1. Intentar actualizar en Keycloak
