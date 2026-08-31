@@ -7,6 +7,8 @@
 <body>
     <h1>Panel de administración</h1>
     <p>Bienvenido, <strong>{{ user.first_name }} {{ user.last_name }}</strong> (rol admin)</p>
+    <a href="{% url 'gestion_roles' %}">Gestión de roles y permisos</a>
+    <br>
     <a href="{% url 'home' %}">Volver al inicio</a>
 </body>
 </html>
