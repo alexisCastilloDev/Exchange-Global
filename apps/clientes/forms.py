@@ -3,8 +3,8 @@ Módulo de formularios para la aplicación de Clientes.
 
 Este módulo define el formulario principal para la creación y modificación
 de clientes. Incluye validaciones condicionales según el tipo de persona 
-(Física o Jurídica) y verifica la correspondencia del documento con los 
-usuarios registrados en el sistema.
+(Física o Jurídica), verifica la correspondencia del documento con los 
+usuarios registrados en el sistema, y permite la categorización mediante segmentos.
 """
 
 from django import forms
@@ -22,11 +22,28 @@ class ClienteForm(forms.ModelForm):
     Permite capturar y validar la información esencial, asegurando que 
     los datos requeridos coincidan con la naturaleza del cliente y que 
     exista un usuario subyacente válido para vincular.
+    
+    Historia de Usuario GE-8: Se incluye el campo 'segmento' para permitir 
+    a los administradores clasificar a los clientes en categorías.
     """
 
     class Meta:
         model = Cliente
-        fields = ['tipo_cliente', 'identificador', 'nombre', 'apellido', 'razon_social', 'email']
+        # Se agrega 'segmento' a la lista de campos
+        fields = [
+            'tipo_cliente', 
+            'identificador', 
+            'nombre', 
+            'apellido', 
+            'razon_social', 
+            'email',
+            'segmento'
+        ]
+        
+        # Opcional: Mejorar la apariencia del selector de segmentos en el HTML
+        widgets = {
+            'segmento': forms.Select(attrs={'class': 'form-control'}),
+        }
 
     def __init__(self, *args, **kwargs):
         """

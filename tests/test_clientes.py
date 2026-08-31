@@ -2,7 +2,7 @@
 Módulo de pruebas unitarias para el formulario y las vistas de Clientes.
 
 Incluye pruebas de validación de formulario para creación y edición,
-así como pruebas de integración para el control de acceso y actualización de datos (HU GE-62).
+así como pruebas de integración para el control de acceso y actualización de datos (HU GE-62 y GE-8).
 """
 
 import pytest
@@ -28,7 +28,8 @@ class TestClienteForm:
             'nombre': 'Juan',
             'apellido': 'Pérez',
             'identificador': '1234567',
-            'email': 'juan.perez@test.com'
+            'email': 'juan.perez@test.com',
+            'segmento': 'ESTANDAR'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is True
@@ -42,7 +43,8 @@ class TestClienteForm:
             'nombre': 'Carlos',
             'apellido': 'López',
             'identificador': '9999999',
-            'email': 'carlos@test.com'
+            'email': 'carlos@test.com',
+            'segmento': 'ESTANDAR'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is False
@@ -55,7 +57,8 @@ class TestClienteForm:
             'tipo_cliente': 'JURIDICA',
             'razon_social': 'Empresa SA',
             'identificador': '80012345-6',
-            'email': 'contacto@empresa.com'
+            'email': 'contacto@empresa.com',
+            'segmento': 'CORPORATIVO'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is True
@@ -65,7 +68,8 @@ class TestClienteForm:
         User.objects.create_user(username='1234567', email='inc@test.com')
         datos = {
             'tipo_cliente': 'FISICA',
-            'identificador': '1234567'
+            'identificador': '1234567',
+            'segmento': 'ESTANDAR'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is False
@@ -81,7 +85,8 @@ class TestClienteForm:
             nombre='Ana',
             apellido='Gómez',
             identificador='5555555',
-            email='ana@test.com'
+            email='ana@test.com',
+            segmento='ESTANDAR'
         )
 
         datos = {
@@ -89,7 +94,8 @@ class TestClienteForm:
             'nombre': 'Ana María',
             'apellido': 'Gómez',
             'identificador': '5555555',
-            'email': 'ana.otra@test.com'
+            'email': 'ana.otra@test.com',
+            'segmento': 'ESTANDAR'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is False
@@ -107,7 +113,8 @@ class TestClienteForm:
             nombre='Juan',
             apellido='Pérez',
             identificador='1234567',
-            email='juan@test.com'
+            email='juan@test.com',
+            segmento='ESTANDAR'
         )
 
         datos_editados = {
@@ -115,7 +122,8 @@ class TestClienteForm:
             'nombre': 'Juan Carlos',
             'apellido': 'Pérez Gómez',
             'identificador': '1234567',
-            'email': 'juancarlos@test.com'
+            'email': 'juancarlos@test.com',
+            'segmento': 'ESTANDAR'
         }
         form = ClienteForm(data=datos_editados, instance=cliente)
         assert form.is_valid() is True
@@ -124,7 +132,7 @@ class TestClienteForm:
 @pytest.mark.django_db
 class TestClienteView:
     """
-    Pruebas de integración para las vistas de creación y edición de Clientes.
+    Pruebas de integración para las vistas de creación, edición y listado de Clientes.
     """
 
     def test_acceso_denegado_a_usuario_comun(self, client):
@@ -161,7 +169,8 @@ class TestClienteView:
             nombre='Carlos',
             apellido='Ruiz',
             identificador='1234567',
-            email='c@test.com'
+            email='c@test.com',
+            segmento='ESTANDAR'
         )
         user_normal = User.objects.create_user(username='normal', is_staff=False)
         client.force_login(user_normal)
@@ -184,7 +193,8 @@ class TestClienteView:
             nombre='Mario',
             apellido='Silva',
             identificador='7777777',
-            email='m@test.com'
+            email='m@test.com',
+            segmento='ESTANDAR'
         )
 
         client.force_login(admin)
@@ -195,7 +205,8 @@ class TestClienteView:
             'nombre': 'Mario Alberto',
             'apellido': 'Silva Franco',
             'identificador': '7777777',
-            'email': 'mario.alberto@test.com'
+            'email': 'mario.alberto@test.com',
+            'segmento': 'ESTANDAR'
         }
 
         response = client.post(url, data=datos_nuevos)
@@ -220,7 +231,8 @@ class TestClienteView:
             nombre='Esteban',
             apellido='Quito',
             identificador='8888888',
-            email='e@test.com'
+            email='e@test.com',
+            segmento='ESTANDAR'
         )
 
         client.force_login(admin)
@@ -231,7 +243,8 @@ class TestClienteView:
             'nombre': '',  # Nombre en blanco (inválido)
             'apellido': '',  # Apellido en blanco (inválido)
             'identificador': '8888888',
-            'email': 'e@test.com'
+            'email': 'e@test.com',
+            'segmento': 'ESTANDAR'
         }
 
         response = client.post(url, data=datos_invalidos)
@@ -241,3 +254,72 @@ class TestClienteView:
 
         cliente.refresh_from_db()
         assert cliente.nombre == 'Esteban'  # La DB no cambió
+
+    def test_modificar_segmento_cliente_exitoso(self, client):
+        """
+        HU GE-8 - Criterio 1:
+        Dado que soy administrador, cuando edito un cliente, 
+        entonces puedo asignarle una categoría/segmento desde una lista predefinida.
+        """
+        admin = User.objects.create_user(username='admin_ge8', is_staff=True)
+        user_cliente = User.objects.create_user(username='9999999', email='seg@test.com')
+        cliente = Cliente.objects.create(
+            user=user_cliente,
+            tipo_cliente='FISICA',
+            nombre='Lucas',
+            apellido='Pérez',
+            identificador='9999999',
+            email='seg@test.com',
+            segmento='ESTANDAR'
+        )
+
+        client.force_login(admin)
+        url = reverse('cliente_update', kwargs={'pk': cliente.pk})
+
+        datos_nuevos = {
+            'tipo_cliente': 'FISICA',
+            'nombre': 'Lucas',
+            'apellido': 'Pérez',
+            'identificador': '9999999',
+            'email': 'seg@test.com',
+            'segmento': 'VIP'  # Cambiando el segmento a VIP
+        }
+
+        response = client.post(url, data=datos_nuevos)
+        assert response.status_code == 302
+
+        cliente.refresh_from_db()
+        assert cliente.segmento == 'VIP'
+
+    def test_filtrar_listado_clientes_por_segmento(self, client):
+        """
+        HU GE-8 - Criterio 2:
+        Dado que filtro el listado de clientes por segmento, 
+        cuando aplico el filtro, entonces el sistema muestra únicamente 
+        los clientes de esa categoría.
+        """
+        # Crear superusuario para saltar el PermissionRequiredMixin si lo requiere
+        admin = User.objects.create_user(username='admin_filtro', is_superuser=True)
+        
+        u1 = User.objects.create_user(username='111', email='1@test.com')
+        u2 = User.objects.create_user(username='222', email='2@test.com')
+        
+        c_estandar = Cliente.objects.create(
+            user=u1, tipo_cliente='FISICA', nombre='Ana', apellido='B', identificador='111', segmento='ESTANDAR'
+        )
+        c_vip = Cliente.objects.create(
+            user=u2, tipo_cliente='FISICA', nombre='Luis', apellido='C', identificador='222', segmento='VIP'
+        )
+
+        client.force_login(admin)
+        
+        # Petición GET aplicando filtro por segmento 'VIP' (Ajusta 'panel_admin' si el name en urls.py es diferente)
+        url = reverse('panel_admin')
+        response = client.get(url, {'segmento': 'VIP'})
+        
+        assert response.status_code == 200
+        
+        # Verificar que solo el cliente VIP esté en el contexto
+        clientes_en_contexto = response.context['clientes']
+        assert c_vip in clientes_en_contexto
+        assert c_estandar not in clientes_en_contexto

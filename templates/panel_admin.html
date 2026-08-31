@@ -32,6 +32,33 @@
         .btn-editar:hover {
             background-color: #e0a800;
         }
+        /* Estilos para el filtro y etiqueta de segmento (Historia GE-8) */
+        .contenedor-filtro {
+            margin-bottom: 15px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .select-segmento {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 14px;
+        }
+        .badge-segmento {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #e2e3e5;
+            color: #383d41;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body style="font-family: sans-serif; padding: 20px;">
@@ -56,6 +83,24 @@
     <!-- Listado dinámico de clientes -->
     <h2>Gestión de Clientes</h2>
     
+    <!-- Filtro interactivo por Segmento (Criterio de Aceptación 2 - GE-8) -->
+    <div class="contenedor-filtro">
+        <form method="GET" action="" style="display: flex; align-items: center; gap: 10px; margin: 0;">
+            <label for="segmento" style="font-weight: bold; color: #333; font-size: 14px;">Filtrar por Segmento:</label>
+            <select name="segmento" id="segmento" class="select-segmento" onchange="this.form.submit()">
+                <option value="">Todos los segmentos</option>
+                {% for valor, etiqueta in segmentos %}
+                    <option value="{{ valor }}" {% if segmento_actual == valor %}selected{% endif %}>
+                        {{ etiqueta }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if segmento_actual %}
+                <a href="{{ request.path }}" style="font-size: 13px; color: #dc3545; text-decoration: none; margin-left: 10px;">Limpiar filtro</a>
+            {% endif %}
+        </form>
+    </div>
+
     {% if clientes %}
         <table class="tabla-clientes">
             <thead>
@@ -63,6 +108,7 @@
                     <th>Identificador (CI/RUC)</th>
                     <th>Nombre / Razón Social</th>
                     <th>Tipo</th>
+                    <th>Segmento</th>
                     <th>Correo Electrónico</th>
                     <th>Acciones</th>
                 </tr>
@@ -79,6 +125,9 @@
                             {% endif %}
                         </td>
                         <td>{{ cliente.get_tipo_cliente_display }}</td>
+                        <td>
+                            <span class="badge-segmento">{{ cliente.get_segmento_display }}</span>
+                        </td>
                         <td>{{ cliente.email }}</td>
                         <td>
                             <!-- Botón que redirige a la edición del cliente específico -->
@@ -89,7 +138,7 @@
             </tbody>
         </table>
     {% else %}
-        <p style="color: #666; font-style: italic;">No hay clientes registrados en el sistema actualmente.</p>
+        <p style="color: #666; font-style: italic;">No se encontraron clientes para la búsqueda o filtro seleccionado.</p>
     {% endif %}
 
     <hr style="margin: 30px 0 20px 0;">

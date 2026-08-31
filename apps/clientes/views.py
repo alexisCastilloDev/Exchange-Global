@@ -12,12 +12,42 @@ from .forms import ClienteForm
 class PanelAdminView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """
     Vista para renderizar el panel de administración con la lista de clientes.
+    
+    Historia de Usuario GE-8: Se incluye lógica para filtrar el listado 
+    mostrando únicamente los clientes que pertenezcan a la categoría/segmento 
+    seleccionado en la interfaz.
     """
 
     model = Cliente
     template_name = 'panel_admin.html'
     context_object_name = 'clientes'
     permission_required = 'authentication.acceder_panel_admin'
+
+    def get_queryset(self):
+        """
+        Sobrescribe la consulta base para aplicar el filtro de 'segmento'
+        si se recibe a través de los parámetros GET de la URL.
+        """
+        queryset = super().get_queryset()
+        segmento_seleccionado = self.request.GET.get('segmento')
+        
+        # Si existe el parámetro y no está vacío, aplicamos el filtro exacto
+        if segmento_seleccionado:
+            queryset = queryset.filter(segmento=segmento_seleccionado)
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        """
+        Añade las opciones de segmentación y la selección actual al contexto 
+        para construir el formulario de filtrado en el template.
+        """
+        context = super().get_context_data(**kwargs)
+        # Enviamos las opciones definidas en el modelo
+        context['segmentos'] = Cliente.SEGMENTO_CHOICES
+        # Mantenemos el valor seleccionado para que el select HTML no pierda el estado
+        context['segmento_actual'] = self.request.GET.get('segmento', '')
+        return context
 
     def has_permission(self):
         """
@@ -36,6 +66,7 @@ class PanelAdminView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         
         # 2. Redirigimos al home en lugar del login
         return redirect('home')
+
 
 class ClienteCreateView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, CreateView):
     """
@@ -62,6 +93,9 @@ class ClienteCreateView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageM
 class ClienteUpdateView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView):
     """
     Vista para la edición de datos de un cliente existente.
+    
+    Historia de Usuario GE-8: A través del ClienteForm inyectado, permite
+    al administrador reasignar la categoría/segmento del cliente.
     """
 
     model = Cliente
