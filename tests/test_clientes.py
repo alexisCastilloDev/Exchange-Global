@@ -2,7 +2,8 @@
 Módulo de pruebas unitarias para el formulario y las vistas de Clientes.
 
 Incluye pruebas de validación de formulario para creación y edición,
-así como pruebas de integración para el control de acceso y actualización de datos (HU GE-62 y GE-8).
+así como pruebas de integración para el control de acceso, actualización de datos,
+segmentación (HU GE-62 y GE-8) y baja lógica (HU GE-63).
 """
 
 import pytest
@@ -132,7 +133,8 @@ class TestClienteForm:
 @pytest.mark.django_db
 class TestClienteView:
     """
-    Pruebas de integración para las vistas de creación, edición y listado de Clientes.
+    Pruebas de integración para las vistas de creación, edición, listado 
+    y eliminación (baja lógica) de Clientes.
     """
 
     def test_acceso_denegado_a_usuario_comun(self, client):
@@ -298,7 +300,6 @@ class TestClienteView:
         cuando aplico el filtro, entonces el sistema muestra únicamente 
         los clientes de esa categoría.
         """
-        # Crear superusuario para saltar el PermissionRequiredMixin si lo requiere
         admin = User.objects.create_user(username='admin_filtro', is_superuser=True)
         
         u1 = User.objects.create_user(username='111', email='1@test.com')
@@ -313,13 +314,94 @@ class TestClienteView:
 
         client.force_login(admin)
         
-        # Petición GET aplicando filtro por segmento 'VIP' (Ajusta 'panel_admin' si el name en urls.py es diferente)
         url = reverse('panel_admin')
         response = client.get(url, {'segmento': 'VIP'})
         
         assert response.status_code == 200
         
-        # Verificar que solo el cliente VIP esté en el contexto
         clientes_en_contexto = response.context['clientes']
         assert c_vip in clientes_en_contexto
         assert c_estandar not in clientes_en_contexto
+
+    # =======================================================================
+    # NUEVOS TESTS PARA LA HISTORIA GE-63 (Baja lógica y trazabilidad)
+    # =======================================================================
+
+    def test_eliminar_cliente_baja_logica(self, client):
+        """
+        HU GE-63 - Criterio 1:
+        Dado que soy administrador, cuando elimino un cliente, entonces el sistema 
+        realiza una baja lógica (is_active=False) sin borrar físicamente sus datos.
+        """
+        admin = User.objects.create_user(username='admin_ge63', is_superuser=True)
+        u1 = User.objects.create_user(username='333', email='3@test.com')
+        cliente = Cliente.objects.create(
+            user=u1, tipo_cliente='FISICA', nombre='Pedro', apellido='D', identificador='333'
+        )
+        
+        client.force_login(admin)
+        url = reverse('cliente_delete', kwargs={'pk': cliente.pk})
+
+        response = client.post(url)
+        
+        # Validar redirección tras éxito
+        assert response.status_code in [301, 302]
+
+        # Validar que el cliente sigue existiendo en BD pero inactivo
+        cliente.refresh_from_db()
+        assert cliente.is_active is False
+        assert Cliente.objects.filter(pk=cliente.pk).exists() is True
+
+    def test_listado_general_oculta_inactivos_por_defecto(self, client):
+        """
+        HU GE-63 - Criterio 2:
+        Dado que un cliente está dado de baja, cuando consulto el listado general,
+        entonces el sistema no lo muestra entre los clientes activos por defecto.
+        """
+        admin = User.objects.create_user(username='admin_ge63_2', is_superuser=True)
+        
+        u1 = User.objects.create_user(username='444', email='4@test.com')
+        cliente_activo = Cliente.objects.create(
+            user=u1, tipo_cliente='FISICA', nombre='Activo', apellido='A', identificador='444'
+        )
+        
+        u2 = User.objects.create_user(username='555', email='5@test.com')
+        cliente_inactivo = Cliente.objects.create(
+            user=u2, tipo_cliente='FISICA', nombre='Inactivo', apellido='I', identificador='555', is_active=False
+        )
+
+        client.force_login(admin)
+        url = reverse('panel_admin')
+        response = client.get(url)
+
+        assert response.status_code == 200
+        clientes_en_contexto = response.context['clientes']
+        
+        # El cliente activo debe estar, el inactivo debe ocultarse
+        assert cliente_activo in clientes_en_contexto
+        assert cliente_inactivo not in clientes_en_contexto
+
+    def test_trazabilidad_historial_cliente_inactivo(self, client):
+        """
+        HU GE-63 - Criterio 3:
+        Dado que un cliente dado de baja tiene operaciones históricas asociadas, 
+        cuando reviso ese historial (simulado pidiendo incluir inactivos), 
+        entonces sigue siendo accesible para trazabilidad.
+        """
+        admin = User.objects.create_user(username='admin_ge63_3', is_superuser=True)
+        u1 = User.objects.create_user(username='666', email='6@test.com')
+        cliente_inactivo = Cliente.objects.create(
+            user=u1, tipo_cliente='FISICA', nombre='Inactivo', apellido='I', identificador='666', is_active=False
+        )
+
+        client.force_login(admin)
+        url = reverse('panel_admin')
+        
+        # Enviar parámetro GET para incluir inactivos
+        response = client.get(url, {'incluir_inactivos': '1'})
+
+        assert response.status_code == 200
+        clientes_en_contexto = response.context['clientes']
+        
+        # El cliente inactivo ahora debe aparecer listado
+        assert cliente_inactivo in clientes_en_contexto
