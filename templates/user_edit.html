@@ -1,0 +1,38 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Editar Usuario: {{ usuario.email }}</h2>
+
+  <!-- Mensajes de error/éxito -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="POST">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Nombre</label>
+      <input type="text" name="first_name" value="{{ usuario.first_name }}" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Apellido</label>
+      <input type="text" name="last_name" value="{{ usuario.last_name }}" class="form-control">
+    </div>
+
+    <div class="form-check mb-3">
+      <input type="checkbox" name="is_active" value="on" class="form-check-input" id="is_active" {% if usuario.is_active %}checked{% endif %}>
+      <label class="form-check-label" for="is_active">Usuario Activo (si se desmarca, no podrá iniciar sesión)</label>
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar Cambios</button>
+    <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

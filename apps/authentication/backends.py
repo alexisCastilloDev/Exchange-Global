@@ -9,26 +9,20 @@ hacia Django Groups, para que el sistema de permisos nativo de Django
 Deliberadamente NO se usa `is_superuser`: ese flag hace que Django
 ignore cualquier chequeo de permisos, lo cual anularía por completo la
 gestión de permisos por rol.
+Sincroniza roles de Keycloak hacia Django Groups para autorización
+granular (GE-7). No usa is_superuser para no bypasear permisos.
 """
-
 from django.contrib.auth.models import Group
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
-# Roles de negocio soportados por el proyecto. Deben coincidir exactamente
-# con los "Realm roles" creados en Keycloak.
 ROLES_DE_NEGOCIO = {'admin', 'cliente', 'analista_cambiario', 'cajero'}
 
 
 class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
     def verify_claims(self, claims):
-        """
-        Verifica que los claims básicos sean válidos Y que el correo
-        electrónico haya sido confirmado en Keycloak antes de permitir el acceso.
-        """
         claims_verified = super().verify_claims(claims)
         email_verified = claims.get('email_verified', False)
-
         return claims_verified and email_verified
 
     def filter_users_by_claims(self, claims):
@@ -71,16 +65,12 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
         # Acceso al panel /admin/ de Django y vistas de staff solo para el rol admin.
         user.is_staff = 'admin' in roles_negocio
-        user.is_superuser = False  # Nunca superuser: los permisos pasan por Groups
+        user.is_superuser = False
         user.save()
 
         self._sincronizar_grupos(user, roles_negocio)
 
     def _sincronizar_grupos(self, user, roles_negocio):
-        """
-        Deja los Django Groups del usuario exactamente iguales a sus
-        roles de negocio actuales en Keycloak.
-        """
         grupos_actuales = set(user.groups.values_list('name', flat=True))
         if grupos_actuales == roles_negocio:
             return
