@@ -4,7 +4,6 @@ URL configuration for global_exchange project.
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/6.1/topics/http/urls/
 """
-
 from django.contrib import admin
 from django.urls import path, include
 from global_exchange.views import home, panel_protegido, panel_admin, gestion_roles
