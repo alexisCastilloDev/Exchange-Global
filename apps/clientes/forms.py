@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from .models import Cliente
 
 User = get_user_model()
@@ -7,21 +8,12 @@ User = get_user_model()
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
-        fields = ['user', 'tipo_cliente', 'identificador', 'nombre', 'apellido', 'razon_social', 'email']
+        fields = ['tipo_cliente', 'identificador', 'nombre', 'apellido', 'razon_social', 'email']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filtra para mostrar únicamente usuarios que aún no tienen perfil de Cliente
-        usuarios_asignados = Cliente.objects.filter(user__isnull=False)
-        
-        # Si se está editando un cliente existente, permite conservar su usuario actual en la lista
-        if self.instance and self.instance.pk and self.instance.user_id:
-            usuarios_asignados = usuarios_asignados.exclude(pk=self.instance.pk)
-
-        self.fields['user'].queryset = User.objects.exclude(id__in=usuarios_asignados.values_list('user_id', flat=True))
-        self.fields['user'].required = True
-        self.fields['user'].label = "Usuario del Sistema"
-        self.fields['user'].empty_label = "-- Seleccione un usuario --"
+        # El número de documento es estrictamente obligatorio para la verificación
+        self.fields['identificador'].required = True
 
     def clean(self):
         cleaned_data = super().clean()
@@ -29,8 +21,9 @@ class ClienteForm(forms.ModelForm):
         nombre = cleaned_data.get('nombre')
         apellido = cleaned_data.get('apellido')
         razon_social = cleaned_data.get('razon_social')
+        identificador = cleaned_data.get('identificador')
 
-        # Validación dinámica según tipo de cliente
+        # 1. Validación de campos requeridos según el tipo de cliente
         if tipo == Cliente.TIPO_FISICA:
             if not nombre:
                 self.add_error('nombre', 'El nombre es obligatorio para Persona Física.')
@@ -40,4 +33,42 @@ class ClienteForm(forms.ModelForm):
             if not razon_social:
                 self.add_error('razon_social', 'La razón social es obligatoria para Persona Jurídica.')
 
+        # 2. Verificación en segundo plano por número de documento (CI / RUC)
+        if identificador:
+            identificador_clean = identificador.strip()
+            
+            # Busca coincidencia por username o por atributo de documento en User
+            filtro_usuario = Q(username__iexact=identificador_clean)
+            if hasattr(User, 'identificador'):
+                filtro_usuario |= Q(identificador__iexact=identificador_clean)
+                
+            usuario = User.objects.filter(filtro_usuario).first()
+
+            if not usuario:
+                self.add_error(
+                    'identificador', 
+                    'No existe ningún usuario registrado en el sistema con este número de documento (CI/RUC).'
+                )
+            else:
+                cliente_existente = Cliente.objects.filter(user=usuario)
+                if self.instance and self.instance.pk:
+                    cliente_existente = cliente_existente.exclude(pk=self.instance.pk)
+
+                if cliente_existente.exists():
+                    self.add_error(
+                        'identificador', 
+                        'El usuario con este número de documento ya tiene un perfil de cliente registrado.'
+                    )
+                else:
+                    cleaned_data['user_obj'] = usuario
+
         return cleaned_data
+
+    def save(self, commit=True):
+        cliente = super().save(commit=False)
+        user_obj = self.cleaned_data.get('user_obj')
+        if user_obj:
+            cliente.user = user_obj
+        if commit:
+            cliente.save()
+        return cliente

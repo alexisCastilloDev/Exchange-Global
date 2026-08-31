@@ -9,35 +9,49 @@ User = get_user_model()
 class TestClienteForm:
 
     def test_registro_persona_fisica_exitoso(self):
-        """Criterio: Completar datos obligatorios de persona física con usuario existente"""
-        usuario = User.objects.create_user(username='usr_fisica', email='fisica@test.com')
+        """Criterio: Registra exitosamente si el documento CI pertenece a un usuario existente"""
+        User.objects.create_user(username='1234567', email='juan.perez@test.com')
         datos = {
-            'user': usuario.id,
             'tipo_cliente': 'FISICA',
             'nombre': 'Juan',
             'apellido': 'Pérez',
-            'identificador': '1234567'
+            'identificador': '1234567',
+            'email': 'juan.perez@test.com'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is True
+        cliente = form.save()
+        assert cliente.user.username == '1234567'
+
+    def test_rechazo_si_no_existe_usuario_con_documento(self):
+        """Criterio: Muestra error si la CI/RUC no pertenece a ningún usuario del sistema"""
+        datos = {
+            'tipo_cliente': 'FISICA',
+            'nombre': 'Carlos',
+            'apellido': 'López',
+            'identificador': '9999999',
+            'email': 'carlos@test.com'
+        }
+        form = ClienteForm(data=datos)
+        assert form.is_valid() is False
+        assert 'identificador' in form.errors
 
     def test_registro_persona_juridica_exitoso(self):
-        """Criterio: Completar datos obligatorios de persona jurídica con usuario existente"""
-        usuario = User.objects.create_user(username='usr_juridica', email='empresa@test.com')
+        """Criterio: Registra persona jurídica si el RUC coincide con un usuario registrado"""
+        User.objects.create_user(username='80012345-6', email='contacto@empresa.com')
         datos = {
-            'user': usuario.id,
             'tipo_cliente': 'JURIDICA',
             'razon_social': 'Empresa SA',
-            'identificador': '80012345-6'
+            'identificador': '80012345-6',
+            'email': 'contacto@empresa.com'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is True
 
     def test_error_campos_obligatorios_vacios_fisica(self):
-        """Criterio: Dejar campos vacíos muestra errores de validación"""
-        usuario = User.objects.create_user(username='usr_incompleto', email='inc@test.com')
+        """Criterio: Dejar campos requeridos vacíos muestra errores de validación"""
+        User.objects.create_user(username='1234567', email='inc@test.com')
         datos = {
-            'user': usuario.id,
             'tipo_cliente': 'FISICA',
             'identificador': '1234567'
         }
@@ -46,25 +60,24 @@ class TestClienteForm:
         assert 'nombre' in form.errors
         assert 'apellido' in form.errors
 
-    def test_rechazo_registro_por_duplicado(self):
-        """Criterio: Identificador (CI/RUC) ya existente rechaza el registro"""
-        u1 = User.objects.create_user(username='u1', email='u1@test.com')
-        u2 = User.objects.create_user(username='u2', email='u2@test.com')
-
+    def test_rechazo_registro_usuario_ya_vinculado(self):
+        """Criterio: Rechaza el registro si el usuario con ese documento ya posee perfil de cliente"""
+        u1 = User.objects.create_user(username='5555555', email='ana@test.com')
         Cliente.objects.create(
             user=u1,
             tipo_cliente='FISICA',
             nombre='Ana',
             apellido='Gómez',
-            identificador='9999999'
+            identificador='5555555',
+            email='ana@test.com'
         )
 
         datos = {
-            'user': u2.id,
             'tipo_cliente': 'FISICA',
-            'nombre': 'Carlos',
-            'apellido': 'López',
-            'identificador': '9999999'  # Identificador duplicado
+            'nombre': 'Ana María',
+            'apellido': 'Gómez',
+            'identificador': '5555555',
+            'email': 'ana.otra@test.com'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is False
