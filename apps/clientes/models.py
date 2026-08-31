@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 class Cliente(models.Model):
     TIPO_FISICA = 'FISICA'
@@ -9,6 +10,16 @@ class Cliente(models.Model):
         (TIPO_FISICA, 'Persona Física'),
         (TIPO_JURIDICA, 'Persona Jurídica'),
     ]
+
+    # Relación uno a uno con el modelo de Usuario
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='cliente_profile',
+        verbose_name="Usuario del Sistema",
+        null=True,
+        blank=True
+    )
 
     tipo_cliente = models.CharField(
         max_length=10, 

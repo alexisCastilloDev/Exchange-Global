@@ -1,107 +1,95 @@
 import pytest
-from django.urls import reverse
 from django.contrib.auth import get_user_model
 from apps.clientes.models import Cliente
 from apps.clientes.forms import ClienteForm
 
 User = get_user_model()
 
-# Esta etiqueta le dice a pytest que estas pruebas necesitan acceso a la base de datos
-pytestmark = pytest.mark.django_db
-
-
+@pytest.mark.django_db
 class TestClienteForm:
-    """ Pruebas para los Criterios de Aceptación 1, 2, 3 y 4 a nivel de Formulario """
 
     def test_registro_persona_fisica_exitoso(self):
-        """ Criterio: Completar datos obligatorios de persona física registra correctamente """
+        """Criterio: Completar datos obligatorios de persona física con usuario existente"""
+        usuario = User.objects.create_user(username='usr_fisica', email='fisica@test.com')
         datos = {
+            'user': usuario.id,
             'tipo_cliente': 'FISICA',
-            'nombres': 'Juan',
-            'apellidos': 'Pérez',
+            'nombre': 'Juan',
+            'apellido': 'Pérez',
             'identificador': '1234567'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is True
 
     def test_registro_persona_juridica_exitoso(self):
-        """ Criterio: Completar datos específicos de persona jurídica registra correctamente """
+        """Criterio: Completar datos obligatorios de persona jurídica con usuario existente"""
+        usuario = User.objects.create_user(username='usr_juridica', email='empresa@test.com')
         datos = {
+            'user': usuario.id,
             'tipo_cliente': 'JURIDICA',
-            'razon_social': 'Mi Empresa S.A.',
+            'razon_social': 'Empresa SA',
             'identificador': '80012345-6'
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is True
 
     def test_error_campos_obligatorios_vacios_fisica(self):
-        """ Criterio: Dejar campos vacíos muestra errores de validación """
+        """Criterio: Dejar campos vacíos muestra errores de validación"""
+        usuario = User.objects.create_user(username='usr_incompleto', email='inc@test.com')
         datos = {
+            'user': usuario.id,
             'tipo_cliente': 'FISICA',
             'identificador': '1234567'
-            # Faltan nombres y apellidos
         }
         form = ClienteForm(data=datos)
         assert form.is_valid() is False
-        assert 'nombres' in form.errors
-        assert 'apellidos' in form.errors
+        assert 'nombre' in form.errors
+        assert 'apellido' in form.errors
 
     def test_rechazo_registro_por_duplicado(self):
-        """ Criterio: Identificador (CI/RUC) ya existente rechaza el registro """
-        # Arrange: Creamos un cliente previo en la base de datos
+        """Criterio: Identificador (CI/RUC) ya existente rechaza el registro"""
+        u1 = User.objects.create_user(username='u1', email='u1@test.com')
+        u2 = User.objects.create_user(username='u2', email='u2@test.com')
+
         Cliente.objects.create(
-            tipo_cliente='FISICA', 
-            nombres='Ana', 
-            apellidos='Gómez', 
+            user=u1,
+            tipo_cliente='FISICA',
+            nombre='Ana',
+            apellido='Gómez',
             identificador='9999999'
         )
 
-        # Act: Intentamos registrar otro con el mismo identificador
-        datos_duplicados = {
-            'tipo_cliente': 'JURIDICA',
-            'razon_social': 'Otra Empresa',
-            'identificador': '9999999' # Mismo identificador
+        datos = {
+            'user': u2.id,
+            'tipo_cliente': 'FISICA',
+            'nombre': 'Carlos',
+            'apellido': 'López',
+            'identificador': '9999999'  # Identificador duplicado
         }
-        form = ClienteForm(data=datos_duplicados)
-
-        # Assert: El formulario debe ser inválido por el campo unique
+        form = ClienteForm(data=datos)
         assert form.is_valid() is False
         assert 'identificador' in form.errors
 
 
+@pytest.mark.django_db
 class TestClienteView:
-    """ Pruebas para el control de acceso (Solo administradores) """
 
-    @pytest.fixture
-    def admin_user(self):
-        """ Fixture para crear un usuario administrador (staff) """
-        return User.objects.create_user(username='admin', password='123', is_staff=True)
+    def test_acceso_denegado_a_usuario_comun(self, client):
+        usuario = User.objects.create_user(
+            username='user_normal',
+            email='user@test.com',
+            is_staff=False
+        )
+        client.force_login(usuario)
+        response = client.get('/clientes/nuevo/')
+        assert response.status_code == 403
 
-    @pytest.fixture
-    def normal_user(self):
-        """ Fixture para crear un usuario común """
-        return User.objects.create_user(username='comun', password='123', is_staff=False)
-
-    def test_acceso_denegado_a_usuario_comun(self, client, normal_user):
-        """ Criterio: Dado que soy administrador... (Usuario común no debe entrar) """
-        # Forzamos el login saltando Keycloak
-        client.force_login(normal_user) 
-        
-        # OJO: Asegúrate de que el nombre 'cliente_create' coincida con el 'name' en tu urls.py
-        # url = reverse('cliente_create') 
-        url = '/clientes/nuevo/' # Usando la ruta directa si no tienes configurado el reverse aún
-        
-        response = client.get(url)
-        
-        # 403 Forbidden porque el UserPassesTestMixin de la vista lo bloquea
-        assert response.status_code == 403 
-
-    def test_acceso_permitido_a_administrador(self, client, admin_user):
-        """ Criterio: El administrador sí puede ver el formulario """
-        client.force_login(admin_user)
-        url = '/clientes/nuevo/' # Cambia esto por tu URL real
-        
-        response = client.get(url)
-        
-        # 200 OK significa que cargó la página del formulario exitosamente
+    def test_acceso_permitido_a_administrador(self, client):
+        admin = User.objects.create_user(
+            username='admin_user',
+            email='admin@test.com',
+            is_staff=True
+        )
+        client.force_login(admin)
+        response = client.get('/clientes/nuevo/')
         assert response.status_code == 200
