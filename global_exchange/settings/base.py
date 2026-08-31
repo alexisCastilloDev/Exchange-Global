@@ -21,6 +21,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'mozilla_django_oidc',
+    
+    # Agrega tus aplicaciones aquí:
+    'apps.authentication', 
+    'apps.clientes',       
 ]
 
 MIDDLEWARE = [
@@ -92,8 +96,14 @@ OIDC_OP_USER_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/userinfo
 OIDC_OP_JWKS_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/certs'
 
 OIDC_RP_SIGN_ALGO = 'RS256'
-OIDC_RP_SCOPES = 'openid email profile'
+OIDC_RP_SCOPES = 'openid email profile roles'
 
 # A dónde redirige después de login/logout exitoso
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# --- Keycloak / OIDC ---
+KEYCLOAK_SERVER_URL = env('KEYCLOAK_SERVER_URL')
+KEYCLOAK_REALM = env('KEYCLOAK_REALM')
+KEYCLOAK_CLIENT_ID = env('KEYCLOAK_CLIENT_ID')
+KEYCLOAK_CLIENT_SECRET = env('KEYCLOAK_CLIENT_SECRET')

@@ -2,9 +2,9 @@
 Backend de autenticación que conecta Django con Keycloak vía OIDC.
 
 Además de autenticar, sincroniza los roles de negocio que vienen en el
-token de Keycloak (claim `realm_access.roles`) hacia Django Groups, para
-que el sistema de permisos nativo de Django (`user.has_perm(...)`) pueda
-usarse como mecanismo de autorización granular por rol.
+token de Keycloak (claim `realm_access.roles` o el claim personalizado `roles`) 
+hacia Django Groups, para que el sistema de permisos nativo de Django 
+(`user.has_perm(...)`) pueda usarse como mecanismo de autorización granular por rol.
 
 Deliberadamente NO se usa `is_superuser`: ese flag hace que Django
 ignore cualquier chequeo de permisos, lo cual anularía por completo la
@@ -51,14 +51,25 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         Actualiza nombre/apellido y sincroniza el/los rol(es) de Keycloak
         del usuario hacia sus Django Groups.
         """
+        
         user.first_name = claims.get('given_name', '')
         user.last_name = claims.get('family_name', '')
-
+        
+        # 1. Extraer roles (Soporte para realm_access y el mapper personalizado 'roles')
         realm_access = claims.get('realm_access', {})
-        roles_keycloak = set(realm_access.get('roles', []))
+        roles_realm = realm_access.get('roles', [])
+        
+        # Leemos los roles del mapper personalizado 'roles'
+        roles_custom = claims.get('roles', [])
+        # Si Keycloak manda un solo rol como texto simple (String), lo convertimos a lista
+        if isinstance(roles_custom, str):
+            roles_custom = [roles_custom]
+
+        # Unimos ambas listas de roles por seguridad y filtramos los permitidos
+        roles_keycloak = set(roles_realm) | set(roles_custom)
         roles_negocio = roles_keycloak & ROLES_DE_NEGOCIO
 
-        # Acceso al panel /admin/ de Django solo para el rol admin.
+        # Acceso al panel /admin/ de Django y vistas de staff solo para el rol admin.
         user.is_staff = 'admin' in roles_negocio
         user.is_superuser = False  # Nunca superuser: los permisos pasan por Groups
         user.save()

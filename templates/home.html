@@ -6,9 +6,29 @@
 </head>
 <body>
     <h1>Bienvenido a Global Exchange</h1>
-
+<!-- BLOQUE DE MENSAJES DE ÉXITO -->
+    {% if messages %}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+                <div style="padding: 10px 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; font-weight: bold;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
     {% if user.is_authenticated %}
         <p>Hola, <strong>{{ user.first_name }} {{ user.last_name }}</strong> ({{ user.email }})</p>
+        
+        <!-- Aquí validamos si es admin para mostrar el botón -->
+        {% if user.is_staff or user.is_superuser %}
+            <p>
+                <a href="{% url 'cliente_create' %}" style="display: inline-block; padding: 10px 16px; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    Registrar Nuevo Cliente
+                </a>
+            </p>
+        {% endif %}
+
         <form method="post" action="{% url 'oidc_logout' %}">
             {% csrf_token %}
             <button type="submit">Cerrar Sesión</button>
@@ -17,5 +37,8 @@
         <p>No has iniciado sesión.</p>
         <a href="{% url 'oidc_authentication_init' %}">Iniciar Sesión con Keycloak SSO</a>
     {% endif %}
+    
+    {% block content %}
+    {% endblock %}
 </body>
 </html>
