@@ -45,6 +45,11 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         Actualiza nombre/apellido y sincroniza el/los rol(es) de Keycloak
         del usuario hacia sus Django Groups.
         """
+        print("\n=== CLAIMS RECIBIDOS ===")
+        print(claims)
+        print("========================\n")
+
+        user.first_name = claims.get('given_name', '')
         
         user.first_name = claims.get('given_name', '')
         user.last_name = claims.get('family_name', '')
