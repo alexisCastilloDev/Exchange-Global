@@ -20,4 +20,5 @@ urlpatterns = [
     path('oidc/callback/', CustomOIDCCallbackView.as_view(), name='oidc_authentication_callback'),
     path('oidc/', include('mozilla_django_oidc.urls')),
     path('clientes/', include('apps.clientes.urls')),
+    path('divisas/', include('apps.divisas.urls')),
 ]

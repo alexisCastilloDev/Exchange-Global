@@ -1,0 +1,100 @@
+<!-- 
+  Docstring del Template: divisas/tasas_vigentes.html
+  
+  Propósito: 
+  Visualizar las tasas de compra y venta vigentes de las divisas activas.
+  
+  Criterios de Aceptación implementados:
+  - CA1: Muestra el listado con tasas de compra y venta.
+  - CA2: Si no hay cotización, se muestra "sin cotización" en lugar de un valor erróneo o vacío.
+  - CA3: Muestra fecha y hora de la última actualización (formato dd/mm/yyyy hh:mm).
+  - CA4: Las divisas inactivas no se muestran (esto ya viene filtrado desde la vista en el backend).
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta de tasas vigentes - Global Exchange</title>
+    <style>
+        /* Estilos básicos para mantener la coherencia con el sistema actual */
+        body {
+            font-family: sans-serif; 
+            padding: 20px;
+        }
+        .tabla-tasas {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .tabla-tasas th, .tabla-tasas td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .tabla-tasas th {
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .text-muted {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Encabezado con datos del usuario autenticado vía Keycloak -->
+    <header>
+        <h1>Consulta de tasas vigentes</h1>
+        <p>Agente conectado: <strong>{{ user.first_name }} {{ user.last_name }}</strong></p>
+        <p>Como usuario quiero consultar las tasas de compra y venta vigentes para conocer el valor actual de las divisas disponibles.</p>
+        <hr style="margin: 20px 0;">
+    </header>
+
+    <main>
+        <!-- Tabla de Divisas -->
+        <table class="tabla-tasas">
+            <thead>
+                <tr>
+                    <th>Divisa</th>
+                    <th>Tasa de Compra</th>
+                    <th>Tasa de Venta</th>
+                    <th>Última Actualización</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for divisa in divisas %}
+                    <tr>
+                        <td><strong>{{ divisa.codigo }}</strong> - {{ divisa.nombre }}</td>
+                        
+                        <!-- Verificación de cotizaciones (Criterio 1 y 2) -->
+                        {% if divisa.ultima_cotizacion %}
+                            <td>{{ divisa.ultima_cotizacion.tasa_compra }}</td>
+                            <td>{{ divisa.ultima_cotizacion.tasa_venta }}</td>
+                            <!-- Formateo de fecha y hora (Criterio 3) -->
+                            <td>{{ divisa.ultima_cotizacion.fecha_actualizacion|date:"d/m/Y H:i" }}</td>
+                        {% else %}
+                            <!-- Manejo de divisas sin historial de cotización -->
+                            <td colspan="2" class="text-center text-muted">sin cotización</td>
+                            <td class="text-muted">-</td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <!-- Mensaje de seguridad por si no hay ninguna divisa activa cargada en la DB -->
+                        <td colspan="4" class="text-center text-muted">
+                            No hay divisas activas registradas en el sistema en este momento.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 30px;">
+            <a href="{% url 'home' %}" style="text-decoration: none; color: #007bff;">Volver al inicio</a>
+        </div>
+    </main>
+</body>
+</html>

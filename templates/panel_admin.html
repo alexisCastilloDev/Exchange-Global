@@ -114,8 +114,12 @@
             <a href="{% url 'cliente_create' %}" style="display: inline-block; padding: 10px 16px; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">
                 Registrar Nuevo Cliente
             </a>
-            <a href="{% url 'gestion_roles' %}" style="display: inline-block; padding: 10px 16px; background-color: #17a2b8; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            <a href="{% url 'gestion_roles' %}" style="display: inline-block; padding: 10px 16px; background-color: #17a2b8; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">
                 Gestión de Roles y Permisos
+            </a>
+            <!-- NUEVO BOTÓN: Acceso a Tasas Vigentes -->
+            <a href="{% url 'divisas:tasas_vigentes' %}" style="display: inline-block; padding: 10px 16px; background-color: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Ver Tasas Vigentes
             </a>
         </p>
     </div>
@@ -198,7 +202,7 @@
                             {% if cliente.is_active %}
                                 <form action="{% url 'cliente_delete' cliente.pk %}" method="POST" style="display: inline;">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn-eliminar" onclick="return confirm('¿Confirms la baja lógica del cliente {{ cliente.nombre|default:cliente.razon_social }}?');">
+                                    <button type="submit" class="btn-eliminar" onclick="return confirm('¿Confirma la baja lógica del cliente {{ cliente.nombre|default:cliente.razon_social }}?');">
                                         Eliminar
                                     </button>
                                 </form>

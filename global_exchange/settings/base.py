@@ -24,7 +24,8 @@ INSTALLED_APPS = [
     
     # Agrega tus aplicaciones aquí:
     'apps.authentication', 
-    'apps.clientes',       
+    'apps.clientes',
+    'apps.divisas',       
 ]
 
 MIDDLEWARE = [
