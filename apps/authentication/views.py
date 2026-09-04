@@ -4,6 +4,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from mozilla_django_oidc.views import OIDCLogoutView, OIDCAuthenticationCallbackView
 
+
 class CustomOIDCLogoutView(OIDCLogoutView):
     def get(self, request):
         return self.post(request)
@@ -23,13 +24,13 @@ class CustomOIDCLogoutView(OIDCLogoutView):
 
 class CustomOIDCCallbackView(OIDCAuthenticationCallbackView):
     def login_success(self):
+        """
+        Tras un login exitoso, redirige según permisos reales en lugar de usar is_staff.
+        Si el usuario tiene permiso para el panel admin, lo enviamos a panel_admin,
+        en caso contrario a home.
+        """
         response = super().login_success()
         user = self.request.user
-        if user.is_staff:
+        if user.has_perm('authentication.acceder_panel_admin'):
             return redirect(reverse('panel_admin'))
-        # Para usuarios "cliente" no-staff: se los manda a 'home'.
-        # ClienteActivoMiddleware se encarga de interceptar la request
-        # siguiente y redirigirlos a 'seleccionar_cliente_activo' si
-        # están asociados a más de un cliente, o de autoseleccionar
-        # el cliente activo si solo tienen uno.
         return redirect(reverse('home'))

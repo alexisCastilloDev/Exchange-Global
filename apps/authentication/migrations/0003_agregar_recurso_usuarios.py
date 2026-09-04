@@ -1,4 +1,3 @@
-# apps/authentication/migrations/0003_agregar_recurso_usuarios.py
 """
 Agrega el RecursoProtegido "usuarios" para poder proteger
 /usuarios/ con @requiere_permiso('usuarios').
@@ -40,4 +39,3 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(cargar_recurso_usuarios, revertir),
     ]
-

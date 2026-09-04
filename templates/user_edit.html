@@ -1,38 +1,35 @@
 {% extends 'home.html' %}
 
 {% block content %}
-<div class="container mt-4">
+<div style="max-width: 720px; margin: 20px auto; font-family: sans-serif;">
   <h2>Editar Usuario: {{ usuario.email }}</h2>
 
-  <!-- Mensajes de error/éxito -->
   {% if messages %}
     {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      <div style="padding: 10px; margin-bottom: 8px; border-radius: 4px; background: #f8f9fa;">
         {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     {% endfor %}
   {% endif %}
 
   <form method="POST">
     {% csrf_token %}
-    <div class="mb-3">
-      <label class="form-label">Nombre</label>
-      <input type="text" name="first_name" value="{{ usuario.first_name }}" class="form-control">
+    <div style="margin-bottom: 10px;">
+      <label>Nombre</label><br>
+      <input type="text" name="first_name" value="{{ usuario.first_name }}" style="padding: 8px; width: 100%;">
     </div>
 
-    <div class="mb-3">
-      <label class="form-label">Apellido</label>
-      <input type="text" name="last_name" value="{{ usuario.last_name }}" class="form-control">
+    <div style="margin-bottom: 10px;">
+      <label>Apellido</label><br>
+      <input type="text" name="last_name" value="{{ usuario.last_name }}" style="padding: 8px; width: 100%;">
     </div>
 
-    <div class="form-check mb-3">
-      <input type="checkbox" name="is_active" value="on" class="form-check-input" id="is_active" {% if usuario.is_active %}checked{% endif %}>
-      <label class="form-check-label" for="is_active">Usuario Activo (si se desmarca, no podrá iniciar sesión)</label>
+    <div style="margin-bottom: 10px;">
+      <label><input type="checkbox" name="is_active" value="on" {% if usuario.is_active %}checked{% endif %}> Usuario Activo</label>
     </div>
 
-    <button type="submit" class="btn btn-success">Guardar Cambios</button>
-    <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+    <button type="submit" style="padding: 10px 14px; background:#28a745; color:white; border:none; border-radius:4px;">Guardar Cambios</button>
+    <a href="{% url 'lista_usuarios' %}" style="margin-left:10px; text-decoration:none;">Cancelar</a>
   </form>
 </div>
 {% endblock %}

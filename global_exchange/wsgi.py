@@ -1,12 +1,11 @@
 """
-WSGI config for global_exchange project.
+Configuración WSGI para el proyecto global_exchange.
 
-It exposes the WSGI callable as a module-level variable named ``application``.
+Este módulo expone el objeto WSGI llamado `application`.
 
-For more information on this file, see
+Para más información sobre WSGI y su despliegue, ver:
 https://docs.djangoproject.com/en/6.1/howto/deployment/wsgi/
 """
-
 import os
 
 from django.core.wsgi import get_wsgi_application

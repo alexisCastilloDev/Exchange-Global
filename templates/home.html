@@ -22,9 +22,8 @@
         <p>Hola, <strong>{{ user.first_name }} {{ user.last_name }}</strong> ({{ user.email }})</p>
         
         <!-- Opciones exclusivas para personal autorizado -->
-        {% if user.is_staff or user.is_superuser %}
+        {% if perms.authentication.acceder_panel_admin or perms.authentication.acceder_gestion_roles %}
             <div style="margin: 15px 0;">
-                
                 <a href="{% url 'panel_admin' %}" style="display: inline-block; padding: 10px 16px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
                     Panel de Administración
                 </a>

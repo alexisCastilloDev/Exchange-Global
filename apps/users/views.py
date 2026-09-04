@@ -3,12 +3,12 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.contrib import messages
 from .services import actualizar_usuario_en_keycloak
-from apps.authentication.decorators import requiere_permiso   
+from apps.authentication.decorators import requiere_permiso
 
 User = get_user_model()
 
 
-@requiere_permiso('usuarios')                                  
+@requiere_permiso('usuarios')
 def lista_usuarios_view(request):
     query = request.GET.get('q', '').strip()
     usuarios = User.objects.all().prefetch_related('groups').order_by('id')
@@ -26,7 +26,7 @@ def lista_usuarios_view(request):
     })
 
 
-@requiere_permiso('usuarios')                                  
+@requiere_permiso('usuarios')
 def editar_usuario_view(request, user_id):
     usuario = get_object_or_404(User, id=user_id)
 
@@ -36,6 +36,10 @@ def editar_usuario_view(request, user_id):
 
         raw_is_active = request.POST.get('is_active')
         is_active = raw_is_active in ['on', 'true', 'True', True]
+
+        if not usuario.email:
+            messages.error(request, "El usuario no tiene email; no es posible sincronizar con Keycloak.")
+            return redirect('editar_usuario', user_id=user_id)
 
         try:
             actualizar_usuario_en_keycloak(
@@ -52,7 +56,11 @@ def editar_usuario_view(request, user_id):
             messages.success(request, f"Usuario {usuario.email} actualizado correctamente.")
             return redirect('lista_usuarios')
 
+        except ValueError as ve:
+            messages.error(request, f"No se pudo encontrar el usuario en Keycloak: {ve}")
+        except RuntimeError as re:
+            messages.error(request, f"Error al actualizar en Keycloak: {re}")
         except Exception as e:
-            messages.error(request, f"Error al actualizar en Keycloak: {str(e)}")
+            messages.error(request, f"Error inesperado al sincronizar con Keycloak: {e}")
 
     return render(request, 'user_edit.html', {'usuario': usuario})
