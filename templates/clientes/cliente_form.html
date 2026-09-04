@@ -3,37 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Registrar Cliente - Global Exchange</title>
-    <style>
-        /* Un pequeño estilo para que los errores de validación resalten en rojo */
-        .errorlist { color: red; font-weight: bold; list-style-type: none; padding-left: 0; }
-    </style>
+    <style>.errorlist { color: red; font-weight: bold; list-style-type: none; padding-left: 0; }</style>
 </head>
 <body style="font-family: sans-serif; padding: 20px;">
-    <h1>Registrar Nuevo Cliente</h1>
-    
-    <!-- Agregamos novalidate para que el navegador nos deje ver las validaciones de Django -->
+    <h1>Registrar / Editar Cliente</h1>
+
     <form method="post" novalidate>
-        <!-- Token de seguridad obligatorio -->
         {% csrf_token %}
-        
-        <!-- Pinta los campos del formulario -->
         {{ form.as_p }}
-        
         <button type="submit" style="padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
             Guardar Cliente
         </button>
     </form>
-    
-    <br>
-    <p><a href="{% url 'home' %}" style="text-decoration: none; color: #007bff;">Volver al inicio</a></p>
 
-    <!-- Script adaptado para {{ form.as_p }} -->
+    <br>
+    <p><a href="{% url 'panel_admin' %}" style="text-decoration: none; color: #007bff;">Volver al panel</a></p>
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Buscamos los IDs exactos que Django genera por defecto
             const selectTipo = document.getElementById("id_tipo_cliente");
-            
-            // Buscamos el campo y seleccionamos la etiqueta <p> que lo envuelve usando .closest("p")
             const pNombre = document.getElementById("id_nombre")?.closest("p");
             const pApellido = document.getElementById("id_apellido")?.closest("p");
             const pRazonSocial = document.getElementById("id_razon_social")?.closest("p");
@@ -50,10 +38,7 @@
                         if (pRazonSocial) pRazonSocial.style.display = "none";
                     }
                 }
-
-                // Escuchar el cambio en el selector
                 selectTipo.addEventListener("change", alternarCampos);
-                // Ejecutar inmediatamente para configurar la vista inicial
                 alternarCampos();
             }
         });

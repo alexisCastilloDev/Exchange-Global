@@ -1,56 +1,50 @@
-{% extends 'home.html' %}  <!-- O el layout principal de tu proyecto -->
+{% extends 'home.html' %}
 
 {% block content %}
-<div class="container mt-4">
+<div style="max-width: 900px; margin: 20px auto; font-family: sans-serif;">
   <h2>Gestión de Usuarios</h2>
 
-  <!-- Buscador (CA4) -->
-  <form method="GET" action="" class="row mb-3">
-    <div class="col-md-6">
-      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo...">
-    </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-primary">Buscar</button>
-    </div>
+  <form method="GET" action="" style="margin-bottom: 16px;">
+    <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nombre o correo..." style="padding:8px; width:70%;">
+    <button type="submit" style="padding:8px 12px; margin-left:8px;">Buscar</button>
   </form>
 
-  <!-- Tabla de Usuarios (CA1) -->
-  <table class="table table-striped">
+  <table style="width:100%; border-collapse: collapse;">
     <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Correo</th>
-        <th>Estado</th>
-        <th>Rol</th>
-        <th>Acciones</th>
+      <tr style="background:#f4f4f4;">
+        <th style="padding:8px; text-align:left;">Nombre</th>
+        <th style="padding:8px; text-align:left;">Correo</th>
+        <th style="padding:8px; text-align:left;">Estado</th>
+        <th style="padding:8px; text-align:left;">Rol</th>
+        <th style="padding:8px; text-align:left;">Acciones</th>
       </tr>
     </thead>
     <tbody>
       {% for u in usuarios %}
       <tr>
-        <td>{{ u.first_name }} {{ u.last_name }}</td>
-        <td>{{ u.email }}</td>
-        <td>
+        <td style="padding:8px;">{{ u.first_name }} {{ u.last_name }}</td>
+        <td style="padding:8px;">{{ u.email }}</td>
+        <td style="padding:8px;">
           {% if u.is_active %}
-            <span class="badge bg-success">Activo</span>
+            <span style="background:#d4edda; color:#155724; padding:4px 8px; border-radius:4px;">Activo</span>
           {% else %}
-            <span class="badge bg-danger">Inactivo</span>
+            <span style="background:#f8d7da; color:#721c24; padding:4px 8px; border-radius:4px;">Inactivo</span>
           {% endif %}
         </td>
-        <td>
+        <td style="padding:8px;">
           {% for group in u.groups.all %}
-            <span class="badge bg-info text-dark">{{ group.name }}</span>
+            <span style="background:#e2e3e5; padding:4px 8px; border-radius:4px; margin-right:4px;">{{ group.name }}</span>
           {% empty %}
             Sin rol
           {% endfor %}
         </td>
-        <td>
-          <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-secondary">Editar</a>
+        <td style="padding:8px;">
+          <a href="{% url 'editar_usuario' u.id %}" style="text-decoration:none; padding:6px 10px; background:#6c757d; color:white; border-radius:4px;">Editar</a>
         </td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="5">No se encontraron usuarios.</td>
+        <td colspan="5" style="padding:8px; color:#666;">No se encontraron usuarios.</td>
       </tr>
       {% endfor %}
     </tbody>

@@ -1,12 +1,11 @@
 """
-ASGI config for global_exchange project.
+Configuración ASGI para el proyecto global_exchange.
 
-It exposes the ASGI callable as a module-level variable named ``application``.
+Este módulo expone el objeto ASGI llamado `application`.
 
-For more information on this file, see
+Para más información sobre ASGI y su despliegue, ver:
 https://docs.djangoproject.com/en/6.1/howto/deployment/asgi/
 """
-
 import os
 
 from django.core.asgi import get_asgi_application

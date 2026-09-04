@@ -1,8 +1,8 @@
 """
-URL configuration for global_exchange project.
+Configuración de URLs para el proyecto global_exchange.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
+La lista `urlpatterns` enruta URLs hacia vistas. Para más información:
+https://docs.djangoproject.com/en/6.1/topics/http/urls/
 """
 from django.contrib import admin
 from django.urls import path, include

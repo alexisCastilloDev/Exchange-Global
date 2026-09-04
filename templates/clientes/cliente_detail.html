@@ -15,21 +15,15 @@
         .btn-danger { background-color: #dc3545; color: white; border: none; cursor: pointer; }
         .form-asociar { display: flex; gap: 10px; align-items: center; margin: 15px 0; }
         .form-control { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; min-width: 260px; }
-        .errorlist { color: #dc3545; }
-        .messages { list-style: none; padding: 0; }
-        .messages li { padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; }
-        .messages .success { background: #d4edda; color: #155724; }
-        .messages .error { background: #f8d7da; color: #721c24; }
-        .messages .warning { background: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
     <p><a href="{% url 'panel_admin' %}">&larr; Volver al listado</a></p>
 
     {% if messages %}
-        <ul class="messages">
+        <ul style="list-style:none;padding:0;">
             {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
+                <li style="padding:8px;margin-bottom:8px;border-radius:4px;background:#f8f9fa;">{{ message }}</li>
             {% endfor %}
         </ul>
     {% endif %}
@@ -56,14 +50,9 @@
 
     <form class="form-asociar" method="POST" action="{% url 'cliente_asociar_usuario' cliente.pk %}">
         {% csrf_token %}
-        {{ form_asociar.email }}
+        <input type="email" name="email" placeholder="usuario@ejemplo.com" class="form-control" required>
         <button type="submit" class="btn btn-primary">Asociar por email</button>
     </form>
-    {% if form_asociar.errors %}
-        <ul class="errorlist">
-            {% for error in form_asociar.email.errors %}<li>{{ error }}</li>{% endfor %}
-        </ul>
-    {% endif %}
 
     {% if usuarios_asociados %}
         <table>
@@ -82,8 +71,7 @@
                         <td>
                             <form method="POST" action="{% url 'cliente_desasociar_usuario' cliente.pk usuario.pk %}" style="display:inline;">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-danger"
-                                    onclick="return confirm('¿Quitar el acceso de {{ usuario.email }} a este cliente?');">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Quitar el acceso de {{ usuario.email }} a este cliente?');">
                                     Desasociar
                                 </button>
                             </form>

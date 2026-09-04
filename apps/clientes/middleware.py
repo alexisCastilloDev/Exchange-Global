@@ -1,19 +1,13 @@
 """
-Middleware para la Historia de Usuario: selección de cliente activo.
+Middleware para la selección de cliente activo.
 
-Cuando un usuario "cliente" (asociado a uno o más Cliente) inicia sesión,
-el sistema debe:
-- Pedirle que elija en nombre de qué cliente va a operar, si está
-  asociado a más de uno.
-- Seleccionarlo automáticamente si está asociado a uno solo.
-- Mantener el cliente activo en la sesión mientras navega, hasta que
-  decida cambiarlo (sin necesidad de cerrar sesión).
+Excluye del flujo a los usuarios con permiso administrativo (acceder_panel_admin),
+en lugar de basarse en is_staff/is_superuser.
 """
 from django.shortcuts import redirect
 from django.urls import reverse
 
-# Rutas que no deben disparar la redirección a "seleccionar cliente",
-# para no generar un bucle de redirecciones.
+# Rutas exentas para no generar bucles
 RUTAS_EXENTAS = (
     '/clientes/seleccionar/',
     '/clientes/cambiar/',
@@ -24,19 +18,16 @@ RUTAS_EXENTAS = (
 
 
 class ClienteActivoMiddleware:
-    """
-    Si el usuario logueado está asociado a más de un Cliente y todavía
-    no eligió uno en la sesión actual, lo redirige a la pantalla de
-    selección. Si está asociado a uno solo, lo autoselecciona.
-    """
-
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         user = getattr(request, 'user', None)
 
-        if user and user.is_authenticated and not (user.is_staff or user.is_superuser):
+        # Si el usuario está autenticado y NO tiene el permiso del panel admin,
+        # aplicamos la lógica de selección automática / redirección para elegir cliente.
+        if user and user.is_authenticated and not user.has_perm('authentication.acceder_panel_admin'):
+            # No ejecutar en rutas exentas
             if not any(request.path.startswith(ruta) for ruta in RUTAS_EXENTAS):
                 clientes = user.clientes_asociados.filter(is_active=True)
                 cantidad = clientes.count()
