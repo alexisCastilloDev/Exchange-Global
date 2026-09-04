@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ficha de Cliente - Global Exchange</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .dato { margin-bottom: 8px; }
+        .dato strong { display: inline-block; width: 200px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f4f4f4; }
+        .btn { display: inline-block; padding: 8px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        .btn-primary { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        .btn-danger { background-color: #dc3545; color: white; border: none; cursor: pointer; }
+        .form-asociar { display: flex; gap: 10px; align-items: center; margin: 15px 0; }
+        .form-control { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; min-width: 260px; }
+        .errorlist { color: #dc3545; }
+        .messages { list-style: none; padding: 0; }
+        .messages li { padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; }
+        .messages .success { background: #d4edda; color: #155724; }
+        .messages .error { background: #f8d7da; color: #721c24; }
+        .messages .warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <p><a href="{% url 'panel_admin' %}">&larr; Volver al listado</a></p>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h1>Ficha de Cliente</h1>
+
+    <div class="dato"><strong>Tipo:</strong> {{ cliente.get_tipo_cliente_display }}</div>
+    {% if cliente.tipo_cliente == 'JURIDICA' %}
+        <div class="dato"><strong>Razón Social:</strong> {{ cliente.razon_social }}</div>
+    {% else %}
+        <div class="dato"><strong>Nombre:</strong> {{ cliente.nombre }} {{ cliente.apellido }}</div>
+    {% endif %}
+    <div class="dato"><strong>Identificador (CI/RUC):</strong> {{ cliente.identificador }}</div>
+    <div class="dato"><strong>Email:</strong> {{ cliente.email }}</div>
+    <div class="dato"><strong>Segmento:</strong> {{ cliente.get_segmento_display }}</div>
+    <div class="dato"><strong>Estado:</strong> {% if cliente.is_active %}Activo{% else %}Inactivo{% endif %}</div>
+    <div class="dato"><strong>Fecha de registro:</strong> {{ cliente.fecha_registro }}</div>
+
+    <p><a href="{% url 'cliente_update' cliente.pk %}" class="btn btn-primary">Editar datos</a></p>
+
+    <hr>
+
+    <h2>Usuarios habilitados para operar en representación de este cliente</h2>
+
+    <form class="form-asociar" method="POST" action="{% url 'cliente_asociar_usuario' cliente.pk %}">
+        {% csrf_token %}
+        {{ form_asociar.email }}
+        <button type="submit" class="btn btn-primary">Asociar por email</button>
+    </form>
+    {% if form_asociar.errors %}
+        <ul class="errorlist">
+            {% for error in form_asociar.email.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if usuarios_asociados %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios_asociados %}
+                    <tr>
+                        <td>{{ usuario.email }}</td>
+                        <td>{{ usuario.first_name }} {{ usuario.last_name }}</td>
+                        <td>
+                            <form method="POST" action="{% url 'cliente_desasociar_usuario' cliente.pk usuario.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger"
+                                    onclick="return confirm('¿Quitar el acceso de {{ usuario.email }} a este cliente?');">
+                                    Desasociar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color:#666; font-style: italic;">Este cliente todavía no tiene usuarios asociados.</p>
+    {% endif %}
+</body>
+</html>

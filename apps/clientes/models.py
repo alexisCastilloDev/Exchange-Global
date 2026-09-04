@@ -49,14 +49,15 @@ class Cliente(models.Model):
         ('CORPORATIVO', 'Corporativo'),
     ]
 
-    # Relación uno a uno con el modelo de Usuario
-    user = models.OneToOneField(
+    # Relación muchos a muchos: un cliente puede tener varios usuarios
+    # autorizados a operar en su representación, y un usuario puede estar
+    # asociado a más de un cliente. El vínculo se establece por email
+    # (ver ClienteForm y las vistas de asociación en views.py), no por documento.
+    usuarios = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='cliente_profile',
-        verbose_name="Usuario del Sistema",
-        null=True,
-        blank=True
+        related_name='clientes_asociados',
+        verbose_name="Usuarios Autorizados",
+        blank=True,
     )
 
     tipo_cliente = models.CharField(
