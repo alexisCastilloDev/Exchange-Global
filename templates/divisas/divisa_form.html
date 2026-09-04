@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if object %}Editar Divisa{% else %}Nueva Divisa{% endif %}</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 40px;">
+
+    <h2>{% if object %}Editar Divisa: {{ object.codigo }}{% else %}Registrar Nueva Divisa{% endif %}</h2>
+
+    <div style="max-width: 450px; background-color: #f8f9fa; padding: 25px; border-radius: 8px; border: 1px solid #ddd;">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div style="color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div style="margin-bottom: 15px;">
+                    <label for="{{ field.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 5px;">
+                        {{ field.label }}
+                    </label>
+                    
+                    {{ field }}
+
+                    {% if field.errors %}
+                        <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px; font-weight: bold;">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+
+                    {% if field.help_text %}
+                        <small style="color: #6c757d; display: block; margin-top: 2px;">{{ field.help_text }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div style="margin-top: 25px; display: flex; align-items: center;">
+                <button type="submit" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    Guardar
+                </button>
+                <a href="{% url 'divisas:lista_divisas' %}" style="margin-left: 15px; color: #dc3545; text-decoration: none; font-weight: bold;">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

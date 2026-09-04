@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administración de Divisas</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 40px;">
+
+    <h2>Catálogo de Divisas</h2>
+
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'divisas:crear_divisa' %}" style="padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">+ Nueva Divisa</a>
+        <a href="{% url 'panel_admin' %}" style="padding: 10px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; margin-left: 10px;">Volver al Panel</a>
+    </div>
+
+    <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+        <thead style="background-color: #f8f9fa;">
+            <tr>
+                <th>Código ISO</th>
+                <th>Nombre</th>
+                <th>Símbolo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for divisa in divisas %}
+            <tr>
+                <td><strong>{{ divisa.codigo }}</strong></td>
+                <td>{{ divisa.nombre }}</td>
+                <td>{{ divisa.simbolo|default:"-" }}</td>
+                <td>
+                    {% if divisa.activa %}
+                        <span style="color: green; font-weight: bold;">Activa</span>
+                    {% else %}
+                        <span style="color: red; font-weight: bold;">Inactiva</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'divisas:editar_divisa' divisa.pk %}" style="padding: 5px 10px; background-color: #ffc107; color: #212529; text-decoration: none; border-radius: 3px; font-weight: bold;">Editar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center;">No hay divisas registradas en el catálogo.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
