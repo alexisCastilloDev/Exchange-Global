@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Roles de {{ usuario.email }}</h2>
+
+<form method="post">
+  {% csrf_token %}
+  <ul style="list-style:none; padding-left:0;">
+    {% for rol in roles_disponibles %}
+      <li>
+        <label>
+          <input type="checkbox" name="roles" value="{{ rol }}"
+            {% if rol in roles_actuales %}checked{% endif %}>
+          {{ rol }}
+        </label>
+      </li>
+    {% endfor %}
+  </ul>
+  <button type="submit">Guardar roles</button>
+</form>
+{% endblock %}
