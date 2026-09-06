@@ -6,7 +6,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 """
 from django.contrib import admin
 from django.urls import path, include
-from global_exchange.views import home, panel_protegido, panel_admin, gestion_roles
+from global_exchange.views import home, panel_protegido, panel_admin, user_roles
 from apps.authentication.views import CustomOIDCLogoutView, CustomOIDCCallbackView
 
 urlpatterns = [
@@ -14,7 +14,7 @@ urlpatterns = [
     path('', home, name='home'),
     path('panel/', panel_protegido, name='panel_protegido'),
     path('panel-admin/', panel_admin, name='panel_admin'),
-    path('roles/', gestion_roles, name='gestion_roles'),
+    path('roles/', user_roles, name='user_roles'),
     path('usuarios/', include('apps.users.urls')),
     path('oidc/logout/', CustomOIDCLogoutView.as_view(), name='oidc_logout'),
     path('oidc/callback/', CustomOIDCCallbackView.as_view(), name='oidc_authentication_callback'),

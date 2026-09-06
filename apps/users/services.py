@@ -12,12 +12,24 @@ def _obtener_keycloak_admin():
     )
 
 
+def _obtener_user_id_por_email(keycloak_admin, email):
+    """Busca al usuario por email de forma exacta en Keycloak."""
+    # Buscar usuarios que coincidan exactamente con el email
+    users = keycloak_admin.get_users({"email": email, "exact": True})
+    
+    if not users:
+        # Intento secundario: buscar por username en caso de que coincida con el correo
+        users = keycloak_admin.get_users({"username": email, "exact": True})
+
+    if not users:
+        raise ValueError(f"No se encontró el usuario {email} en Keycloak")
+
+    return users[0]['id']
+
+
 def actualizar_usuario_en_keycloak(email, first_name, last_name, is_active):
     keycloak_admin = _obtener_keycloak_admin()
-    user_id_keycloak = keycloak_admin.get_user_id(email)
-
-    if not user_id_keycloak:
-        raise ValueError(f"No se encontró el usuario {email} en Keycloak")
+    user_id_keycloak = _obtener_user_id_por_email(keycloak_admin, email)
 
     keycloak_admin.update_user(
         user_id=user_id_keycloak,
@@ -29,8 +41,6 @@ def actualizar_usuario_en_keycloak(email, first_name, last_name, is_active):
     )
 
 
-# Roles técnicos que Keycloak agrega a todo usuario/realm y que no se
-# deben ofrecer para asignar manualmente (mismo criterio que en backends.py).
 ROLES_TECNICOS_EXCLUIDOS = {
     'offline_access',
     'uma_authorization',
@@ -50,9 +60,7 @@ def obtener_roles_disponibles():
 def obtener_roles_de_usuario(email):
     """Roles que el usuario ya tiene asignados en Keycloak, ahora mismo."""
     keycloak_admin = _obtener_keycloak_admin()
-    user_id_keycloak = keycloak_admin.get_user_id(email)
-    if not user_id_keycloak:
-        raise ValueError(f"No se encontró el usuario {email} en Keycloak")
+    user_id_keycloak = _obtener_user_id_por_email(keycloak_admin, email)
 
     roles = keycloak_admin.get_realm_roles_of_user(user_id_keycloak)
     return sorted(
@@ -66,11 +74,14 @@ def actualizar_roles_de_usuario(email, roles_deseados):
     agrega los que le faltan y le quita los que ya no deberían estar.
     """
     keycloak_admin = _obtener_keycloak_admin()
-    user_id_keycloak = keycloak_admin.get_user_id(email)
-    if not user_id_keycloak:
-        raise ValueError(f"No se encontró el usuario {email} en Keycloak")
+    user_id_keycloak = _obtener_user_id_por_email(keycloak_admin, email)
 
-    roles_actuales = set(obtener_roles_de_usuario(email))
+    # Obtenemos directamente los roles actuales con el user_id ya validado
+    roles_actuales_obj = keycloak_admin.get_realm_roles_of_user(user_id_keycloak)
+    roles_actuales = set(
+        r['name'] for r in roles_actuales_obj if r['name'] not in ROLES_TECNICOS_EXCLUIDOS
+    )
+    
     roles_deseados = set(roles_deseados)
 
     roles_a_agregar = roles_deseados - roles_actuales

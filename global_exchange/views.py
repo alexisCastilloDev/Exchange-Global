@@ -24,10 +24,16 @@ def panel_protegido(request):
     return render(request, 'panel.html')
 
 
-@requiere_permiso('panel_admin')
+@requiere_permiso('admin')
 def panel_admin(request):
     """
     Panel exclusivo para el rol admin (o el rol 'panel_admin' en Keycloak).
     El acceso se controla 100% desde Keycloak.
     """
     return render(request, 'panel_admin.html')
+
+@requiere_permiso('admin')
+def user_roles(request):
+    """Vista para la gestión de roles de usuario."""
+    # Agrega aquí la lógica necesaria para obtener los roles/usuarios
+    return render(request, 'user_roles.html')
