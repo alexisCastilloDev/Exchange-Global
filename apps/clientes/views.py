@@ -8,14 +8,14 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.views.generic import CreateView, UpdateView, ListView
 from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 
 from .models import Cliente
 from .forms import ClienteForm
 
 
-class PanelAdminView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """
     Vista para renderizar el panel de administración con la lista de clientes.
     
@@ -24,12 +24,24 @@ class PanelAdminView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     
     Historia de Usuario GE-63: Se listan únicamente los clientes activos por defecto. 
     Se permite incluir inactivos si se requiere revisar el historial.
+
+    Antes esta vista usaba PermissionRequiredMixin con
+    ``permission_required = 'authentication.acceder_panel_admin'``, un
+    permiso de ``auth.Permission`` que ya no existe: la migración 0004
+    de la app authentication borró el modelo ``RecursoProtegido`` y
+    todos sus permisos generados al migrar la autorización a Keycloak.
+    ``has_perm`` sobre un permiso inexistente simplemente devuelve
+    False siempre, así que en la práctica esa condición nunca aportaba
+    nada. Se reemplaza por el mismo criterio (``is_staff`` /
+    ``is_superuser``) que ya usan las vistas hermanas de este archivo
+    (ClienteCreateView, ClienteUpdateView, ClienteSoftDeleteView), para
+    que las cuatro vistas de esta app compartan una única regla de
+    autorización.
     """
 
     model = Cliente
     template_name = 'panel_admin.html'
     context_object_name = 'clientes'
-    permission_required = 'authentication.acceder_panel_admin'
 
     def get_queryset(self):
         """
@@ -65,13 +77,16 @@ class PanelAdminView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context['incluir_inactivos'] = self.request.GET.get('incluir_inactivos') == '1'
         return context
 
-    def has_permission(self):
+    def test_func(self):
         """
-        Valida si el usuario actual posee permisos de staff, superusuario
-        o el permiso específico para acceder al panel de administración.
+        Misma regla de acceso que ClienteCreateView/UpdateView/SoftDeleteView.
+        En producción ``is_staff`` ya queda determinado por el rol 'admin'
+        de Keycloak en cada login (ver KeycloakOIDCAuthenticationBackend),
+        así que este chequeo sigue siendo, en efecto, un chequeo de rol
+        de Keycloak — sin depender de la sesión directamente.
         """
         user = self.request.user
-        return user.is_staff or user.is_superuser or user.has_perm(self.permission_required)
+        return user.is_staff or user.is_superuser
 
     def handle_no_permission(self):
         """

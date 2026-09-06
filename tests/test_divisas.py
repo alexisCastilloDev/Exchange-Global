@@ -6,6 +6,7 @@ from django.contrib.auth.models import User, Group
 from django.conf import settings
 from django.shortcuts import resolve_url
 from apps.divisas.models import Divisa, Cotizacion
+
 @pytest.mark.django_db  # Habilita el acceso a la base de datos para pytest
 class TasasVigentesTest(TestCase):
     """
@@ -24,7 +25,7 @@ class TasasVigentesTest(TestCase):
         Configuración inicial para cada prueba.
         Crea usuarios, grupos, divisas y cotizaciones simulando el estado de la base de datos.
         """
-        # 1. Configuración de Seguridad (Simulando lo que sincroniza mozilla-django-oidc)
+        # 1. Configuración de Seguridad
         self.grupo_agentes = Group.objects.create(name='Agentes')
         self.agente = User.objects.create_user(username='agente01', password='password123')
         self.agente.groups.add(self.grupo_agentes)
@@ -46,8 +47,15 @@ class TasasVigentesTest(TestCase):
         # Divisa INACTIVA (Para CA4)
         self.ars = Divisa.objects.create(codigo='ARS', nombre='Peso Argentino', activa=False)
 
-        # URL de la vista (Asumiendo que el app_name en urls.py es 'divisas' y el name='tasas_vigentes')
+        # URL de la vista
         self.url = reverse('divisas:tasas_vigentes')
+
+    def _login_agente_con_sesion(self):
+        """Método auxiliar para loguear e inyectar los roles en la sesión de Keycloak."""
+        self.client.login(username='agente01', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['agente', 'admin', 'Agentes']
+        session.save()
 
     def test_acceso_denegado_usuarios_no_autenticados(self):
         """Prueba de seguridad: Un usuario anónimo es redirigido al login."""
@@ -62,10 +70,14 @@ class TasasVigentesTest(TestCase):
 
     def test_acceso_denegado_usuarios_sin_rol(self):
         """
-        Prueba de seguridad: Un usuario autenticado pero sin el grupo 'Agentes'
+        Prueba de seguridad: Un usuario autenticado pero sin roles en la sesión de Keycloak
         recibe un error 403 (Prohibido).
         """
         self.client.login(username='invitado', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = []  # Sin roles permitidos
+        session.save()
+
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403)
 
@@ -73,7 +85,7 @@ class TasasVigentesTest(TestCase):
         """
         Criterio de Aceptación 4: Las divisas inactivas no deben aparecer en el listado.
         """
-        self.client.login(username='agente01', password='password123')
+        self._login_agente_con_sesion()
         response = self.client.get(self.url)
         
         self.assertEqual(response.status_code, 200)
@@ -89,7 +101,7 @@ class TasasVigentesTest(TestCase):
         Criterio de Aceptación 1 y 3: Divisas con cotización muestran tasas de compra/venta
         y la fecha de actualización.
         """
-        self.client.login(username='agente01', password='password123')
+        self._login_agente_con_sesion()
         response = self.client.get(self.url)
         
         # Validamos que el HTML renderizado contenga los valores correctos
@@ -102,7 +114,7 @@ class TasasVigentesTest(TestCase):
         Criterio de Aceptación 2: Divisas sin cotización muestran el texto "sin cotización"
         en lugar de valores vacíos o erróneos.
         """
-        self.client.login(username='agente01', password='password123')
+        self._login_agente_con_sesion()
         response = self.client.get(self.url)
         
         # Validamos que el texto específico del CA esté en el HTML devuelto
