@@ -2,7 +2,6 @@ from unittest.mock import patch
 import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 
 # Importa tu backend personalizado (ajusta la ruta según la estructura de tu proyecto)
 from apps.authentication.backends import KeycloakOIDCAuthenticationBackend
@@ -58,7 +57,7 @@ def test_verify_claims_rechaza_correo_no_verificado(backend):
         'email': 'unverified@example.com',
         'email_verified': False,
     }
-    
+
     with patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_claims', return_value=True):
         assert backend.verify_claims(claims) is False
 
@@ -70,54 +69,51 @@ def test_verify_claims_acepta_correo_verificado(backend):
         'email': 'verified@example.com',
         'email_verified': True,
     }
-    
+
     with patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_claims', return_value=True):
         assert backend.verify_claims(claims) is True
 
 
 @pytest.mark.django_db
-def test_update_user_claims_asigna_grupos_y_flags(backend):
-    """CA: Sincroniza roles de Keycloak a Django Groups y asigna is_staff/is_superuser."""
+def test_update_user_claims_guarda_roles_en_sesion(backend, rf):
+    """CA: Los roles de negocio del token quedan en session['keycloak_roles']."""
+    request = rf.get('/')
+    request.session = {}
     user = User.objects.create_user(username='testuser', email='test@example.com')
     claims = {
         'given_name': 'Juan',
         'family_name': 'Pérez',
         'email': 'test@example.com',
-        'realm_access': {
-            'roles': ['admin', 'cajero']
-        }
+        'realm_access': {'roles': ['admin', 'cajero', 'offline_access']},
     }
 
-    backend.update_user_claims(user, claims)
+    backend.update_user_claims(user, claims, request=request)
     user.refresh_from_db()
 
     assert user.first_name == 'Juan'
     assert user.last_name == 'Pérez'
     assert user.is_staff is True
     assert user.is_superuser is False  # Regla de negocio: nunca superuser
-
-    grupos_asociados = set(user.groups.values_list('name', flat=True))
-    assert grupos_asociados == {'admin', 'cajero'}
+    # 'offline_access' es un rol técnico de Keycloak, no de negocio: debe quedar excluido
+    assert request.session['keycloak_roles'] == ['admin', 'cajero']
 
 
 @pytest.mark.django_db
-def test_update_user_claims_remueve_grupos_obsoletos(backend):
-    """CA: Si se revoca un rol en Keycloak, se remueve el grupo en Django."""
+def test_update_user_claims_reemplaza_roles_previos_en_sesion(backend, rf):
+    """CA: cada login sobreescribe la sesión con los roles ACTUALES, no acumula."""
+    request = rf.get('/')
+    request.session = {'keycloak_roles': ['admin', 'cajero']}  # roles de un login anterior
     user = User.objects.create_user(username='cajero1', email='cajero@example.com')
-    grupo_cajero, _ = Group.objects.get_or_create(name='cajero')
-    grupo_admin, _ = Group.objects.get_or_create(name='admin')
-    user.groups.add(grupo_cajero, grupo_admin)
 
-    # Ahora solo tiene rol cliente
+    # Ahora Keycloak solo le manda el rol 'cliente'
     claims = {
         'given_name': 'Cajero',
         'family_name': 'Uno',
-        'realm_access': {'roles': ['cliente']}
+        'realm_access': {'roles': ['cliente']},
     }
 
-    backend.update_user_claims(user, claims)
+    backend.update_user_claims(user, claims, request=request)
     user.refresh_from_db()
 
-    grupos_actuales = set(user.groups.values_list('name', flat=True))
-    assert grupos_actuales == {'cliente'}
+    assert request.session['keycloak_roles'] == ['cliente']
     assert user.is_staff is False

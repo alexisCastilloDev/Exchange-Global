@@ -63,7 +63,7 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         self.update_user_claims(user, claims)
         return user
 
-    def update_user_claims(self, user, claims):
+    def update_user_claims(self, user, claims, request=None):
         """
         Actualiza datos básicos y guarda los roles en la sesión.
         Soporta roles en realm_access, en claim 'roles' y en resource_access.
@@ -114,4 +114,8 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
             user.save(update_fields=['first_name', 'last_name', 'is_staff', 'is_superuser'])
 
         # Única fuente de autorización: la sesión, no auth.Group.
-        self.request.session['keycloak_roles'] = sorted(roles_negocio)
+        # Usa el request explícito si lo pasan (tests); si no, el de la
+        # instancia que setea mozilla_django_oidc durante authenticate() real.
+        effective_request = request or getattr(self, 'request', None)
+        if effective_request and hasattr(effective_request, 'session'):
+            effective_request.session['keycloak_roles'] = sorted(roles_negocio)
