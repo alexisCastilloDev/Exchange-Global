@@ -1,11 +1,18 @@
 """
-Vistas generales del proyecto: pantalla de bienvenida y paneles
-protegidos por rol de Keycloak (sesión).
+Vistas generales del proyecto: pantalla de bienvenida y panel
+protegido de demostración por rol de Keycloak (sesión).
+
+El panel de administración (listado de clientes) y la gestión de
+roles ya no viven acá: son responsabilidad de
+``apps.clientes.views.PanelAdminView`` y ``apps.users.views``
+respectivamente. Antes había acá dos vistas "stub" (``panel_admin`` y
+``user_roles``) registradas en las URLs pero que renderizaban sus
+templates sin ningún contexto — quedaban siempre vacías/rotas porque
+la lógica real vivía en otro lado y nunca se enrutaba. Se eliminaron
+para no tener dos implementaciones compitiendo por la misma URL.
 """
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-
-from apps.authentication.decorators import requiere_permiso
 
 
 def home(request):
@@ -22,18 +29,3 @@ def panel_protegido(request):
     por sesión/token válido (GE-3).
     """
     return render(request, 'panel.html')
-
-
-@requiere_permiso('admin')
-def panel_admin(request):
-    """
-    Panel exclusivo para el rol admin (o el rol 'panel_admin' en Keycloak).
-    El acceso se controla 100% desde Keycloak.
-    """
-    return render(request, 'panel_admin.html')
-
-@requiere_permiso('admin')
-def user_roles(request):
-    """Vista para la gestión de roles de usuario."""
-    # Agrega aquí la lógica necesaria para obtener los roles/usuarios
-    return render(request, 'user_roles.html')
