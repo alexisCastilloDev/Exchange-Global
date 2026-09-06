@@ -1,10 +1,16 @@
-{% extends 'home.html' %}
+{% extends 'base.html' %}
+
+{% block title %}Seleccionar cliente - Global Exchange{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Seleccione el cliente en cuyo nombre va a operar</h2>
-    <p>Su cuenta tiene acceso a múltiples perfiles de clientes.</p>
+<div class="ge-page-header">
+    <div>
+        <h1>¿En nombre de qué cliente vas a operar?</h1>
+        <p>Tu cuenta tiene acceso a múltiples perfiles de clientes.</p>
+    </div>
+</div>
 
+<div class="ge-card" style="max-width: 560px;">
     <form method="post">
         {% csrf_token %}
         <div class="list-group mb-4">
@@ -13,7 +19,7 @@
                 <input class="form-check-input flex-shrink-0" type="radio" name="cliente_id" value="{{ cliente.pk }}" required>
                 <span>
                     <strong>{{ cliente }}</strong>
-                    <small class="d-block text-muted">ID: {{ cliente.identificador }} | Segmento: {{ cliente.segmento }}</small>
+                    <small class="d-block text-muted">ID: {{ cliente.identificador }} &middot; Segmento: {{ cliente.get_segmento_display }}</small>
                 </span>
             </label>
             {% endfor %}

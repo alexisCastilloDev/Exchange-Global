@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load ge_extras %}
+
+{% block title %}Mi perfil - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Mi perfil</h1>
+        <p>Tus datos y accesos vigentes en Global Exchange.</p>
+    </div>
+</div>
+
+<div class="ge-card" style="max-width: 640px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <span class="ge-avatar" style="width:56px; height:56px; font-size:18px;">{{ user.get_full_name|default:user.email|iniciales }}</span>
+        <div>
+            <h2 style="font-size:18px; margin:0;">{{ user.first_name }} {{ user.last_name }}</h2>
+            <p style="color: var(--ge-text-muted); margin:0; font-size: 14px;">{{ user.email }}</p>
+        </div>
+    </div>
+
+    <dl class="row mb-0">
+        <dt class="col-sm-4" style="color: var(--ge-text-muted); font-weight:600;">Rol efectivo</dt>
+        <dd class="col-sm-8">{% if es_admin %}Administrador{% else %}Operador{% endif %}</dd>
+
+        <dt class="col-sm-4" style="color: var(--ge-text-muted); font-weight:600;">Roles asignados (Keycloak)</dt>
+        <dd class="col-sm-8">
+            {% for rol in roles %}
+                <span class="badge-usuario">{{ rol }}</span>
+            {% empty %}
+                <span class="text-muted">Sin roles de negocio asignados.</span>
+            {% endfor %}
+        </dd>
+
+        {% if cliente_activo %}
+        <dt class="col-sm-4" style="color: var(--ge-text-muted); font-weight:600;">Operando como</dt>
+        <dd class="col-sm-8">
+            {{ cliente_activo.nombre|default:cliente_activo.razon_social }}
+            {% if mis_clientes|length > 1 %}
+                &middot; <a href="{% url 'seleccionar_cliente' %}">cambiar de cliente</a>
+            {% endif %}
+        </dd>
+        {% endif %}
+    </dl>
+</div>
+
+<p style="margin-top: 16px; font-size: 13px; color: var(--ge-text-muted);">
+    Tus datos personales y roles se administran centralmente en Keycloak.
+    Si algo no está correcto, contactá a un administrador.
+</p>
+{% endblock %}

@@ -52,6 +52,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.clientes.context_processors.cliente_activo_context',
+                'apps.authentication.context_processors.permisos_ui_context',
             ],
         },
     },
@@ -75,8 +76,19 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# El directorio static/ vivía en la raíz del proyecto pero nunca estaba
+# declarado acá, por lo que el finder de staticfiles no lo encontraba y
+# {% static %} devolvía rutas rotas en desarrollo.
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Alinea los tags de django.contrib.messages con las clases de alerta
+# de Bootstrap (por defecto usa "error", Bootstrap espera "danger").
+from django.contrib.messages import constants as messages_constants
+MESSAGE_TAGS = {
+    messages_constants.ERROR: 'danger',
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

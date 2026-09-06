@@ -1,69 +1,59 @@
-{% extends 'home.html' %}
+{% extends 'base.html' %}
+
+{% block title %}Asociar usuarios - Global Exchange{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Asociar Usuarios a Cliente</h5>
-                    <a href="{% url 'home' %}" class="btn btn-sm btn-outline-light">Volver al Panel</a>
-                </div>
-                <div class="card-body">
-                    <!-- Resumen del Cliente -->
-                    <div class="alert alert-secondary mb-4">
-                        <h6 class="alert-heading fw-bold">Cliente Seleccionado:</h6>
-                        <p class="mb-1">
-                            <strong>Nombre/Razón Social:</strong> 
-                            {% if cliente.tipo_cliente == 'JURIDICA' %}
-                                {{ cliente.razon_social }}
-                            {% else %}
-                                {{ cliente.nombre }} {{ cliente.apellido }}
-                            {% endif %}
-                        </p>
-                        <p class="mb-1"><strong>Identificador (CI/RUC):</strong> {{ cliente.identificador|default:"N/A" }}</p>
-                        <p class="mb-0"><strong>Tipo:</strong> {{ cliente.get_tipo_cliente_display }}</p>
-                    </div>
-
-                    <!-- Formulario de Asociación -->
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Selecciona los usuarios del sistema a vincular:</label>
-                            <p class="text-muted small">
-                                Marque las casillas de los usuarios que tendrán acceso o gestión sobre este cliente.
-                            </p>
-                            
-                            <div class="border rounded p-3 bg-light style-user-list" style="max-height: 280px; overflow-y: auto;">
-                                {% for choice in form.usuarios %}
-                                    <div class="form-check mb-2">
-                                        {{ choice.tag }}
-                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
-                                            {{ choice.choice_label }}
-                                        </label>
-                                    </div>
-                                {% empty %}
-                                    <p class="text-muted mb-0">No hay usuarios del sistema registrados o activos.</p>
-                                {% endfor %}
-                            </div>
-                            {% if form.usuarios.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.usuarios.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-check-circle"></i> Guardar Cambios
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+<div class="ge-page-header">
+    <div>
+        <h1>Asociar usuarios a cliente</h1>
+        <p>Elegí qué usuarios del sistema tendrán acceso o gestión sobre este cliente.</p>
     </div>
+</div>
+
+<div class="ge-card" style="max-width: 640px;">
+    <div class="alert alert-secondary mb-4">
+        <h6 class="fw-bold mb-2">Cliente seleccionado</h6>
+        <p class="mb-1">
+            <strong>Nombre / razón social:</strong>
+            {% if cliente.tipo_cliente == 'JURIDICA' %}
+                {{ cliente.razon_social }}
+            {% else %}
+                {{ cliente.nombre }} {{ cliente.apellido }}
+            {% endif %}
+        </p>
+        <p class="mb-1"><strong>Identificador (CI/RUC):</strong> {{ cliente.identificador|default:"N/A" }}</p>
+        <p class="mb-0"><strong>Tipo:</strong> {{ cliente.get_tipo_cliente_display }}</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label fw-bold">Usuarios del sistema a vincular</label>
+            <p class="text-muted small">Marcá las casillas de los usuarios que tendrán acceso o gestión sobre este cliente.</p>
+
+            <div class="border rounded p-3" style="max-height: 280px; overflow-y: auto; background: var(--ge-paper);">
+                {% for choice in form.usuarios %}
+                    <div class="form-check mb-2">
+                        {{ choice.tag }}
+                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                            {{ choice.choice_label }}
+                        </label>
+                    </div>
+                {% empty %}
+                    <p class="text-muted mb-0">No hay usuarios del sistema registrados o activos.</p>
+                {% endfor %}
+            </div>
+            {% if form.usuarios.errors %}
+                <div class="text-danger small mt-1">{{ form.usuarios.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle me-1"></i>Guardar cambios
+            </button>
+        </div>
+    </form>
 </div>
 {% endblock %}
