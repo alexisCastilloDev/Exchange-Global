@@ -22,10 +22,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mozilla_django_oidc',
     
-    # Agrega tus aplicaciones aquí:
     'apps.authentication', 
     'apps.clientes',
-    'apps.divisas',       
+    'apps.divisas',
+    'apps.users',
 ]
 
 MIDDLEWARE = [

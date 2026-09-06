@@ -2,6 +2,7 @@ from django.views.generic import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from apps.divisas.models import Divisa
 
+
 class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Divisa
     template_name = 'divisas/tasas_vigentes.html'
@@ -9,14 +10,11 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
     def test_func(self):
         """
-        Control de acceso: Evita el error 403 Forbidden.
-        Permite el acceso si el usuario pertenece al grupo 'Agentes'
-        O si es un superusuario/administrador del sistema.
+        Autorización 100% contra Keycloak (sesión), sin auth.Group.
+        Acceso para 'admin' o para el rol de negocio 'agentes'.
         """
-        es_agente = self.request.user.groups.filter(name='Agentes').exists()
-        es_admin = self.request.user.is_superuser
-
-        return es_agente or es_admin
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'admin' in roles or 'agentes' in roles
 
     def get_queryset(self):
         """
