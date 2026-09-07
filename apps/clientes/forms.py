@@ -98,7 +98,12 @@ class ClienteForm(forms.ModelForm):
 class AsociarUsuarioClienteForm(forms.Form):
     """Formulario independiente para asociar o desasociar Usuarios a un Cliente."""
 
-    usuarios = forms.ModelMultipleChoiceField(
+    class UsuarioModelMultipleChoiceField(forms.ModelMultipleChoiceField):
+        def label_from_instance(self, obj):
+            nombre_completo = f"{obj.first_name} {obj.last_name}".strip()
+            return nombre_completo if nombre_completo else obj.username
+
+    usuarios = UsuarioModelMultipleChoiceField(
         queryset=None,
         widget=forms.CheckboxSelectMultiple,
         required=False,
@@ -107,4 +112,6 @@ class AsociarUsuarioClienteForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['usuarios'].queryset = User.objects.filter(is_active=True)
+        self.fields['usuarios'].queryset = User.objects.filter(
+            is_active=True
+        ).order_by('first_name', 'last_name')
