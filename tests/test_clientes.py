@@ -37,8 +37,8 @@ class TestClienteForm:
         cliente = form.save()
         assert cliente.user.username == '1234567'
 
-    def test_permitir_creacion_cliente_sin_usuario_previo(self):
-        """Criterio: Permite registrar un cliente con documento aunque no exista un usuario asociado."""
+    def test_rechazo_si_no_existe_usuario_con_documento(self):
+        """Criterio: Muestra error si la CI/RUC no pertenece a ningún usuario del sistema."""
         datos = {
             'tipo_cliente': 'FISICA',
             'nombre': 'Carlos',
@@ -48,7 +48,8 @@ class TestClienteForm:
             'segmento': 'ESTANDAR'
         }
         form = ClienteForm(data=datos)
-        assert form.is_valid() is True
+        assert form.is_valid() is False
+        assert 'identificador' in form.errors
 
     def test_registro_persona_juridica_exitoso(self):
         """Criterio: Registra persona jurídica si el RUC coincide con un usuario registrado."""
