@@ -59,13 +59,6 @@ class Cliente(models.Model):
         blank=True
     )
 
-    usuarios = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        blank=True,
-        related_name='clientes_asociados',
-        verbose_name='Usuarios Autorizados',
-    )
-
     tipo_cliente = models.CharField(
         max_length=10, 
         choices=TIPO_CLIENTE_CHOICES, 
