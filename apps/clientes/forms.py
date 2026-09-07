@@ -24,24 +24,17 @@ class ClienteForm(forms.ModelForm):
         ]
 
     def clean_identificador(self):
-        """Valida que exista un usuario en el sistema con el identificador ingresado
+        """Valida únicamente que el identificador/documento no esté registrado
 
-        y que dicho usuario no esté ya asociado a otro perfil de cliente.
+        en otro perfil de cliente. Ya no exige que el usuario exista previamente.
         """
         identificador = self.cleaned_data.get('identificador')
 
         if not identificador:
             return identificador
 
-        # 1. Validar que exista el usuario con ese documento/username
-        usuario = User.objects.filter(username=identificador).first()
-        if not usuario:
-            raise forms.ValidationError(
-                f'No existe ningún usuario registrado con el documento {identificador}.'
-            )
-
-        # 2. Validar que el usuario no esté ya vinculado a otro cliente
-        cliente_existente = Cliente.objects.filter(user=usuario)
+        # 1. Validar unicidad del identificador dentro de la tabla Cliente
+        cliente_existente = Cliente.objects.filter(identificador=identificador)
         if self.instance and self.instance.pk:
             cliente_existente = cliente_existente.exclude(
                 pk=self.instance.pk
@@ -49,7 +42,7 @@ class ClienteForm(forms.ModelForm):
 
         if cliente_existente.exists():
             raise forms.ValidationError(
-                'El usuario con este documento ya posee un perfil de cliente asociado.'
+                'Ya existe un perfil de cliente registrado con este documento/identificador.'
             )
 
         return identificador
@@ -83,7 +76,10 @@ class ClienteForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        """Asigna automáticamente el usuario titular correspondiente al identificador."""
+        """Asigna automáticamente el usuario si ya existe con ese identificador.
+
+        Si no existe, se crea el cliente normalmente sin forzar la vinculación.
+        """
         cliente = super().save(commit=False)
         identificador = self.cleaned_data.get('identificador')
 
