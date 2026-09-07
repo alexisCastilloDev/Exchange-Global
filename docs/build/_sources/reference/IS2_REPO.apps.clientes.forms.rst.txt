@@ -1,0 +1,7 @@
+IS2\_REPO.apps.clientes.forms module
+====================================
+
+.. automodule:: IS2_REPO.apps.clientes.forms
+   :members:
+   :show-inheritance:
+   :undoc-members:

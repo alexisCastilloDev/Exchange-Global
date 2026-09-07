@@ -8,9 +8,11 @@ login, que es el único momento en que Django "aprende" el estado
 actual de roles en Keycloak.
 
 Características:
+
 - verifica email_verified
 - busca usuario por email; si no existe, busca por preferred_username
 - extrae roles desde:
+
     - realm_access.roles
     - claim 'roles' (mapper opcional)
     - resource_access.<client>.roles (client roles)

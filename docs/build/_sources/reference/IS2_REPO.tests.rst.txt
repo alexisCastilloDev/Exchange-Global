@@ -1,0 +1,18 @@
+IS2\_REPO.tests namespace
+=========================
+
+.. py:module:: IS2_REPO.tests
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.tests.test_asociacion_usuarios
+   IS2_REPO.tests.test_auth
+   IS2_REPO.tests.test_clientes
+   IS2_REPO.tests.test_roles
+   IS2_REPO.tests.test_seleccion_cliente
+   IS2_REPO.tests.test_setup
+   IS2_REPO.tests.test_users

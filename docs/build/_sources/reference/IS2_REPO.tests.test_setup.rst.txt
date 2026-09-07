@@ -1,0 +1,7 @@
+IS2\_REPO.tests.test\_setup module
+==================================
+
+.. automodule:: IS2_REPO.tests.test_setup
+   :members:
+   :show-inheritance:
+   :undoc-members:

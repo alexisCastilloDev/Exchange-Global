@@ -1,0 +1,7 @@
+IS2\_REPO.docs.source.conf module
+=================================
+
+.. automodule:: IS2_REPO.docs.source.conf
+   :members:
+   :show-inheritance:
+   :undoc-members:
