@@ -5,10 +5,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from .forms import AsociarUsuarioClienteForm, ClienteForm
 from .models import Cliente
@@ -68,6 +69,7 @@ class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Cliente
     template_name = 'panel_admin.html'
     context_object_name = 'clientes'
+    paginate_by = 10
 
     def get_queryset(self):
         incluir_inactivos = self.request.GET.get('incluir_inactivos') == '1'
@@ -79,12 +81,22 @@ class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         if segmento_seleccionado:
             queryset = queryset.filter(segmento=segmento_seleccionado)
 
-        return queryset.prefetch_related('usuarios')
+        busqueda = self.request.GET.get('q', '').strip()
+        if busqueda:
+            queryset = queryset.filter(
+                Q(nombre__icontains=busqueda)
+                | Q(apellido__icontains=busqueda)
+                | Q(razon_social__icontains=busqueda)
+                | Q(identificador__icontains=busqueda)
+            )
+
+        return queryset.order_by('pk').prefetch_related('usuarios')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['segmentos'] = Cliente.SEGMENTO_CHOICES
         context['segmento_actual'] = self.request.GET.get('segmento', '')
+        context['busqueda'] = self.request.GET.get('q', '').strip()
         context['incluir_inactivos'] = (
             self.request.GET.get('incluir_inactivos') == '1'
         )
@@ -98,6 +110,22 @@ class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         messages.error(
             self.request,
             "No tienes los permisos necesarios para acceder a este panel.",
+        )
+        return redirect('home')
+
+
+class ClienteDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Cliente
+    template_name = 'clientes/cliente_detail.html'
+    context_object_name = 'cliente'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        messages.error(
+            self.request,
+            "No tienes los permisos necesarios para acceder a esta ficha.",
         )
         return redirect('home')
 

@@ -292,6 +292,90 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.segmento == 'VIP'
 
+    def test_listado_clientes_es_paginado_y_muestra_datos_principales(self, client):
+        """El listado administrativo pagina los clientes y muestra sus datos principales."""
+        admin = User.objects.create_user(username='admin_listado', is_staff=True)
+        clientes = [
+            Cliente.objects.create(
+                tipo_cliente='FISICA',
+                nombre=f'Cliente {indice}',
+                apellido='Listado',
+                identificador=f'LIST-{indice}',
+            )
+            for indice in range(1, 12)
+        ]
+        client.force_login(admin)
+
+        response = client.get(reverse('panel_admin'))
+
+        assert response.status_code == 200
+        assert response.context['is_paginated'] is True
+        assert response.context['page_obj'].paginator.count == 11
+        assert len(response.context['clientes']) == 10
+        assert_contains = response.content.decode()
+        assert clientes[0].identificador in assert_contains
+        assert clientes[0].nombre in assert_contains
+
+    def test_busqueda_clientes_por_nombre_ci_y_ruc(self, client):
+        """El buscador encuentra clientes por nombre, CI o RUC."""
+        admin = User.objects.create_user(username='admin_busqueda', is_staff=True)
+        cliente_nombre = Cliente.objects.create(
+            tipo_cliente='FISICA',
+            nombre='LuciaBusqueda',
+            apellido='Gomez',
+            identificador='CI-1001',
+        )
+        cliente_ci = Cliente.objects.create(
+            tipo_cliente='FISICA',
+            nombre='Carlos',
+            apellido='Documento',
+            identificador='CI-2002',
+        )
+        cliente_ruc = Cliente.objects.create(
+            tipo_cliente='JURIDICA',
+            razon_social='EmpresaRucBusqueda',
+            identificador='RUC-3003',
+        )
+        client.force_login(admin)
+
+        for termino, esperado in [
+            ('LuciaBusqueda', cliente_nombre),
+            ('CI-2002', cliente_ci),
+            ('RUC-3003', cliente_ruc),
+        ]:
+            response = client.get(reverse('panel_admin'), {'q': termino})
+            assert response.status_code == 200
+            assert list(response.context['clientes']) == [esperado]
+
+    def test_listado_enlaza_a_ficha_detallada_del_cliente(self, client):
+        """Seleccionar un cliente del listado abre su ficha completa."""
+        admin = User.objects.create_user(username='admin_ficha', is_staff=True)
+        usuario = User.objects.create_user(
+            username='usuario_ficha',
+            email='usuario-ficha@test.com',
+        )
+        cliente = Cliente.objects.create(
+            tipo_cliente='JURIDICA',
+            razon_social='Empresa Ficha',
+            identificador='RUC-FICHA-1',
+            email='empresa-ficha@test.com',
+            segmento='PREMIUM',
+        )
+        cliente.usuarios.add(usuario)
+        client.force_login(admin)
+
+        listado = client.get(reverse('panel_admin'))
+        ficha_url = reverse('cliente_detail', kwargs={'pk': cliente.pk})
+        ficha = client.get(ficha_url)
+
+        assert ficha_url in listado.content.decode()
+        assert ficha.status_code == 200
+        assert ficha.context['cliente'] == cliente
+        assert 'Empresa Ficha' in ficha.content.decode()
+        assert 'RUC-FICHA-1' in ficha.content.decode()
+        assert 'empresa-ficha@test.com' in ficha.content.decode()
+        assert 'usuario_ficha' in ficha.content.decode()
+
     def test_filtrar_listado_clientes_por_segmento(self, client):
         """
         HU GE-8 - Criterio 2:
