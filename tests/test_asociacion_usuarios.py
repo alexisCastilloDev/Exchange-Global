@@ -74,6 +74,24 @@ class AsociacionUsuarioClienteTest(TestCase):
         self.assertContains(response, 'operador1')
         self.assertContains(response, 'operador2')
 
+    def test_ficha_preselecciona_todos_los_usuarios_asociados(self):
+        """La ficha muestra como seleccionados todos los usuarios vinculados."""
+        self.cliente.usuarios.add(self.usuario_1, self.usuario_2)
+
+        url = reverse(
+            'cliente_asociar_usuarios', kwargs={'pk': self.cliente.pk}
+        )
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        usuarios_iniciales = response.context['form'].initial['usuarios']
+        self.assertCountEqual(
+            usuarios_iniciales,
+            [self.usuario_1, self.usuario_2],
+        )
+        self.assertContains(response, 'operador1')
+        self.assertContains(response, 'operador2')
+
     def test_criterio_3_revocar_asociacion_usuario(self):
         """Dado que un cliente tiene usuarios asociados, al desmarcarlo se remueve el acceso."""
         # Inicialmente el cliente tiene 2 usuarios asociados
