@@ -15,9 +15,15 @@
     </div>
 </div>
 
-<!-- Filtros combinados: Segmento (GE-8) y Trazabilidad / Inactivos (GE-63) -->
+<!-- Filtros combinados: búsqueda, segmento y trazabilidad / inactivos -->
 <div class="contenedor-filtro">
     <form method="GET" action="" class="d-flex align-items-center gap-3 flex-wrap mb-0">
+        <div>
+            <label for="q" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Buscar cliente</label>
+            <input type="search" name="q" id="q" value="{{ busqueda }}"
+                   class="form-control" placeholder="Nombre, CI o RUC">
+        </div>
+
         <div>
             <label for="segmento" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Segmento</label>
             <select name="segmento" id="segmento" class="select-segmento" onchange="this.form.submit()">
@@ -39,7 +45,11 @@
             </label>
         </div>
 
-        {% if segmento_actual or incluir_inactivos %}
+        <button type="submit" class="btn btn-primary mt-3">
+            <i class="bi bi-search me-1"></i>Buscar
+        </button>
+
+        {% if busqueda or segmento_actual or incluir_inactivos %}
             <a href="{{ request.path }}" style="font-size: 13px; color: var(--ge-brick);">Limpiar filtros</a>
         {% endif %}
     </form>
@@ -67,9 +77,9 @@
                             <td>{{ cliente.identificador|default:"N/A" }}</td>
                             <td>
                                 {% if cliente.tipo_cliente == 'JURIDICA' %}
-                                    {{ cliente.razon_social }}
+                                    <a href="{% url 'cliente_detail' cliente.pk %}">{{ cliente.razon_social }}</a>
                                 {% else %}
-                                    {{ cliente.nombre }} {{ cliente.apellido }}
+                                    <a href="{% url 'cliente_detail' cliente.pk %}">{{ cliente.nombre }} {{ cliente.apellido }}</a>
                                 {% endif %}
                             </td>
                             <td>{{ cliente.get_tipo_cliente_display }}</td>
@@ -111,6 +121,25 @@
                 </tbody>
             </table>
         </div>
+        {% if is_paginated %}
+            <nav class="p-3" aria-label="Paginación de clientes">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ busqueda|urlencode }}&segmento={{ segmento_actual|urlencode }}&incluir_inactivos={% if incluir_inactivos %}1{% endif %}&page={{ page_obj.previous_page_number }}">Anterior</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ busqueda|urlencode }}&segmento={{ segmento_actual|urlencode }}&incluir_inactivos={% if incluir_inactivos %}1{% endif %}&page={{ page_obj.next_page_number }}">Siguiente</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
     {% else %}
         <div class="p-4 text-center" style="color: var(--ge-text-muted);">
             No se encontraron clientes para la búsqueda o filtro seleccionado.
