@@ -12,15 +12,20 @@ class ClienteActivoMiddleware:
         if request.user.is_authenticated and not request.user.is_staff:
             cliente_id = request.session.get('cliente_activo_id')
             clientes_asociados = request.user.clientes.filter(is_active=True)
+            cliente_activo = None
 
             # Caso 1: El usuario está asociado a un ÚNICO cliente
             if clientes_asociados.count() == 1:
-                request.session['cliente_activo_id'] = (
-                    clientes_asociados.first().pk
-                )
+                cliente_activo = clientes_asociados.first()
+                request.session['cliente_activo_id'] = cliente_activo.pk
 
             # Caso 2: El usuario tiene MÚLTIPLES clientes y aún no ha seleccionado uno
-            elif clientes_asociados.count() > 1 and not cliente_id:
+            elif clientes_asociados.count() > 1:
+                if cliente_id:
+                    cliente_activo = clientes_asociados.filter(
+                        pk=cliente_id
+                    ).first()
+
                 try:
                     path_seleccion = reverse('seleccionar_cliente')
                 except NoReverseMatch:
@@ -36,18 +41,14 @@ class ClienteActivoMiddleware:
                         continue
 
                 # Evitar bucle infinito de redirección
-                if path_seleccion and request.path not in [
-                    path_seleccion,
-                    path_logout,
-                ]:
+                if (
+                    cliente_activo is None
+                    and path_seleccion
+                    and request.path not in [path_seleccion, path_logout]
+                ):
                     return redirect('seleccionar_cliente')
 
             # Cargar el objeto cliente_activo en la request
-            if cliente_id:
-                request.cliente_activo = Cliente.objects.filter(
-                    pk=cliente_id, is_active=True
-                ).first()
-            else:
-                request.cliente_activo = clientes_asociados.first()
+            request.cliente_activo = cliente_activo
 
         return self.get_response(request)

@@ -1,0 +1,7 @@
+IS2\_REPO.global\_exchange.auth module
+======================================
+
+.. automodule:: IS2_REPO.global_exchange.auth
+   :members:
+   :show-inheritance:
+   :undoc-members:
