@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar método de pago - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+  <div>
+    <h1>Eliminar método de pago</h1>
+    <p>Revisa la información antes de confirmar la baja.</p>
+  </div>
+</div>
+
+<div class="ge-card ge-confirm-card">
+    <div class="ge-confirm-card__icon"><i class="bi bi-trash3"></i></div>
+    <div>
+      <span class="ge-eyebrow">Confirmación requerida</span>
+      <h2>¿Eliminar este método?</h2>
+      <p class="mb-2">Se eliminará <strong>{{ metodo }}</strong> de tus medios disponibles.</p>
+      <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+    </div>
+
+      <form method="post" class="ge-form-actions">
+        {% csrf_token %}
+        <a href="{% url 'clientes:metodo_pago_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash3 me-1"></i>Eliminar método</button>
+      </form>
+</div>
+{% endblock %}

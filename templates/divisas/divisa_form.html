@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar divisa{% else %}Nueva divisa{% endif %} - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>{% if object %}Editar divisa{% else %}Registrar nueva divisa{% endif %}</h1>
+        <p>Definí el código ISO, nombre y símbolo de la divisa.</p>
+    </div>
+</div>
+
+<div class="ge-card" style="max-width: 620px;">
+    <form method="post" novalidate class="ge-plain-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        {% for field in form %}
+            <div class="mb-3">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    <div class="form-check">
+                        {{ field }}
+                        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    </div>
+                {% else %}
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                {% endif %}
+                {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+                {% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
+            </div>
+        {% endfor %}
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Guardar</button>
+            <a href="{% url 'divisas:lista_divisas' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

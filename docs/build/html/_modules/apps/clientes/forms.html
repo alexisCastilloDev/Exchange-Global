@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="es" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>apps.clientes.forms &#8212; documentación de Global Exchange - 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Código fuente para apps.clientes.forms</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Módulo de formularios para la aplicación de Clientes.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django</span><span class="w"> </span><span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="c1"># Se agregó MetodoPago a la importación existente</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span><span class="p">,</span> <span class="n">MetodoPago</span>
+
+<span class="n">User</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="ClienteForm">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ClienteForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="c1"># Campo legado: se conserva para aceptar datos históricos, pero no se</span>
+    <span class="c1"># muestra en la interfaz; el correo operativo pertenece al usuario.</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
+<div class="viewcode-block" id="ClienteForm.SegmentoChoiceField">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.SegmentoChoiceField">[documentos]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">SegmentoChoiceField</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Lista los segmentos vigentes y mantiene compatibilidad con datos previos."""</span>
+
+        <span class="n">_alias_historicos</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'ESTANDAR'</span><span class="p">:</span> <span class="s1">'MINORISTA'</span><span class="p">,</span> <span class="s1">'PREMIUM'</span><span class="p">:</span> <span class="s1">'VIP'</span><span class="p">}</span>
+
+<div class="viewcode-block" id="ClienteForm.SegmentoChoiceField.clean">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.SegmentoChoiceField.clean">[documentos]</a>
+        <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_alias_historicos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ClienteForm.SegmentoChoiceField.valid_value">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.SegmentoChoiceField.valid_value">[documentos]</a>
+        <span class="k">def</span><span class="w"> </span><span class="nf">valid_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alias_historicos</span>
+                <span class="ow">or</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">valid_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="p">)</span></div>
+</div>
+
+
+    <span class="n">segmento</span> <span class="o">=</span> <span class="n">SegmentoChoiceField</span><span class="p">(</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">Cliente</span><span class="o">.</span><span class="n">SEGMENTO_CHOICES</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">'Segmento / Categoría'</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="ClienteForm.Meta">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.Meta">[documentos]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">'tipo_cliente'</span><span class="p">,</span>
+            <span class="s1">'identificador'</span><span class="p">,</span>
+            <span class="s1">'nombre'</span><span class="p">,</span>
+            <span class="s1">'apellido'</span><span class="p">,</span>
+            <span class="s1">'razon_social'</span><span class="p">,</span>
+            <span class="s1">'segmento'</span><span class="p">,</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ClienteForm.clean_identificador">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.clean_identificador">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_identificador</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida únicamente que el identificador/documento no esté registrado</span>
+
+<span class="sd">        en otro perfil de cliente. Ya no exige que el usuario exista previamente.</span>
+<span class="sd">        """</span>
+        <span class="n">identificador</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'identificador'</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">identificador</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">identificador</span>
+
+        <span class="c1"># 1. Validar unicidad del identificador dentro de la tabla Cliente</span>
+        <span class="n">cliente_existente</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">identificador</span><span class="o">=</span><span class="n">identificador</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="p">:</span>
+            <span class="n">cliente_existente</span> <span class="o">=</span> <span class="n">cliente_existente</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cliente_existente</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s1">'Ya existe un perfil de cliente registrado con este documento/identificador.'</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">identificador</span></div>
+
+
+<div class="viewcode-block" id="ClienteForm.clean">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.clean">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Validaciones condicionales según el tipo de cliente."""</span>
+        <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="n">tipo_cliente</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo_cliente'</span><span class="p">)</span>
+        <span class="n">nombre</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'nombre'</span><span class="p">)</span>
+        <span class="n">apellido</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'apellido'</span><span class="p">)</span>
+        <span class="n">razon_social</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'razon_social'</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tipo_cliente</span> <span class="o">==</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">TIPO_FISICA</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">nombre</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                    <span class="s1">'nombre'</span><span class="p">,</span> <span class="s1">'El nombre es obligatorio para personas físicas.'</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">apellido</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                    <span class="s1">'apellido'</span><span class="p">,</span>
+                    <span class="s1">'El apellido es obligatorio para personas físicas.'</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">tipo_cliente</span> <span class="o">==</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">TIPO_JURIDICA</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">razon_social</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
+                    <span class="s1">'razon_social'</span><span class="p">,</span>
+                    <span class="s1">'La razón social es obligatoria para personas jurídicas.'</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cleaned_data</span></div>
+
+
+<div class="viewcode-block" id="ClienteForm.save">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.save">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Asigna automáticamente el usuario si ya existe con ese identificador.</span>
+
+<span class="sd">        Si no existe, se crea el cliente normalmente sin forzar la vinculación.</span>
+<span class="sd">        """</span>
+        <span class="n">cliente</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">commit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">identificador</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'identificador'</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">identificador</span><span class="p">:</span>
+            <span class="n">usuario</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="n">identificador</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">usuario</span><span class="p">:</span>
+                <span class="n">cliente</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">usuario</span>
+
+        <span class="k">if</span> <span class="n">commit</span><span class="p">:</span>
+            <span class="n">cliente</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_m2m</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">cliente</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AsociarUsuarioClienteForm">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AsociarUsuarioClienteForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Formulario independiente para asociar o desasociar Usuarios a un Cliente."""</span>
+
+<div class="viewcode-block" id="AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField">[documentos]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">UsuarioModelMultipleChoiceField</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelMultipleChoiceField</span><span class="p">):</span>
+<div class="viewcode-block" id="AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField.label_from_instance">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField.label_from_instance">[documentos]</a>
+        <span class="k">def</span><span class="w"> </span><span class="nf">label_from_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+            <span class="n">nombre_completo</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="n">first_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="n">last_name</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">nombre_completo</span> <span class="k">if</span> <span class="n">nombre_completo</span> <span class="k">else</span> <span class="n">obj</span><span class="o">.</span><span class="n">username</span></div>
+</div>
+
+
+    <span class="n">usuarios</span> <span class="o">=</span> <span class="n">UsuarioModelMultipleChoiceField</span><span class="p">(</span>
+        <span class="n">queryset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">CheckboxSelectMultiple</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"Usuarios del Sistema"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">usuarios_cliente</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># Los roles son gestionados exclusivamente por Keycloak. La vista</span>
+        <span class="c1"># entrega los IDs sincronizados que poseen el rol de negocio cliente.</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">usuarios_cliente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk__in</span><span class="o">=</span><span class="n">usuarios_cliente</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'usuarios'</span><span class="p">]</span><span class="o">.</span><span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span>
+            <span class="s1">'first_name'</span><span class="p">,</span> <span class="s1">'last_name'</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># FORMULARIOS PARA GE-19: Gestión de métodos de pago</span>
+<span class="c1"># ==============================================================================</span>
+
+<div class="viewcode-block" id="MetodoPagoForm">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetodoPagoForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Formulario para la creación y edición de métodos de pago del cliente.</span>
+<span class="sd">    Realiza validaciones condicionales de acuerdo al tipo de medio de pago seleccionado.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="MetodoPagoForm.Meta">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.Meta">[documentos]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">MetodoPago</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">'tipo_medio'</span><span class="p">,</span>
+            <span class="s1">'nombre_titular'</span><span class="p">,</span>
+            <span class="s1">'entidad_financiera'</span><span class="p">,</span>
+            <span class="s1">'numero_cuenta'</span><span class="p">,</span>
+            <span class="s1">'tipo_cuenta'</span><span class="p">,</span>
+            <span class="s1">'ultimos_4_digitos'</span><span class="p">,</span>
+            <span class="s1">'es_predeterminado'</span>
+        <span class="p">]</span>
+        <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'tipo_medio'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-select'</span><span class="p">,</span> <span class="s1">'id'</span><span class="p">:</span> <span class="s1">'id_tipo_medio'</span><span class="p">}),</span>
+            <span class="s1">'nombre_titular'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
+            <span class="s1">'entidad_financiera'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
+            <span class="s1">'numero_cuenta'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
+            <span class="s1">'tipo_cuenta'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-select'</span><span class="p">}),</span>
+            <span class="s1">'ultimos_4_digitos'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">,</span> <span class="s1">'maxlength'</span><span class="p">:</span> <span class="s1">'4'</span><span class="p">}),</span>
+            <span class="s1">'es_predeterminado'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-check-input'</span><span class="p">}),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="MetodoPagoForm.clean">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.clean">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Valida que se ingresen los campos obligatorios correspondientes a cada tipo de pago (Criterio 2).</span>
+<span class="sd">        """</span>
+        <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="n">tipo_medio</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo_medio'</span><span class="p">)</span>
+        <span class="n">numero_cuenta</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'numero_cuenta'</span><span class="p">)</span>
+        <span class="n">tipo_cuenta</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo_cuenta'</span><span class="p">)</span>
+        <span class="n">ultimos_4_digitos</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ultimos_4_digitos'</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tipo_medio</span> <span class="o">==</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TRANSFERENCIA</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">numero_cuenta</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'numero_cuenta'</span><span class="p">,</span> <span class="s1">'El número de cuenta es obligatorio para transferencias bancarias.'</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tipo_cuenta</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'tipo_cuenta'</span><span class="p">,</span> <span class="s1">'Debe seleccionar el tipo de cuenta.'</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">tipo_medio</span> <span class="o">==</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ultimos_4_digitos</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'ultimos_4_digitos'</span><span class="p">,</span> <span class="s1">'Debe ingresar los últimos 4 dígitos de la tarjeta.'</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">ultimos_4_digitos</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">ultimos_4_digitos</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'ultimos_4_digitos'</span><span class="p">,</span> <span class="s1">'Debe ingresar exactamente 4 dígitos numéricos.'</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cleaned_data</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">IS2_REPO</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Código de módulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Equipo 11.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Administración de divisas - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Administración de divisas</h1>
+        <p>Definí las monedas disponibles para las operaciones de Global Exchange.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'divisas:historial_bajas' %}" class="btn btn-secondary"><i class="bi bi-clock-history me-1"></i>Historial de bajas</a>
+        <a href="{% url 'divisas:crear_divisa' %}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Nueva divisa</a>
+    </div>
+</div>
+
+<div class="ge-card p-0">
+    <div class="ge-card__header">
+        <h2>Catálogo de divisas</h2>
+        <span class="badge bg-secondary">{{ divisas|length }} registradas</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr><th>Código ISO</th><th>Nombre</th><th>Símbolo</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                {% for divisa in divisas %}
+                <tr>
+                    <td><strong>{{ divisa.codigo }}</strong></td>
+                    <td>{{ divisa.nombre }}</td>
+                    <td>{{ divisa.simbolo }}</td>
+                    <td>{% if divisa.activa %}<span class="badge-activo">Activo</span>{% else %}<span class="badge-inactivo">Inactivo</span>{% endif %}</td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'divisas:editar_divisa' divisa.pk %}" class="btn btn-sm btn-secondary"><i class="bi bi-pencil me-1"></i>Editar</a>
+                        {% if divisa.activa %}<a href="{% url 'divisas:baja_divisa' divisa.pk %}" class="btn btn-sm btn-danger">Dar de baja</a>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4 text-muted">No hay divisas registradas en el catálogo.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html lang="es" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>apps.authentication.backends &#8212; documentación de Global Exchange - 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Código fuente para apps.authentication.backends</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Backend OIDC para Keycloak -&gt; autenticación Y autorización 100% en Keycloak.</span>
+
+<span class="sd">Los roles del usuario se guardan tal cual llegan del token en</span>
+<span class="sd">`request.session['keycloak_roles']`, sin persistir nada en las tablas</span>
+<span class="sd">auth.Group / auth.Permission de Django. La sesión se refresca en cada</span>
+<span class="sd">login, que es el único momento en que Django "aprende" el estado</span>
+<span class="sd">actual de roles en Keycloak.</span>
+
+<span class="sd">Características:</span>
+
+<span class="sd">- verifica email_verified</span>
+<span class="sd">- busca usuario por email; si no existe, busca por preferred_username</span>
+<span class="sd">- extrae roles desde:</span>
+
+<span class="sd">    - realm_access.roles</span>
+<span class="sd">    - claim 'roles' (mapper opcional)</span>
+<span class="sd">    - resource_access.&lt;client&gt;.roles (client roles)</span>
+<span class="sd">- marca is_staff True sólo si 'admin' está presente (útil para /admin/)</span>
+<span class="sd">- NO usa is_superuser (por seguridad)</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mozilla_django_oidc.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">OIDCAuthenticationBackend</span>
+
+<span class="c1"># Roles técnicos que Keycloak agrega solo a todo usuario y que NO</span>
+<span class="c1"># representan un permiso de negocio real.</span>
+<span class="n">ROLES_TECNICOS_EXCLUIDOS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'offline_access'</span><span class="p">,</span>
+    <span class="s1">'uma_authorization'</span><span class="p">,</span>
+    <span class="s1">'default-roles-global'</span><span class="p">,</span>  <span class="c1"># ajustar si el realm no se llama "global"</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="es_rol_tecnico">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.es_rol_tecnico">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">rol</span> <span class="ow">in</span> <span class="n">ROLES_TECNICOS_EXCLUIDOS</span> <span class="ow">or</span> <span class="n">rol</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'default-roles-'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeycloakOIDCAuthenticationBackend</span><span class="p">(</span><span class="n">OIDCAuthenticationBackend</span><span class="p">):</span>
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.verify_claims">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.verify_claims">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_claims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Verifica claims basales y que el email esté verificado.</span>
+<span class="sd">        """</span>
+        <span class="n">claims_verified</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">verify_claims</span><span class="p">(</span><span class="n">claims</span><span class="p">)</span>
+        <span class="n">email_verified</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email_verified'</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">claims_verified</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">email_verified</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.filter_users_by_claims">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.filter_users_by_claims">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_users_by_claims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Localiza usuarios existentes:</span>
+<span class="sd">         - primero por email (insensible a mayúsculas),</span>
+<span class="sd">         - fallback a preferred_username si no hay email.</span>
+<span class="sd">        """</span>
+        <span class="n">email</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">email</span><span class="p">:</span>
+            <span class="n">users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email__iexact</span><span class="o">=</span><span class="n">email</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">users</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">users</span>
+
+        <span class="n">preferred</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'preferred_username'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">preferred</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">username__iexact</span><span class="o">=</span><span class="n">preferred</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.create_user">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.create_user">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="n">claims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_user_claims</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user</span></div>
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.update_user">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_user_claims</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user</span></div>
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.update_user_claims">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user_claims">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_user_claims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Actualiza datos básicos y guarda los roles en la sesión.</span>
+<span class="sd">        Soporta roles en realm_access, en claim 'roles' y en resource_access.</span>
+<span class="sd">        """</span>
+        <span class="n">given</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'given_name'</span><span class="p">)</span>
+        <span class="n">family</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'family_name'</span><span class="p">)</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">given</span> <span class="ow">and</span> <span class="n">user</span><span class="o">.</span><span class="n">first_name</span> <span class="o">!=</span> <span class="n">given</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">first_name</span> <span class="o">=</span> <span class="n">given</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">family</span> <span class="ow">and</span> <span class="n">user</span><span class="o">.</span><span class="n">last_name</span> <span class="o">!=</span> <span class="n">family</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">last_name</span> <span class="o">=</span> <span class="n">family</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># 1) roles en realm_access</span>
+        <span class="n">realm_access</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'realm_access'</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">roles_realm</span> <span class="o">=</span> <span class="n">realm_access</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]</span>
+
+        <span class="c1"># 2) roles en claim 'roles' (mapper personalizado)</span>
+        <span class="n">roles_custom</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">roles_custom</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">roles_custom</span> <span class="o">=</span> <span class="p">[</span><span class="n">roles_custom</span><span class="p">]</span>
+
+        <span class="c1"># 3) roles en resource_access (client roles)</span>
+        <span class="n">resource_access</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'resource_access'</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">client_roles</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_access</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">client_info</span> <span class="ow">in</span> <span class="n">resource_access</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="n">client_roles</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">client_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[])</span>
+
+        <span class="c1"># Consolidar y excluir roles técnicos de Keycloak</span>
+        <span class="n">roles_keycloak</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles_realm</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles_custom</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">client_roles</span><span class="p">)</span>
+        <span class="n">roles_negocio</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">rol</span> <span class="k">for</span> <span class="n">rol</span> <span class="ow">in</span> <span class="n">roles_keycloak</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># is_staff para acceder al admin site (no sustituye autorización)</span>
+        <span class="n">is_staff_value</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles_negocio</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="o">!=</span> <span class="n">is_staff_value</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="o">=</span> <span class="n">is_staff_value</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Nunca permitir is_superuser por token</span>
+        <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">changed</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'first_name'</span><span class="p">,</span> <span class="s1">'last_name'</span><span class="p">,</span> <span class="s1">'is_staff'</span><span class="p">,</span> <span class="s1">'is_superuser'</span><span class="p">])</span>
+
+        <span class="c1"># Única fuente de autorización: la sesión, no auth.Group.</span>
+        <span class="c1"># Usa el request explícito si lo pasan (tests); si no, el de la</span>
+        <span class="c1"># instancia que setea mozilla_django_oidc durante authenticate() real.</span>
+        <span class="n">effective_request</span> <span class="o">=</span> <span class="n">request</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'request'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">effective_request</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">effective_request</span><span class="p">,</span> <span class="s1">'session'</span><span class="p">):</span>
+            <span class="n">effective_request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'keycloak_roles'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">roles_negocio</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">IS2_REPO</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Código de módulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Equipo 11.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

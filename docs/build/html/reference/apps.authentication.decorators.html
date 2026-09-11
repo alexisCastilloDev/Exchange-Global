@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+
+<html lang="es" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>apps.authentication.decorators module &#8212; documentación de Global Exchange - 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.authentication.models module" href="apps.authentication.models.html" />
+    <link rel="prev" title="apps.authentication.context_processors module" href="apps.authentication.context_processors.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-apps.authentication.decorators">
+<span id="apps-authentication-decorators-module"></span><h1>apps.authentication.decorators module<a class="headerlink" href="#module-apps.authentication.decorators" title="Link to this heading">¶</a></h1>
+<p>Decorador para proteger vistas según el rol de Keycloak requerido.</p>
+<p>La autorización es 100% de Keycloak: no se consulta auth.Group ni
+auth.Permission. El rol efectivo del usuario está en
+<cite>request.session[“keycloak_roles”]</cite>, cargado ahí por
+KeycloakOIDCAuthenticationBackend en cada login.</p>
+<p>Como el chequeo es contra la sesión (no contra la base de datos), un
+cambio de rol en Keycloak recién se refleja cuando el usuario vuelve a
+loguearse — no hay forma de «empujar» el cambio a una sesión activa,
+ya que Django no tiene ninguna copia propia del rol para actualizar.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.authentication.decorators.requiere_permiso">
+<span class="sig-prename descclassname"><span class="pre">apps.authentication.decorators.</span></span><span class="sig-name descname"><span class="pre">requiere_permiso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">codigo_recurso</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/decorators.html#requiere_permiso"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.decorators.requiere_permiso" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.authentication.decorators.requiere_rol">
+<span class="sig-prename descclassname"><span class="pre">apps.authentication.decorators.</span></span><span class="sig-name descname"><span class="pre">requiere_rol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rol_requerido</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/decorators.html#requiere_rol"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.decorators.requiere_rol" title="Link to this definition">¶</a></dt>
+<dd><p>Protege una vista por rol, permitiendo también el rol global <code class="docutils literal notranslate"><span class="pre">admin</span></code>.</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">IS2_REPO</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">IS2_REPO</a><ul>
+  <li><a href="apps.html">apps package</a><ul>
+  <li><a href="apps.authentication.html">apps.authentication package</a><ul>
+      <li>Previous: <a href="apps.authentication.context_processors.html" title="capítulo anterior">apps.authentication.context_processors module</a></li>
+      <li>Next: <a href="apps.authentication.models.html" title="próximo capítulo">apps.authentication.models module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Equipo 11.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/reference/apps.authentication.decorators.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html lang="es" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>apps.divisas.views &#8212; documentación de Global Exchange - 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Código fuente para apps.divisas.views</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span><span class="p">,</span> <span class="n">ROUND_HALF_UP</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span><span class="p">,</span> <span class="n">reverse_lazy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">View</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">CreateView</span><span class="p">,</span> <span class="n">ListView</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">,</span> <span class="n">UpdateView</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">CausaBajaForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistorialBaja</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">CotizacionForm</span><span class="p">,</span> <span class="n">DivisaForm</span><span class="p">,</span> <span class="n">SimulacionDivisasForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cotizacion</span><span class="p">,</span> <span class="n">Divisa</span>
+
+
+<div class="viewcode-block" id="TasasVigentesListView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TasasVigentesListView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Divisa</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/tasas_vigentes.html'</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'divisas'</span>
+
+<div class="viewcode-block" id="TasasVigentesListView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Autorización contra Keycloak: acceso para administración, analista cambiario,</span>
+<span class="sd">        cliente o agente.</span>
+<span class="sd">        """</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'agente'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="TasasVigentesListView.get_queryset">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.get_queryset">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Criterio de Aceptación 4: Las divisas inactivas no se muestran.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ActualizarCotizacionView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ActualizarCotizacionView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">UpdateView</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Cotizacion</span>
+    <span class="n">form_class</span> <span class="o">=</span> <span class="n">CotizacionForm</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/cotizacion_form.html'</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'cotizacion'</span>
+    <span class="n">success_url</span> <span class="o">=</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:tasas_vigentes'</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ActualizarCotizacionView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ActualizarCotizacionView.get_object">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_object">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span>
+            <span class="n">Divisa</span><span class="p">,</span>
+            <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'divisa_id'</span><span class="p">],</span>
+            <span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Cotizacion</span><span class="p">(</span><span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ActualizarCotizacionView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">divisa</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+
+
+<div class="viewcode-block" id="ActualizarCotizacionView.form_valid">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.form_valid">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">form_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">):</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">divisa</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">divisa</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">usuario</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">form_valid</span><span class="p">(</span><span class="n">form</span><span class="p">)</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s1">'Cotización de </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> actualizada correctamente.'</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:tasas_vigentes'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HistorialCotizacionesView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HistorialCotizacionesView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra cada cambio registrado para las tasas de una divisa."""</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Cotizacion</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/historial_cotizaciones.html'</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'cotizaciones'</span>
+
+<div class="viewcode-block" id="HistorialCotizacionesView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="HistorialCotizacionesView.dispatch">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.dispatch">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'divisa_id'</span><span class="p">])</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HistorialCotizacionesView.get_queryset">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_queryset">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">cotizaciones</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HistorialCotizacionesView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SimulacionDivisasView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SimulacionDivisasView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/simulacion_divisas.html'</span>
+
+<div class="viewcode-block" id="SimulacionDivisasView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'agente'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SimulacionDivisasView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'divisas'</span><span class="p">]</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'form'</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimulacionDivisasForm</span><span class="p">()</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'resultado'</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+
+
+<div class="viewcode-block" id="SimulacionDivisasView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">SimulacionDivisasForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">divisas</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">origen</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa_origen'</span><span class="p">]</span>
+            <span class="n">destino</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa_destino'</span><span class="p">]</span>
+            <span class="n">monto</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">get_cotizacion</span><span class="p">(</span><span class="n">divisa</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">divisa</span><span class="p">,</span> <span class="s1">'codigo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'PYG'</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="s1">'CotizacionPYG'</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{</span><span class="s1">'tasa_compra'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'1.00'</span><span class="p">),</span> <span class="s1">'tasa_venta'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'1.00'</span><span class="p">)})()</span>
+                <span class="n">cotizacion</span> <span class="o">=</span> <span class="n">divisa</span><span class="o">.</span><span class="n">ultima_cotizacion</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">cotizacion</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'La divisa </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> no tiene tasa disponible.'</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">cotizacion</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cotizacion_origen</span> <span class="o">=</span> <span class="n">get_cotizacion</span><span class="p">(</span><span class="n">origen</span><span class="p">)</span>
+                <span class="n">cotizacion_destino</span> <span class="o">=</span> <span class="n">get_cotizacion</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">({</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'divisas'</span><span class="p">:</span> <span class="n">divisas</span><span class="p">,</span> <span class="s1">'resultado'</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+
+            <span class="n">tasa_origen</span> <span class="o">=</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">))</span>
+            <span class="n">tasa_destino</span> <span class="o">=</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">))</span>
+            <span class="n">tasa_aplicada</span> <span class="o">=</span> <span class="n">tasa_origen</span> <span class="o">/</span> <span class="n">tasa_destino</span>
+            <span class="n">monto_final</span> <span class="o">=</span> <span class="p">(</span><span class="n">monto</span> <span class="o">*</span> <span class="n">tasa_aplicada</span><span class="p">)</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.01'</span><span class="p">),</span> <span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span><span class="p">)</span>
+
+            <span class="n">context</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span>
+                <span class="s1">'divisas'</span><span class="p">:</span> <span class="n">divisas</span><span class="p">,</span>
+                <span class="s1">'resultado'</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">'monto_origen'</span><span class="p">:</span> <span class="n">monto</span><span class="p">,</span>
+                    <span class="s1">'divisa_origen'</span><span class="p">:</span> <span class="n">origen</span><span class="p">,</span>
+                    <span class="s1">'divisa_destino'</span><span class="p">:</span> <span class="n">destino</span><span class="p">,</span>
+                    <span class="s1">'tasa_aplicada'</span><span class="p">:</span> <span class="n">tasa_aplicada</span><span class="p">,</span>
+                    <span class="s1">'monto_final'</span><span class="p">:</span> <span class="n">monto_final</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">({</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'divisas'</span><span class="p">:</span> <span class="n">divisas</span><span class="p">,</span> <span class="s1">'resultado'</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AdminDivisasMixin">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdminDivisasMixin</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Control de acceso: solo administradores (rol 'admin' en Keycloak)."""</span>
+<div class="viewcode-block" id="AdminDivisasMixin.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DivisaListView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaListView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DivisaListView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Divisa</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/divisa_list.html'</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'divisas'</span>
+    <span class="n">ordering</span> <span class="o">=</span> <span class="s1">'codigo'</span></div>
+
+
+
+<div class="viewcode-block" id="DivisaCreateView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaCreateView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DivisaCreateView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">CreateView</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Divisa</span>
+    <span class="n">form_class</span> <span class="o">=</span> <span class="n">DivisaForm</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/divisa_form.html'</span>
+    <span class="n">success_url</span> <span class="o">=</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DivisaCreateView.form_valid">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaCreateView.form_valid">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">form_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">):</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">activa</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">form_valid</span><span class="p">(</span><span class="n">form</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DivisaUpdateView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaUpdateView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DivisaUpdateView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">UpdateView</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Divisa</span>
+    <span class="n">form_class</span> <span class="o">=</span> <span class="n">DivisaForm</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/divisa_form.html'</span>
+    <span class="n">success_url</span> <span class="o">=</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DivisaSoftDeleteView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DivisaSoftDeleteView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<div class="viewcode-block" id="DivisaSoftDeleteView.get">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span>
+            <span class="s1">'bajas/confirmar_baja.html'</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s1">'form'</span><span class="p">:</span> <span class="n">CausaBajaForm</span><span class="p">(),</span>
+                <span class="s1">'recurso_tipo'</span><span class="p">:</span> <span class="s1">'divisa'</span><span class="p">,</span>
+                <span class="s1">'recurso_nombre'</span><span class="p">:</span> <span class="n">divisa</span><span class="p">,</span>
+                <span class="s1">'cancelar_url'</span><span class="p">:</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DivisaSoftDeleteView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CausaBajaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'bajas/confirmar_baja.html'</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span>
+                    <span class="s1">'recurso_tipo'</span><span class="p">:</span> <span class="s1">'divisa'</span><span class="p">,</span>
+                    <span class="s1">'recurso_nombre'</span><span class="p">:</span> <span class="n">divisa</span><span class="p">,</span>
+                    <span class="s1">'cancelar_url'</span><span class="p">:</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">),</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">divisa</span><span class="o">.</span><span class="n">activa</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'La divisa ya se encontraba inactiva.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">)</span>
+        <span class="n">divisa</span><span class="o">.</span><span class="n">activa</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">divisa</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'activa'</span><span class="p">])</span>
+        <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_DIVISA</span><span class="p">,</span>
+            <span class="n">recurso_id</span><span class="o">=</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="n">recurso_nombre</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="p">),</span>
+            <span class="n">causa</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'causa'</span><span class="p">],</span>
+            <span class="n">realizado_por</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'La divisa </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> fue dada de baja.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DivisaHistorialBajasView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaHistorialBajasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DivisaHistorialBajasView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">HistorialBaja</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'bajas/historial_bajas.html'</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'registros'</span>
+
+<div class="viewcode-block" id="DivisaHistorialBajasView.get_queryset">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaHistorialBajasView.get_queryset">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_DIVISA</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'realizado_por'</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DivisaHistorialBajasView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaHistorialBajasView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'titulo'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Historial de bajas de divisas'</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'volver_url'</span><span class="p">]</span> <span class="o">=</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">IS2_REPO</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Código de módulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Equipo 11.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

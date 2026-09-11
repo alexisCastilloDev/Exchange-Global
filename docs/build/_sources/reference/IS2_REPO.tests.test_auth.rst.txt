@@ -1,0 +1,7 @@
+IS2\_REPO.tests.test\_auth module
+=================================
+
+.. automodule:: IS2_REPO.tests.test_auth
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html lang="es" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>apps.authentication.backends module &#8212; documentación de Global Exchange - 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.authentication.context_processors module" href="apps.authentication.context_processors.html" />
+    <link rel="prev" title="apps.authentication.apps module" href="apps.authentication.apps.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-apps.authentication.backends">
+<span id="apps-authentication-backends-module"></span><h1>apps.authentication.backends module<a class="headerlink" href="#module-apps.authentication.backends" title="Link to this heading">¶</a></h1>
+<p>Backend OIDC para Keycloak -&gt; autenticación Y autorización 100% en Keycloak.</p>
+<p>Los roles del usuario se guardan tal cual llegan del token en
+<cite>request.session[“keycloak_roles”]</cite>, sin persistir nada en las tablas
+auth.Group / auth.Permission de Django. La sesión se refresca en cada
+login, que es el único momento en que Django «aprende» el estado
+actual de roles en Keycloak.</p>
+<p>Características:</p>
+<ul>
+<li><p>verifica email_verified</p></li>
+<li><p>busca usuario por email; si no existe, busca por preferred_username</p></li>
+<li><p>extrae roles desde:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>realm_access.roles</p></li>
+<li><p>claim “roles” (mapper opcional)</p></li>
+<li><p>resource_access.&lt;client&gt;.roles (client roles)</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>marca is_staff True sólo si “admin” está presente (útil para /admin/)</p></li>
+<li><p>NO usa is_superuser (por seguridad)</p></li>
+</ul>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.authentication.backends.KeycloakOIDCAuthenticationBackend">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.authentication.backends.</span></span><span class="sig-name descname"><span class="pre">KeycloakOIDCAuthenticationBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/backends.html#KeycloakOIDCAuthenticationBackend"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.backends.KeycloakOIDCAuthenticationBackend" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OIDCAuthenticationBackend</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.authentication.backends.KeycloakOIDCAuthenticationBackend.create_user">
+<span class="sig-name descname"><span class="pre">create_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claims</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/backends.html#KeycloakOIDCAuthenticationBackend.create_user"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.create_user" title="Link to this definition">¶</a></dt>
+<dd><p>Return object for a newly created user account.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.authentication.backends.KeycloakOIDCAuthenticationBackend.filter_users_by_claims">
+<span class="sig-name descname"><span class="pre">filter_users_by_claims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claims</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/backends.html#KeycloakOIDCAuthenticationBackend.filter_users_by_claims"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.filter_users_by_claims" title="Link to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Localiza usuarios existentes:</dt><dd><ul class="simple">
+<li><p>primero por email (insensible a mayúsculas),</p></li>
+<li><p>fallback a preferred_username si no hay email.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user">
+<span class="sig-name descname"><span class="pre">update_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">claims</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/backends.html#KeycloakOIDCAuthenticationBackend.update_user"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user" title="Link to this definition">¶</a></dt>
+<dd><p>Update existing user with new claims, if necessary save, and return user</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user_claims">
+<span class="sig-name descname"><span class="pre">update_user_claims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">claims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/backends.html#KeycloakOIDCAuthenticationBackend.update_user_claims"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user_claims" title="Link to this definition">¶</a></dt>
+<dd><p>Actualiza datos básicos y guarda los roles en la sesión.
+Soporta roles en realm_access, en claim “roles” y en resource_access.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.authentication.backends.KeycloakOIDCAuthenticationBackend.verify_claims">
+<span class="sig-name descname"><span class="pre">verify_claims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claims</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/backends.html#KeycloakOIDCAuthenticationBackend.verify_claims"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.verify_claims" title="Link to this definition">¶</a></dt>
+<dd><p>Verifica claims basales y que el email esté verificado.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.authentication.backends.es_rol_tecnico">
+<span class="sig-prename descclassname"><span class="pre">apps.authentication.backends.</span></span><span class="sig-name descname"><span class="pre">es_rol_tecnico</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/backends.html#es_rol_tecnico"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.backends.es_rol_tecnico" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">IS2_REPO</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">IS2_REPO</a><ul>
+  <li><a href="apps.html">apps package</a><ul>
+  <li><a href="apps.authentication.html">apps.authentication package</a><ul>
+      <li>Previous: <a href="apps.authentication.apps.html" title="capítulo anterior">apps.authentication.apps module</a></li>
+      <li>Next: <a href="apps.authentication.context_processors.html" title="próximo capítulo">apps.authentication.context_processors module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Equipo 11.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/reference/apps.authentication.backends.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

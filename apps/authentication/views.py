@@ -26,6 +26,9 @@ class CustomOIDCCallbackView(OIDCAuthenticationCallbackView):
     def login_success(self):
         response = super().login_success()
         user = self.request.user
+        roles = self.request.session.get('keycloak_roles', [])
         if user.is_staff:
             return redirect(reverse('panel_admin'))
+        if 'analista_cambiario' in roles:
+            return redirect(reverse('divisas:tasas_vigentes'))
         return redirect(reverse('home'))

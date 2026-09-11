@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Tasas vigentes - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Tasas vigentes</h1>
+        <p>Consultá las tasas de compra y venta vigentes para operar.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge-activo"><i class="bi bi-shield-check me-1"></i>{% if puede_administrar_divisas %}Acceso administrador{% elif puede_actualizar_tasas %}Acceso analista cambiario{% else %}Acceso cliente{% endif %}</span>
+        {% if puede_administrar_divisas %}
+            <a href="{% url 'divisas:crear_divisa' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>Nueva divisa
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="ge-card p-0">
+    <div class="ge-card__header">
+        <div>
+            <p class="mb-0 text-muted">Última cotización disponible por divisa activa.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-secondary">{{ divisas|length }} activas</span>
+            <a href="{% url 'divisas:simulacion_divisas' %}" class="btn btn-outline-primary btn-sm">Simulador</a>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Divisa</th>
+                    <th>Tasa de compra</th>
+                    <th>Tasa de venta</th>
+                    <th>Última actualización</th>
+                    {% if puede_actualizar_tasas %}<th>Acciones</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for divisa in divisas %}
+                <tr>
+                    <td><strong>{{ divisa.codigo }}</strong> <span class="text-muted">{{ divisa.nombre }}</span></td>
+                    {% if divisa.ultima_cotizacion %}
+                        <td class="ge-num">{{ divisa.ultima_cotizacion.tasa_compra }}</td>
+                        <td class="ge-num">{{ divisa.ultima_cotizacion.tasa_venta }}</td>
+                        <td>
+                            {{ divisa.ultima_cotizacion.fecha_actualizacion|date:"d/m/Y H:i" }}
+                            {% if divisa.ultima_cotizacion.usuario %}
+                                <small class="d-block text-muted">por {{ divisa.ultima_cotizacion.usuario.get_full_name|default:divisa.ultima_cotizacion.usuario.username }}</small>
+                            {% endif %}
+                        </td>
+                    {% else %}
+                        <td colspan="2" class="text-muted">sin cotización</td>
+                        <td class="text-muted">-</td>
+                    {% endif %}
+                    {% if puede_actualizar_tasas %}
+                        <td class="text-nowrap">
+                            <a href="{% url 'divisas:actualizar_cotizacion' divisa.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-arrow-repeat me-1"></i>Actualizar</a>
+                            <a href="{% url 'divisas:historial_cotizaciones' divisa.pk %}" class="btn btn-sm btn-secondary">Historial</a>
+                        </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if puede_actualizar_tasas %}5{% else %}4{% endif %}" class="text-center py-4 text-muted">No hay divisas activas registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if puede_administrar_divisas %}
+        <div class="px-3 pb-3">
+            <a href="{% url 'divisas:lista_divisas' %}" class="btn btn-secondary">
+                <i class="bi bi-list-ul me-1"></i>Ver catálogo administrativo
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

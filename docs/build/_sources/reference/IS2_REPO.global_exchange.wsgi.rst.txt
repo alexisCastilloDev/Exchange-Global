@@ -1,0 +1,7 @@
+IS2\_REPO.global\_exchange.wsgi module
+======================================
+
+.. automodule:: IS2_REPO.global_exchange.wsgi
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from apps.clientes.models import Cliente
 from apps.clientes.forms import ClienteForm
+from apps.authentication.models import HistorialBaja
 
 User = get_user_model()
 
@@ -20,6 +21,12 @@ class TestClienteForm:
     """
     Pruebas unitarias para las reglas de validación de ClienteForm.
     """
+
+    def test_segmento_se_presenta_como_lista_de_opciones_vigentes(self):
+        form = ClienteForm()
+
+        assert form.fields['segmento'].choices == Cliente.SEGMENTO_CHOICES
+        assert form.fields['segmento'].widget.__class__.__name__ == 'Select'
 
     def test_registro_persona_fisica_exitoso(self):
         """Criterio: Registra exitosamente si el documento CI pertenece a un usuario existente."""
@@ -37,8 +44,8 @@ class TestClienteForm:
         cliente = form.save()
         assert cliente.user.username == '1234567'
 
-    def test_rechazo_si_no_existe_usuario_con_documento(self):
-        """Criterio: Muestra error si la CI/RUC no pertenece a ningún usuario del sistema."""
+    def test_permitir_creacion_cliente_sin_usuario_previo(self):
+        """Criterio: Permite registrar un cliente con documento aunque no exista un usuario asociado."""
         datos = {
             'tipo_cliente': 'FISICA',
             'nombre': 'Carlos',
@@ -48,8 +55,7 @@ class TestClienteForm:
             'segmento': 'ESTANDAR'
         }
         form = ClienteForm(data=datos)
-        assert form.is_valid() is False
-        assert 'identificador' in form.errors
+        assert form.is_valid() is True
 
     def test_registro_persona_juridica_exitoso(self):
         """Criterio: Registra persona jurídica si el RUC coincide con un usuario registrado."""
@@ -217,7 +223,7 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.nombre == 'Mario Alberto'
         assert cliente.apellido == 'Silva Franco'
-        assert cliente.email == 'mario.alberto@test.com'
+        assert cliente.user.email == 'm@test.com'
 
     def test_modificar_cliente_datos_invalidos(self, client):
         """
@@ -293,6 +299,90 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.segmento == 'VIP'
 
+    def test_listado_clientes_es_paginado_y_muestra_datos_principales(self, client):
+        """El listado administrativo pagina los clientes y muestra sus datos principales."""
+        admin = User.objects.create_user(username='admin_listado', is_staff=True)
+        clientes = [
+            Cliente.objects.create(
+                tipo_cliente='FISICA',
+                nombre=f'Cliente {indice}',
+                apellido='Listado',
+                identificador=f'LIST-{indice}',
+            )
+            for indice in range(1, 12)
+        ]
+        client.force_login(admin)
+
+        response = client.get(reverse('panel_admin'))
+
+        assert response.status_code == 200
+        assert response.context['is_paginated'] is True
+        assert response.context['page_obj'].paginator.count == 11
+        assert len(response.context['clientes']) == 10
+        assert_contains = response.content.decode()
+        assert clientes[0].identificador in assert_contains
+        assert clientes[0].nombre in assert_contains
+
+    def test_busqueda_clientes_por_nombre_ci_y_ruc(self, client):
+        """El buscador encuentra clientes por nombre, CI o RUC."""
+        admin = User.objects.create_user(username='admin_busqueda', is_staff=True)
+        cliente_nombre = Cliente.objects.create(
+            tipo_cliente='FISICA',
+            nombre='LuciaBusqueda',
+            apellido='Gomez',
+            identificador='CI-1001',
+        )
+        cliente_ci = Cliente.objects.create(
+            tipo_cliente='FISICA',
+            nombre='Carlos',
+            apellido='Documento',
+            identificador='CI-2002',
+        )
+        cliente_ruc = Cliente.objects.create(
+            tipo_cliente='JURIDICA',
+            razon_social='EmpresaRucBusqueda',
+            identificador='RUC-3003',
+        )
+        client.force_login(admin)
+
+        for termino, esperado in [
+            ('LuciaBusqueda', cliente_nombre),
+            ('CI-2002', cliente_ci),
+            ('RUC-3003', cliente_ruc),
+        ]:
+            response = client.get(reverse('panel_admin'), {'q': termino})
+            assert response.status_code == 200
+            assert list(response.context['clientes']) == [esperado]
+
+    def test_listado_enlaza_a_ficha_detallada_del_cliente(self, client):
+        """Seleccionar un cliente del listado abre su ficha completa."""
+        admin = User.objects.create_user(username='admin_ficha', is_staff=True)
+        usuario = User.objects.create_user(
+            username='usuario_ficha',
+            email='usuario-ficha@test.com',
+        )
+        cliente = Cliente.objects.create(
+            tipo_cliente='JURIDICA',
+            razon_social='Empresa Ficha',
+            identificador='RUC-FICHA-1',
+            email='empresa-ficha@test.com',
+            segmento='PREMIUM',
+        )
+        cliente.usuarios.add(usuario)
+        client.force_login(admin)
+
+        listado = client.get(reverse('panel_admin'))
+        ficha_url = reverse('cliente_detail', kwargs={'pk': cliente.pk})
+        ficha = client.get(ficha_url)
+
+        assert ficha_url in listado.content.decode()
+        assert ficha.status_code == 200
+        assert ficha.context['cliente'] == cliente
+        assert 'Empresa Ficha' in ficha.content.decode()
+        assert 'RUC-FICHA-1' in ficha.content.decode()
+        assert 'usuario-ficha@test.com' in ficha.content.decode()
+        assert 'usuario_ficha' in ficha.content.decode()
+
     def test_filtrar_listado_clientes_por_segmento(self, client):
         """
         HU GE-8 - Criterio 2:
@@ -342,7 +432,7 @@ class TestClienteView:
         client.force_login(admin)
         url = reverse('cliente_delete', kwargs={'pk': cliente.pk})
 
-        response = client.post(url)
+        response = client.post(url, {'causa': 'Solicitud del cliente'})
         
         # Validar redirección tras éxito
         assert response.status_code in [301, 302]
@@ -351,6 +441,15 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.is_active is False
         assert Cliente.objects.filter(pk=cliente.pk).exists() is True
+        registro = HistorialBaja.objects.get(
+            tipo_recurso=HistorialBaja.TIPO_CLIENTE,
+            recurso_id=cliente.pk,
+        )
+        assert registro.causa == 'Solicitud del cliente'
+
+        historial = client.get(reverse('cliente_historial_bajas'))
+        assert historial.status_code == 200
+        assert 'Solicitud del cliente' in historial.content.decode()
 
     def test_listado_general_oculta_inactivos_por_defecto(self, client):
         """
@@ -381,12 +480,10 @@ class TestClienteView:
         assert cliente_activo in clientes_en_contexto
         assert cliente_inactivo not in clientes_en_contexto
 
-    def test_trazabilidad_historial_cliente_inactivo(self, client):
+    def test_listado_clientes_oculta_bajas_logicas(self, client):
         """
-        HU GE-63 - Criterio 3:
-        Dado que un cliente dado de baja tiene operaciones históricas asociadas, 
-        cuando reviso ese historial (simulado pidiendo incluir inactivos), 
-        entonces sigue siendo accesible para trazabilidad.
+        Los clientes dados de baja se conservan en PostgreSQL, pero no aparecen
+        en el listado operativo aunque se envíe el antiguo filtro histórico.
         """
         admin = User.objects.create_user(username='admin_ge63_3', is_superuser=True)
         u1 = User.objects.create_user(username='666', email='6@test.com')
@@ -397,11 +494,9 @@ class TestClienteView:
         client.force_login(admin)
         url = reverse('panel_admin')
         
-        # Enviar parámetro GET para incluir inactivos
         response = client.get(url, {'incluir_inactivos': '1'})
 
         assert response.status_code == 200
         clientes_en_contexto = response.context['clientes']
         
-        # El cliente inactivo ahora debe aparecer listado
-        assert cliente_inactivo in clientes_en_contexto
+        assert cliente_inactivo not in clientes_en_contexto

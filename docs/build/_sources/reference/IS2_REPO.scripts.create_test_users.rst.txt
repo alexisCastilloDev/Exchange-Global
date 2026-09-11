@@ -1,0 +1,7 @@
+IS2\_REPO.scripts.create\_test\_users module
+============================================
+
+.. automodule:: IS2_REPO.scripts.create_test_users
+   :members:
+   :show-inheritance:
+   :undoc-members:

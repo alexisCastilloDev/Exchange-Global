@@ -1,0 +1,7 @@
+IS2\_REPO.apps.users.services module
+====================================
+
+.. automodule:: IS2_REPO.apps.users.services
+   :members:
+   :show-inheritance:
+   :undoc-members:

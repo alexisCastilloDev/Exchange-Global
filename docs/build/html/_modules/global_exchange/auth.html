@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<html lang="es" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>global_exchange.auth &#8212; documentación de Global Exchange - 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=9c9b61ad"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/translations.js?v=f85f4cfb"></script>
+    <link rel="index" title="Índice" href="../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Código fuente para global_exchange.auth</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mozilla_django_oidc.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">OIDCAuthenticationBackend</span>
+
+<div class="viewcode-block" id="CustomOIDCBackend">
+<a class="viewcode-back" href="../../reference/global_exchange.auth.html#global_exchange.auth.CustomOIDCBackend">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomOIDCBackend</span><span class="p">(</span><span class="n">OIDCAuthenticationBackend</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Backend de autenticación OIDC personalizado para sincronizar</span>
+<span class="sd">    los roles de Keycloak con los permisos de usuario en Django.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_user_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Asigna permisos de staff y superuser basándose EXCLUSIVAMENTE</span>
+<span class="sd">        en los roles asignados en Keycloak.</span>
+<span class="sd">        """</span>
+        <span class="c1"># Imprime en consola los datos exactos que Keycloak nos envía</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">=== CLAIMS RECIBIDOS DE KEYCLOAK ==="</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">claims</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"====================================</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="c1"># 1. Obtener roles de Realm (Estructura estándar de Keycloak: realm_access.roles)</span>
+        <span class="n">realm_access</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'realm_access'</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">realm_roles</span> <span class="o">=</span> <span class="n">realm_access</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">realm_access</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+
+        <span class="c1"># 2. Obtener roles mapeados al nivel superior (si se configuró un Mapper hacia 'roles')</span>
+        <span class="n">top_level_roles</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">),</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+
+        <span class="c1"># 3. Obtener roles de Clientes (resource_access.&lt;cliente&gt;.roles)</span>
+        <span class="n">client_roles</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">resource_access</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'resource_access'</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_access</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">client_data</span> <span class="ow">in</span> <span class="n">resource_access</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="n">client_roles</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">client_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[]))</span>
+
+        <span class="c1"># Consolidar todos los roles únicos recibidos de Keycloak</span>
+        <span class="n">todos_los_roles</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">realm_roles</span> <span class="o">+</span> <span class="n">top_level_roles</span> <span class="o">+</span> <span class="n">client_roles</span><span class="p">)</span>
+
+        <span class="c1"># Evaluar EXCLUSIVAMENTE si el rol 'admin' está presente</span>
+        <span class="n">es_admin</span> <span class="o">=</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">todos_los_roles</span>
+
+        <span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="o">=</span> <span class="n">es_admin</span>
+        <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span> <span class="o">=</span> <span class="n">es_admin</span>
+        <span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CustomOIDCBackend.update_user">
+<a class="viewcode-back" href="../../reference/global_exchange.auth.html#global_exchange.auth.CustomOIDCBackend.update_user">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Actualiza los permisos del usuario en cada inicio de sesión."""</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_user</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_user_permissions</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user</span></div>
+
+
+<div class="viewcode-block" id="CustomOIDCBackend.create_user">
+<a class="viewcode-back" href="../../reference/global_exchange.auth.html#global_exchange.auth.CustomOIDCBackend.create_user">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Crea el usuario en Django y asigna sus permisos iniciales tras autenticarse."""</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="n">claims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_user_permissions</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/modules.html">IS2_REPO</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Código de módulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Equipo 11.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
