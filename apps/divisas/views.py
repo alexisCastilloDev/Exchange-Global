@@ -37,6 +37,7 @@ class DivisaListView(AdminDivisasMixin, ListView):
     model = Divisa
     template_name = 'divisas/divisa_list.html'
     context_object_name = 'divisas'
+    ordering = 'codigo'
 
 
 class DivisaCreateView(AdminDivisasMixin, CreateView):
@@ -44,6 +45,10 @@ class DivisaCreateView(AdminDivisasMixin, CreateView):
     form_class = DivisaForm
     template_name = 'divisas/divisa_form.html'
     success_url = reverse_lazy('divisas:lista_divisas')
+
+    def form_valid(self, form):
+        form.instance.activa = True
+        return super().form_valid(form)
 
 
 class DivisaUpdateView(AdminDivisasMixin, UpdateView):

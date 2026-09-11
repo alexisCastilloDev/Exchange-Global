@@ -71,6 +71,19 @@
             </div>
             {% endif %}
 
+            {% if puede_ver_divisas %}
+            <div>
+                <div class="ge-sidebar__section-label">Operaciones</div>
+                <ul class="ge-sidebar__nav">
+                    <li>
+                        <a href="{% if puede_administrar_divisas %}{% url 'divisas:lista_divisas' %}{% else %}{% url 'divisas:tasas_vigentes' %}{% endif %}" class="ge-sidebar__link {% if request.resolver_match.namespace == 'divisas' %}is-active{% endif %}">
+                            <i class="bi bi-currency-exchange"></i> Gestión de divisas
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
+
             <div>
                 <div class="ge-sidebar__section-label">Cuenta</div>
                 <ul class="ge-sidebar__nav">

@@ -22,10 +22,13 @@ def permisos_ui_context(request):
 
     roles = request.session.get('keycloak_roles', [])
     es_admin = 'admin' in roles or request.user.is_staff or request.user.is_superuser
+    puede_ver_divisas = es_admin or 'agente' in roles
 
     return {
         'keycloak_roles': roles,
         'es_admin': es_admin,
         'puede_ver_usuarios': es_admin or 'usuarios' in roles,
         'puede_ver_roles': es_admin or 'gestion_roles' in roles,
+        'puede_ver_divisas': puede_ver_divisas,
+        'puede_administrar_divisas': es_admin,
     }

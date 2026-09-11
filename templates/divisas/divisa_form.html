@@ -1,53 +1,40 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>{% if object %}Editar Divisa{% else %}Nueva Divisa{% endif %}</title>
-</head>
-<body style="font-family: Arial, sans-serif; margin: 40px;">
+{% extends 'base.html' %}
 
-    <h2>{% if object %}Editar Divisa: {{ object.codigo }}{% else %}Registrar Nueva Divisa{% endif %}</h2>
+{% block title %}{% if object %}Editar divisa{% else %}Nueva divisa{% endif %} - Global Exchange{% endblock %}
 
-    <div style="max-width: 450px; background-color: #f8f9fa; padding: 25px; border-radius: 8px; border: 1px solid #ddd;">
-        <form method="post" novalidate>
-            {% csrf_token %}
-
-            {% if form.non_field_errors %}
-                <div style="color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-
-            {% for field in form %}
-                <div style="margin-bottom: 15px;">
-                    <label for="{{ field.id_for_label }}" style="display: block; font-weight: bold; margin-bottom: 5px;">
-                        {{ field.label }}
-                    </label>
-                    
-                    {{ field }}
-
-                    {% if field.errors %}
-                        <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px; font-weight: bold;">
-                            {{ field.errors }}
-                        </div>
-                    {% endif %}
-
-                    {% if field.help_text %}
-                        <small style="color: #6c757d; display: block; margin-top: 2px;">{{ field.help_text }}</small>
-                    {% endif %}
-                </div>
-            {% endfor %}
-
-            <div style="margin-top: 25px; display: flex; align-items: center;">
-                <button type="submit" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                    Guardar
-                </button>
-                <a href="{% url 'divisas:lista_divisas' %}" style="margin-left: 15px; color: #dc3545; text-decoration: none; font-weight: bold;">
-                    Cancelar
-                </a>
-            </div>
-        </form>
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>{% if object %}Editar divisa{% else %}Registrar nueva divisa{% endif %}</h1>
+        <p>Definí el código ISO, nombre, símbolo y disponibilidad operativa.</p>
     </div>
+</div>
 
-</body>
-</html>
+<div class="ge-card" style="max-width: 620px;">
+    <form method="post" novalidate class="ge-plain-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        {% for field in form %}
+            <div class="mb-3">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    <div class="form-check">
+                        {{ field }}
+                        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    </div>
+                {% else %}
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                {% endif %}
+                {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+                {% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
+            </div>
+        {% endfor %}
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Guardar</button>
+            <a href="{% url 'divisas:lista_divisas' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
