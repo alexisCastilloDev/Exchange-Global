@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+  <div>
+    <h1>{{ titulo }}</h1>
+    <p>Completa los datos del medio que utilizarás para operar.</p>
+  </div>
+</div>
+
+<div class="ge-card ge-payment-form">
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="ge-form-section">
+      <span class="ge-eyebrow">Identificación</span>
+      <div class="mb-3">
+      <label for="{{ form.tipo_medio.id_for_label }}" class="form-label">Tipo de Medio de Pago</label>
+      {{ form.tipo_medio }}
+      {% if form.tipo_medio.errors %}<div class="text-danger small">{{ form.tipo_medio.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="mb-3">
+      <label for="{{ form.nombre_titular.id_for_label }}" class="form-label">Nombre del Titular</label>
+      {{ form.nombre_titular }}
+      {% if form.nombre_titular.errors %}<div class="text-danger small">{{ form.nombre_titular.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="mb-3">
+      <label for="{{ form.entidad_financiera.id_for_label }}" class="form-label">Entidad Financiera / Banco</label>
+      {{ form.entidad_financiera }}
+      {% if form.entidad_financiera.errors %}<div class="text-danger small">{{ form.entidad_financiera.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div id="campo-transferencia" class="ge-form-section">
+      <span class="ge-eyebrow">Datos de la cuenta</span>
+      <div class="mb-3">
+        <label for="{{ form.numero_cuenta.id_for_label }}" class="form-label">Número de Cuenta</label>
+        {{ form.numero_cuenta }}
+        {% if form.numero_cuenta.errors %}<div class="text-danger small">{{ form.numero_cuenta.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.tipo_cuenta.id_for_label }}" class="form-label">Tipo de Cuenta</label>
+        {{ form.tipo_cuenta }}
+        {% if form.tipo_cuenta.errors %}<div class="text-danger small">{{ form.tipo_cuenta.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div id="campo-tarjeta" class="ge-form-section">
+      <span class="ge-eyebrow">Datos de la tarjeta</span>
+      <div class="mb-3">
+      <label for="{{ form.ultimos_4_digitos.id_for_label }}" class="form-label">Últimos 4 dígitos</label>
+      {{ form.ultimos_4_digitos }}
+      {% if form.ultimos_4_digitos.errors %}<div class="text-danger small">{{ form.ultimos_4_digitos.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="ge-default-option form-check mb-3">
+      {{ form.es_predeterminado }}
+      <label class="form-check-label" for="{{ form.es_predeterminado.id_for_label }}">
+        Marcar como método predeterminado
+      </label>
+    </div>
+
+    <div class="ge-form-actions d-flex justify-content-end gap-2">
+      <a href="{% url 'clientes:metodo_pago_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Guardar método</button>
+    </div>
+  </form>
+</div>
+
+<!-- Dinámica visual sencilla con JS -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const tipoMedio = document.getElementById('id_tipo_medio');
+    const campoTransferencia = document.getElementById('campo-transferencia');
+    const campoTarjeta = document.getElementById('campo-tarjeta');
+
+    function toggleFields() {
+      if (tipoMedio.value === 'TRANSFERENCIA') {
+        campoTransferencia.style.display = 'block';
+        campoTarjeta.style.display = 'none';
+      } else if (tipoMedio.value === 'TARJETA') {
+        campoTransferencia.style.display = 'none';
+        campoTarjeta.style.display = 'block';
+      } else {
+        campoTransferencia.style.display = 'none';
+        campoTarjeta.style.display = 'none';
+      }
+    }
+
+    tipoMedio.addEventListener('change', toggleFields);
+    toggleFields();
+  });
+</script>
+{% endblock %}

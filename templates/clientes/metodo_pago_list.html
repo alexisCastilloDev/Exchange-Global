@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Métodos de pago - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+  <div>
+    <h1>Métodos de pago</h1>
+    <p>Administra las cuentas y medios que utilizarás para tus operaciones.</p>
+  </div>
+  <a href="{% url 'clientes:metodo_pago_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i>Agregar método
+  </a>
+</div>
+
+<div class="ge-card ge-payment-summary mb-3">
+  <div>
+    <span class="ge-eyebrow">Medios registrados</span>
+    <strong>{{ metodos|length }}</strong>
+  </div>
+  <div class="ge-payment-summary__hint">
+    <i class="bi bi-shield-check"></i>
+    <span>Selecciona un método predeterminado para agilizar tus operaciones.</span>
+  </div>
+</div>
+
+{% if metodos %}
+  <div class="row row-cols-1 row-cols-lg-2 g-3">
+    {% for metodo in metodos %}
+    <div class="col">
+      <article class="ge-card ge-payment-card {% if metodo.es_predeterminado %}is-default{% endif %}">
+        <div class="ge-payment-card__topline">
+          <div class="ge-payment-card__identity">
+            <span class="ge-payment-card__icon"><i class="bi {% if metodo.tipo_medio == 'TARJETA' %}bi-credit-card-2-front{% elif metodo.tipo_medio == 'TRANSFERENCIA' %}bi-bank{% else %}bi-phone{% endif %}"></i></span>
+            <div>
+              <span class="ge-eyebrow">{{ metodo.get_tipo_medio_display }}</span>
+              <h2>{{ metodo.entidad_financiera }}</h2>
+            </div>
+          </div>
+          {% if metodo.es_predeterminado %}
+            <span class="ge-status ge-status--active"><i class="bi bi-check2"></i> Predeterminado</span>
+          {% endif %}
+        </div>
+
+        <div class="ge-payment-card__details">
+          <div><span>Titular</span><strong>{{ metodo.nombre_titular }}</strong></div>
+          {% if metodo.tipo_medio == 'TRANSFERENCIA' %}
+            <div><span>Cuenta</span><strong>{{ metodo.numero_cuenta }}</strong></div>
+            <div><span>Tipo de cuenta</span><strong>{{ metodo.get_tipo_cuenta_display }}</strong></div>
+          {% elif metodo.tipo_medio == 'TARJETA' %}
+            <div><span>Tarjeta</span><strong>**** {{ metodo.ultimos_4_digitos }}</strong></div>
+          {% else %}
+            <div><span>Medio</span><strong>Billetera digital</strong></div>
+          {% endif %}
+        </div>
+
+        <div class="ge-payment-card__actions">
+          <div class="d-flex gap-2">
+            <a href="{% url 'clientes:metodo_pago_update' metodo.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Editar</a>
+            <a href="{% url 'clientes:metodo_pago_delete' metodo.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Eliminar</a>
+          </div>
+
+          {% if not metodo.es_predeterminado %}
+          <form action="{% url 'clientes:metodo_pago_set_default' metodo.pk %}" method="post" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-star me-1"></i>Usar por defecto</button>
+          </form>
+          {% endif %}
+        </div>
+      </article>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="ge-card ge-empty-state">
+    <span class="ge-empty-state__icon"><i class="bi bi-wallet2"></i></span>
+    <h2>Aún no tienes métodos registrados</h2>
+    <p>Agrega una cuenta, tarjeta o billetera para tenerla disponible en tus operaciones.</p>
+    <a href="{% url 'clientes:metodo_pago_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Agregar primer método</a>
+  </div>
+{% endif %}
+{% endblock %}

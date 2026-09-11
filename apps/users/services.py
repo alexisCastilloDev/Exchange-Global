@@ -1,8 +1,16 @@
-from keycloak import KeycloakAdmin
 from django.conf import settings
+
+try:
+    from keycloak import KeycloakAdmin
+except ImportError:  # pragma: no cover
+    KeycloakAdmin = None
 
 
 def _obtener_keycloak_admin():
+    if KeycloakAdmin is None:
+        raise RuntimeError(
+            'La integración de Keycloak no está disponible. Verifica la dependencia python-keycloak y la configuración del realm.'
+        )
     return KeycloakAdmin(
         server_url=settings.KEYCLOAK_SERVER_URL,
         realm_name=settings.KEYCLOAK_REALM,

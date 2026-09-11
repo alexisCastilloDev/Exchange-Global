@@ -31,4 +31,5 @@ def permisos_ui_context(request):
         'puede_ver_roles': es_admin or 'gestion_roles' in roles,
         'puede_ver_divisas': puede_ver_divisas,
         'puede_administrar_divisas': es_admin,
+        'puede_gestionar_metodos_pago': es_admin or 'cliente' in roles,
     }

@@ -1,0 +1,146 @@
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from apps.clientes.models import MetodoPago
+
+User = get_user_model()
+
+class MetodoPagoTestCase(TestCase):
+    """
+    Pruebas unitarias para validar los criterios de aceptación de la historia GE-19.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='cliente_test',
+            email='cliente@test.com',
+            password='password123'
+        )
+        self.client.login(username='cliente_test', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+    def test_usuario_sin_rol_cliente_no_puede_gestionar_metodos(self):
+        session = self.client.session
+        session['keycloak_roles'] = ['agente']
+        session.save()
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+
+        self.assertRedirects(response, reverse('home'))
+
+    def test_administrador_puede_gestionar_metodos(self):
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_menu_no_muestra_metodos_sin_rol_cliente(self):
+        session = self.client.session
+        session['keycloak_roles'] = ['agente']
+        session.save()
+
+        response = self.client.get(reverse('home'))
+
+        self.assertNotContains(response, 'Métodos de pago')
+
+    def test_registro_metodo_pago_exitoso(self):
+        """Criterio 1: Registro exitoso de método de pago."""
+        response = self.client.post(reverse('clientes:metodo_pago_create'), {
+            'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
+            'nombre_titular': 'Juan Pérez',
+            'entidad_financiera': 'Banco Itaú',
+            'numero_cuenta': '123456789',
+            'tipo_cuenta': 'AHORRO',
+            'es_predeterminado': True
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(MetodoPago.objects.filter(cliente=self.user).count(), 1)
+
+    def test_validacion_campos_incompletos(self):
+        """Criterio 2: Muestra errores de validación si faltan datos requeridos."""
+        response = self.client.post(reverse('clientes:metodo_pago_create'), {
+            'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
+            'nombre_titular': 'Juan Pérez',
+            'entidad_financiera': 'Banco Itaú',
+            'numero_cuenta': '',  # Incompleto a propósito
+            'tipo_cuenta': ''
+        })
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertFormError(form, 'numero_cuenta', 'El número de cuenta es obligatorio para transferencias bancarias.')
+
+    def test_listar_metodos_pago(self):
+        """Criterio 3: El cliente puede ver sus métodos de pago."""
+        MetodoPago.objects.create(
+            cliente=self.user,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Sudameris',
+            numero_cuenta='987654',
+            tipo_cuenta='CORRIENTE'
+        )
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sudameris')
+
+    def test_modificar_metodo_pago(self):
+        """Criterio 4: Modificar datos de un método existente."""
+        metodo = MetodoPago.objects.create(
+            cliente=self.user,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Sudameris',
+            numero_cuenta='987654',
+            tipo_cuenta='CORRIENTE'
+        )
+        response = self.client.post(reverse('clientes:metodo_pago_update', args=[metodo.pk]), {
+            'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
+            'nombre_titular': 'Juan Pérez Modificado',
+            'entidad_financiera': 'Sudameris',
+            'numero_cuenta': '987654',
+            'tipo_cuenta': 'CORRIENTE'
+        })
+        metodo.refresh_from_db()
+        self.assertEqual(metodo.nombre_titular, 'Juan Pérez Modificado')
+
+    def test_eliminar_metodo_pago(self):
+        """Criterio 5: Eliminar un método de pago."""
+        metodo = MetodoPago.objects.create(
+            cliente=self.user,
+            tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Visa Bank',
+            ultimos_4_digitos='1234'
+        )
+        response = self.client.post(reverse('clientes:metodo_pago_delete', args=[metodo.pk]))
+        self.assertEqual(MetodoPago.objects.filter(pk=metodo.pk).count(), 0)
+
+    def test_solo_un_metodo_predeterminado(self):
+        """Criterio 6: Solo un método de pago puede estar marcado como predeterminado."""
+        metodo1 = MetodoPago.objects.create(
+            cliente=self.user,
+            tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Banco A',
+            ultimos_4_digitos='1111',
+            es_predeterminado=True
+        )
+        metodo2 = MetodoPago.objects.create(
+            cliente=self.user,
+            tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Banco B',
+            ultimos_4_digitos='2222',
+            es_predeterminado=True
+        )
+
+        metodo1.refresh_from_db()
+        metodo2.refresh_from_db()
+
+        self.assertFalse(metodo1.es_predeterminado)
+        self.assertTrue(metodo2.es_predeterminado)
