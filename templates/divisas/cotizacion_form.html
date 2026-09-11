@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Actualizar cotización - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Actualizar cotización</h1>
+        <p>{{ divisa.codigo }} · {{ divisa.nombre }}. La cotización anterior se conservará en el historial.</p>
+    </div>
+    <span class="badge-activo"><i class="bi bi-graph-up-arrow me-1"></i>Actualización de tasas</span>
+</div>
+
+<div class="ge-card" style="max-width: 620px;">
+    <form method="post" novalidate class="ge-plain-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.tasa_compra.id_for_label }}">{{ form.tasa_compra.label }}</label>
+                {{ form.tasa_compra }}
+                {% if form.tasa_compra.errors %}<div class="text-danger small mt-1">{{ form.tasa_compra.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.tasa_venta.id_for_label }}">{{ form.tasa_venta.label }}</label>
+                {{ form.tasa_venta }}
+                {% if form.tasa_venta.errors %}<div class="text-danger small mt-1">{{ form.tasa_venta.errors }}</div>{% endif %}
+            </div>
+        </div>
+        <p class="text-muted small mt-3 mb-0">El precio de compra debe ser menor o igual al precio de venta y ambos deben ser mayores que cero.</p>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Guardar cotización</button>
+            <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

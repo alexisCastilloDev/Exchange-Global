@@ -23,11 +23,6 @@
             <input type="text" name="last_name" value="{{ usuario.last_name }}" class="form-control">
         </div>
 
-        <div class="form-check mb-4">
-            <input type="checkbox" name="is_active" value="on" class="form-check-input" id="is_active" {% if usuario.is_active %}checked{% endif %}>
-            <label class="form-check-label" for="is_active">Usuario activo (si se desmarca, no podrá iniciar sesión)</label>
-        </div>
-
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">Guardar cambios</button>
             <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>

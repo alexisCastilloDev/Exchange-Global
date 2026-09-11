@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar baja - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Dar de baja {{ recurso_tipo }}</h1>
+        <p>La baja es lógica: se conserva el registro y la causa para auditoría.</p>
+    </div>
+</div>
+
+<div class="ge-card" style="max-width: 620px;">
+    <p class="mb-4">Vas a dar de baja: <strong>{{ recurso_nombre }}</strong>.</p>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label" for="{{ form.causa.id_for_label }}">{{ form.causa.label }}</label>
+            {{ form.causa }}
+            {% if form.causa.errors %}<div class="text-danger small mt-1">{{ form.causa.errors }}</div>{% endif %}
+        </div>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-danger"><i class="bi bi-person-dash me-1"></i>Confirmar baja</button>
+            <a href="{{ cancelar_url }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

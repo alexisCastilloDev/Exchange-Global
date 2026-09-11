@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import patch
 from apps.clientes.models import Cliente
 
 User = get_user_model()
@@ -47,6 +48,22 @@ class AsociacionUsuarioClienteTest(TestCase):
 
         # Autenticar como administrador
         self.client.login(username='admin_test', password='Password123!')
+
+        # La elegibilidad se consulta a Keycloak; para estas pruebas se
+        # simulan los roles retornados por la sincronización.
+        self.roles_keycloak = patch(
+            'apps.clientes.views.sincronizar_usuarios_desde_keycloak',
+            return_value={
+                self.usuario_1.pk: ['cliente'],
+                self.usuario_2.pk: ['cliente'],
+                self.user_titular.pk: ['cliente'],
+            },
+        )
+        self.roles_keycloak.start()
+
+    def tearDown(self):
+        self.roles_keycloak.stop()
+        super().tearDown()
 
     def test_criterio_1_asociar_usuario_a_cliente(self):
         """Dado que selecciono un cliente, al asociar un usuario, queda vinculado en la relación M2M."""
@@ -124,3 +141,21 @@ class AsociacionUsuarioClienteTest(TestCase):
 
         # Debe denegar el acceso (403 Forbidden) o redirigir
         self.assertIn(response.status_code, [403, 302])
+
+    def test_solo_usuarios_con_rol_cliente_pueden_vincularse(self):
+        usuario_sin_rol = User.objects.create_user(
+            username='operador-sin-rol',
+            email='operador-sin-rol@test.com',
+            password='Password123!',
+        )
+        url = reverse(
+            'cliente_asociar_usuarios', kwargs={'pk': self.cliente.pk}
+        )
+
+        response = self.client.get(url)
+        self.assertContains(response, 'operador1')
+        self.assertNotContains(response, 'operador-sin-rol')
+
+        response = self.client.post(url, {'usuarios': [usuario_sin_rol.pk]})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.cliente.usuarios.exists())

@@ -61,7 +61,13 @@
 
 {% if cliente_activo %}
 <div class="ge-card" style="border-left: 3px solid var(--ge-teal); margin-bottom: 18px;">
-    <strong>Operando como:</strong> {{ cliente_activo.nombre|default:cliente_activo.razon_social }}
+    <strong>Operando como:</strong>
+    {% if cliente_activo.tipo_cliente == 'JURIDICA' %}
+        {{ cliente_activo.razon_social }}
+    {% else %}
+        {{ cliente_activo.nombre }} {{ cliente_activo.apellido }}
+    {% endif %}
+    <span class="text-muted">· CI/RUC: {{ cliente_activo.identificador|default:"N/A" }}</span>
     {% if mis_clientes|length > 1 %}
         &middot; <a href="{% url 'seleccionar_cliente' %}">cambiar de cliente</a>
     {% endif %}
@@ -98,6 +104,17 @@
                 <i class="bi bi-currency-exchange" style="font-size: 22px; color: var(--ge-brass);"></i>
                 <h2 style="font-size:16px; margin: 10px 0 4px;">Gestión de divisas</h2>
                 <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá las tasas vigentes para operar.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_ver_tasas and not puede_ver_divisas %}
+    <div class="col-md-4">
+        <a href="{% url 'divisas:tasas_vigentes' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-graph-up-arrow" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">{% if puede_actualizar_tasas %}Actualizar tasas{% else %}Tasas actuales{% endif %}</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá las tasas de compra y venta vigentes.</p>
             </div>
         </a>
     </div>

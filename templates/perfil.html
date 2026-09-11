@@ -27,7 +27,9 @@
         <dt class="col-sm-4" style="color: var(--ge-text-muted); font-weight:600;">Roles asignados (Keycloak)</dt>
         <dd class="col-sm-8">
             {% for rol in roles %}
+                {% if not rol|rol_tecnico %}
                 <span class="badge-usuario">{{ rol }}</span>
+                {% endif %}
             {% empty %}
                 <span class="text-muted">Sin roles de negocio asignados.</span>
             {% endfor %}

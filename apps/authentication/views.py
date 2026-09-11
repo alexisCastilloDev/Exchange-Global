@@ -29,6 +29,6 @@ class CustomOIDCCallbackView(OIDCAuthenticationCallbackView):
         roles = self.request.session.get('keycloak_roles', [])
         if user.is_staff:
             return redirect(reverse('panel_admin'))
-        if 'agente' in roles:
+        if 'analista_cambiario' in roles:
             return redirect(reverse('divisas:tasas_vigentes'))
         return redirect(reverse('home'))

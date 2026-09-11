@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 class Divisa(models.Model):
@@ -46,6 +47,14 @@ class Cotizacion(models.Model):
     divisa = models.ForeignKey(Divisa, on_delete=models.CASCADE, related_name='cotizaciones')
     tasa_compra = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Tasa de Compra")
     tasa_venta = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Tasa de Venta")
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='cotizaciones_actualizadas',
+        verbose_name="Usuario actualizador",
+        null=True,
+        blank=True,
+    )
     fecha_actualizacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Actualización")
 
     class Meta:
