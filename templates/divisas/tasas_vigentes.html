@@ -22,13 +22,6 @@
     <div class="ge-card__header">
         <div>
             <h2>Tasas vigentes</h2>
-    {% if puede_administrar_divisas %}
-        <div class="px-3 pb-3">
-            <a href="{% url 'divisas:lista_divisas' %}" class="btn btn-secondary">
-                <i class="bi bi-list-ul me-1"></i>Ver catálogo administrativo
-            </a>
-        </div>
-    {% endif %}
             <p class="mb-0 text-muted">Última cotización disponible por divisa activa.</p>
         </div>
         <span class="badge bg-secondary">{{ divisas|length }} activas</span>
@@ -64,5 +57,12 @@
             </tbody>
         </table>
     </div>
+    {% if puede_administrar_divisas %}
+        <div class="px-3 pb-3">
+            <a href="{% url 'divisas:lista_divisas' %}" class="btn btn-secondary">
+                <i class="bi bi-list-ul me-1"></i>Ver catálogo administrativo
+            </a>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
