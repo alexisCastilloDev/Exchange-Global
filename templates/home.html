@@ -1,50 +1,115 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Global Exchange</title>
-</head>
-<body style="font-family: sans-serif; padding: 20px;">
-    <h1>Bienvenido a Global Exchange</h1>
+{% extends 'base.html' %}
+{% load static %}
 
-    <!-- Bloque de mensajes de éxito/error -->
-    {% if messages %}
-        <div style="margin-bottom: 20px;">
-            {% for message in messages %}
-                <div style="padding: 10px 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 5px; font-weight: bold;">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    
-    {% if user.is_authenticated %}
-        <p>Hola, <strong>{{ user.first_name }} {{ user.last_name }}</strong> ({{ user.email }})</p>
-        
-        <!-- Opciones exclusivas para personal autorizado -->
-        {% if user.is_staff or user.is_superuser %}
-            <div style="margin: 15px 0;">
-                
-                <a href="{% url 'panel_admin' %}" style="display: inline-block; padding: 10px 16px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                    Panel de Administración
+{% block title %}Global Exchange{% endblock %}
+
+{% block content_publico %}
+<div class="ge-hero">
+    <div class="ge-hero__top">
+        <span class="ge-sidebar__brand-mark" style="background: var(--ge-brass); color: var(--ge-ink);">GE</span>
+        Global Exchange
+    </div>
+    <div class="ge-hero__body">
+        <div class="ge-hero__grid">
+            <div>
+                <h1>El panel operativo de tu casa de cambio</h1>
+                <p class="ge-lead">
+                    Gestioná clientes, segmentos y accesos de tu equipo desde
+                    un mismo lugar. Iniciá sesión con tu cuenta corporativa
+                    para continuar.
+                </p>
+
+                {% if messages %}
+                    {% include 'partials/mensajes.html' %}
+                {% endif %}
+
+                <a href="{% url 'oidc_authentication_init' %}" class="btn btn-primary btn-lg px-4">
+                    <i class="bi bi-shield-lock me-2"></i>Iniciar Sesión con Keycloak SSO
                 </a>
             </div>
-        {% endif %}
 
-        <form method="post" action="{% url 'oidc_logout' %}" style="margin-top: 20px;">
-            {% csrf_token %}
-            <button type="submit" style="padding: 8px 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                Cerrar Sesión
-            </button>
-        </form>
-    {% else %}
-        <p>No has iniciado sesión.</p>
-        <a href="{% url 'oidc_authentication_init' %}" style="display: inline-block; padding: 10px 16px; background-color: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
-            Iniciar Sesión con Keycloak SSO
-        </a>
+            <div class="ge-ticker">
+                <div class="ge-ticker__row">
+                    <span class="ge-ticker__par">USD / PYG</span>
+                    <span class="ge-ticker__label">Compra · Venta</span>
+                    <span class="ge-ticker__valor">7.280 / 7.410</span>
+                </div>
+                <div class="ge-ticker__row">
+                    <span class="ge-ticker__par">EUR / PYG</span>
+                    <span class="ge-ticker__label">Compra · Venta</span>
+                    <span class="ge-ticker__valor">7.850 / 8.020</span>
+                </div>
+                <div class="ge-ticker__row">
+                    <span class="ge-ticker__par">BRL / PYG</span>
+                    <span class="ge-ticker__label">Compra · Venta</span>
+                    <span class="ge-ticker__valor">1.290 / 1.340</span>
+                </div>
+                <p style="font-size:11.5px; color:#6E7A93; margin: 14px 4px 0;">Cotizaciones referenciales, solo a modo ilustrativo.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Hola, {{ user.first_name|default:user.email }}</h1>
+        <p>Esto es lo que tenés disponible según tu acceso.</p>
+    </div>
+</div>
+
+{% if cliente_activo %}
+<div class="ge-card" style="border-left: 3px solid var(--ge-teal); margin-bottom: 18px;">
+    <strong>Operando como:</strong> {{ cliente_activo.nombre|default:cliente_activo.razon_social }}
+    {% if mis_clientes|length > 1 %}
+        &middot; <a href="{% url 'seleccionar_cliente' %}">cambiar de cliente</a>
     {% endif %}
+</div>
+{% endif %}
 
-    {% block content %}
-    {% endblock %}
-</body>
-</html>
+<div class="row g-3">
+    {% if es_admin %}
+    <div class="col-md-4">
+        <a href="{% url 'panel_admin' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-building" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Clientes</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Ver, filtrar y dar de alta o baja clientes.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_ver_usuarios %}
+    <div class="col-md-4">
+        <a href="{% url 'lista_usuarios' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-people" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Usuarios y roles</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Administrá cuentas y permisos del equipo.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_ver_divisas %}
+    <div class="col-md-4">
+        <a href="{% if puede_administrar_divisas %}{% url 'divisas:lista_divisas' %}{% else %}{% url 'divisas:tasas_vigentes' %}{% endif %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-currency-exchange" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Gestión de divisas</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá las tasas vigentes para operar.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    <div class="col-md-4">
+        <a href="{% url 'perfil' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-person-circle" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Mi perfil</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Tus datos y roles asignados.</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

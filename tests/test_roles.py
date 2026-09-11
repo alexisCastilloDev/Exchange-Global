@@ -1,150 +1,205 @@
 """
 Tests de la HU GE-7 "Gestión de roles, permisos y control de acceso".
 
-Se testea la lógica de autorización de forma aislada del flujo OIDC
-real (usando client.force_login), ya que lo que se valida acá es el
-comportamiento del decorador `requiere_permiso` y del panel de
-gestión de roles, no el login en sí (eso ya está cubierto en
-test_auth.py, GE-3).
+Reescrito tras el bugfix de delegación de auth/autz a Keycloak:
+- Ya no existen Group/Permission/RecursoProtegido en Django.
+- La autorización se verifica contra request.session['keycloak_roles']
+  (decorador requiere_permiso en apps.authentication.decorators).
+- La asignación real de roles se hace contra la Keycloak Admin API
+  (apps.users.services), mockeada acá para no depender de un servidor
+  Keycloak real en los tests.
 """
 from unittest.mock import patch
 
 import pytest
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
-
-from apps.authentication.models import RecursoProtegido
 
 User = get_user_model()
 
 
 @pytest.fixture
-def recurso_panel_admin(db):
-    """
-    RecursoProtegido de panel_admin, para usar en los tests.
-
-    Ya viene cargado por la data migration 0002_cargar_recursos_iniciales
-    (corre también sobre la base de test), así que se usa get_or_create
-    en vez de create() para no chocar contra la restricción de unicidad
-    si ya existe.
-    """
-    return RecursoProtegido.objects.get_or_create(
-        codigo='panel_admin', defaults={'nombre': 'Panel de administración'}
-    )[0]
+def usuario_admin(db):
+    return User.objects.create_user(username='admin1', email='admin1@test.com', is_staff=True)
 
 
 @pytest.fixture
-def grupo_admin(db):
-    return Group.objects.get_or_create(name='admin')[0]
+def usuario_gestor_roles(db):
+    """Tiene el rol específico 'gestion_roles', pero NO 'admin'."""
+    return User.objects.create_user(username='gestor1', email='gestor1@test.com')
 
 
 @pytest.fixture
-def grupo_cliente(db):
-    return Group.objects.get_or_create(name='cliente')[0]
+def usuario_con_permiso_usuarios(db):
+    """Tiene el rol 'usuarios', pero NO 'gestion_roles' ni 'admin'."""
+    return User.objects.create_user(username='soporte1', email='soporte1@test.com')
 
 
 @pytest.fixture
-def usuario_admin(db, grupo_admin, recurso_panel_admin):
-    """Usuario con rol admin y el permiso de panel_admin ya asignado."""
-    user = User.objects.create_user(username='admin1', email='admin1@test.com', is_staff=True)
-    user.groups.add(grupo_admin)
-    permiso = Permission.objects.get(codename='acceder_panel_admin', content_type__app_label='authentication')
-    grupo_admin.permissions.add(permiso)
-    return user
+def usuario_cliente(db):
+    """Sin ningún rol de negocio especial."""
+    return User.objects.create_user(username='cliente1', email='cliente1@test.com')
 
 
 @pytest.fixture
-def usuario_cliente(db, grupo_cliente):
-    """Usuario con rol cliente, SIN permisos asignados todavía."""
-    user = User.objects.create_user(username='cliente1', email='cliente1@test.com')
-    user.groups.add(grupo_cliente)
-    return user
+def usuario_objetivo(db):
+    """El usuario cuyos datos/roles se van a editar en los tests."""
+    return User.objects.create_user(
+        username='objetivo1', email='objetivo1@test.com',
+        first_name='Ana', last_name='Gómez',
+    )
+
+
+def _login_con_roles(client, user, roles):
+    """Simula lo que backends.py deja en sesión tras un login real con esos roles."""
+    client.force_login(user)
+    session = client.session
+    session['keycloak_roles'] = roles
+    session.save()
 
 
 # ============================================================================
-# CA1: definir permisos de un rol se aplica a todos los usuarios de ese rol
+# lista_usuarios_view / editar_usuario_view: requieren rol 'usuarios' o 'admin'
 # ============================================================================
 
 @pytest.mark.django_db
-def test_admin_asigna_permiso_a_grupo_y_aplica_a_todos_sus_miembros(
-    client, usuario_admin, grupo_cliente, recurso_panel_admin
-):
-    otro_cliente = User.objects.create_user(username='cliente2', email='cliente2@test.com')
-    otro_cliente.groups.add(grupo_cliente)
+def test_usuario_no_autenticado_es_redirigido_al_login(client):
+    response = client.get(reverse('lista_usuarios'))
+    assert response.status_code == 302
 
-    client.force_login(usuario_admin)
-    client.post(reverse('gestion_roles'), {
-        'grupo_id': grupo_cliente.id,
-        'recursos': ['panel_admin'],
-    })
-
-    # Ambos usuarios del grupo cliente quedan con el permiso, sin tocarlos individualmente
-    assert grupo_cliente.permissions.filter(codename='acceder_panel_admin').exists()
-    client.force_login(otro_cliente)
-    response = client.get(reverse('panel_admin'))
-    assert response.status_code == 200
-
-
-# ============================================================================
-# CA2: usuario sin permiso es denegado con mensaje
-# ============================================================================
 
 @pytest.mark.django_db
-def test_usuario_sin_permiso_es_denegado(client, usuario_cliente, recurso_panel_admin):
-    client.force_login(usuario_cliente)
-    response = client.get(reverse('panel_admin'), follow=True)
-
-    assert response.redirect_chain[0][1] == 302
+def test_usuario_sin_rol_usuarios_es_denegado(client, usuario_cliente):
+    _login_con_roles(client, usuario_cliente, roles=['cliente'])
+    response = client.get(reverse('lista_usuarios'), follow=True)
+    assert response.status_code == 200  # terminó en 'home' tras el redirect
     mensajes = [str(m) for m in response.context['messages']]
     assert any('permiso' in m.lower() for m in mensajes)
 
 
 @pytest.mark.django_db
-def test_usuario_con_permiso_accede(client, usuario_cliente, grupo_cliente, recurso_panel_admin):
-    permiso = Permission.objects.get(codename='acceder_panel_admin', content_type__app_label='authentication')
-    grupo_cliente.permissions.add(permiso)
-
-    client.force_login(usuario_cliente)
-    response = client.get(reverse('panel_admin'))
+def test_usuario_con_rol_usuarios_accede_a_la_lista(client, usuario_con_permiso_usuarios):
+    _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
+    response = client.get(reverse('lista_usuarios'))
     assert response.status_code == 200
 
 
-# ============================================================================
-# CA3: el cambio de permiso aplica sin que el usuario vuelva a loguearse
-# ============================================================================
-
 @pytest.mark.django_db
-def test_cambio_de_permiso_aplica_sin_relogin(client, usuario_cliente, grupo_cliente, recurso_panel_admin):
-    client.force_login(usuario_cliente)
-
-    # Sin permiso: denegado
-    response = client.get(reverse('panel_admin'))
-    assert response.status_code == 302
-
-    # El admin le agrega el permiso al grupo del usuario "por detrás"
-    permiso = Permission.objects.get(codename='acceder_panel_admin', content_type__app_label='authentication')
-    grupo_cliente.permissions.add(permiso)
-
-    # El MISMO client, sin volver a loguearse, ya puede entrar
-    response = client.get(reverse('panel_admin'))
+def test_admin_accede_a_la_lista_sin_tener_el_rol_especifico(client, usuario_admin):
+    """El rol 'admin' siempre pasa el decorador, sin importar el código de recurso."""
+    _login_con_roles(client, usuario_admin, roles=['admin'])
+    response = client.get(reverse('lista_usuarios'))
     assert response.status_code == 200
 
 
-# ============================================================================
-# CA4: acceso directo por URL también se bloquea, no solo el menú
-# ============================================================================
+@pytest.mark.django_db
+def test_busqueda_filtra_por_nombre_apellido_o_email(client, usuario_con_permiso_usuarios, usuario_objetivo):
+    _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
+    response = client.get(reverse('lista_usuarios'), {'q': 'Ana'})
+    assert response.status_code == 200
+    assert usuario_objetivo in response.context['usuarios']
+
 
 @pytest.mark.django_db
-def test_acceso_directo_por_url_se_bloquea_igual(client, usuario_cliente, recurso_panel_admin):
-    client.force_login(usuario_cliente)
-    # Entra directo a la URL, sin pasar por ningún link del menú
-    response = client.get('/panel-admin/')
+def test_editar_usuario_actualiza_datos_locales_y_en_keycloak(client, usuario_con_permiso_usuarios, usuario_objetivo):
+    _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
+
+    with patch('apps.users.views.actualizar_usuario_en_keycloak') as mock_actualizar:
+        response = client.post(
+            reverse('editar_usuario', args=[usuario_objetivo.id]),
+            {'first_name': 'Ana María', 'last_name': 'Gómez', 'is_active': 'on'},
+        )
+
+    mock_actualizar.assert_called_once_with(
+        email=usuario_objetivo.email,
+        first_name='Ana María',
+        last_name='Gómez',
+        is_active=True,
+    )
+    usuario_objetivo.refresh_from_db()
+    assert usuario_objetivo.first_name == 'Ana María'
     assert response.status_code == 302
 
 
 @pytest.mark.django_db
-def test_usuario_no_autenticado_es_redirigido_al_login(client, recurso_panel_admin):
-    response = client.get(reverse('panel_admin'))
-    assert response.status_code == 302
+def test_editar_usuario_muestra_error_si_keycloak_falla(client, usuario_con_permiso_usuarios, usuario_objetivo):
+    _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
+
+    with patch('apps.users.views.actualizar_usuario_en_keycloak', side_effect=Exception('timeout')):
+        response = client.post(
+            reverse('editar_usuario', args=[usuario_objetivo.id]),
+            {'first_name': 'Ana María', 'last_name': 'Gómez'},
+            follow=True,
+        )
+
+    mensajes = [str(m) for m in response.context['messages']]
+    assert any('error' in m.lower() for m in mensajes)
+    usuario_objetivo.refresh_from_db()
+    assert usuario_objetivo.first_name == 'Ana'  # no se guardó nada localmente si Keycloak falló
+
+
+# ============================================================================
+# editar_roles_view: requiere el rol específico 'gestion_roles' (o 'admin')
+# ============================================================================
+
+@pytest.mark.django_db
+def test_usuario_con_rol_usuarios_no_puede_gestionar_roles(client, usuario_con_permiso_usuarios, usuario_objetivo):
+    """'usuarios' no alcanza para /roles/: son permisos distintos."""
+    _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
+    response = client.get(reverse('editar_roles', args=[usuario_objetivo.id]), follow=True)
+    mensajes = [str(m) for m in response.context['messages']]
+    assert any('permiso' in m.lower() for m in mensajes)
+
+
+@pytest.mark.django_db
+def test_usuario_con_rol_gestion_roles_ve_el_formulario(client, usuario_gestor_roles, usuario_objetivo):
+    _login_con_roles(client, usuario_gestor_roles, roles=['gestion_roles'])
+
+    with patch('apps.users.views.obtener_roles_disponibles', return_value=['admin', 'cajero', 'usuarios']), \
+         patch('apps.users.views.obtener_roles_de_usuario', return_value=['cajero']):
+        response = client.get(reverse('editar_roles', args=[usuario_objetivo.id]))
+
+    assert response.status_code == 200
+    assert response.context['roles_disponibles'] == ['admin', 'cajero', 'usuarios']
+    assert response.context['roles_actuales'] == ['cajero']
+
+
+@pytest.mark.django_db
+def test_admin_asigna_roles_y_se_notifica_relogin_requerido(client, usuario_admin, usuario_objetivo):
+    _login_con_roles(client, usuario_admin, roles=['admin'])
+
+    with patch('apps.users.views.obtener_roles_disponibles', return_value=['admin', 'cajero']), \
+         patch('apps.users.views.obtener_roles_de_usuario', return_value=['cajero']), \
+         patch('apps.users.views.actualizar_roles_de_usuario') as mock_actualizar:
+        response = client.post(
+            reverse('editar_roles', args=[usuario_objetivo.id]),
+            {'roles': ['admin', 'cajero']},
+            follow=True,
+        )
+
+    mock_actualizar.assert_called_once_with(usuario_objetivo.email, ['admin', 'cajero'])
+    mensajes = [str(m) for m in response.context['messages']]
+    assert any('volver a loguearse' in m.lower() for m in mensajes)
+
+
+@pytest.mark.django_db
+def test_editar_roles_muestra_error_si_keycloak_falla_al_consultar(client, usuario_admin, usuario_objetivo):
+    _login_con_roles(client, usuario_admin, roles=['admin'])
+
+    with patch('apps.users.views.obtener_roles_disponibles', side_effect=Exception('conexión rechazada')):
+        response = client.get(reverse('editar_roles', args=[usuario_objetivo.id]), follow=True)
+
+    mensajes = [str(m) for m in response.context['messages']]
+    assert any('error' in m.lower() for m in mensajes)
+
+
+@pytest.mark.django_db
+def test_cambio_de_rol_no_aplica_sin_relogin(client, usuario_gestor_roles, usuario_objetivo):
+    """
+    Documenta el comportamiento esperado: aunque el admin cambie los
+    roles en Keycloak, el propio USUARIO OBJETIVO no ve el cambio
+    reflejado en su sesión activa hasta volver a loguearse.
+    """
+    _login_con_roles(client, usuario_objetivo, roles=['cliente'])
+    response = client.get(reverse('lista_usuarios'))
+    assert response.status_code == 302  # sigue sin el rol 'usuarios' en SU sesión actual

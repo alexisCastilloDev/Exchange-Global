@@ -1,0 +1,7 @@
+IS2\_REPO.apps.users.tests module
+=================================
+
+.. automodule:: IS2_REPO.apps.users.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

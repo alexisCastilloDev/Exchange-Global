@@ -1,0 +1,7 @@
+IS2\_REPO.apps.authentication.backends module
+=============================================
+
+.. automodule:: IS2_REPO.apps.authentication.backends
+   :members:
+   :show-inheritance:
+   :undoc-members:

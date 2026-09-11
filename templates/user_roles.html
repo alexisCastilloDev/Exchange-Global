@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Roles de {{ usuario.email }} - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Roles de {{ usuario.email }}</h1>
+        <p>Los cambios se aplican directamente en Keycloak; el usuario debe volver a loguearse para que surtan efecto.</p>
+    </div>
+</div>
+
+<div class="ge-card" style="max-width: 520px;">
+    <form method="post">
+        {% csrf_token %}
+        <ul class="list-unstyled mb-4">
+            {% for rol in roles_disponibles %}
+                <li class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" id="rol-{{ rol }}" name="roles" value="{{ rol }}"
+                        {% if rol in roles_actuales %}checked{% endif %}>
+                    <label class="form-check-label" for="rol-{{ rol }}">{{ rol }}</label>
+                </li>
+            {% empty %}
+                <li class="text-muted">No hay roles de negocio configurados en Keycloak.</li>
+            {% endfor %}
+        </ul>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Guardar roles</button>
+            <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

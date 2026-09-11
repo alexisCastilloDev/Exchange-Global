@@ -1,0 +1,31 @@
+IS2\_REPO.apps.authentication package
+=====================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.apps.authentication.templatetags
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.apps.authentication.apps
+   IS2_REPO.apps.authentication.backends
+   IS2_REPO.apps.authentication.context_processors
+   IS2_REPO.apps.authentication.decorators
+   IS2_REPO.apps.authentication.models
+   IS2_REPO.apps.authentication.views
+
+Module contents
+---------------
+
+.. automodule:: IS2_REPO.apps.authentication
+   :members:
+   :show-inheritance:
+   :undoc-members:

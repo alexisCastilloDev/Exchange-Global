@@ -1,0 +1,14 @@
+IS2\_REPO namespace
+===================
+
+.. py:module:: IS2_REPO
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.global_exchange
+   IS2_REPO.scripts
+   IS2_REPO.tests

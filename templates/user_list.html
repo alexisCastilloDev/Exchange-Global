@@ -1,59 +1,73 @@
-{% extends 'home.html' %}  <!-- O el layout principal de tu proyecto -->
+{% extends 'base.html' %}
+
+{% block title %}Usuarios - Global Exchange{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <h2>Gestión de Usuarios</h2>
-
-  <!-- Buscador (CA4) -->
-  <form method="GET" action="" class="row mb-3">
-    <div class="col-md-6">
-      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo...">
+<div class="ge-page-header">
+    <div>
+        <h1>Usuarios y roles</h1>
+        <p>Administrá las cuentas del equipo y sus roles de negocio.</p>
     </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-primary">Buscar</button>
-    </div>
-  </form>
+</div>
 
-  <!-- Tabla de Usuarios (CA1) -->
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Correo</th>
-        <th>Estado</th>
-        <th>Rol</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in usuarios %}
-      <tr>
-        <td>{{ u.first_name }} {{ u.last_name }}</td>
-        <td>{{ u.email }}</td>
-        <td>
-          {% if u.is_active %}
-            <span class="badge bg-success">Activo</span>
-          {% else %}
-            <span class="badge bg-danger">Inactivo</span>
-          {% endif %}
-        </td>
-        <td>
-          {% for group in u.groups.all %}
-            <span class="badge bg-info text-dark">{{ group.name }}</span>
-          {% empty %}
-            Sin rol
-          {% endfor %}
-        </td>
-        <td>
-          <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-secondary">Editar</a>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="5">No se encontraron usuarios.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="contenedor-filtro">
+    <form method="GET" action="" class="d-flex align-items-center gap-2 mb-0" style="flex: 1;">
+        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo...">
+        <button type="submit" class="btn btn-secondary text-nowrap">
+            <i class="bi bi-search me-1"></i>Buscar
+        </button>
+    </form>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Estado</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u.first_name }} {{ u.last_name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge-activo">Activo</span>
+                        {% else %}
+                            <span class="badge-inactivo">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for group in u.groups.all %}
+                            <span class="badge-usuario">{{ group.name }}</span>
+                        {% empty %}
+                            <span style="font-size: 12px; color: var(--ge-text-muted);">Sin rol</span>
+                        {% endfor %}
+                    </td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-secondary" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% if puede_ver_roles %}
+                        <a href="{% url 'editar_roles' u.id %}" class="btn btn-sm btn-info text-white" title="Roles">
+                            <i class="bi bi-shield-check"></i> Roles
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4" style="color: var(--ge-text-muted);">No se encontraron usuarios.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

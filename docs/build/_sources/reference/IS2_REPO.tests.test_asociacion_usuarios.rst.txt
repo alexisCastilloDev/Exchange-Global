@@ -1,0 +1,7 @@
+IS2\_REPO.tests.test\_asociacion\_usuarios module
+=================================================
+
+.. automodule:: IS2_REPO.tests.test_asociacion_usuarios
+   :members:
+   :show-inheritance:
+   :undoc-members:
