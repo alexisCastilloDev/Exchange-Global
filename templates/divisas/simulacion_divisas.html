@@ -8,23 +8,27 @@
         <h1>Simulador de conversión</h1>
         <p>Calculá el monto resultante antes de operar.</p>
     </div>
+    <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary">Volver a tasas</a>
 </div>
 
 {% if messages %}
     {% include 'partials/mensajes.html' %}
 {% endif %}
 
-<div class="row g-4">
+<div class="row g-4 align-items-start">
     <div class="col-lg-5">
         <div class="ge-card">
-            <h2 class="h5 mb-3">Datos de la simulación</h2>
-            <form method="post" novalidate>
+            <div class="ge-card__header mb-3">
+                <h2>Datos de la simulación</h2>
+            </div>
+
+            <form method="post" novalidate class="ge-form-grid">
                 {% csrf_token %}
                 {% if form.non_field_errors %}
-                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    <div class="alert alert-danger mb-3">{{ form.non_field_errors }}</div>
                 {% endif %}
 
-                <div class="mb-3">
+                <div class="ge-form-field">
                     <label for="id_monto" class="form-label">Monto</label>
                     {{ form.monto }}
                     {% if form.monto.errors %}
@@ -32,7 +36,7 @@
                     {% endif %}
                 </div>
 
-                <div class="mb-3">
+                <div class="ge-form-field">
                     <label for="id_divisa_origen" class="form-label">Divisa origen</label>
                     {{ form.divisa_origen }}
                     {% if form.divisa_origen.errors %}
@@ -40,7 +44,7 @@
                     {% endif %}
                 </div>
 
-                <div class="mb-3">
+                <div class="ge-form-field">
                     <label for="id_divisa_destino" class="form-label">Divisa destino</label>
                     {{ form.divisa_destino }}
                     {% if form.divisa_destino.errors %}
@@ -48,39 +52,47 @@
                     {% endif %}
                 </div>
 
-                <button type="submit" class="btn btn-primary">Simular</button>
-                <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-outline-secondary ms-2">Volver</a>
+                <div class="d-flex gap-2 mt-3 pt-2">
+                    <button type="submit" class="btn btn-primary">Simular</button>
+                    <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary">Cancelar</a>
+                </div>
             </form>
         </div>
     </div>
 
     <div class="col-lg-7">
-        <div class="ge-card">
-            <h2 class="h5 mb-3">Resultado</h2>
+        <div class="ge-card ge-result-panel">
+            <div class="ge-card__header mb-3">
+                <h2>Resultado</h2>
+                <span class="badge-activo">Solo simulación</span>
+            </div>
+
             {% if resultado %}
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <div class="border rounded p-3 h-100">
-                            <small class="text-muted d-block">Monto origen</small>
+                        <div class="ge-stat-box">
+                            <small>Monto origen</small>
                             <strong>{{ resultado.monto_origen }} {{ resultado.divisa_origen.codigo }}</strong>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="border rounded p-3 h-100">
-                            <small class="text-muted d-block">Tasa aplicada</small>
+                        <div class="ge-stat-box">
+                            <small>Tasa aplicada</small>
                             <strong>{{ resultado.tasa_aplicada|floatformat:4 }}</strong>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="border rounded p-3 h-100">
-                            <small class="text-muted d-block">Monto final</small>
+                        <div class="ge-stat-box ge-stat-box--accent">
+                            <small>Monto final</small>
                             <strong>{{ resultado.monto_final }} {{ resultado.divisa_destino.codigo }}</strong>
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 text-muted mb-0">Esta es una simulación, no registra ninguna operación real.</p>
+                <p class="ge-note mt-3 mb-0">Esta es una simulación, no registra ninguna operación real.</p>
             {% else %}
-                <div class="text-muted">Todavía no se realizó una simulación.</div>
+                <div class="ge-empty-state">
+                    Todavía no se realizó una simulación.
+                </div>
             {% endif %}
         </div>
     </div>

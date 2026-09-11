@@ -95,6 +95,11 @@
                         </a>
                     </li>
                     {% endif %}
+                    <li>
+                        <a href="{% url 'divisas:simulacion_divisas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'simulacion_divisas' %}is-active{% endif %}">
+                            <i class="bi bi-calculator"></i> Simulador de conversión
+                        </a>
+                    </li>
                 </ul>
             </div>
             {% endif %}

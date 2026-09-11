@@ -48,15 +48,28 @@
         <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span><span class="p">:</span>
             <span class="n">cliente_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'cliente_activo_id'</span><span class="p">)</span>
             <span class="n">clientes_asociados</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">cliente_activo</span> <span class="o">=</span> <span class="kc">None</span>
 
             <span class="c1"># Caso 1: El usuario está asociado a un ÚNICO cliente</span>
             <span class="k">if</span> <span class="n">clientes_asociados</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'cliente_activo_id'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">clientes_asociados</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">pk</span>
-                <span class="p">)</span>
+                <span class="n">cliente_activo</span> <span class="o">=</span> <span class="n">clientes_asociados</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'cliente_activo_id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">cliente_activo</span><span class="o">.</span><span class="n">pk</span>
 
             <span class="c1"># Caso 2: El usuario tiene MÚLTIPLES clientes y aún no ha seleccionado uno</span>
-            <span class="k">elif</span> <span class="n">clientes_asociados</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cliente_id</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">clientes_asociados</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">cliente_id</span><span class="p">:</span>
+                    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="n">clientes_asociados</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">pk</span><span class="o">=</span><span class="n">cliente_id</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
+                <span class="c1"># La gestión de métodos de pago es una pantalla personal del cliente</span>
+                <span class="c1"># y no depende de haber elegido un cliente activo concreto. Al tener</span>
+                <span class="c1"># varios clientes asociados, se toma el más reciente como contexto</span>
+                <span class="c1"># operativo del usuario para evitar que el acceso quede bloqueado.</span>
+                <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">'/clientes/metodos-pago/'</span><span class="p">,</span> <span class="s1">'/clientes/metodos-pago/nuevo/'</span><span class="p">,</span> <span class="s1">'/clientes/metodos-pago/&lt;int:pk&gt;/editar/'</span><span class="p">,</span> <span class="s1">'/clientes/metodos-pago/&lt;int:pk&gt;/eliminar/'</span><span class="p">]:</span>
+                    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="n">clientes_asociados</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-pk'</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                    <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'cliente_activo_id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">cliente_activo</span><span class="o">.</span><span class="n">pk</span>
+
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">path_seleccion</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'seleccionar_cliente'</span><span class="p">)</span>
                 <span class="k">except</span> <span class="n">NoReverseMatch</span><span class="p">:</span>
@@ -72,19 +85,15 @@
                         <span class="k">continue</span>
 
                 <span class="c1"># Evitar bucle infinito de redirección</span>
-                <span class="k">if</span> <span class="n">path_seleccion</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
-                    <span class="n">path_seleccion</span><span class="p">,</span>
-                    <span class="n">path_logout</span><span class="p">,</span>
-                <span class="p">]:</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="n">path_seleccion</span>
+                    <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">path_seleccion</span><span class="p">,</span> <span class="n">path_logout</span><span class="p">]</span>
+                <span class="p">):</span>
                     <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'seleccionar_cliente'</span><span class="p">)</span>
 
             <span class="c1"># Cargar el objeto cliente_activo en la request</span>
-            <span class="k">if</span> <span class="n">cliente_id</span><span class="p">:</span>
-                <span class="n">request</span><span class="o">.</span><span class="n">cliente_activo</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                    <span class="n">pk</span><span class="o">=</span><span class="n">cliente_id</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">request</span><span class="o">.</span><span class="n">cliente_activo</span> <span class="o">=</span> <span class="n">clientes_asociados</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">cliente_activo</span> <span class="o">=</span> <span class="n">cliente_activo</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
 

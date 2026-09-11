@@ -56,6 +56,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.backends.html">apps.authentication.backends module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend"><code class="docutils literal notranslate"><span class="pre">KeycloakOIDCAuthenticationBackend</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.backends.html#apps.authentication.backends.es_rol_tecnico"><code class="docutils literal notranslate"><span class="pre">es_rol_tecnico()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.context_processors.html">apps.authentication.context_processors module</a><ul>
@@ -64,9 +65,13 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.decorators.html">apps.authentication.decorators module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.decorators.html#apps.authentication.decorators.requiere_permiso"><code class="docutils literal notranslate"><span class="pre">requiere_permiso()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.decorators.html#apps.authentication.decorators.requiere_rol"><code class="docutils literal notranslate"><span class="pre">requiere_rol()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html">apps.authentication.models module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html">apps.authentication.models module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja"><code class="docutils literal notranslate"><span class="pre">HistorialBaja</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.views.html">apps.authentication.views module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCCallbackView"><code class="docutils literal notranslate"><span class="pre">CustomOIDCCallbackView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCLogoutView"><code class="docutils literal notranslate"><span class="pre">CustomOIDCLogoutView</span></code></a></li>
@@ -86,6 +91,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.forms.html">apps.clientes.forms module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm"><code class="docutils literal notranslate"><span class="pre">AsociarUsuarioClienteForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.ClienteForm"><code class="docutils literal notranslate"><span class="pre">ClienteForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm"><code class="docutils literal notranslate"><span class="pre">MetodoPagoForm</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.middleware.html">apps.clientes.middleware module</a><ul>
@@ -95,22 +101,63 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html">apps.clientes.models module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.Cliente"><code class="docutils literal notranslate"><span class="pre">Cliente</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.ClienteActiveManager"><code class="docutils literal notranslate"><span class="pre">ClienteActiveManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago"><code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.urls.html">apps.clientes.urls module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.views.html">apps.clientes.views module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView"><code class="docutils literal notranslate"><span class="pre">AsociarUsuariosClienteView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.ClienteCreateView"><code class="docutils literal notranslate"><span class="pre">ClienteCreateView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.ClienteDetailView"><code class="docutils literal notranslate"><span class="pre">ClienteDetailView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView"><code class="docutils literal notranslate"><span class="pre">ClienteHistorialBajasView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView"><code class="docutils literal notranslate"><span class="pre">ClienteSoftDeleteView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.ClienteUpdateView"><code class="docutils literal notranslate"><span class="pre">ClienteUpdateView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.PanelAdminView"><code class="docutils literal notranslate"><span class="pre">PanelAdminView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.cambiar_cliente_view"><code class="docutils literal notranslate"><span class="pre">cambiar_cliente_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_create"><code class="docutils literal notranslate"><span class="pre">metodo_pago_create()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_delete"><code class="docutils literal notranslate"><span class="pre">metodo_pago_delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_list"><code class="docutils literal notranslate"><span class="pre">metodo_pago_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_reveal"><code class="docutils literal notranslate"><span class="pre">metodo_pago_reveal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_set_default"><code class="docutils literal notranslate"><span class="pre">metodo_pago_set_default()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_update"><code class="docutils literal notranslate"><span class="pre">metodo_pago_update()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.seleccionar_cliente_view"><code class="docutils literal notranslate"><span class="pre">seleccionar_cliente_view()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.clientes.html#module-apps.clientes">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.forms.html">apps.divisas.forms module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.CotizacionForm"><code class="docutils literal notranslate"><span class="pre">CotizacionForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.DivisaForm"><code class="docutils literal notranslate"><span class="pre">DivisaForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm"><code class="docutils literal notranslate"><span class="pre">SimulacionDivisasForm</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html">apps.divisas.models module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion"><code class="docutils literal notranslate"><span class="pre">Cotizacion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa"><code class="docutils literal notranslate"><span class="pre">Divisa</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.urls.html">apps.divisas.urls module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html">apps.divisas.views module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin"><code class="docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaCreateView"><code class="docutils literal notranslate"><span class="pre">DivisaCreateView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaHistorialBajasView"><code class="docutils literal notranslate"><span class="pre">DivisaHistorialBajasView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaListView"><code class="docutils literal notranslate"><span class="pre">DivisaListView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView"><code class="docutils literal notranslate"><span class="pre">DivisaSoftDeleteView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaUpdateView"><code class="docutils literal notranslate"><span class="pre">DivisaUpdateView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView"><code class="docutils literal notranslate"><span class="pre">SimulacionDivisasView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.TasasVigentesListView"><code class="docutils literal notranslate"><span class="pre">TasasVigentesListView</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.html#module-apps.divisas">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.users.html">apps.users package</a><ul>
@@ -126,13 +173,16 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.users.services.html#apps.users.services.actualizar_usuario_en_keycloak"><code class="docutils literal notranslate"><span class="pre">actualizar_usuario_en_keycloak()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.services.html#apps.users.services.obtener_roles_de_usuario"><code class="docutils literal notranslate"><span class="pre">obtener_roles_de_usuario()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.services.html#apps.users.services.obtener_roles_disponibles"><code class="docutils literal notranslate"><span class="pre">obtener_roles_disponibles()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.services.html#apps.users.services.sincronizar_usuarios_desde_keycloak"><code class="docutils literal notranslate"><span class="pre">sincronizar_usuarios_desde_keycloak()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.users.tests.html">apps.users.tests module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.users.urls.html">apps.users.urls module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.users.views.html">apps.users.views module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.views.html#apps.users.views.baja_usuario_view"><code class="docutils literal notranslate"><span class="pre">baja_usuario_view()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.views.html#apps.users.views.editar_roles_view"><code class="docutils literal notranslate"><span class="pre">editar_roles_view()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.views.html#apps.users.views.editar_usuario_view"><code class="docutils literal notranslate"><span class="pre">editar_usuario_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.views.html#apps.users.views.historial_bajas_usuarios_view"><code class="docutils literal notranslate"><span class="pre">historial_bajas_usuarios_view()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.views.html#apps.users.views.lista_usuarios_view"><code class="docutils literal notranslate"><span class="pre">lista_usuarios_view()</span></code></a></li>
 </ul>
 </li>

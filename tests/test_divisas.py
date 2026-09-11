@@ -368,6 +368,21 @@ class SimuladorDivisasTest(TestCase):
         self.assertContains(response, 'Monto final')
         self.assertContains(response, '93.67')
 
+    def test_simulacion_incluye_guarani_implicitamente_en_las_opciones(self):
+        response = self.client.get(reverse('divisas:simulacion_divisas'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Guaraní (PYG)')
+
+    def test_simulacion_calcula_conversion_con_guarani_implicitamente(self):
+        response = self.client.post(
+            reverse('divisas:simulacion_divisas'),
+            {'monto': '100', 'divisa_origen': str(self.usd.pk), 'divisa_destino': 'PYG'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '740000.00')
+
     def test_simulacion_rechaza_divisa_sin_tasa_vigente(self):
         divisa_sin_tasa = Divisa.objects.create(codigo='BRL', nombre='Real', simbolo='R$', activa=True)
 

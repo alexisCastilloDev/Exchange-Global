@@ -44,7 +44,9 @@
 <li class="toctree-l2"><a class="reference internal" href="apps.authentication.templatetags.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.templatetags.ge_extras.html">apps.authentication.templatetags.ge_extras module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.en_lista"><code class="docutils literal notranslate"><span class="pre">en_lista()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.get_item"><code class="docutils literal notranslate"><span class="pre">get_item()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.iniciales"><code class="docutils literal notranslate"><span class="pre">iniciales()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.rol_tecnico"><code class="docutils literal notranslate"><span class="pre">rol_tecnico()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -76,6 +78,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.verify_claims"><code class="docutils literal notranslate"><span class="pre">KeycloakOIDCAuthenticationBackend.verify_claims()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="apps.authentication.backends.html#apps.authentication.backends.es_rol_tecnico"><code class="docutils literal notranslate"><span class="pre">es_rol_tecnico()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.authentication.context_processors.html">apps.authentication.context_processors module</a><ul>
@@ -84,9 +87,34 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.authentication.decorators.html">apps.authentication.decorators module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.authentication.decorators.html#apps.authentication.decorators.requiere_permiso"><code class="docutils literal notranslate"><span class="pre">requiere_permiso()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.authentication.decorators.html#apps.authentication.decorators.requiere_rol"><code class="docutils literal notranslate"><span class="pre">requiere_rol()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="apps.authentication.models.html">apps.authentication.models module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps.authentication.models.html">apps.authentication.models module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja"><code class="docutils literal notranslate"><span class="pre">HistorialBaja</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.NotUpdated"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.TIPO_CLIENTE"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.TIPO_CLIENTE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.TIPO_DIVISA"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.TIPO_DIVISA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.TIPO_RECURSO_CHOICES"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.TIPO_RECURSO_CHOICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.TIPO_USUARIO"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.TIPO_USUARIO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.causa"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.causa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.fecha"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.fecha</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_next_by_fecha"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.get_next_by_fecha()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_previous_by_fecha"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.get_previous_by_fecha()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_tipo_recurso_display"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.get_tipo_recurso_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.id"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.objects"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.realizado_por"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.realizado_por</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.realizado_por_id"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.realizado_por_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.recurso_id"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.recurso_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.recurso_nombre"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.recurso_nombre</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja.tipo_recurso"><code class="docutils literal notranslate"><span class="pre">HistorialBaja.tipo_recurso</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="apps.authentication.views.html">apps.authentication.views module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCCallbackView"><code class="docutils literal notranslate"><span class="pre">CustomOIDCCallbackView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCCallbackView.login_success"><code class="docutils literal notranslate"><span class="pre">CustomOIDCCallbackView.login_success()</span></code></a></li>

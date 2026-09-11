@@ -65,6 +65,13 @@
 <span class="p">}</span>
 
 
+<div class="viewcode-block" id="es_rol_tecnico">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.es_rol_tecnico">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">rol</span> <span class="ow">in</span> <span class="n">ROLES_TECNICOS_EXCLUIDOS</span> <span class="ow">or</span> <span class="n">rol</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'default-roles-'</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend">
 <a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">KeycloakOIDCAuthenticationBackend</span><span class="p">(</span><span class="n">OIDCAuthenticationBackend</span><span class="p">):</span>
@@ -89,7 +96,9 @@
 <span class="sd">        """</span>
         <span class="n">email</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">email</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email__iexact</span><span class="o">=</span><span class="n">email</span><span class="p">)</span>
+            <span class="n">users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email__iexact</span><span class="o">=</span><span class="n">email</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">users</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">users</span>
 
         <span class="n">preferred</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'preferred_username'</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">preferred</span><span class="p">:</span>
@@ -149,7 +158,9 @@
 
         <span class="c1"># Consolidar y excluir roles técnicos de Keycloak</span>
         <span class="n">roles_keycloak</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles_realm</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles_custom</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">client_roles</span><span class="p">)</span>
-        <span class="n">roles_negocio</span> <span class="o">=</span> <span class="n">roles_keycloak</span> <span class="o">-</span> <span class="n">ROLES_TECNICOS_EXCLUIDOS</span>
+        <span class="n">roles_negocio</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">rol</span> <span class="k">for</span> <span class="n">rol</span> <span class="ow">in</span> <span class="n">roles_keycloak</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">)</span>
+        <span class="p">}</span>
 
         <span class="c1"># is_staff para acceder al admin site (no sustituye autorización)</span>
         <span class="n">is_staff_value</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles_negocio</span><span class="p">)</span>

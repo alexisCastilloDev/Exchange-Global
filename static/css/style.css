@@ -408,6 +408,80 @@ a {
     font-size: 12px;
     font-weight: 600;
 }
+
+.ge-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.ge-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ge-form-control {
+    background: var(--ge-surface);
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius-sm);
+    min-height: 42px;
+    padding: 10px 12px;
+    color: var(--ge-text);
+}
+
+.ge-form-control:focus {
+    border-color: var(--ge-teal);
+    box-shadow: 0 0 0 0.15rem rgba(14, 124, 123, 0.15);
+    outline: none;
+}
+
+.ge-result-panel {
+    border-left: 3px solid var(--ge-brass);
+}
+
+.ge-stat-box {
+    background: var(--ge-paper);
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius-sm);
+    padding: 16px 14px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.ge-stat-box small {
+    color: var(--ge-text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ge-stat-box strong {
+    font-size: 1.05rem;
+    color: var(--ge-ink);
+    word-break: break-word;
+}
+
+.ge-stat-box--accent {
+    background: var(--ge-brass-soft);
+    border-color: rgba(179, 129, 46, 0.35);
+}
+
+.ge-note {
+    color: var(--ge-text-muted);
+    font-size: 13px;
+}
+
+.ge-empty-state {
+    border: 1px dashed var(--ge-border);
+    background: var(--ge-paper);
+    border-radius: var(--ge-radius-sm);
+    color: var(--ge-text-muted);
+    padding: 18px;
+}
 .badge-inactivo {
     display: inline-block;
     padding: 3px 9px;

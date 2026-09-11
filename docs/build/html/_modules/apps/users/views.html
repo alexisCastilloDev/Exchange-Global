@@ -33,16 +33,20 @@
             
   <h1>Código fuente para apps.users.views</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span><span class="p">,</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">requiere_permiso</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">CausaBajaForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistorialBaja</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.services</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">actualizar_usuario_en_keycloak</span><span class="p">,</span>
     <span class="n">obtener_roles_disponibles</span><span class="p">,</span>
     <span class="n">obtener_roles_de_usuario</span><span class="p">,</span>
     <span class="n">actualizar_roles_de_usuario</span><span class="p">,</span>
+    <span class="n">sincronizar_usuarios_desde_keycloak</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">User</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span>
@@ -53,7 +57,17 @@
 <span class="nd">@requiere_permiso</span><span class="p">(</span><span class="s1">'usuarios'</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">lista_usuarios_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
     <span class="n">query</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'q'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="n">usuarios</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'id'</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">roles_por_usuario</span> <span class="o">=</span> <span class="n">sincronizar_usuarios_desde_keycloak</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">roles_por_usuario</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span>
+            <span class="s1">'No fue posible actualizar los usuarios desde Keycloak. '</span>
+            <span class="s1">'Se muestran los datos locales disponibles.'</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">usuarios</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'id'</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">query</span><span class="p">:</span>
         <span class="n">usuarios</span> <span class="o">=</span> <span class="n">usuarios</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -64,7 +78,8 @@
 
     <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'user_list.html'</span><span class="p">,</span> <span class="p">{</span>
         <span class="s1">'usuarios'</span><span class="p">:</span> <span class="n">usuarios</span><span class="p">,</span>
-        <span class="s1">'query'</span><span class="p">:</span> <span class="n">query</span>
+        <span class="s1">'query'</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span>
+        <span class="s1">'roles_por_usuario'</span><span class="p">:</span> <span class="n">roles_por_usuario</span><span class="p">,</span>
     <span class="p">})</span></div>
 
 
@@ -79,21 +94,17 @@
         <span class="n">first_name</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'first_name'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="n">last_name</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'last_name'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
-        <span class="n">raw_is_active</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_active'</span><span class="p">)</span>
-        <span class="n">is_active</span> <span class="o">=</span> <span class="n">raw_is_active</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">'on'</span><span class="p">,</span> <span class="s1">'true'</span><span class="p">,</span> <span class="s1">'True'</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span>
-
         <span class="k">try</span><span class="p">:</span>
             <span class="n">actualizar_usuario_en_keycloak</span><span class="p">(</span>
                 <span class="n">email</span><span class="o">=</span><span class="n">usuario</span><span class="o">.</span><span class="n">email</span><span class="p">,</span>
                 <span class="n">first_name</span><span class="o">=</span><span class="n">first_name</span><span class="p">,</span>
                 <span class="n">last_name</span><span class="o">=</span><span class="n">last_name</span><span class="p">,</span>
-                <span class="n">is_active</span><span class="o">=</span><span class="n">is_active</span>
+                <span class="n">is_active</span><span class="o">=</span><span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="n">usuario</span><span class="o">.</span><span class="n">first_name</span> <span class="o">=</span> <span class="n">first_name</span>
             <span class="n">usuario</span><span class="o">.</span><span class="n">last_name</span> <span class="o">=</span> <span class="n">last_name</span>
-            <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span> <span class="o">=</span> <span class="n">is_active</span>
-            <span class="n">usuario</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="n">usuario</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'first_name'</span><span class="p">,</span> <span class="s1">'last_name'</span><span class="p">])</span>
 
             <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Usuario </span><span class="si">{</span><span class="n">usuario</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2"> actualizado correctamente."</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'lista_usuarios'</span><span class="p">)</span>
@@ -102,6 +113,81 @@
             <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Error al actualizar en Keycloak: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'user_edit.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'usuario'</span><span class="p">:</span> <span class="n">usuario</span><span class="p">})</span></div>
+
+
+
+<div class="viewcode-block" id="baja_usuario_view">
+<a class="viewcode-back" href="../../../reference/apps.users.views.html#apps.users.views.baja_usuario_view">[documentos]</a>
+<span class="nd">@requiere_permiso</span><span class="p">(</span><span class="s1">'admin'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">baja_usuario_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+    <span class="n">usuario</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El usuario ya se encontraba inactivo.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'lista_usuarios'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CausaBajaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">actualizar_usuario_en_keycloak</span><span class="p">(</span>
+                    <span class="n">email</span><span class="o">=</span><span class="n">usuario</span><span class="o">.</span><span class="n">email</span><span class="p">,</span>
+                    <span class="n">first_name</span><span class="o">=</span><span class="n">usuario</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span>
+                    <span class="n">last_name</span><span class="o">=</span><span class="n">usuario</span><span class="o">.</span><span class="n">last_name</span><span class="p">,</span>
+                    <span class="n">is_active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'No se pudo dar de baja el usuario: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s1">'</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">usuario</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'is_active'</span><span class="p">])</span>
+                <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_USUARIO</span><span class="p">,</span>
+                    <span class="n">recurso_id</span><span class="o">=</span><span class="n">usuario</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                    <span class="n">recurso_nombre</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">usuario</span><span class="o">.</span><span class="n">get_full_name</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="n">usuario</span><span class="o">.</span><span class="n">username</span>
+                    <span class="p">),</span>
+                    <span class="n">causa</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'causa'</span><span class="p">],</span>
+                    <span class="n">realizado_por</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span>
+                    <span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'El usuario </span><span class="si">{</span><span class="n">usuario</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s1"> fue dado de baja.'</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'lista_usuarios'</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CausaBajaForm</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="s1">'bajas/confirmar_baja.html'</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span>
+            <span class="s1">'recurso_tipo'</span><span class="p">:</span> <span class="s1">'usuario'</span><span class="p">,</span>
+            <span class="s1">'recurso_nombre'</span><span class="p">:</span> <span class="n">usuario</span><span class="o">.</span><span class="n">get_full_name</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="n">usuario</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+            <span class="s1">'cancelar_url'</span><span class="p">:</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'lista_usuarios'</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="historial_bajas_usuarios_view">
+<a class="viewcode-back" href="../../../reference/apps.users.views.html#apps.users.views.historial_bajas_usuarios_view">[documentos]</a>
+<span class="nd">@requiere_permiso</span><span class="p">(</span><span class="s1">'admin'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">historial_bajas_usuarios_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">registros</span> <span class="o">=</span> <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_USUARIO</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'realizado_por'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="s1">'bajas/historial_bajas.html'</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="s1">'registros'</span><span class="p">:</span> <span class="n">registros</span><span class="p">,</span>
+            <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Historial de bajas de usuarios'</span><span class="p">,</span>
+            <span class="s1">'volver_url'</span><span class="p">:</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'lista_usuarios'</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
 
 
 

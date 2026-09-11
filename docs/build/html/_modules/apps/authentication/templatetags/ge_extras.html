@@ -38,6 +38,7 @@
 <span class="sd">qué ítem de navegación se ve resaltado.</span>
 <span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django</span><span class="w"> </span><span class="kn">import</span> <span class="n">template</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">es_rol_tecnico</span>
 
 <span class="n">register</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">Library</span><span class="p">()</span>
 
@@ -71,6 +72,22 @@
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">partes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">partes</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">partes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">partes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="get_item">
+<a class="viewcode-back" href="../../../../reference/apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.get_item">[documentos]</a>
+<span class="nd">@register</span><span class="o">.</span><span class="n">filter</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_item</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">mapping</span> <span class="k">else</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="rol_tecnico">
+<a class="viewcode-back" href="../../../../reference/apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.rol_tecnico">[documentos]</a>
+<span class="nd">@register</span><span class="o">.</span><span class="n">filter</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">)</span></div>
 
 </pre></div>
 

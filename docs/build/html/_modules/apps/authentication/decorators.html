@@ -67,6 +67,24 @@
         <span class="k">return</span> <span class="n">wrapper</span>
     <span class="k">return</span> <span class="n">decorador</span></div>
 
+
+
+<div class="viewcode-block" id="requiere_rol">
+<a class="viewcode-back" href="../../../reference/apps.authentication.decorators.html#apps.authentication.decorators.requiere_rol">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">requiere_rol</span><span class="p">(</span><span class="n">rol_requerido</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Protege una vista por rol, permitiendo también el rol global ``admin``."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorador</span><span class="p">(</span><span class="n">view_func</span><span class="p">):</span>
+        <span class="nd">@login_required</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">view_func</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="n">rol_requerido</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">and</span> <span class="s1">'admin'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés el rol necesario para acceder a esta funcionalidad.'</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">view_func</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wrapper</span>
+    <span class="k">return</span> <span class="n">decorador</span></div>
+
 </pre></div>
 
           </div>

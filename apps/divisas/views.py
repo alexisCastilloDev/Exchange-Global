@@ -115,15 +115,19 @@ class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
             destino = form.cleaned_data['divisa_destino']
             monto = form.cleaned_data['monto']
 
-            cotizacion_origen = origen.ultima_cotizacion
-            cotizacion_destino = destino.ultima_cotizacion
+            def get_cotizacion(divisa):
+                if getattr(divisa, 'codigo', None) == 'PYG':
+                    return type('CotizacionPYG', (), {'tasa_compra': Decimal('1.00'), 'tasa_venta': Decimal('1.00')})()
+                cotizacion = divisa.ultima_cotizacion
+                if not cotizacion:
+                    raise ValueError(f'La divisa {divisa.codigo} no tiene tasa disponible.')
+                return cotizacion
 
-            if not cotizacion_origen:
-                messages.error(request, f'La divisa {origen.codigo} no tiene tasa disponible.')
-                return self.render_to_response({'form': form, 'divisas': divisas, 'resultado': None})
-
-            if not cotizacion_destino:
-                messages.error(request, f'La divisa {destino.codigo} no tiene tasa disponible.')
+            try:
+                cotizacion_origen = get_cotizacion(origen)
+                cotizacion_destino = get_cotizacion(destino)
+            except ValueError as exc:
+                messages.error(request, str(exc))
                 return self.render_to_response({'form': form, 'divisas': divisas, 'resultado': None})
 
             tasa_origen = Decimal(str(cotizacion_origen.tasa_venta))
