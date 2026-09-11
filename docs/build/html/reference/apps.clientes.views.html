@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html lang="es" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>apps.clientes.views module &#8212; documentación de Global Exchange - 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.users package" href="apps.users.html" />
+    <link rel="prev" title="apps.clientes.urls module" href="apps.clientes.urls.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-apps.clientes.views">
+<span id="apps-clientes-views-module"></span><h1>apps.clientes.views module<a class="headerlink" href="#module-apps.clientes.views" title="Link to this heading">¶</a></h1>
+<p>Módulo de vistas para la aplicación de clientes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.AsociarUsuariosClienteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">AsociarUsuariosClienteView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#AsociarUsuariosClienteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.AsociarUsuariosClienteView" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Módulo independiente para asociar/desasociar usuarios del sistema a un cliente.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.AsociarUsuariosClienteView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#AsociarUsuariosClienteView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.AsociarUsuariosClienteView.get" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.AsociarUsuariosClienteView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#AsociarUsuariosClienteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.AsociarUsuariosClienteView.post" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.AsociarUsuariosClienteView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'clientes/asociar_usuarios.html'</span></span><a class="headerlink" href="#apps.clientes.views.AsociarUsuariosClienteView.template_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.AsociarUsuariosClienteView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#AsociarUsuariosClienteView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.AsociarUsuariosClienteView.test_func" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteCreateView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">ClienteCreateView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteCreateView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteCreateView" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SuccessMessageMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CreateView</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteCreateView.form_class">
+<span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#apps.clientes.views.ClienteCreateView.form_class" title="Link to this definition">¶</a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.ClienteForm" title="apps.clientes.forms.ClienteForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClienteForm</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteCreateView.get_success_message">
+<span class="sig-name descname"><span class="pre">get_success_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cleaned_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteCreateView.get_success_message"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteCreateView.get_success_message" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteCreateView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.clientes.views.ClienteCreateView.model" title="Link to this definition">¶</a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.Cliente" title="apps.clientes.models.Cliente"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cliente</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteCreateView.success_url">
+<span class="sig-name descname"><span class="pre">success_url</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/'</span></span><a class="headerlink" href="#apps.clientes.views.ClienteCreateView.success_url" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteCreateView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'clientes/cliente_form.html'</span></span><a class="headerlink" href="#apps.clientes.views.ClienteCreateView.template_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteCreateView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteCreateView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteCreateView.test_func" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteSoftDeleteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">ClienteSoftDeleteView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteSoftDeleteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteSoftDeleteView" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteSoftDeleteView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteSoftDeleteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteSoftDeleteView.post" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteSoftDeleteView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteSoftDeleteView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteSoftDeleteView.test_func" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteUpdateView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">ClienteUpdateView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteUpdateView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteUpdateView" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SuccessMessageMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateView</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteUpdateView.form_class">
+<span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#apps.clientes.views.ClienteUpdateView.form_class" title="Link to this definition">¶</a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.ClienteForm" title="apps.clientes.forms.ClienteForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClienteForm</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteUpdateView.get_success_message">
+<span class="sig-name descname"><span class="pre">get_success_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cleaned_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteUpdateView.get_success_message"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteUpdateView.get_success_message" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteUpdateView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.clientes.views.ClienteUpdateView.model" title="Link to this definition">¶</a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.Cliente" title="apps.clientes.models.Cliente"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cliente</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteUpdateView.success_url">
+<span class="sig-name descname"><span class="pre">success_url</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/'</span></span><a class="headerlink" href="#apps.clientes.views.ClienteUpdateView.success_url" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteUpdateView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'clientes/cliente_form.html'</span></span><a class="headerlink" href="#apps.clientes.views.ClienteUpdateView.template_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteUpdateView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteUpdateView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteUpdateView.test_func" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">PanelAdminView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#PanelAdminView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.PanelAdminView" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'clientes'</span></span><a class="headerlink" href="#apps.clientes.views.PanelAdminView.context_object_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#PanelAdminView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.PanelAdminView.get_context_data" title="Link to this definition">¶</a></dt>
+<dd><p>Get the context for this view.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#PanelAdminView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.PanelAdminView.get_queryset" title="Link to this definition">¶</a></dt>
+<dd><p>Return the list of items for this view.</p>
+<p>The return value must be an iterable and may be an instance of
+<cite>QuerySet</cite> in which case <cite>QuerySet</cite> specific behavior will be enabled.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.handle_no_permission">
+<span class="sig-name descname"><span class="pre">handle_no_permission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#PanelAdminView.handle_no_permission"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.PanelAdminView.handle_no_permission" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.clientes.views.PanelAdminView.model" title="Link to this definition">¶</a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.Cliente" title="apps.clientes.models.Cliente"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cliente</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'panel_admin.html'</span></span><a class="headerlink" href="#apps.clientes.views.PanelAdminView.template_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#PanelAdminView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.PanelAdminView.test_func" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.cambiar_cliente_view">
+<span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">cambiar_cliente_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#cambiar_cliente_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.cambiar_cliente_view" title="Link to this definition">¶</a></dt>
+<dd><p>Permite cambiar de cliente activo en cualquier momento sin cerrar sesión.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.seleccionar_cliente_view">
+<span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">seleccionar_cliente_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#seleccionar_cliente_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.seleccionar_cliente_view" title="Link to this definition">¶</a></dt>
+<dd><p>Vista para que el usuario elija con qué cliente operará.</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">IS2_REPO</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">IS2_REPO</a><ul>
+  <li><a href="apps.html">apps package</a><ul>
+  <li><a href="apps.clientes.html">apps.clientes package</a><ul>
+      <li>Previous: <a href="apps.clientes.urls.html" title="capítulo anterior">apps.clientes.urls module</a></li>
+      <li>Next: <a href="apps.users.html" title="próximo capítulo">apps.users package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Equipo 11.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/reference/apps.clientes.views.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

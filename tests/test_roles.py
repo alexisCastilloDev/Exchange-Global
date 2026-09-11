@@ -135,7 +135,7 @@ def test_editar_usuario_muestra_error_si_keycloak_falla(client, usuario_con_perm
     mensajes = [str(m) for m in response.context['messages']]
     assert any('error' in m.lower() for m in mensajes)
     usuario_objetivo.refresh_from_db()
-    assert usuario_objetivo.first_name == 'Ana'
+    assert usuario_objetivo.first_name == 'Ana'  # no se guardó nada localmente si Keycloak falló
 
 
 # ============================================================================
@@ -202,4 +202,4 @@ def test_cambio_de_rol_no_aplica_sin_relogin(client, usuario_gestor_roles, usuar
     """
     _login_con_roles(client, usuario_objetivo, roles=['cliente'])
     response = client.get(reverse('lista_usuarios'))
-    assert response.status_code == 302
+    assert response.status_code == 302  # sigue sin el rol 'usuarios' en SU sesión actual

@@ -1,0 +1,7 @@
+IS2\_REPO.apps.authentication.decorators module
+===============================================
+
+.. automodule:: IS2_REPO.apps.authentication.decorators
+   :members:
+   :show-inheritance:
+   :undoc-members:

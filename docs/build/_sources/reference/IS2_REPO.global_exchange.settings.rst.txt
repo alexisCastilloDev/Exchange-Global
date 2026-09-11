@@ -1,0 +1,19 @@
+IS2\_REPO.global\_exchange.settings package
+===========================================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.global_exchange.settings.base
+   IS2_REPO.global_exchange.settings.dev
+
+Module contents
+---------------
+
+.. automodule:: IS2_REPO.global_exchange.settings
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,7 @@
+IS2\_REPO.tests.test\_roles module
+==================================
+
+.. automodule:: IS2_REPO.tests.test_roles
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -29,3 +29,14 @@ def panel_protegido(request):
     por sesión/token válido (GE-3).
     """
     return render(request, 'panel.html')
+
+
+@login_required
+def perfil(request):
+    """
+    Perfil del usuario autenticado: datos básicos, roles efectivos
+    (sesión Keycloak) y, si corresponde, el cliente en cuyo nombre
+    está operando.
+    """
+    roles = request.session.get('keycloak_roles', [])
+    return render(request, 'perfil.html', {'roles': roles})
