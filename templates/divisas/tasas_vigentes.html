@@ -23,7 +23,10 @@
         <div>
             <p class="mb-0 text-muted">Última cotización disponible por divisa activa.</p>
         </div>
-        <span class="badge bg-secondary">{{ divisas|length }} activas</span>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-secondary">{{ divisas|length }} activas</span>
+            <a href="{% url 'divisas:simulacion_divisas' %}" class="btn btn-outline-primary btn-sm">Simulador</a>
+        </div>
     </div>
     <div class="table-responsive">
         <table class="table mb-0">

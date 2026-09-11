@@ -3,6 +3,46 @@ from django.core.validators import RegexValidator
 from .models import Cotizacion, Divisa
 
 
+class SimulacionDivisasForm(forms.Form):
+    monto = forms.DecimalField(
+        label='Monto a convertir',
+        min_value=0,
+        max_digits=18,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01'}),
+    )
+    divisa_origen = forms.ModelChoiceField(
+        label='Divisa origen',
+        queryset=Divisa.objects.none(),
+    )
+    divisa_destino = forms.ModelChoiceField(
+        label='Divisa destino',
+        queryset=Divisa.objects.none(),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        divisas_activas = Divisa.objects.filter(activa=True).order_by('codigo')
+        self.fields['divisa_origen'].queryset = divisas_activas
+        self.fields['divisa_destino'].queryset = divisas_activas
+
+    def clean_monto(self):
+        monto = self.cleaned_data['monto']
+        if monto <= 0:
+            raise forms.ValidationError('El monto debe ser mayor que cero.')
+        return monto
+
+    def clean(self):
+        cleaned_data = super().clean()
+        origen = cleaned_data.get('divisa_origen')
+        destino = cleaned_data.get('divisa_destino')
+
+        if origen and destino and origen.pk == destino.pk:
+            raise forms.ValidationError('Debe seleccionar dos divisas distintas.')
+
+        return cleaned_data
+
+
 class DivisaForm(forms.ModelForm):
     codigo = forms.CharField(
         label='Código ISO (Ej. USD, EUR, PYG)',

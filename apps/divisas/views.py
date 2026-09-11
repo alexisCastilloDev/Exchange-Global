@@ -1,13 +1,15 @@
+from decimal import Decimal, ROUND_HALF_UP
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from apps.authentication.forms import CausaBajaForm
 from apps.authentication.models import HistorialBaja
-from apps.divisas.forms import CotizacionForm, DivisaForm
+from apps.divisas.forms import CotizacionForm, DivisaForm, SimulacionDivisasForm
 from apps.divisas.models import Cotizacion, Divisa
 
 
@@ -18,11 +20,11 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
     def test_func(self):
         """
-        Autorización 100% contra Keycloak (sesión), sin auth.Group.
-        Acceso para administración, analista cambiario o cliente.
+        Autorización contra Keycloak: acceso para administración, analista cambiario,
+        cliente o agente.
         """
         roles = self.request.session.get('keycloak_roles', [])
-        return bool({'admin', 'analista_cambiario', 'cliente'} & set(roles))
+        return bool({'admin', 'agente', 'analista_cambiario', 'cliente'} & set(roles))
 
     def get_queryset(self):
         """
@@ -88,6 +90,61 @@ class HistorialCotizacionesView(LoginRequiredMixin, UserPassesTestMixin, ListVie
         context = super().get_context_data(**kwargs)
         context['divisa'] = self.divisa
         return context
+
+
+class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'divisas/simulacion_divisas.html'
+
+    def test_func(self):
+        roles = self.request.session.get('keycloak_roles', [])
+        return bool({'admin', 'agente', 'analista_cambiario', 'cliente'} & set(roles))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['divisas'] = Divisa.objects.filter(activa=True).order_by('codigo')
+        context['form'] = SimulacionDivisasForm()
+        context['resultado'] = None
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SimulacionDivisasForm(request.POST)
+        divisas = Divisa.objects.filter(activa=True).order_by('codigo')
+
+        if form.is_valid():
+            origen = form.cleaned_data['divisa_origen']
+            destino = form.cleaned_data['divisa_destino']
+            monto = form.cleaned_data['monto']
+
+            cotizacion_origen = origen.ultima_cotizacion
+            cotizacion_destino = destino.ultima_cotizacion
+
+            if not cotizacion_origen:
+                messages.error(request, f'La divisa {origen.codigo} no tiene tasa disponible.')
+                return self.render_to_response({'form': form, 'divisas': divisas, 'resultado': None})
+
+            if not cotizacion_destino:
+                messages.error(request, f'La divisa {destino.codigo} no tiene tasa disponible.')
+                return self.render_to_response({'form': form, 'divisas': divisas, 'resultado': None})
+
+            tasa_origen = Decimal(str(cotizacion_origen.tasa_venta))
+            tasa_destino = Decimal(str(cotizacion_destino.tasa_compra))
+            tasa_aplicada = tasa_origen / tasa_destino
+            monto_final = (monto * tasa_aplicada).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+            context = {
+                'form': form,
+                'divisas': divisas,
+                'resultado': {
+                    'monto_origen': monto,
+                    'divisa_origen': origen,
+                    'divisa_destino': destino,
+                    'tasa_aplicada': tasa_aplicada,
+                    'monto_final': monto_final,
+                },
+            }
+            return self.render_to_response(context)
+
+        return self.render_to_response({'form': form, 'divisas': divisas, 'resultado': None})
 
 
 class AdminDivisasMixin(LoginRequiredMixin, UserPassesTestMixin):

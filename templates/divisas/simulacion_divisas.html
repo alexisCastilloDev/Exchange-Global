@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Simulador de divisas{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Simulador de conversión</h1>
+        <p>Calculá el monto resultante antes de operar.</p>
+    </div>
+</div>
+
+{% if messages %}
+    {% include 'partials/mensajes.html' %}
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="ge-card">
+            <h2 class="h5 mb-3">Datos de la simulación</h2>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="id_monto" class="form-label">Monto</label>
+                    {{ form.monto }}
+                    {% if form.monto.errors %}
+                        <div class="text-danger small mt-1">{{ form.monto.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_divisa_origen" class="form-label">Divisa origen</label>
+                    {{ form.divisa_origen }}
+                    {% if form.divisa_origen.errors %}
+                        <div class="text-danger small mt-1">{{ form.divisa_origen.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_divisa_destino" class="form-label">Divisa destino</label>
+                    {{ form.divisa_destino }}
+                    {% if form.divisa_destino.errors %}
+                        <div class="text-danger small mt-1">{{ form.divisa_destino.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary">Simular</button>
+                <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-outline-secondary ms-2">Volver</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="ge-card">
+            <h2 class="h5 mb-3">Resultado</h2>
+            {% if resultado %}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <small class="text-muted d-block">Monto origen</small>
+                            <strong>{{ resultado.monto_origen }} {{ resultado.divisa_origen.codigo }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <small class="text-muted d-block">Tasa aplicada</small>
+                            <strong>{{ resultado.tasa_aplicada|floatformat:4 }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <small class="text-muted d-block">Monto final</small>
+                            <strong>{{ resultado.monto_final }} {{ resultado.divisa_destino.codigo }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <p class="mt-3 text-muted mb-0">Esta es una simulación, no registra ninguna operación real.</p>
+            {% else %}
+                <div class="text-muted">Todavía no se realizó una simulación.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
