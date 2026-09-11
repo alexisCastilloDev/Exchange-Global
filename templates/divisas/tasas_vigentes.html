@@ -34,6 +34,7 @@
                     <th>Tasa de compra</th>
                     <th>Tasa de venta</th>
                     <th>Última actualización</th>
+                    {% if puede_actualizar_tasas %}<th>Acciones</th>{% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -43,15 +44,23 @@
                     {% if divisa.ultima_cotizacion %}
                         <td class="ge-num">{{ divisa.ultima_cotizacion.tasa_compra }}</td>
                         <td class="ge-num">{{ divisa.ultima_cotizacion.tasa_venta }}</td>
-                        <td>{{ divisa.ultima_cotizacion.fecha_actualizacion|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {{ divisa.ultima_cotizacion.fecha_actualizacion|date:"d/m/Y H:i" }}
+                            {% if divisa.ultima_cotizacion.usuario %}
+                                <small class="d-block text-muted">por {{ divisa.ultima_cotizacion.usuario.get_full_name|default:divisa.ultima_cotizacion.usuario.username }}</small>
+                            {% endif %}
+                        </td>
                     {% else %}
                         <td colspan="2" class="text-muted">sin cotización</td>
                         <td class="text-muted">-</td>
                     {% endif %}
+                    {% if puede_actualizar_tasas %}
+                        <td><a href="{% url 'divisas:actualizar_cotizacion' divisa.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-arrow-repeat me-1"></i>Actualizar</a></td>
+                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center py-4 text-muted">No hay divisas activas registradas.</td>
+                    <td colspan="{% if puede_actualizar_tasas %}5{% else %}4{% endif %}" class="text-center py-4 text-muted">No hay divisas activas registradas.</td>
                 </tr>
                 {% endfor %}
             </tbody>

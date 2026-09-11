@@ -80,6 +80,13 @@
                             <i class="bi bi-currency-exchange"></i> Gestión de divisas
                         </a>
                     </li>
+                    {% if puede_actualizar_tasas %}
+                    <li>
+                        <a href="{% url 'divisas:tasas_vigentes' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'tasas_vigentes' or request.resolver_match.url_name == 'actualizar_cotizacion' %}is-active{% endif %}">
+                            <i class="bi bi-arrow-repeat"></i> Actualizar tasas
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}

@@ -1,6 +1,6 @@
 from django import forms
 from django.core.validators import RegexValidator
-from .models import Divisa
+from .models import Cotizacion, Divisa
 
 
 class DivisaForm(forms.ModelForm):
@@ -42,3 +42,32 @@ class DivisaForm(forms.ModelForm):
         if not simbolo:
             raise forms.ValidationError('El símbolo de la divisa es obligatorio.')
         return simbolo
+
+
+class CotizacionForm(forms.ModelForm):
+    class Meta:
+        model = Cotizacion
+        fields = ['tasa_compra', 'tasa_venta']
+        labels = {
+            'tasa_compra': 'Precio de compra',
+            'tasa_venta': 'Precio de venta',
+        }
+        widgets = {
+            'tasa_compra': forms.NumberInput(attrs={'step': '0.01', 'min': '0.01'}),
+            'tasa_venta': forms.NumberInput(attrs={'step': '0.01', 'min': '0.01'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        compra = cleaned_data.get('tasa_compra')
+        venta = cleaned_data.get('tasa_venta')
+
+        if compra is not None and compra <= 0:
+            self.add_error('tasa_compra', 'El precio de compra debe ser mayor que cero.')
+        if venta is not None and venta <= 0:
+            self.add_error('tasa_venta', 'El precio de venta debe ser mayor que cero.')
+        if compra is not None and venta is not None and compra > venta:
+            raise forms.ValidationError(
+                'El precio de compra no puede ser mayor que el precio de venta.'
+            )
+        return cleaned_data

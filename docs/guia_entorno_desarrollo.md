@@ -81,6 +81,64 @@ Abrí VSCode → pestaña Extensions (ícono de cuadraditos en la barra lateral)
 12. Para que el resto del equipo se conecte, necesitan la **IP local de tu máquina** en la red (no `localhost`, que en la máquina de cada uno apunta a sí misma). Verla con `ipconfig` → buscar "Dirección IPv4".
 13. Pasarle al equipo, por un canal privado (nunca por el repo): la IP, el Realm, el Client ID y el Client Secret.
 
+### 3.1 — Cargar la configuración y usuarios de prueba automáticamente
+
+Con Keycloak levantado en `http://localhost:8080`, podés crear el Realm, el Client,
+los roles y los usuarios de prueba con el script:
+
+```powershell
+.\scripts\keycloak-configure.ps1 -AdminUser TU_ADMIN_MASTER
+```
+
+El script solicita la contraseña del administrador de Keycloak y crea de forma
+idempotente:
+
+| Usuario | Password inicial | Roles |
+|---|---|---|
+| `admin.prueba` | `GE2-Prueba-2026!` | `admin`, `usuarios`, `gestion_roles`, `analista_cambiario`, `agente` |
+| `analista.prueba` | `GE2-Prueba-2026!` | `analista_cambiario`, `agente` |
+| `agente.prueba` | `GE2-Prueba-2026!` | `agente`, `analista_cambiario` |
+| `cliente.prueba` | `GE2-Prueba-2026!` | `cliente` |
+
+También crea los roles `admin`, `analista_cambiario`, `agente`, `usuarios`,
+`gestion_roles` y `cliente`, además del Client `global-exchange-django` con
+redirect URIs para `localhost` y `127.0.0.1`. Al terminar, el script imprime el
+Client Secret: copiá ese valor únicamente en tu `.env`:
+
+```dotenv
+KEYCLOAK_SERVER_URL=http://localhost:8080
+KEYCLOAK_REALM=global-exchange
+KEYCLOAK_CLIENT_ID=global-exchange-django
+KEYCLOAK_CLIENT_SECRET=VALOR_IMPRESO_POR_EL_SCRIPT
+```
+
+La password de prueba es solo para desarrollo local; cambiala antes de compartir
+el entorno. Después de modificar roles en Keycloak, cerrá sesión y volvé a iniciar
+sesión para que Django reciba los roles actualizados en el token.
+
+### 3.2 — Cómo se sincronizan usuarios y clientes
+
+Keycloak es la fuente de usuarios, contraseñas y roles. En el primer login de
+un usuario, el backend OIDC lo busca por email y, si no encuentra coincidencia,
+por `preferred_username`; luego crea o actualiza su registro en la tabla de
+usuarios de PostgreSQL. También actualiza nombre, apellido, `is_staff` y los
+roles de la sesión actual.
+
+Esto significa que un usuario de Keycloak queda emparejado automáticamente al
+iniciar sesión en Django. Los usuarios que todavía nunca iniciaron sesión no
+se copian a PostgreSQL hasta ese momento.
+
+Los clientes son entidades propias de la aplicación y se guardan directamente
+en PostgreSQL, en la tabla `clientes_cliente`. Crear un cliente desde el módulo
+de clientes persiste sus datos allí; Keycloak no reemplaza ese catálogo.
+La relación de usuarios autorizados se guarda en la tabla intermedia de
+`Cliente.usuarios` y se administra desde la ficha del cliente.
+
+`agente` y `analista_cambiario` representan el mismo perfil operativo en la
+aplicación. Se aceptan ambos nombres para mantener compatibilidad con usuarios
+o tokens existentes; en una configuración nueva se recomienda asignar
+`analista_cambiario` y conservar `agente` como alias.
+
 ## Paso 4 — Clonar el proyecto y armar el entorno virtual
 
 ```bash

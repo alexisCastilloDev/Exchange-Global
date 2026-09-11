@@ -269,3 +269,97 @@ class AdministracionDivisasTest(TestCase):
         self.assertContains(response, inactiva.codigo)
         self.assertContains(response, inactiva.nombre)
         self.assertContains(response, 'Inactivo')
+
+
+@pytest.mark.django_db
+class ActualizacionCotizacionesTest(TestCase):
+    def setUp(self):
+        self.analista = User.objects.create_user(
+            username='analista-cambiario', password='password123'
+        )
+        self.divisa = Divisa.objects.create(
+            codigo='USD', nombre='Dólar', simbolo='$', activa=True
+        )
+        self.url = reverse(
+            'divisas:actualizar_cotizacion',
+            kwargs={'divisa_id': self.divisa.pk},
+        )
+        self.client.login(
+            username='analista-cambiario', password='password123'
+        )
+        session = self.client.session
+        session['keycloak_roles'] = ['analista_cambiario']
+        session.save()
+
+    def test_analista_ve_el_menu_de_actualizar_tasas(self):
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Actualizar tasas')
+        self.assertContains(response, reverse('divisas:tasas_vigentes'))
+
+    def test_analista_y_agente_comparten_el_acceso_operativo(self):
+        response = self.client.get(reverse('divisas:tasas_vigentes'))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_analista_actualiza_compra_y_venta(self):
+        response = self.client.post(
+            self.url,
+            {'tasa_compra': '7300.50', 'tasa_venta': '7400.00'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        cotizacion = Cotizacion.objects.get(divisa=self.divisa)
+        self.assertEqual(cotizacion.tasa_compra, 7300.50)
+        self.assertEqual(cotizacion.tasa_venta, 7400.00)
+
+    def test_actualizacion_registra_usuario_y_fecha(self):
+        response = self.client.post(
+            self.url,
+            {'tasa_compra': '7300', 'tasa_venta': '7400'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        cotizacion = Cotizacion.objects.get(divisa=self.divisa)
+        self.assertEqual(cotizacion.usuario, self.analista)
+        self.assertIsNotNone(cotizacion.fecha_actualizacion)
+
+    def test_rechaza_compra_mayor_y_valores_no_validos(self):
+        for datos in [
+            {'tasa_compra': '7500', 'tasa_venta': '7400'},
+            {'tasa_compra': '-1', 'tasa_venta': '7400'},
+            {'tasa_compra': '7300', 'tasa_venta': '0'},
+        ]:
+            response = self.client.post(self.url, datos)
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(response.context['form'].is_valid())
+        self.assertEqual(Cotizacion.objects.filter(divisa=self.divisa).count(), 0)
+
+    def test_nueva_actualizacion_conserva_la_anterior_en_historial(self):
+        anterior = Cotizacion.objects.create(
+            divisa=self.divisa,
+            tasa_compra=7000,
+            tasa_venta=7100,
+            usuario=self.analista,
+        )
+
+        response = self.client.post(
+            self.url,
+            {'tasa_compra': '7300', 'tasa_venta': '7400'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Cotizacion.objects.filter(divisa=self.divisa).count(), 2)
+        anterior.refresh_from_db()
+        self.assertEqual(anterior.tasa_compra, 7000)
+        self.assertEqual(anterior.tasa_venta, 7100)
+
+    def test_usuario_sin_rol_no_puede_actualizar(self):
+        session = self.client.session
+        session['keycloak_roles'] = []
+        session.save()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 403)

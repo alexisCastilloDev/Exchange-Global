@@ -48,7 +48,9 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         """
         email = claims.get('email')
         if email:
-            return self.UserModel.objects.filter(email__iexact=email)
+            users = self.UserModel.objects.filter(email__iexact=email)
+            if users.exists():
+                return users
 
         preferred = claims.get('preferred_username')
         if preferred:
