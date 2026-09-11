@@ -12,8 +12,11 @@ from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
+from apps.authentication.forms import CausaBajaForm
+from apps.authentication.models import HistorialBaja
 from .forms import AsociarUsuarioClienteForm, ClienteForm
 from .models import Cliente
+from apps.users.services import sincronizar_usuarios_desde_keycloak
 
 User = get_user_model()
 
@@ -188,11 +191,35 @@ class AsociarUsuariosClienteView(
     def test_func(self):
         return self.request.user.is_staff or self.request.user.is_superuser
 
+    def _usuarios_cliente_ids(self):
+        """Obtiene los usuarios activos que Keycloak identifica como clientes.
+
+        Si la sincronización no está disponible, se devuelve una lista vacía:
+        así nunca se habilita accidentalmente asociar a un usuario sin el rol
+        requerido.
+        """
+        try:
+            roles_por_usuario = sincronizar_usuarios_desde_keycloak()
+        except Exception:
+            messages.error(
+                self.request,
+                'No fue posible verificar los roles en Keycloak. '
+                'No se modificaron las vinculaciones.',
+            )
+            return []
+        return [
+            user_id
+            for user_id, roles in roles_por_usuario.items()
+            if 'cliente' in roles
+        ]
+
     def get(self, request, pk, *args, **kwargs):
         cliente = get_object_or_404(Cliente, pk=pk)
+        usuarios_cliente = self._usuarios_cliente_ids()
         # Pre-seleccionar los usuarios que ya están vinculados
         form = AsociarUsuarioClienteForm(
-            initial={'usuarios': cliente.usuarios.all()}
+            initial={'usuarios': cliente.usuarios.filter(pk__in=usuarios_cliente)},
+            usuarios_cliente=usuarios_cliente,
         )
         return render(
             request, self.template_name, {'form': form, 'cliente': cliente}
@@ -200,7 +227,11 @@ class AsociarUsuariosClienteView(
 
     def post(self, request, pk, *args, **kwargs):
         cliente = get_object_or_404(Cliente, pk=pk)
-        form = AsociarUsuarioClienteForm(request.POST)
+        usuarios_cliente = self._usuarios_cliente_ids()
+        form = AsociarUsuarioClienteForm(
+            request.POST,
+            usuarios_cliente=usuarios_cliente,
+        )
         if form.is_valid():
             nuevos_usuarios = form.cleaned_data['usuarios']
             # Actualiza la relación Muchos a Muchos
@@ -220,9 +251,44 @@ class ClienteSoftDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         return self.request.user.is_staff or self.request.user.is_superuser
 
+    def get(self, request, pk, *args, **kwargs):
+        cliente = get_object_or_404(Cliente, pk=pk)
+        return render(
+            request,
+            'bajas/confirmar_baja.html',
+            {
+                'form': CausaBajaForm(),
+                'recurso_tipo': 'cliente',
+                'recurso_nombre': cliente,
+                'cancelar_url': reverse('panel_admin'),
+            },
+        )
+
     def post(self, request, pk, *args, **kwargs):
         cliente = get_object_or_404(Cliente, pk=pk)
+        form = CausaBajaForm(request.POST)
+        if not form.is_valid():
+            return render(
+                request,
+                'bajas/confirmar_baja.html',
+                {
+                    'form': form,
+                    'recurso_tipo': 'cliente',
+                    'recurso_nombre': cliente,
+                    'cancelar_url': reverse('panel_admin'),
+                },
+            )
+        if not cliente.is_active:
+            messages.info(request, 'El cliente ya se encontraba inactivo.')
+            return redirect('panel_admin')
         cliente.soft_delete()
+        HistorialBaja.objects.create(
+            tipo_recurso=HistorialBaja.TIPO_CLIENTE,
+            recurso_id=cliente.pk,
+            recurso_nombre=str(cliente),
+            causa=form.cleaned_data['causa'],
+            realizado_por=request.user,
+        )
         nombre_display = (
             cliente.razon_social
             if cliente.tipo_cliente == Cliente.TIPO_JURIDICA
@@ -232,5 +298,24 @@ class ClienteSoftDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
             request,
             f"¡El cliente {nombre_display} ha sido dado de baja correctamente!",
         )
-        url_previa = request.META.get('HTTP_REFERER')
-        return redirect(url_previa) if url_previa else redirect('home')
+        return redirect('panel_admin')
+
+
+class ClienteHistorialBajasView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = HistorialBaja
+    template_name = 'bajas/historial_bajas.html'
+    context_object_name = 'registros'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_queryset(self):
+        return HistorialBaja.objects.filter(
+            tipo_recurso=HistorialBaja.TIPO_CLIENTE
+        ).select_related('realizado_por')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Historial de bajas de clientes'
+        context['volver_url'] = reverse('panel_admin')
+        return context

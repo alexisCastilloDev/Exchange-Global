@@ -3,6 +3,7 @@ import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
+from apps.authentication.models import HistorialBaja
 
 User = get_user_model()
 
@@ -76,30 +77,38 @@ def test_sincronizacion_keycloak_actualiza_y_oculta_usuarios(mock_admin, client,
 
 @pytest.mark.django_db
 @patch('apps.users.views.actualizar_usuario_en_keycloak')
-def test_editar_usuario_y_deshabilitar(mock_keycloak, client, admin_user):
+def test_baja_usuario_registra_causa_y_auditoria(mock_keycloak, client, admin_user):
     """CA2 / CA3: Edita el usuario y desactiva su estado sincronizando con Keycloak."""
     _login_con_roles(client, admin_user, roles=['admin'])
     target_user = User.objects.create_user(
         username='cliente', email='cliente@test.com', first_name='Carlos', is_active=True
     )
 
-    url = reverse('editar_usuario', args=[target_user.id])
+    url = reverse('baja_usuario', args=[target_user.id])
     data = {
-        'first_name': 'Carlos Editado',
-        'last_name': 'Pérez',
-        'is_active': ''  # Desmarcado representa Inactivo
+        'causa': 'Finalizacion de contrato',
     }
 
     response = client.post(url, data)
     assert response.status_code == 302  # Redirección tras guardar
 
     target_user.refresh_from_db()
-    assert target_user.first_name == 'Carlos Editado'
     assert target_user.is_active is False
+
+    registro = HistorialBaja.objects.get(
+        tipo_recurso=HistorialBaja.TIPO_USUARIO,
+        recurso_id=target_user.pk,
+    )
+    assert registro.causa == 'Finalizacion de contrato'
+    assert registro.realizado_por == admin_user
+
+    historial = client.get(reverse('historial_bajas_usuarios'))
+    assert historial.status_code == 200
+    assert 'Finalizacion de contrato' in historial.content.decode()
 
     mock_keycloak.assert_called_once_with(
         email='cliente@test.com',
-        first_name='Carlos Editado',
-        last_name='Pérez',
+        first_name='Carlos',
+        last_name='',
         is_active=False
     )

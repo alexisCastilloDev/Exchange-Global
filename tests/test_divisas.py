@@ -6,6 +6,7 @@ from django.conf import settings
 from django.shortcuts import resolve_url
 from django.utils import timezone
 from apps.divisas.models import Divisa, Cotizacion
+from apps.authentication.models import HistorialBaja
 
 
 @pytest.mark.django_db  # Habilita el acceso a la base de datos para pytest
@@ -80,14 +81,15 @@ class TasasVigentesTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403)
 
-    def test_analista_ve_el_acceso_a_gestion_de_divisas_en_inicio(self):
-        """Un analista autenticado puede llegar a la pantalla desde el inicio."""
+    def test_analista_ve_solo_el_acceso_a_actualizar_tasas_en_inicio(self):
+        """El analista no administra divisas; solo puede actualizar tasas."""
         self._login_analista_con_sesion()
 
         response = self.client.get(reverse('home'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Gestión de divisas')
+        self.assertContains(response, 'Actualizar tasas')
+        self.assertNotContains(response, 'Gestión de divisas')
         self.assertContains(response, self.url)
 
     def test_ca4_divisas_inactivas_no_se_muestran(self):
@@ -228,18 +230,23 @@ class AdministracionDivisasTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('divisas:editar_divisa', kwargs={'pk': divisa.pk}),
-            {
-                'codigo': 'BRL',
-                'nombre': 'Real',
-                'simbolo': 'R$',
-            },
+            reverse('divisas:baja_divisa', kwargs={'pk': divisa.pk}),
+            {'causa': 'Moneda fuera de operacion'},
         )
 
         self.assertEqual(response.status_code, 302)
         divisa.refresh_from_db()
         self.assertFalse(divisa.activa)
         self.assertTrue(Cotizacion.objects.filter(pk=cotizacion.pk).exists())
+        registro = HistorialBaja.objects.get(
+            tipo_recurso=HistorialBaja.TIPO_DIVISA,
+            recurso_id=divisa.pk,
+        )
+        self.assertEqual(registro.causa, 'Moneda fuera de operacion')
+
+        historial = self.client.get(reverse('divisas:historial_bajas'))
+        self.assertEqual(historial.status_code, 200)
+        self.assertContains(historial, 'Moneda fuera de operacion')
 
         session = self.client.session
         session['keycloak_roles'] = ['admin']
@@ -351,6 +358,32 @@ class ActualizacionCotizacionesTest(TestCase):
         self.assertEqual(anterior.tasa_compra, 7000)
         self.assertEqual(anterior.tasa_venta, 7100)
 
+    def test_historial_muestra_todas_las_actualizaciones_de_la_divisa(self):
+        primera = Cotizacion.objects.create(
+            divisa=self.divisa,
+            tasa_compra=7000,
+            tasa_venta=7100,
+            usuario=self.analista,
+        )
+        segunda = Cotizacion.objects.create(
+            divisa=self.divisa,
+            tasa_compra=7300,
+            tasa_venta=7400,
+            usuario=self.analista,
+        )
+
+        response = self.client.get(
+            reverse(
+                'divisas:historial_cotizaciones',
+                kwargs={'divisa_id': self.divisa.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['cotizaciones']), [segunda, primera])
+        self.assertContains(response, '7300.00')
+        self.assertContains(response, '7000.00')
+
     def test_usuario_sin_rol_no_puede_actualizar(self):
         session = self.client.session
         session['keycloak_roles'] = []
@@ -359,3 +392,34 @@ class ActualizacionCotizacionesTest(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 403)
+
+
+@pytest.mark.django_db
+class ConsultaTasasClienteTest(TestCase):
+    def test_cliente_visualiza_tasas_actuales_sin_acciones_de_actualizacion(self):
+        cliente = User.objects.create_user(
+            username='cliente-tasas', password='password123'
+        )
+        divisa = Divisa.objects.create(
+            codigo='EUR', nombre='Euro', simbolo='€', activa=True
+        )
+        Cotizacion.objects.create(
+            divisa=divisa, tasa_compra=7800, tasa_venta=8000
+        )
+        self.client.login(username='cliente-tasas', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        response = self.client.get(reverse('divisas:tasas_vigentes'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tasas actuales')
+        self.assertContains(response, '7800.00')
+        self.assertNotContains(
+            response,
+            reverse(
+                'divisas:actualizar_cotizacion',
+                kwargs={'divisa_id': divisa.pk},
+            ),
+        )

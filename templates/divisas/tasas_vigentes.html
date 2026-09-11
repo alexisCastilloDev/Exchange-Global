@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
-{% block title %}Gestión de divisas - Global Exchange{% endblock %}
+{% block title %}Tasas vigentes - Global Exchange{% endblock %}
 
 {% block content %}
 <div class="ge-page-header">
     <div>
-        <h1>Gestión de divisas</h1>
+        <h1>Tasas vigentes</h1>
         <p>Consultá las tasas de compra y venta vigentes para operar.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <span class="badge-activo"><i class="bi bi-shield-check me-1"></i>{% if puede_administrar_divisas %}Acceso administrador{% else %}Acceso analista cambiario{% endif %}</span>
+        <span class="badge-activo"><i class="bi bi-shield-check me-1"></i>{% if puede_administrar_divisas %}Acceso administrador{% elif puede_actualizar_tasas %}Acceso analista cambiario{% else %}Acceso cliente{% endif %}</span>
         {% if puede_administrar_divisas %}
             <a href="{% url 'divisas:crear_divisa' %}" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-1"></i>Nueva divisa
@@ -55,7 +55,10 @@
                         <td class="text-muted">-</td>
                     {% endif %}
                     {% if puede_actualizar_tasas %}
-                        <td><a href="{% url 'divisas:actualizar_cotizacion' divisa.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-arrow-repeat me-1"></i>Actualizar</a></td>
+                        <td class="text-nowrap">
+                            <a href="{% url 'divisas:actualizar_cotizacion' divisa.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-arrow-repeat me-1"></i>Actualizar</a>
+                            <a href="{% url 'divisas:historial_cotizaciones' divisa.pk %}" class="btn btn-sm btn-secondary">Historial</a>
+                        </td>
                     {% endif %}
                 </tr>
                 {% empty %}

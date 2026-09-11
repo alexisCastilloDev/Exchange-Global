@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from apps.clientes.models import Cliente
 from apps.clientes.forms import ClienteForm
+from apps.authentication.models import HistorialBaja
 
 User = get_user_model()
 
@@ -20,6 +21,12 @@ class TestClienteForm:
     """
     Pruebas unitarias para las reglas de validación de ClienteForm.
     """
+
+    def test_segmento_se_presenta_como_lista_de_opciones_vigentes(self):
+        form = ClienteForm()
+
+        assert form.fields['segmento'].choices == Cliente.SEGMENTO_CHOICES
+        assert form.fields['segmento'].widget.__class__.__name__ == 'Select'
 
     def test_registro_persona_fisica_exitoso(self):
         """Criterio: Registra exitosamente si el documento CI pertenece a un usuario existente."""
@@ -425,7 +432,7 @@ class TestClienteView:
         client.force_login(admin)
         url = reverse('cliente_delete', kwargs={'pk': cliente.pk})
 
-        response = client.post(url)
+        response = client.post(url, {'causa': 'Solicitud del cliente'})
         
         # Validar redirección tras éxito
         assert response.status_code in [301, 302]
@@ -434,6 +441,15 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.is_active is False
         assert Cliente.objects.filter(pk=cliente.pk).exists() is True
+        registro = HistorialBaja.objects.get(
+            tipo_recurso=HistorialBaja.TIPO_CLIENTE,
+            recurso_id=cliente.pk,
+        )
+        assert registro.causa == 'Solicitud del cliente'
+
+        historial = client.get(reverse('cliente_historial_bajas'))
+        assert historial.status_code == 200
+        assert 'Solicitud del cliente' in historial.content.decode()
 
     def test_listado_general_oculta_inactivos_por_defecto(self, client):
         """

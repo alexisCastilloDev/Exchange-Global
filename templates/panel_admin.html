@@ -9,6 +9,9 @@
         <p>Bienvenido, {{ user.first_name }} {{ user.last_name }}</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'cliente_historial_bajas' %}" class="btn btn-secondary">
+            <i class="bi bi-clock-history me-1"></i>Historial de bajas
+        </a>
         <a href="{% url 'cliente_create' %}" class="btn btn-primary">
             <i class="bi bi-person-plus me-1"></i> Registrar cliente
         </a>
@@ -98,13 +101,9 @@
                                     <i class="bi bi-people"></i> {{ cliente.usuarios.count }}
                                 </a>
                                 {% if cliente.is_active %}
-                                    <form action="{% url 'cliente_delete' cliente.pk %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Dar de baja"
-                                                onclick="return confirm('¿Confirmas la baja lógica del cliente {{ cliente.nombre|default:cliente.razon_social }}?');">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <a href="{% url 'cliente_delete' cliente.pk %}" class="btn btn-sm btn-danger" title="Dar de baja">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
                                 {% endif %}
                             </td>
                         </tr>

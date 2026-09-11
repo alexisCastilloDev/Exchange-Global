@@ -16,11 +16,9 @@ class DivisaForm(forms.ModelForm):
     )
     nombre = forms.CharField(label='Nombre de la divisa', max_length=50)
     simbolo = forms.CharField(label='Símbolo (Ej. $, €)', max_length=5)
-    activa = forms.BooleanField(label='Divisa Activa', required=False, initial=True)
-
     class Meta:
         model = Divisa
-        fields = ['codigo', 'nombre', 'simbolo', 'activa']
+        fields = ['codigo', 'nombre', 'simbolo']
 
     def clean_codigo(self):
         codigo = self.cleaned_data['codigo'].strip().upper()
