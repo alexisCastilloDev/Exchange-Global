@@ -1,0 +1,30 @@
+IS2\_REPO.global\_exchange package
+==================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.global_exchange.settings
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.global_exchange.asgi
+   IS2_REPO.global_exchange.auth
+   IS2_REPO.global_exchange.urls
+   IS2_REPO.global_exchange.views
+   IS2_REPO.global_exchange.wsgi
+
+Module contents
+---------------
+
+.. automodule:: IS2_REPO.global_exchange
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from global_exchange.views import home, panel_protegido
+from global_exchange.views import home, panel_protegido, perfil
 from apps.authentication.views import CustomOIDCLogoutView, CustomOIDCCallbackView
 from apps.clientes.views import PanelAdminView
 
@@ -8,6 +8,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
     path('panel/', panel_protegido, name='panel_protegido'),
+    path('perfil/', perfil, name='perfil'),
+    # Enrutado directo a la vista real (antes apuntaba a un stub vacío
+    # en global_exchange.views mientras PanelAdminView, con la lógica
+    # de filtros de GE-8/GE-63, no estaba registrada en ningún lado).
     path('panel-admin/', PanelAdminView.as_view(), name='panel_admin'),
     path('usuarios/', include('apps.users.urls')),
     path('oidc/logout/', CustomOIDCLogoutView.as_view(), name='oidc_logout'),

@@ -1,0 +1,24 @@
+IS2\_REPO.apps.users package
+============================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.apps.users.admin
+   IS2_REPO.apps.users.apps
+   IS2_REPO.apps.users.models
+   IS2_REPO.apps.users.services
+   IS2_REPO.apps.users.tests
+   IS2_REPO.apps.users.urls
+   IS2_REPO.apps.users.views
+
+Module contents
+---------------
+
+.. automodule:: IS2_REPO.apps.users
+   :members:
+   :show-inheritance:
+   :undoc-members:

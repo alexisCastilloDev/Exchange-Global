@@ -1,0 +1,7 @@
+IS2\_REPO.apps.users.admin module
+=================================
+
+.. automodule:: IS2_REPO.apps.users.admin
+   :members:
+   :show-inheritance:
+   :undoc-members:

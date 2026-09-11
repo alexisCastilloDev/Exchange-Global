@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="es" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>global_exchange.views &#8212; documentación de Global Exchange - 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=9c9b61ad"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/translations.js?v=f85f4cfb"></script>
+    <link rel="index" title="Índice" href="../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Código fuente para global_exchange.views</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Vistas generales del proyecto: pantalla de bienvenida y panel</span>
+<span class="sd">protegido de demostración por rol de Keycloak (sesión).</span>
+
+<span class="sd">El panel de administración (listado de clientes) y la gestión de</span>
+<span class="sd">roles ya no viven acá: son responsabilidad de</span>
+<span class="sd">``apps.clientes.views.PanelAdminView`` y ``apps.users.views``</span>
+<span class="sd">respectivamente. Antes había acá dos vistas "stub" (``panel_admin`` y</span>
+<span class="sd">``user_roles``) registradas en las URLs pero que renderizaban sus</span>
+<span class="sd">templates sin ningún contexto — quedaban siempre vacías/rotas porque</span>
+<span class="sd">la lógica real vivía en otro lado y nunca se enrutaba. Se eliminaron</span>
+<span class="sd">para no tener dos implementaciones compitiendo por la misma URL.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">login_required</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span>
+
+
+<div class="viewcode-block" id="home">
+<a class="viewcode-back" href="../../reference/global_exchange.views.html#global_exchange.views.home">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">home</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Vista pública de bienvenida.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'home.html'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="panel_protegido">
+<a class="viewcode-back" href="../../reference/global_exchange.views.html#global_exchange.views.panel_protegido">[documentos]</a>
+<span class="nd">@login_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">panel_protegido</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Vista de prueba para demostrar que el acceso está protegido</span>
+<span class="sd">    por sesión/token válido (GE-3).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'panel.html'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="perfil">
+<a class="viewcode-back" href="../../reference/global_exchange.views.html#global_exchange.views.perfil">[documentos]</a>
+<span class="nd">@login_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">perfil</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Perfil del usuario autenticado: datos básicos, roles efectivos</span>
+<span class="sd">    (sesión Keycloak) y, si corresponde, el cliente en cuyo nombre</span>
+<span class="sd">    está operando.</span>
+<span class="sd">    """</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'perfil.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'roles'</span><span class="p">:</span> <span class="n">roles</span><span class="p">})</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
+<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/modules.html">IS2_REPO</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Código de módulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Equipo 11.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

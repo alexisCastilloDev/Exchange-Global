@@ -1,0 +1,14 @@
+IS2\_REPO.apps namespace
+========================
+
+.. py:module:: IS2_REPO.apps
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.apps.authentication
+   IS2_REPO.apps.clientes
+   IS2_REPO.apps.users

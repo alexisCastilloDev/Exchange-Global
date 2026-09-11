@@ -1,0 +1,7 @@
+IS2\_REPO.apps.authentication.templatetags.ge\_extras module
+============================================================
+
+.. automodule:: IS2_REPO.apps.authentication.templatetags.ge_extras
+   :members:
+   :show-inheritance:
+   :undoc-members:

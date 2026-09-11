@@ -1,0 +1,12 @@
+IS2\_REPO.docs namespace
+========================
+
+.. py:module:: IS2_REPO.docs
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   IS2_REPO.docs.source

@@ -1,0 +1,7 @@
+IS2\_REPO.tests.test\_clientes module
+=====================================
+
+.. automodule:: IS2_REPO.tests.test_clientes
+   :members:
+   :show-inheritance:
+   :undoc-members:
