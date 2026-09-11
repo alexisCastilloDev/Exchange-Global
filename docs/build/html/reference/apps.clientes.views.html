@@ -15,7 +15,7 @@
     <script src="../_static/translations.js?v=f85f4cfb"></script>
     <link rel="index" title="Índice" href="../genindex.html" />
     <link rel="search" title="Búsqueda" href="../search.html" />
-    <link rel="next" title="apps.users package" href="apps.users.html" />
+    <link rel="next" title="apps.divisas package" href="apps.divisas.html" />
     <link rel="prev" title="apps.clientes.urls module" href="apps.clientes.urls.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -103,9 +103,93 @@
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteDetailView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">ClienteDetailView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteDetailView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteDetailView" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DetailView</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteDetailView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cliente'</span></span><a class="headerlink" href="#apps.clientes.views.ClienteDetailView.context_object_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteDetailView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteDetailView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteDetailView.get_context_data" title="Link to this definition">¶</a></dt>
+<dd><p>Insert the single object into the context dict.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteDetailView.handle_no_permission">
+<span class="sig-name descname"><span class="pre">handle_no_permission</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteDetailView.handle_no_permission"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteDetailView.handle_no_permission" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteDetailView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.clientes.views.ClienteDetailView.model" title="Link to this definition">¶</a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.Cliente" title="apps.clientes.models.Cliente"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cliente</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteDetailView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'clientes/cliente_detail.html'</span></span><a class="headerlink" href="#apps.clientes.views.ClienteDetailView.template_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteDetailView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteDetailView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteDetailView.test_func" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteHistorialBajasView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">ClienteHistorialBajasView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteHistorialBajasView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteHistorialBajasView" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteHistorialBajasView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'registros'</span></span><a class="headerlink" href="#apps.clientes.views.ClienteHistorialBajasView.context_object_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteHistorialBajasView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteHistorialBajasView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteHistorialBajasView.get_context_data" title="Link to this definition">¶</a></dt>
+<dd><p>Get the context for this view.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteHistorialBajasView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteHistorialBajasView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteHistorialBajasView.get_queryset" title="Link to this definition">¶</a></dt>
+<dd><p>Return the list of items for this view.</p>
+<p>The return value must be an iterable and may be an instance of
+<cite>QuerySet</cite> in which case <cite>QuerySet</cite> specific behavior will be enabled.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteHistorialBajasView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.clientes.views.ClienteHistorialBajasView.model" title="Link to this definition">¶</a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.authentication.models.html#apps.authentication.models.HistorialBaja" title="apps.authentication.models.HistorialBaja"><code class="xref py py-class docutils literal notranslate"><span class="pre">HistorialBaja</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteHistorialBajasView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'bajas/historial_bajas.html'</span></span><a class="headerlink" href="#apps.clientes.views.ClienteHistorialBajasView.template_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteHistorialBajasView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteHistorialBajasView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteHistorialBajasView.test_func" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="apps.clientes.views.ClienteSoftDeleteView">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">ClienteSoftDeleteView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteSoftDeleteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteSoftDeleteView" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.ClienteSoftDeleteView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteSoftDeleteView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteSoftDeleteView.get" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.clientes.views.ClienteSoftDeleteView.post">
 <span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#ClienteSoftDeleteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.ClienteSoftDeleteView.post" title="Link to this definition">¶</a></dt>
@@ -191,6 +275,11 @@
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.paginate_by">
+<span class="sig-name descname"><span class="pre">paginate_by</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span><a class="headerlink" href="#apps.clientes.views.PanelAdminView.paginate_by" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.views.PanelAdminView.template_name">
 <span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'panel_admin.html'</span></span><a class="headerlink" href="#apps.clientes.views.PanelAdminView.template_name" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -206,6 +295,47 @@
 <dt class="sig sig-object py" id="apps.clientes.views.cambiar_cliente_view">
 <span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">cambiar_cliente_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#cambiar_cliente_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.cambiar_cliente_view" title="Link to this definition">¶</a></dt>
 <dd><p>Permite cambiar de cliente activo en cualquier momento sin cerrar sesión.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.metodo_pago_create">
+<span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">metodo_pago_create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_create"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_create" title="Link to this definition">¶</a></dt>
+<dd><p>Permite al usuario registrar un nuevo método de pago (Criterio 1 y 2).
+Solo los clientes con clientes asociados pueden gestionarlos.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.metodo_pago_delete">
+<span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">metodo_pago_delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_delete"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_delete" title="Link to this definition">¶</a></dt>
+<dd><p>Confirma y elimina un método de pago del cliente (Criterio 5).
+Solo los clientes con clientes asociados pueden gestionarlos.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.metodo_pago_list">
+<span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">metodo_pago_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_list"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_list" title="Link to this definition">¶</a></dt>
+<dd><p>Muestra los métodos del titular del cliente activo, con datos censurados.
+Solo clientes con clientes asociados pueden verlo.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.metodo_pago_reveal">
+<span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">metodo_pago_reveal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_reveal"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_reveal" title="Link to this definition">¶</a></dt>
+<dd><p>Alterna la visualización completa para el usuario que registró el método.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.metodo_pago_set_default">
+<span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">metodo_pago_set_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_set_default"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_set_default" title="Link to this definition">¶</a></dt>
+<dd><p>Establece un método de pago específico como el predeterminado (Criterio 6).
+Solo los clientes con clientes asociados pueden gestionarlos.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.metodo_pago_update">
+<span class="sig-prename descclassname"><span class="pre">apps.clientes.views.</span></span><span class="sig-name descname"><span class="pre">metodo_pago_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_update"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_update" title="Link to this definition">¶</a></dt>
+<dd><p>Permite modificar los datos de un método de pago existente del usuario (Criterio 4).
+Solo los clientes con clientes asociados pueden gestionarlos.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -259,7 +389,7 @@
   <li><a href="apps.html">apps package</a><ul>
   <li><a href="apps.clientes.html">apps.clientes package</a><ul>
       <li>Previous: <a href="apps.clientes.urls.html" title="capítulo anterior">apps.clientes.urls module</a></li>
-      <li>Next: <a href="apps.users.html" title="próximo capítulo">apps.users package</a></li>
+      <li>Next: <a href="apps.divisas.html" title="próximo capítulo">apps.divisas package</a></li>
   </ul></li>
   </ul></li>
   </ul></li>

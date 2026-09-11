@@ -60,6 +60,14 @@ agrega los que le faltan y le quita los que ya no deberían estar.</p>
 <dd><p>Todos los realm roles de negocio que se le pueden asignar a un usuario.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.users.services.sincronizar_usuarios_desde_keycloak">
+<span class="sig-prename descclassname"><span class="pre">apps.users.services.</span></span><span class="sig-name descname"><span class="pre">sincronizar_usuarios_desde_keycloak</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/users/services.html#sincronizar_usuarios_desde_keycloak"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.users.services.sincronizar_usuarios_desde_keycloak" title="Link to this definition">¶</a></dt>
+<dd><p>Refleja en Django los usuarios actuales del realm de Keycloak.</p>
+<p>Los usuarios ausentes o deshabilitados se marcan como inactivos para no
+perder relaciones históricas. Devuelve la cantidad sincronizada.</p>
+</dd></dl>
+
 </section>
 
 

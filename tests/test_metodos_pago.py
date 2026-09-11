@@ -16,6 +16,15 @@ class MetodoPagoTestCase(TestCase):
             email='cliente@test.com',
             password='password123'
         )
+        self.cliente = Cliente.objects.create(
+            user=self.user,
+            identificador='CI-CLIENTE-001',
+            nombre='Juan',
+            apellido='Pérez',
+            email='cliente@test.com',
+            is_active=True,
+        )
+        self.user.clientes.add(self.cliente)
         self.client.login(username='cliente_test', password='password123')
         session = self.client.session
         session['keycloak_roles'] = ['cliente']
@@ -30,14 +39,24 @@ class MetodoPagoTestCase(TestCase):
 
         self.assertRedirects(response, reverse('home'))
 
-    def test_administrador_puede_gestionar_metodos(self):
+    def test_administrador_no_puede_gestionar_metodos(self):
         session = self.client.session
         session['keycloak_roles'] = ['admin']
         session.save()
 
         response = self.client.get(reverse('clientes:metodo_pago_list'))
 
-        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse('home'))
+
+    def test_cliente_sin_clientes_asignados_no_puede_ver_metodos(self):
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+        self.user.clientes.all().delete()
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+
+        self.assertRedirects(response, reverse('home'))
 
     def test_menu_no_muestra_metodos_sin_rol_cliente(self):
         session = self.client.session

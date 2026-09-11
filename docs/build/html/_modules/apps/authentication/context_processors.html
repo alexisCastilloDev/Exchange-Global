@@ -58,12 +58,23 @@
 
     <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
     <span class="n">es_admin</span> <span class="o">=</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span>
+    <span class="n">tiene_clientes_asociados</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+    <span class="c1"># Solo administración gestiona el catálogo de divisas. Analistas y</span>
+    <span class="c1"># clientes tienen accesos separados sobre las tasas.</span>
+    <span class="n">puede_ver_divisas</span> <span class="o">=</span> <span class="n">es_admin</span>
+    <span class="n">puede_actualizar_tasas</span> <span class="o">=</span> <span class="n">es_admin</span> <span class="ow">or</span> <span class="s1">'analista_cambiario'</span> <span class="ow">in</span> <span class="n">roles</span>
+    <span class="n">puede_ver_tasas</span> <span class="o">=</span> <span class="n">puede_actualizar_tasas</span> <span class="ow">or</span> <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s1">'keycloak_roles'</span><span class="p">:</span> <span class="n">roles</span><span class="p">,</span>
         <span class="s1">'es_admin'</span><span class="p">:</span> <span class="n">es_admin</span><span class="p">,</span>
         <span class="s1">'puede_ver_usuarios'</span><span class="p">:</span> <span class="n">es_admin</span> <span class="ow">or</span> <span class="s1">'usuarios'</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">,</span>
         <span class="s1">'puede_ver_roles'</span><span class="p">:</span> <span class="n">es_admin</span> <span class="ow">or</span> <span class="s1">'gestion_roles'</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">,</span>
+        <span class="s1">'puede_ver_divisas'</span><span class="p">:</span> <span class="n">puede_ver_divisas</span><span class="p">,</span>
+        <span class="s1">'puede_administrar_divisas'</span><span class="p">:</span> <span class="n">es_admin</span><span class="p">,</span>
+        <span class="s1">'puede_gestionar_metodos_pago'</span><span class="p">:</span> <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">and</span> <span class="n">tiene_clientes_asociados</span><span class="p">,</span>
+        <span class="s1">'puede_actualizar_tasas'</span><span class="p">:</span> <span class="n">puede_actualizar_tasas</span><span class="p">,</span>
+        <span class="s1">'puede_ver_tasas'</span><span class="p">:</span> <span class="n">puede_ver_tasas</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 </pre></div>

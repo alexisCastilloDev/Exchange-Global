@@ -4,13 +4,12 @@ from django.db import models
 class Divisa(models.Model):
     """
     Modelo que representa una divisa disponible en Global Exchange.
-    
-    Atributos:
-        codigo (str): Código ISO de la divisa (ej. USD, EUR).
+
+    Attributes:
+        codigo (str): Código ISO de la divisa (por ejemplo USD, EUR).
         nombre (str): Nombre completo de la divisa.
-        simbolo (str): Símbolo de la moneda (ej. $, €).
-        activa (bool): Indica si la divisa está habilitada para operar. 
-                       Cumple con el criterio de aceptación de ocultar divisas inactivas.
+        simbolo (str): Símbolo de la moneda (por ejemplo $, €).
+        activa (bool): Indica si la divisa está habilitada para operar.
     """
     codigo = models.CharField(max_length=3, unique=True, verbose_name="Código")
     nombre = models.CharField(max_length=50, verbose_name="Nombre")
@@ -36,13 +35,12 @@ class Divisa(models.Model):
 class Cotizacion(models.Model):
     """
     Modelo que almacena las tasas de compra y venta de una divisa específica.
-    
-    Atributos:
+
+    Attributes:
         divisa (Divisa): Relación a la divisa correspondiente.
         tasa_compra (Decimal): Valor de compra actual.
         tasa_venta (Decimal): Valor de venta actual.
         fecha_actualizacion (datetime): Fecha y hora en la que se registró la tasa.
-                                        Cumple con el criterio de mostrar la última actualización.
     """
     divisa = models.ForeignKey(Divisa, on_delete=models.CASCADE, related_name='cotizaciones')
     tasa_compra = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Tasa de Compra")

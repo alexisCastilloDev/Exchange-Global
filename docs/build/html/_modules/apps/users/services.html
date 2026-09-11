@@ -32,11 +32,21 @@
           <div class="body" role="main">
             
   <h1>Código fuente para apps.users.services</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keycloak</span><span class="w"> </span><span class="kn">import</span> <span class="n">KeycloakAdmin</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">es_rol_tecnico</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">keycloak</span><span class="w"> </span><span class="kn">import</span> <span class="n">KeycloakAdmin</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">KeycloakAdmin</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_obtener_keycloak_admin</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">KeycloakAdmin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s1">'La integración de Keycloak no está disponible. Verifica la dependencia python-keycloak y la configuración del realm.'</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">KeycloakAdmin</span><span class="p">(</span>
         <span class="n">server_url</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">KEYCLOAK_SERVER_URL</span><span class="p">,</span>
         <span class="n">realm_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">KEYCLOAK_REALM</span><span class="p">,</span>
@@ -44,6 +54,54 @@
         <span class="n">client_secret_key</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">KEYCLOAK_CLIENT_SECRET</span><span class="p">,</span>
         <span class="n">verify</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
+
+
+<div class="viewcode-block" id="sincronizar_usuarios_desde_keycloak">
+<a class="viewcode-back" href="../../../reference/apps.users.services.html#apps.users.services.sincronizar_usuarios_desde_keycloak">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sincronizar_usuarios_desde_keycloak</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Refleja en Django los usuarios actuales del realm de Keycloak.</span>
+
+<span class="sd">    Los usuarios ausentes o deshabilitados se marcan como inactivos para no</span>
+<span class="sd">    perder relaciones históricas. Devuelve la cantidad sincronizada.</span>
+<span class="sd">    """</span>
+    <span class="n">user_model</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span>
+    <span class="n">keycloak_admin</span> <span class="o">=</span> <span class="n">_obtener_keycloak_admin</span><span class="p">()</span>
+    <span class="n">usuarios_keycloak</span> <span class="o">=</span> <span class="n">keycloak_admin</span><span class="o">.</span><span class="n">get_users</span><span class="p">({})</span>
+    <span class="n">identificadores</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">roles_por_usuario</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">datos</span> <span class="ow">in</span> <span class="n">usuarios_keycloak</span><span class="p">:</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="p">(</span><span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'username'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">email</span> <span class="o">=</span> <span class="p">(</span><span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">username</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">usuario</span> <span class="o">=</span> <span class="n">user_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">username__iexact</span><span class="o">=</span><span class="n">username</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">usuario</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">email</span><span class="p">:</span>
+            <span class="n">usuario</span> <span class="o">=</span> <span class="n">user_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email__iexact</span><span class="o">=</span><span class="n">email</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">usuario</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">usuario</span> <span class="o">=</span> <span class="n">user_model</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="n">usuario</span><span class="o">.</span><span class="n">set_unusable_password</span><span class="p">()</span>
+
+        <span class="n">usuario</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="n">usuario</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">email</span>
+        <span class="n">usuario</span><span class="o">.</span><span class="n">first_name</span> <span class="o">=</span> <span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'firstName'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span>
+        <span class="n">usuario</span><span class="o">.</span><span class="n">last_name</span> <span class="o">=</span> <span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'lastName'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span>
+        <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'enabled'</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="n">usuario</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">identificadores</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">usuario</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">roles_por_usuario</span><span class="p">[</span><span class="n">usuario</span><span class="o">.</span><span class="n">pk</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="n">rol</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">rol</span> <span class="ow">in</span> <span class="n">keycloak_admin</span><span class="o">.</span><span class="n">get_realm_roles_of_user</span><span class="p">(</span><span class="n">datos</span><span class="p">[</span><span class="s1">'id'</span><span class="p">])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">[</span><span class="s1">'name'</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="n">roles_por_usuario</span><span class="p">[</span><span class="n">usuario</span><span class="o">.</span><span class="n">pk</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">user_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk__in</span><span class="o">=</span><span class="n">identificadores</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">roles_por_usuario</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_obtener_user_id_por_email</span><span class="p">(</span><span class="n">keycloak_admin</span><span class="p">,</span> <span class="n">email</span><span class="p">):</span>
@@ -92,7 +150,7 @@
     <span class="n">keycloak_admin</span> <span class="o">=</span> <span class="n">_obtener_keycloak_admin</span><span class="p">()</span>
     <span class="n">roles</span> <span class="o">=</span> <span class="n">keycloak_admin</span><span class="o">.</span><span class="n">get_realm_roles</span><span class="p">()</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
-        <span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roles</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ROLES_TECNICOS_EXCLUIDOS</span>
+        <span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roles</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">es_rol_tecnico</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">])</span>
     <span class="p">)</span></div>
 
 
@@ -106,7 +164,7 @@
 
     <span class="n">roles</span> <span class="o">=</span> <span class="n">keycloak_admin</span><span class="o">.</span><span class="n">get_realm_roles_of_user</span><span class="p">(</span><span class="n">user_id_keycloak</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
-        <span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roles</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ROLES_TECNICOS_EXCLUIDOS</span>
+        <span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roles</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">es_rol_tecnico</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">])</span>
     <span class="p">)</span></div>
 
 

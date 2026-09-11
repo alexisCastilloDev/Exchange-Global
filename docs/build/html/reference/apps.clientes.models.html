@@ -66,7 +66,7 @@ además de múltiples usuarios del sistema asociados (usuarios) para acceso de o
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.models.Cliente.SEGMENTO_CHOICES">
-<span class="sig-name descname"><span class="pre">SEGMENTO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('ESTANDAR',</span> <span class="pre">'Estándar'),</span> <span class="pre">('PREMIUM',</span> <span class="pre">'Premium'),</span> <span class="pre">('VIP',</span> <span class="pre">'VIP'),</span> <span class="pre">('CORPORATIVO',</span> <span class="pre">'Corporativo')]</span></span><a class="headerlink" href="#apps.clientes.models.Cliente.SEGMENTO_CHOICES" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">SEGMENTO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('MINORISTA',</span> <span class="pre">'Minorista'),</span> <span class="pre">('VIP',</span> <span class="pre">'VIP'),</span> <span class="pre">('CORPORATIVO',</span> <span class="pre">'Corporativo')]</span></span><a class="headerlink" href="#apps.clientes.models.Cliente.SEGMENTO_CHOICES" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -241,6 +241,189 @@ class built by <code class="docutils literal notranslate"><span class="pre">crea
 <span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/models.html#ClienteActiveManager.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.models.ClienteActiveManager.get_queryset" title="Link to this definition">¶</a></dt>
 <dd><p>Return a new QuerySet object. Subclasses can override this method to
 customize the behavior of the Manager.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">apps.clientes.models.</span></span><span class="sig-name descname"><span class="pre">MetodoPago</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/models.html#MetodoPago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.models.MetodoPago" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<p>Modelo para gestionar los métodos de pago registrados por un usuario cliente.
+(Implementación de la historia de usuario GE-19)</p>
+<p>Permite almacenar cuentas bancarias, tarjetas o billeteras digitales asociadas
+a un cliente para la realización de operaciones cambiarias.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.DoesNotExist" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.NotUpdated">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotUpdated</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.NotUpdated" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectNotUpdated</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseError</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.TIPO_BILLETERA">
+<span class="sig-name descname"><span class="pre">TIPO_BILLETERA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BILLETERA'</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.TIPO_BILLETERA" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.TIPO_CUENTA_CHOICES">
+<span class="sig-name descname"><span class="pre">TIPO_CUENTA_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('AHORRO',</span> <span class="pre">'Caja</span> <span class="pre">de</span> <span class="pre">Ahorro'),</span> <span class="pre">('CORRIENTE',</span> <span class="pre">'Cuenta</span> <span class="pre">Corriente')]</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.TIPO_CUENTA_CHOICES" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.TIPO_MEDIO_CHOICES">
+<span class="sig-name descname"><span class="pre">TIPO_MEDIO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('TRANSFERENCIA',</span> <span class="pre">'Transferencia</span> <span class="pre">Bancaria'),</span> <span class="pre">('TARJETA',</span> <span class="pre">'Tarjeta</span> <span class="pre">de</span> <span class="pre">Débito/Crédito'),</span> <span class="pre">('BILLETERA',</span> <span class="pre">'Billetera</span> <span class="pre">Digital')]</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.TIPO_MEDIO_CHOICES" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.TIPO_TARJETA">
+<span class="sig-name descname"><span class="pre">TIPO_TARJETA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'TARJETA'</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.TIPO_TARJETA" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.TIPO_TRANSFERENCIA">
+<span class="sig-name descname"><span class="pre">TIPO_TRANSFERENCIA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'TRANSFERENCIA'</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.TIPO_TRANSFERENCIA" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.actualizado_en">
+<span class="sig-name descname"><span class="pre">actualizado_en</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.actualizado_en" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.cliente">
+<span class="sig-name descname"><span class="pre">cliente</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.cliente" title="Link to this definition">¶</a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.cliente_id">
+<span class="sig-name descname"><span class="pre">cliente_id</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.cliente_id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.creado_en">
+<span class="sig-name descname"><span class="pre">creado_en</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.creado_en" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.entidad_financiera">
+<span class="sig-name descname"><span class="pre">entidad_financiera</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.entidad_financiera" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.es_predeterminado">
+<span class="sig-name descname"><span class="pre">es_predeterminado</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.es_predeterminado" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.get_next_by_actualizado_en">
+<span class="sig-name descname"><span class="pre">get_next_by_actualizado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">actualizado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.clientes.models.MetodoPago.get_next_by_actualizado_en" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.get_next_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_next_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.clientes.models.MetodoPago.get_next_by_creado_en" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.get_previous_by_actualizado_en">
+<span class="sig-name descname"><span class="pre">get_previous_by_actualizado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">actualizado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.clientes.models.MetodoPago.get_previous_by_actualizado_en" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.get_previous_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_previous_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.clientes.models.MetodoPago.get_previous_by_creado_en" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.get_tipo_cuenta_display">
+<span class="sig-name descname"><span class="pre">get_tipo_cuenta_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">tipo_cuenta&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.clientes.models.MetodoPago.get_tipo_cuenta_display" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.get_tipo_medio_display">
+<span class="sig-name descname"><span class="pre">get_tipo_medio_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">tipo_medio&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.clientes.models.MetodoPago.get_tipo_medio_display" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.id" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.nombre_titular">
+<span class="sig-name descname"><span class="pre">nombre_titular</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.nombre_titular" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.numero_cuenta">
+<span class="sig-name descname"><span class="pre">numero_cuenta</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.numero_cuenta" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.objects" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/models.html#MetodoPago.save"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.models.MetodoPago.save" title="Link to this definition">¶</a></dt>
+<dd><p>Sobrescribe save para garantizar que solo exista un método de pago predeterminado
+por cliente a la vez (Criterio 6).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.tipo_cuenta">
+<span class="sig-name descname"><span class="pre">tipo_cuenta</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.tipo_cuenta" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.tipo_medio">
+<span class="sig-name descname"><span class="pre">tipo_medio</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.tipo_medio" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.ultimos_4_digitos">
+<span class="sig-name descname"><span class="pre">ultimos_4_digitos</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.ultimos_4_digitos" title="Link to this definition">¶</a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
 </dd></dl>
 
 </dd></dl>

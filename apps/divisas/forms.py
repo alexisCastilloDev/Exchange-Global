@@ -3,6 +3,86 @@ from django.core.validators import RegexValidator
 from .models import Cotizacion, Divisa
 
 
+class SimulacionDivisasForm(forms.Form):
+    monto = forms.DecimalField(
+        label='Monto a convertir',
+        min_value=0,
+        max_digits=18,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'class': 'form-control ge-form-control'}),
+    )
+    divisa_origen = forms.ChoiceField(
+        label='Divisa origen',
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-select ge-form-control'}),
+    )
+    divisa_destino = forms.ChoiceField(
+        label='Divisa destino',
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-select ge-form-control'}),
+    )
+
+    @staticmethod
+    def _divisa_guarani_implicit():
+        return Divisa(codigo='PYG', nombre='Guaraní', simbolo='₲', activa=True)
+
+    @classmethod
+    def opciones_divisas(cls):
+        divisas_activas = list(Divisa.objects.filter(activa=True).order_by('codigo'))
+        opciones = []
+
+        for divisa in divisas_activas:
+            if divisa.codigo == 'PYG':
+                opciones.append(('PYG', f'{divisa.nombre} ({divisa.codigo})'))
+            else:
+                opciones.append((str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})'))
+
+        if not any(opt[0] == 'PYG' for opt in opciones):
+            opciones.insert(0, ('PYG', 'Guaraní (PYG)'))
+
+        return opciones
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['divisa_origen'].choices = self.opciones_divisas()
+        self.fields['divisa_destino'].choices = self.opciones_divisas()
+
+    def clean_divisa_origen(self):
+        valor = self.cleaned_data['divisa_origen']
+        if valor == 'PYG':
+            return self._divisa_guarani_implicit()
+        divisa = Divisa.objects.filter(pk=valor, activa=True).first()
+        if not divisa:
+            raise forms.ValidationError('Debe elegir una divisa válida.')
+        return divisa
+
+    def clean_divisa_destino(self):
+        valor = self.cleaned_data['divisa_destino']
+        if valor == 'PYG':
+            return self._divisa_guarani_implicit()
+        divisa = Divisa.objects.filter(pk=valor, activa=True).first()
+        if not divisa:
+            raise forms.ValidationError('Debe elegir una divisa válida.')
+        return divisa
+
+    def clean_monto(self):
+        monto = self.cleaned_data['monto']
+        if monto <= 0:
+            raise forms.ValidationError('El monto debe ser mayor que cero.')
+        return monto
+
+    def clean(self):
+        cleaned_data = super().clean()
+        origen = cleaned_data.get('divisa_origen')
+        destino = cleaned_data.get('divisa_destino')
+
+        if origen and destino:
+            if getattr(origen, 'codigo', None) == getattr(destino, 'codigo', None):
+                raise forms.ValidationError('Debe seleccionar dos divisas distintas.')
+
+        return cleaned_data
+
+
 class DivisaForm(forms.ModelForm):
     codigo = forms.CharField(
         label='Código ISO (Ej. USD, EUR, PYG)',
