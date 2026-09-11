@@ -4,7 +4,8 @@ Módulo de formularios para la aplicación de Clientes.
 
 from django import forms
 from django.contrib.auth import get_user_model
-from apps.clientes.models import Cliente
+# Se agregó MetodoPago a la importación existente
+from apps.clientes.models import Cliente, MetodoPago
 
 User = get_user_model()
 
@@ -142,3 +143,59 @@ class AsociarUsuarioClienteForm(forms.Form):
         self.fields['usuarios'].queryset = queryset.order_by(
             'first_name', 'last_name'
         )
+
+
+# ==============================================================================
+# FORMULARIOS PARA GE-19: Gestión de métodos de pago
+# ==============================================================================
+
+class MetodoPagoForm(forms.ModelForm):
+    """
+    Formulario para la creación y edición de métodos de pago del cliente.
+    Realiza validaciones condicionales de acuerdo al tipo de medio de pago seleccionado.
+    """
+
+    class Meta:
+        model = MetodoPago
+        fields = [
+            'tipo_medio',
+            'nombre_titular',
+            'entidad_financiera',
+            'numero_cuenta',
+            'tipo_cuenta',
+            'ultimos_4_digitos',
+            'es_predeterminado'
+        ]
+        widgets = {
+            'tipo_medio': forms.Select(attrs={'class': 'form-select', 'id': 'id_tipo_medio'}),
+            'nombre_titular': forms.TextInput(attrs={'class': 'form-control'}),
+            'entidad_financiera': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_cuenta': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo_cuenta': forms.Select(attrs={'class': 'form-select'}),
+            'ultimos_4_digitos': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '4'}),
+            'es_predeterminado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean(self):
+        """
+        Valida que se ingresen los campos obligatorios correspondientes a cada tipo de pago (Criterio 2).
+        """
+        cleaned_data = super().clean()
+        tipo_medio = cleaned_data.get('tipo_medio')
+        numero_cuenta = cleaned_data.get('numero_cuenta')
+        tipo_cuenta = cleaned_data.get('tipo_cuenta')
+        ultimos_4_digitos = cleaned_data.get('ultimos_4_digitos')
+
+        if tipo_medio == MetodoPago.TIPO_TRANSFERENCIA:
+            if not numero_cuenta:
+                self.add_error('numero_cuenta', 'El número de cuenta es obligatorio para transferencias bancarias.')
+            if not tipo_cuenta:
+                self.add_error('tipo_cuenta', 'Debe seleccionar el tipo de cuenta.')
+
+        elif tipo_medio == MetodoPago.TIPO_TARJETA:
+            if not ultimos_4_digitos:
+                self.add_error('ultimos_4_digitos', 'Debe ingresar los últimos 4 dígitos de la tarjeta.')
+            elif not ultimos_4_digitos.isdigit() or len(ultimos_4_digitos) != 4:
+                self.add_error('ultimos_4_digitos', 'Debe ingresar exactamente 4 dígitos numéricos.')
+
+        return cleaned_data

@@ -8,14 +8,17 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
 from django.views import View
+from django.views.decorators.http import require_POST  # Agregado para Metodos de Pago
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
+from apps.authentication.decorators import requiere_rol
 from apps.authentication.forms import CausaBajaForm
 from apps.authentication.models import HistorialBaja
-from .forms import AsociarUsuarioClienteForm, ClienteForm
-from .models import Cliente
+from .forms import AsociarUsuarioClienteForm, ClienteForm, MetodoPagoForm
+from .models import Cliente, MetodoPago
 from apps.users.services import sincronizar_usuarios_desde_keycloak
 
 User = get_user_model()
@@ -298,7 +301,130 @@ class ClienteSoftDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
             request,
             f"¡El cliente {nombre_display} ha sido dado de baja correctamente!",
         )
-        return redirect('panel_admin')
+        url_previa = request.META.get('HTTP_REFERER')
+        return redirect(url_previa) if url_previa else redirect('home')
+
+
+# ==============================================================================
+# VISTAS PARA GE-19: Gestión de métodos de pago
+# ==============================================================================
+
+@requiere_rol('cliente')
+def metodo_pago_list(request):
+    """
+    Muestra los métodos del titular del cliente activo, con datos censurados.
+    """
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    titular = cliente_activo.user if cliente_activo and cliente_activo.user else request.user
+    metodos = MetodoPago.objects.filter(cliente=titular)
+    metodos_revelados = request.session.get('metodos_pago_revelados', [])
+    return render(
+        request,
+        'clientes/metodo_pago_list.html',
+        {'metodos': metodos, 'metodos_revelados': metodos_revelados},
+    )
+
+
+@requiere_rol('cliente')
+@require_POST
+def metodo_pago_reveal(request, pk):
+    """Alterna la visualización completa para el usuario que registró el método."""
+    metodo = get_object_or_404(MetodoPago, pk=pk)
+    if metodo.cliente_id != request.user.id:
+        return redirect('clientes:metodo_pago_list')
+
+    metodos_revelados = request.session.get('metodos_pago_revelados', [])
+    if metodo.pk in metodos_revelados:
+        metodos_revelados.remove(metodo.pk)
+    else:
+        metodos_revelados.append(metodo.pk)
+    request.session['metodos_pago_revelados'] = metodos_revelados
+    request.session.modified = True
+    return redirect('clientes:metodo_pago_list')
+
+
+@requiere_rol('cliente')
+def metodo_pago_create(request):
+    """
+    Permite al usuario registrar un nuevo método de pago (Criterio 1 y 2).
+    """
+    if request.method == 'POST':
+        form = MetodoPagoForm(request.POST)
+        if form.is_valid():
+            metodo = form.save(commit=False)
+            metodo.cliente = request.user
+            metodo.save()
+            messages.success(request, 'Método de pago agregado exitosamente.')
+            return redirect('clientes:metodo_pago_list')
+        else:
+            messages.error(request, 'Por favor, corrija los errores en el formulario.')
+    else:
+        form = MetodoPagoForm()
+
+    response = TemplateResponse(
+        request,
+        'clientes/metodo_pago_form.html',
+        {'form': form, 'titulo': 'Agregar Método de Pago'}
+    )
+    response.context_data = {'form': form, 'titulo': 'Agregar Método de Pago'}
+    response.context = response.context_data
+    response.render()
+    return response
+
+
+@requiere_rol('cliente')
+def metodo_pago_update(request, pk):
+    """
+    Permite modificar los datos de un método de pago existente del usuario (Criterio 4).
+    """
+    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=request.user)
+    if request.method == 'POST':
+        form = MetodoPagoForm(request.POST, instance=metodo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Método de pago actualizado correctamente.')
+            return redirect('clientes:metodo_pago_list')
+        else:
+            messages.error(request, 'Por favor, corrija los errores en el formulario.')
+    else:
+        form = MetodoPagoForm(instance=metodo)
+
+    response = TemplateResponse(
+        request,
+        'clientes/metodo_pago_form.html',
+        {'form': form, 'titulo': 'Editar Método de Pago'}
+    )
+    response.context_data = {'form': form, 'titulo': 'Editar Método de Pago'}
+    response.context = response.context_data
+    response.render()
+    return response
+
+
+@requiere_rol('cliente')
+def metodo_pago_delete(request, pk):
+    """
+    Confirma y elimina un método de pago del cliente (Criterio 5).
+    """
+    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=request.user)
+    if request.method == 'POST':
+        metodo.delete()
+        messages.success(request, 'El método de pago fue removido exitosamente.')
+        return redirect('clientes:metodo_pago_list')
+
+    return render(request, 'clientes/metodo_pago_confirm_delete.html', {'metodo': metodo})
+
+
+@requiere_rol('cliente')
+@require_POST
+def metodo_pago_set_default(request, pk):
+    """
+    Establece un método de pago específico como el predeterminado (Criterio 6).
+    """
+    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=request.user)
+    metodo.es_predeterminado = True
+    metodo.save()
+    messages.success(request, f'"{metodo}" ha sido establecido como método predeterminado.')
+    return redirect('clientes:metodo_pago_list')
 
 
 class ClienteHistorialBajasView(LoginRequiredMixin, UserPassesTestMixin, ListView):

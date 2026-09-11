@@ -428,6 +428,207 @@ a {
     margin: 1px;
 }
 
+/* ---------------------------------------------------------------
+   Métodos de pago — superficie operativa y estados claros
+   --------------------------------------------------------------- */
+.ge-eyebrow {
+    display: block;
+    color: var(--ge-text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.ge-payment-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px 20px;
+}
+.ge-payment-summary strong {
+    display: block;
+    color: var(--ge-ink);
+    font-size: 25px;
+    line-height: 1.1;
+}
+.ge-payment-summary__hint {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--ge-text-muted);
+    font-size: 13px;
+}
+.ge-payment-summary__hint i {
+    color: var(--ge-teal);
+    font-size: 18px;
+}
+.ge-payment-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-top: 3px solid transparent;
+}
+.ge-payment-card.is-default {
+    border-top-color: var(--ge-teal);
+}
+.ge-payment-card__topline,
+.ge-payment-card__identity,
+.ge-payment-card__actions {
+    display: flex;
+    align-items: center;
+}
+.ge-payment-card__topline {
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.ge-payment-card__identity {
+    gap: 12px;
+    min-width: 0;
+}
+.ge-payment-card__icon {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: var(--ge-radius-sm);
+    background: var(--ge-brass-soft);
+    color: var(--ge-brass-dark);
+    font-size: 19px;
+}
+.ge-payment-card h2 {
+    overflow: hidden;
+    margin: 2px 0 0;
+    color: var(--ge-ink);
+    font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.ge-status--active {
+    background: var(--ge-teal-soft);
+    color: var(--ge-teal);
+}
+.ge-payment-card__details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 22px 0;
+    padding: 14px 0;
+    border-top: 1px solid var(--ge-border);
+    border-bottom: 1px solid var(--ge-border);
+}
+.ge-payment-card__details div:first-child {
+    grid-column: 1 / -1;
+}
+.ge-payment-card__details span,
+.ge-payment-card__details strong {
+    display: block;
+}
+.ge-payment-card__details span {
+    margin-bottom: 2px;
+    color: var(--ge-text-muted);
+    font-size: 11px;
+}
+.ge-payment-card__details strong {
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ge-payment-card__actions {
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: auto;
+    flex-wrap: wrap;
+}
+.ge-empty-state {
+    padding: 42px 24px;
+    text-align: center;
+}
+.ge-empty-state__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    margin-bottom: 14px;
+    border-radius: 50%;
+    background: var(--ge-teal-soft);
+    color: var(--ge-teal);
+    font-size: 22px;
+}
+.ge-empty-state h2,
+.ge-confirm-card h2 {
+    margin-bottom: 6px;
+    font-size: 18px;
+}
+.ge-empty-state p {
+    max-width: 430px;
+    margin: 0 auto 20px;
+    color: var(--ge-text-muted);
+}
+.ge-payment-form {
+    max-width: 720px;
+}
+.ge-form-section {
+    margin-bottom: 22px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--ge-border);
+}
+.ge-form-section > .ge-eyebrow {
+    margin-bottom: 12px;
+    color: var(--ge-teal);
+}
+.ge-default-option {
+    padding: 13px 14px;
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius-sm);
+    background: var(--ge-paper);
+}
+.ge-form-actions {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--ge-border);
+}
+.ge-confirm-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px 16px;
+    max-width: 680px;
+}
+.ge-confirm-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--ge-brick-soft);
+    color: var(--ge-brick);
+    font-size: 18px;
+}
+.ge-confirm-card .ge-form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
 /* Formularios Django renderizados con {{ form.as_p }}: no traen
    clases de Bootstrap propias, así que se estilan por atributo. */
 .ge-plain-form p {
@@ -570,6 +771,20 @@ a {
     .ge-topbar__toggle { display: inline-flex; }
     .ge-hero__grid { grid-template-columns: 1fr; }
     .ge-content { padding: 20px; }
+}
+
+@media (max-width: 576px) {
+    .ge-page-header .btn { width: 100%; }
+    .ge-payment-summary { align-items: flex-start; flex-direction: column; }
+    .ge-payment-card__topline { flex-direction: column; }
+    .ge-payment-card__actions { align-items: stretch; flex-direction: column; }
+    .ge-payment-card__actions > div,
+    .ge-payment-card__actions form,
+    .ge-payment-card__actions button { width: 100%; }
+    .ge-payment-card__actions a { flex: 1; }
+    .ge-confirm-card { grid-template-columns: 1fr; }
+    .ge-confirm-card .ge-form-actions { align-items: stretch; flex-direction: column; }
+    .ge-confirm-card .ge-form-actions .btn { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
