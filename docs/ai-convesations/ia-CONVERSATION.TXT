@@ -8,6 +8,8 @@ https://claude.ai/share/d8cc13fb-73f2-4e33-aa44-b2b2d49469a9
 
 https://claude.ai/share/bbeaa0dc-7e9b-49a2-83ef-91b1490745ca
 
+https://claude.ai/share/94ee15a3-3c2d-4ef3-9438-62394f576485
+
 dame un resumen de todo lo que hicimos
 
 Aquí tienes un resumen ordenado de todo el trabajo que realizamos para analizar y resolver el conflicto entre tus suites de pruebas:
@@ -35,3 +37,4 @@ Paso 2: Se reemplazó Cliente.TIPO_FISICA por 'FISICA'.
 Paso 3: Se actualizaron las redirecciones y rutas (reverse('panel_admin')) para validar correctamente la visualización de usuarios asociados en el panel.
 
 Paso 4: Se mantuvieron los 4 criterios de prueba intactos (asociación, listado en panel, revocación y seguridad/permisos).
+
