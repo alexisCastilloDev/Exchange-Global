@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 
 # Importa tu backend personalizado (ajusta la ruta según la estructura de tu proyecto)
 from apps.authentication.backends import KeycloakOIDCAuthenticationBackend
+from apps.authentication.views import CustomOIDCCallbackView
 
 User = get_user_model()
 
@@ -117,3 +118,25 @@ def test_update_user_claims_reemplaza_roles_previos_en_sesion(backend, rf):
 
     assert request.session['keycloak_roles'] == ['cliente']
     assert user.is_staff is False
+
+
+@pytest.mark.django_db
+def test_login_de_agente_redirige_a_gestion_de_divisas(rf):
+    """El callback de Keycloak lleva al agente a su pantalla operativa."""
+    request = rf.get('/oidc/callback/')
+    request.session = {'keycloak_roles': ['agente']}
+    request.user = User.objects.create_user(
+        username='agente-login',
+        email='agente-login@test.com',
+    )
+    callback = CustomOIDCCallbackView()
+    callback.request = request
+
+    with patch(
+        'mozilla_django_oidc.views.OIDCAuthenticationCallbackView.login_success',
+        return_value=None,
+    ):
+        response = callback.login_success()
+
+    assert response.status_code == 302
+    assert response.url == reverse('divisas:tasas_vigentes')

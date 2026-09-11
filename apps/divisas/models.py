@@ -7,11 +7,14 @@ class Divisa(models.Model):
     Atributos:
         codigo (str): Código ISO de la divisa (ej. USD, EUR).
         nombre (str): Nombre completo de la divisa.
+        simbolo (str): Símbolo de la moneda (ej. $, €).
         activa (bool): Indica si la divisa está habilitada para operar. 
                        Cumple con el criterio de aceptación de ocultar divisas inactivas.
     """
     codigo = models.CharField(max_length=3, unique=True, verbose_name="Código")
     nombre = models.CharField(max_length=50, verbose_name="Nombre")
+    # --- NUEVO CAMPO AÑADIDO ---
+    simbolo = models.CharField(max_length=5, null=True, blank=True, verbose_name="Símbolo") 
     activa = models.BooleanField(default=True, verbose_name="Activa")
 
     class Meta:
@@ -26,12 +29,8 @@ class Divisa(models.Model):
     def ultima_cotizacion(self):
         """
         Obtiene la cotización más reciente registrada para esta divisa.
-        
-        Retorna:
-            Cotizacion: El objeto de cotización más reciente, o None si no tiene cotizaciones.
         """
         return self.cotizaciones.order_by('-fecha_actualizacion').first()
-
 
 class Cotizacion(models.Model):
     """
