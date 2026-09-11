@@ -9,6 +9,9 @@
         <p>Bienvenido, {{ user.first_name }} {{ user.last_name }}</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'cliente_historial_bajas' %}" class="btn btn-secondary">
+            <i class="bi bi-clock-history me-1"></i>Historial de bajas
+        </a>
         <a href="{% url 'cliente_create' %}" class="btn btn-primary">
             <i class="bi bi-person-plus me-1"></i> Registrar cliente
         </a>
@@ -36,20 +39,11 @@
             </select>
         </div>
 
-        <div class="form-check d-flex align-items-center gap-2 mt-3">
-            <input type="checkbox" name="incluir_inactivos" value="1" id="incluir_inactivos"
-                   class="form-check-input mt-0" {% if incluir_inactivos %}checked{% endif %}
-                   onchange="this.form.submit()">
-            <label for="incluir_inactivos" class="form-check-label" style="font-size: 13.5px;">
-                Mostrar clientes dados de baja (historial)
-            </label>
-        </div>
-
         <button type="submit" class="btn btn-primary mt-3">
             <i class="bi bi-search me-1"></i>Buscar
         </button>
 
-        {% if busqueda or segmento_actual or incluir_inactivos %}
+        {% if busqueda or segmento_actual %}
             <a href="{{ request.path }}" style="font-size: 13px; color: var(--ge-brick);">Limpiar filtros</a>
         {% endif %}
     </form>
@@ -65,7 +59,6 @@
                         <th>Nombre / razón social</th>
                         <th>Tipo</th>
                         <th>Segmento</th>
-                        <th>Correo electrónico</th>
                         <th>Usuarios asociados</th>
                         <th>Estado</th>
                         <th>Acciones</th>
@@ -84,10 +77,11 @@
                             </td>
                             <td>{{ cliente.get_tipo_cliente_display }}</td>
                             <td><span class="badge-segmento">{{ cliente.get_segmento_display }}</span></td>
-                            <td>{{ cliente.email|default:"-" }}</td>
                             <td>
                                 {% for usuario in cliente.usuarios.all %}
-                                    <span class="badge-usuario">{{ usuario.username }}</span>
+                                    {% if usuario.is_active %}
+                                        <span class="badge-usuario">{{ usuario.get_full_name|default:usuario.username }}</span>
+                                    {% endif %}
                                 {% empty %}
                                     <span style="font-size: 12px; color: var(--ge-text-muted);">Sin usuarios</span>
                                 {% endfor %}
@@ -107,13 +101,9 @@
                                     <i class="bi bi-people"></i> {{ cliente.usuarios.count }}
                                 </a>
                                 {% if cliente.is_active %}
-                                    <form action="{% url 'cliente_delete' cliente.pk %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Dar de baja"
-                                                onclick="return confirm('¿Confirmas la baja lógica del cliente {{ cliente.nombre|default:cliente.razon_social }}?');">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <a href="{% url 'cliente_delete' cliente.pk %}" class="btn btn-sm btn-danger" title="Dar de baja">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
                                 {% endif %}
                             </td>
                         </tr>
@@ -126,7 +116,7 @@
                 <ul class="pagination justify-content-center mb-0">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?q={{ busqueda|urlencode }}&segmento={{ segmento_actual|urlencode }}&incluir_inactivos={% if incluir_inactivos %}1{% endif %}&page={{ page_obj.previous_page_number }}">Anterior</a>
+                            <a class="page-link" href="?q={{ busqueda|urlencode }}&segmento={{ segmento_actual|urlencode }}&page={{ page_obj.previous_page_number }}">Anterior</a>
                         </li>
                     {% endif %}
                     <li class="page-item active" aria-current="page">
@@ -134,7 +124,7 @@
                     </li>
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?q={{ busqueda|urlencode }}&segmento={{ segmento_actual|urlencode }}&incluir_inactivos={% if incluir_inactivos %}1{% endif %}&page={{ page_obj.next_page_number }}">Siguiente</a>
+                            <a class="page-link" href="?q={{ busqueda|urlencode }}&segmento={{ segmento_actual|urlencode }}&page={{ page_obj.next_page_number }}">Siguiente</a>
                         </li>
                     {% endif %}
                 </ul>

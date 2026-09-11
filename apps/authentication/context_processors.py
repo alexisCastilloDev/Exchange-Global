@@ -22,7 +22,11 @@ def permisos_ui_context(request):
 
     roles = request.session.get('keycloak_roles', [])
     es_admin = 'admin' in roles or request.user.is_staff or request.user.is_superuser
-    puede_ver_divisas = es_admin or 'agente' in roles
+    # Solo administración gestiona el catálogo de divisas. Analistas y
+    # clientes tienen accesos separados sobre las tasas.
+    puede_ver_divisas = es_admin
+    puede_actualizar_tasas = es_admin or 'analista_cambiario' in roles
+    puede_ver_tasas = puede_actualizar_tasas or 'cliente' in roles
 
     return {
         'keycloak_roles': roles,
@@ -32,4 +36,6 @@ def permisos_ui_context(request):
         'puede_ver_divisas': puede_ver_divisas,
         'puede_administrar_divisas': es_admin,
         'puede_gestionar_metodos_pago': es_admin or 'cliente' in roles,
+        'puede_actualizar_tasas': puede_actualizar_tasas,
+        'puede_ver_tasas': puede_ver_tasas,
     }

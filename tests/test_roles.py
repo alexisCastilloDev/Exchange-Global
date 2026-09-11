@@ -93,7 +93,8 @@ def test_admin_accede_a_la_lista_sin_tener_el_rol_especifico(client, usuario_adm
 
 
 @pytest.mark.django_db
-def test_busqueda_filtra_por_nombre_apellido_o_email(client, usuario_con_permiso_usuarios, usuario_objetivo):
+@patch('apps.users.views.sincronizar_usuarios_desde_keycloak')
+def test_busqueda_filtra_por_nombre_apellido_o_email(mock_sync, client, usuario_con_permiso_usuarios, usuario_objetivo):
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
     response = client.get(reverse('lista_usuarios'), {'q': 'Ana'})
     assert response.status_code == 200

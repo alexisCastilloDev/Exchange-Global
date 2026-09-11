@@ -63,7 +63,7 @@
                 <div class="ge-sidebar__section-label">Accesos</div>
                 <ul class="ge-sidebar__nav">
                     <li>
-                        <a href="{% url 'lista_usuarios' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'lista_usuarios,editar_usuario,editar_roles' %}is-active{% endif %}">
+                        <a href="{% url 'lista_usuarios' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'lista_usuarios,editar_usuario,editar_roles,baja_usuario,historial_bajas_usuarios' %}is-active{% endif %}">
                             <i class="bi bi-people"></i> Usuarios y roles
                         </a>
                     </li>
@@ -71,15 +71,30 @@
             </div>
             {% endif %}
 
-            {% if puede_ver_divisas %}
+            {% if puede_ver_divisas or puede_ver_tasas %}
             <div>
                 <div class="ge-sidebar__section-label">Operaciones</div>
                 <ul class="ge-sidebar__nav">
+                    {% if puede_ver_divisas %}
                     <li>
-                        <a href="{% if puede_administrar_divisas %}{% url 'divisas:lista_divisas' %}{% else %}{% url 'divisas:tasas_vigentes' %}{% endif %}" class="ge-sidebar__link {% if request.resolver_match.namespace == 'divisas' %}is-active{% endif %}">
+                        <a href="{% url 'divisas:lista_divisas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'lista_divisas,crear_divisa,editar_divisa' %}is-active{% endif %}">
                             <i class="bi bi-currency-exchange"></i> Gestión de divisas
                         </a>
                     </li>
+                    {% endif %}
+                    {% if puede_actualizar_tasas %}
+                    <li>
+                        <a href="{% url 'divisas:tasas_vigentes' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'tasas_vigentes' or request.resolver_match.url_name == 'actualizar_cotizacion' %}is-active{% endif %}">
+                            <i class="bi bi-arrow-repeat"></i> Actualizar tasas
+                        </a>
+                    </li>
+                    {% elif puede_ver_tasas %}
+                    <li>
+                        <a href="{% url 'divisas:tasas_vigentes' %}" class="ge-sidebar__link {% if request.resolver_match.namespace == 'divisas' %}is-active{% endif %}">
+                            <i class="bi bi-graph-up-arrow"></i> Tasas actuales
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}
@@ -125,14 +140,20 @@
                     <div class="dropdown">
                         <a href="#" class="ge-contexto-cliente dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                             <span class="ge-dot"></span>
-                            Operando como {{ cliente_activo.nombre|default:cliente_activo.razon_social }}
+                            Operando como
+                            {% if cliente_activo.tipo_cliente == 'JURIDICA' %}
+                                {{ cliente_activo.razon_social }}
+                            {% else %}
+                                {{ cliente_activo.nombre }} {{ cliente_activo.apellido }}
+                            {% endif %}
+                            {{ cliente_activo.identificador|default:"N/A" }}
                         </a>
                         <ul class="dropdown-menu">
                             <li><h6 class="dropdown-header">Cambiar de cliente</h6></li>
                             {% for c in mis_clientes %}
                             <li>
                                 <a class="dropdown-item {% if c.pk == cliente_activo.pk %}active{% endif %}" href="{% url 'cambiar_cliente' c.pk %}">
-                                    {{ c.nombre|default:c.razon_social }}
+                                    {{ c.nombre }} {{ c.apellido|default:c.razon_social }}
                                 </a>
                             </li>
                             {% endfor %}
@@ -148,7 +169,6 @@
                             <span class="ge-usuario-actual__nombre d-block">{{ user.first_name|default:user.email }} {{ user.last_name }}</span>
                             <span class="ge-usuario-actual__rol d-block">{% if es_admin %}Administrador{% else %}Operador{% endif %}</span>
                         </span>
-                        <i class="bi bi-chevron-down" style="font-size:12px; color: var(--ge-text-muted);"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{% url 'perfil' %}"><i class="bi bi-person-circle me-2"></i>Mi perfil</a></li>

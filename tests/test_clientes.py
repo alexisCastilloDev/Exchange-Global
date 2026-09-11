@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from apps.clientes.models import Cliente
 from apps.clientes.forms import ClienteForm
+from apps.authentication.models import HistorialBaja
 
 User = get_user_model()
 
@@ -20,6 +21,12 @@ class TestClienteForm:
     """
     Pruebas unitarias para las reglas de validación de ClienteForm.
     """
+
+    def test_segmento_se_presenta_como_lista_de_opciones_vigentes(self):
+        form = ClienteForm()
+
+        assert form.fields['segmento'].choices == Cliente.SEGMENTO_CHOICES
+        assert form.fields['segmento'].widget.__class__.__name__ == 'Select'
 
     def test_registro_persona_fisica_exitoso(self):
         """Criterio: Registra exitosamente si el documento CI pertenece a un usuario existente."""
@@ -216,7 +223,7 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.nombre == 'Mario Alberto'
         assert cliente.apellido == 'Silva Franco'
-        assert cliente.email == 'mario.alberto@test.com'
+        assert cliente.user.email == 'm@test.com'
 
     def test_modificar_cliente_datos_invalidos(self, client):
         """
@@ -373,7 +380,7 @@ class TestClienteView:
         assert ficha.context['cliente'] == cliente
         assert 'Empresa Ficha' in ficha.content.decode()
         assert 'RUC-FICHA-1' in ficha.content.decode()
-        assert 'empresa-ficha@test.com' in ficha.content.decode()
+        assert 'usuario-ficha@test.com' in ficha.content.decode()
         assert 'usuario_ficha' in ficha.content.decode()
 
     def test_filtrar_listado_clientes_por_segmento(self, client):
@@ -425,7 +432,7 @@ class TestClienteView:
         client.force_login(admin)
         url = reverse('cliente_delete', kwargs={'pk': cliente.pk})
 
-        response = client.post(url)
+        response = client.post(url, {'causa': 'Solicitud del cliente'})
         
         # Validar redirección tras éxito
         assert response.status_code in [301, 302]
@@ -434,6 +441,15 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.is_active is False
         assert Cliente.objects.filter(pk=cliente.pk).exists() is True
+        registro = HistorialBaja.objects.get(
+            tipo_recurso=HistorialBaja.TIPO_CLIENTE,
+            recurso_id=cliente.pk,
+        )
+        assert registro.causa == 'Solicitud del cliente'
+
+        historial = client.get(reverse('cliente_historial_bajas'))
+        assert historial.status_code == 200
+        assert 'Solicitud del cliente' in historial.content.decode()
 
     def test_listado_general_oculta_inactivos_por_defecto(self, client):
         """
@@ -464,12 +480,10 @@ class TestClienteView:
         assert cliente_activo in clientes_en_contexto
         assert cliente_inactivo not in clientes_en_contexto
 
-    def test_trazabilidad_historial_cliente_inactivo(self, client):
+    def test_listado_clientes_oculta_bajas_logicas(self, client):
         """
-        HU GE-63 - Criterio 3:
-        Dado que un cliente dado de baja tiene operaciones históricas asociadas, 
-        cuando reviso ese historial (simulado pidiendo incluir inactivos), 
-        entonces sigue siendo accesible para trazabilidad.
+        Los clientes dados de baja se conservan en PostgreSQL, pero no aparecen
+        en el listado operativo aunque se envíe el antiguo filtro histórico.
         """
         admin = User.objects.create_user(username='admin_ge63_3', is_superuser=True)
         u1 = User.objects.create_user(username='666', email='6@test.com')
@@ -480,11 +494,9 @@ class TestClienteView:
         client.force_login(admin)
         url = reverse('panel_admin')
         
-        # Enviar parámetro GET para incluir inactivos
         response = client.get(url, {'incluir_inactivos': '1'})
 
         assert response.status_code == 200
         clientes_en_contexto = response.context['clientes']
         
-        # El cliente inactivo ahora debe aparecer listado
-        assert cliente_inactivo in clientes_en_contexto
+        assert cliente_inactivo not in clientes_en_contexto

@@ -5,6 +5,7 @@ from .views import (
     ClienteDetailView,
     ClienteUpdateView, 
     ClienteSoftDeleteView, 
+    ClienteHistorialBajasView,
     AsociarUsuariosClienteView
 )
 from apps.clientes import views
@@ -18,6 +19,7 @@ urlpatterns = [
     path('<int:pk>/editar/', ClienteUpdateView.as_view(), name='cliente_update'),
     path('<int:pk>/asociar-usuarios/', AsociarUsuariosClienteView.as_view(), name='cliente_asociar_usuarios'),
     path('<int:pk>/eliminar/', ClienteSoftDeleteView.as_view(), name='cliente_delete'),
+    path('historial-bajas/', ClienteHistorialBajasView.as_view(), name='cliente_historial_bajas'),
 
     path(
         'seleccionar/',

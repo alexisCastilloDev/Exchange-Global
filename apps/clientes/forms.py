@@ -11,6 +11,27 @@ User = get_user_model()
 
 
 class ClienteForm(forms.ModelForm):
+    # Campo legado: se conserva para aceptar datos históricos, pero no se
+    # muestra en la interfaz; el correo operativo pertenece al usuario.
+    email = forms.EmailField(required=False, widget=forms.HiddenInput())
+    class SegmentoChoiceField(forms.ChoiceField):
+        """Lista los segmentos vigentes y mantiene compatibilidad con datos previos."""
+
+        _alias_historicos = {'ESTANDAR': 'MINORISTA', 'PREMIUM': 'VIP'}
+
+        def clean(self, value):
+            return super().clean(self._alias_historicos.get(value, value))
+
+        def valid_value(self, value):
+            return (
+                value in self._alias_historicos
+                or super().valid_value(value)
+            )
+
+    segmento = SegmentoChoiceField(
+        choices=Cliente.SEGMENTO_CHOICES,
+        label='Segmento / Categoría',
+    )
 
     class Meta:
         model = Cliente
@@ -20,7 +41,6 @@ class ClienteForm(forms.ModelForm):
             'nombre',
             'apellido',
             'razon_social',
-            'email',
             'segmento',
         ]
 
@@ -111,11 +131,18 @@ class AsociarUsuarioClienteForm(forms.Form):
         label="Usuarios del Sistema",
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, usuarios_cliente=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['usuarios'].queryset = User.objects.filter(
-            is_active=True
-        ).order_by('first_name', 'last_name')
+        # Los roles son gestionados exclusivamente por Keycloak. La vista
+        # entrega los IDs sincronizados que poseen el rol de negocio cliente.
+        queryset = User.objects.filter(is_active=True)
+        if usuarios_cliente is not None:
+            queryset = queryset.filter(pk__in=usuarios_cliente)
+        else:
+            queryset = queryset.none()
+        self.fields['usuarios'].queryset = queryset.order_by(
+            'first_name', 'last_name'
+        )
 
 
 # ==============================================================================

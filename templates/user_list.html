@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load ge_extras %}
 
 {% block title %}Usuarios - Global Exchange{% endblock %}
 
@@ -8,6 +9,9 @@
         <h1>Usuarios y roles</h1>
         <p>Administrá las cuentas del equipo y sus roles de negocio.</p>
     </div>
+    {% if es_admin %}
+    <a href="{% url 'historial_bajas_usuarios' %}" class="btn btn-secondary"><i class="bi bi-clock-history me-1"></i>Historial de bajas</a>
+    {% endif %}
 </div>
 
 <div class="contenedor-filtro">
@@ -44,8 +48,8 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% for group in u.groups.all %}
-                            <span class="badge-usuario">{{ group.name }}</span>
+                        {% for rol in roles_por_usuario|get_item:u.pk %}
+                            <span class="badge-usuario">{{ rol }}</span>
                         {% empty %}
                             <span style="font-size: 12px; color: var(--ge-text-muted);">Sin rol</span>
                         {% endfor %}
@@ -54,6 +58,11 @@
                         <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-secondary" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        {% if es_admin and u.is_active %}
+                        <a href="{% url 'baja_usuario' u.id %}" class="btn btn-sm btn-danger" title="Dar de baja">
+                            <i class="bi bi-person-dash"></i>
+                        </a>
+                        {% endif %}
                         {% if puede_ver_roles %}
                         <a href="{% url 'editar_roles' u.id %}" class="btn btn-sm btn-info text-white" title="Roles">
                             <i class="bi bi-shield-check"></i> Roles

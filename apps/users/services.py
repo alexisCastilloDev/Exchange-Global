@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from apps.authentication.backends import es_rol_tecnico
 
 try:
     from keycloak import KeycloakAdmin
@@ -18,6 +20,51 @@ def _obtener_keycloak_admin():
         client_secret_key=settings.KEYCLOAK_CLIENT_SECRET,
         verify=True
     )
+
+
+def sincronizar_usuarios_desde_keycloak():
+    """Refleja en Django los usuarios actuales del realm de Keycloak.
+
+    Los usuarios ausentes o deshabilitados se marcan como inactivos para no
+    perder relaciones históricas. Devuelve la cantidad sincronizada.
+    """
+    user_model = get_user_model()
+    keycloak_admin = _obtener_keycloak_admin()
+    usuarios_keycloak = keycloak_admin.get_users({})
+    identificadores = set()
+    roles_por_usuario = {}
+
+    for datos in usuarios_keycloak:
+        username = (datos.get('username') or '').strip()
+        email = (datos.get('email') or '').strip()
+        if not username:
+            continue
+
+        usuario = user_model.objects.filter(username__iexact=username).first()
+        if usuario is None and email:
+            usuario = user_model.objects.filter(email__iexact=email).first()
+        if usuario is None:
+            usuario = user_model(username=username)
+            usuario.set_unusable_password()
+
+        usuario.username = username
+        usuario.email = email
+        usuario.first_name = datos.get('firstName') or ''
+        usuario.last_name = datos.get('lastName') or ''
+        usuario.is_active = bool(datos.get('enabled', True))
+        usuario.save()
+        identificadores.add(usuario.pk)
+        try:
+            roles_por_usuario[usuario.pk] = sorted(
+                rol['name']
+                for rol in keycloak_admin.get_realm_roles_of_user(datos['id'])
+                if not es_rol_tecnico(rol['name'])
+            )
+        except (KeyError, TypeError):
+            roles_por_usuario[usuario.pk] = []
+
+    user_model.objects.exclude(pk__in=identificadores).update(is_active=False)
+    return roles_por_usuario
 
 
 def _obtener_user_id_por_email(keycloak_admin, email):
@@ -61,7 +108,7 @@ def obtener_roles_disponibles():
     keycloak_admin = _obtener_keycloak_admin()
     roles = keycloak_admin.get_realm_roles()
     return sorted(
-        r['name'] for r in roles if r['name'] not in ROLES_TECNICOS_EXCLUIDOS
+        r['name'] for r in roles if not es_rol_tecnico(r['name'])
     )
 
 
@@ -72,7 +119,7 @@ def obtener_roles_de_usuario(email):
 
     roles = keycloak_admin.get_realm_roles_of_user(user_id_keycloak)
     return sorted(
-        r['name'] for r in roles if r['name'] not in ROLES_TECNICOS_EXCLUIDOS
+        r['name'] for r in roles if not es_rol_tecnico(r['name'])
     )
 
 

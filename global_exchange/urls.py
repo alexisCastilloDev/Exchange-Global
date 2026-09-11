@@ -9,6 +9,7 @@ from apps.clientes.views import (
     ClienteDetailView,
     ClienteUpdateView,
     ClienteSoftDeleteView,
+    ClienteHistorialBajasView,
     AsociarUsuariosClienteView,
 )
 
@@ -32,6 +33,7 @@ urlpatterns = [
     path('clientes/<int:pk>/editar/', ClienteUpdateView.as_view(), name='cliente_update'),
     path('clientes/<int:pk>/asociar-usuarios/', AsociarUsuariosClienteView.as_view(), name='cliente_asociar_usuarios'),
     path('clientes/<int:pk>/eliminar/', ClienteSoftDeleteView.as_view(), name='cliente_delete'),
+    path('clientes/historial-bajas/', ClienteHistorialBajasView.as_view(), name='cliente_historial_bajas'),
     path('clientes/seleccionar/', clientes_views.seleccionar_cliente_view, name='seleccionar_cliente'),
     path('clientes/cambiar/<int:cliente_id>/', clientes_views.cambiar_cliente_view, name='cambiar_cliente'),
     path('clientes/metodos-pago/', clientes_views.metodo_pago_list, name='metodo_pago_list'),

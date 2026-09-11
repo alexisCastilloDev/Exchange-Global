@@ -33,6 +33,24 @@ class TestSeleccionClienteActivo:
         assert response.url == reverse('seleccionar_cliente')
         assert 'cliente_activo_id' not in client.session
 
+    def test_selector_muestra_nombre_completo_documento_segmento_y_estado(self, client):
+        usuario = User.objects.create_user(username='selector-detalle')
+        cliente = crear_cliente('Cliente Visible', 'SEG-100')
+        cliente.segmento = 'VIP'
+        cliente.save()
+        usuario.clientes.add(cliente, crear_cliente('Segundo Cliente', 'SEG-200'))
+        client.force_login(usuario)
+
+        response = client.get(reverse('seleccionar_cliente'))
+
+        assert response.status_code == 200
+        contenido = response.content.decode()
+        assert 'Cliente Visible' in contenido
+        assert 'Segmento: VIP' in contenido
+        assert 'Activo' in contenido
+        assert 'Prueba' in contenido
+        assert 'CI/RUC: SEG-100' in contenido
+
     def test_seleccion_de_cliente_persiste_y_se_expone_en_las_vistas(self, client):
         usuario = User.objects.create_user(username='operador-seleccion')
         cliente_uno = crear_cliente('Cliente Uno', '2001')
@@ -82,6 +100,8 @@ class TestSeleccionClienteActivo:
         assert response.status_code == 200
         assert client.session['cliente_activo_id'] == cliente.pk
         assert cliente.nombre.encode() in response.content
+        assert cliente.apellido.encode() in response.content
+        assert cliente.identificador.encode() in response.content
 
     def test_sesion_no_puede_activar_cliente_de_otro_usuario(self, client):
         usuario = User.objects.create_user(username='operador-seguro')

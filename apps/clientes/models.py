@@ -32,8 +32,7 @@ class Cliente(models.Model):
     ]
 
     SEGMENTO_CHOICES = [
-        ('ESTANDAR', 'Estándar'),
-        ('PREMIUM', 'Premium'),
+        ('MINORISTA', 'Minorista'),
         ('VIP', 'VIP'),
         ('CORPORATIVO', 'Corporativo'),
     ]
@@ -93,7 +92,7 @@ class Cliente(models.Model):
     segmento = models.CharField(
         max_length=20,
         choices=SEGMENTO_CHOICES,
-        default='ESTANDAR',
+        default='MINORISTA',
         verbose_name='Segmento / Categoría',
         help_text='Permite clasificar al cliente.',
     )

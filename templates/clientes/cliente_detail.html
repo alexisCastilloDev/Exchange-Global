@@ -32,9 +32,6 @@
                 <dt class="col-sm-5">CI / RUC</dt>
                 <dd class="col-sm-7">{{ cliente.identificador|default:'N/A' }}</dd>
 
-                <dt class="col-sm-5">Correo electrónico</dt>
-                <dd class="col-sm-7">{{ cliente.email|default:'-' }}</dd>
-
                 <dt class="col-sm-5">Segmento</dt>
                 <dd class="col-sm-7">{{ cliente.get_segmento_display }}</dd>
 
@@ -53,7 +50,7 @@
                 <h2 style="font-size: 18px; margin: 0;">Usuarios asociados</h2>
                 <span class="badge bg-secondary">{{ cliente.usuarios.count }}</span>
             </div>
-            {% for usuario in cliente.usuarios.all %}
+            {% for usuario in usuarios_activos %}
                 <div class="border-bottom py-2">
                     <strong>{{ usuario.get_full_name|default:usuario.username }}</strong>
                     <small class="d-block text-muted">{{ usuario.email|default:usuario.username }}</small>

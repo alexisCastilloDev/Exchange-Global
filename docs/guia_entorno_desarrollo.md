@@ -81,6 +81,53 @@ Abrí VSCode → pestaña Extensions (ícono de cuadraditos en la barra lateral)
 12. Para que el resto del equipo se conecte, necesitan la **IP local de tu máquina** en la red (no `localhost`, que en la máquina de cada uno apunta a sí misma). Verla con `ipconfig` → buscar "Dirección IPv4".
 13. Pasarle al equipo, por un canal privado (nunca por el repo): la IP, el Realm, el Client ID y el Client Secret.
 
+### 3.1 — Roles y usuarios de prueba
+
+En el Realm `global-exchange` crear únicamente estos roles de negocio:
+
+| Rol | Uso en la aplicación |
+|---|---|
+| `admin` | Clientes, usuarios, roles, catálogo de divisas y tasas |
+| `analista_cambiario` | Consulta y actualización de tasas |
+| `usuarios` | Listado y edición de usuarios |
+| `gestion_roles` | Administración de roles en Keycloak |
+| `cliente` | Usuario cliente con selección de cliente activo |
+
+`agente` no es un rol válido del sistema. No lo crees ni lo asignes.
+
+Usuarios recomendados para pruebas:
+
+| Usuario | Roles |
+|---|---|
+| `admin.prueba` | `admin`, `usuarios`, `gestion_roles`, `analista_cambiario` |
+| `analista.prueba` | `analista_cambiario` |
+| `cliente.prueba` | `cliente` |
+
+En cada usuario de Keycloak:
+
+1. Configurá un email válido y `Email verified = ON`.
+2. En **Credentials**, asigná una contraseña y desactivá `Temporary`.
+3. En **Role mapping**, asigná únicamente los roles necesarios.
+4. En el Client `global-exchange-django`, agregá los claims de roles al ID token o access token usando los mappers estándar de realm roles.
+
+El script `scripts/keycloak-configure.ps1` crea esta configuración de forma
+repetible. Después de cambiar roles, cerrá sesión y volvé a iniciar sesión.
+
+### 3.2 — Sincronización con PostgreSQL
+
+Keycloak es la fuente de usuarios, contraseñas y roles. Durante el login Django
+crea o actualiza el usuario local usando email y, como alternativa, `preferred_username`.
+Al abrir `/usuarios/`, Django consulta los usuarios del Realm y actualiza nombre,
+apellido, email y estado. Los usuarios ausentes o deshabilitados en Keycloak se
+marcan como inactivos y no aparecen en el listado.
+
+Si Keycloak está temporalmente fuera de servicio, se conserva el último estado
+local y se muestra un aviso; no se desactivan usuarios por una falla de conexión.
+
+Los clientes no se administran en Keycloak: se guardan en PostgreSQL, en el
+modelo `Cliente`. Las bajas son lógicas (`is_active=False`) y los clientes
+inactivos no aparecen en el listado operativo.
+
 ## Paso 4 — Clonar el proyecto y armar el entorno virtual
 
 ```bash
