@@ -45,7 +45,18 @@
         <div class="ge-payment-card__details">
           <div><span>Titular</span><strong>{{ metodo.nombre_titular }}</strong></div>
           {% if metodo.tipo_medio == 'TRANSFERENCIA' %}
-            <div><span>Cuenta</span><strong>{{ metodo.numero_cuenta }}</strong></div>
+            <div>
+              <span>Cuenta</span>
+              <strong>
+                {% if metodo.pk in metodos_revelados %}
+                  {{ metodo.numero_cuenta }}
+                {% elif metodo.numero_cuenta %}
+                  *****{{ metodo.numero_cuenta|slice:'-3:' }}
+                {% else %}
+                  No especificada
+                {% endif %}
+              </strong>
+            </div>
             <div><span>Tipo de cuenta</span><strong>{{ metodo.get_tipo_cuenta_display }}</strong></div>
           {% elif metodo.tipo_medio == 'TARJETA' %}
             <div><span>Tarjeta</span><strong>**** {{ metodo.ultimos_4_digitos }}</strong></div>
@@ -56,6 +67,16 @@
 
         <div class="ge-payment-card__actions">
           <div class="d-flex gap-2">
+            {% if metodo.cliente_id == request.user.id %}
+            <form action="{% url 'clientes:metodo_pago_reveal' metodo.pk %}" method="post" class="d-inline">
+              {% csrf_token %}
+              {% if metodo.pk in metodos_revelados %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye-slash me-1"></i>Ocultar datos</button>
+              {% else %}
+                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye me-1"></i>Ver datos</button>
+              {% endif %}
+            </form>
+            {% endif %}
             <a href="{% url 'clientes:metodo_pago_update' metodo.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Editar</a>
             <a href="{% url 'clientes:metodo_pago_delete' metodo.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Eliminar</a>
           </div>

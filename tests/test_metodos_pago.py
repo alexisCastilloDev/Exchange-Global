@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from apps.clientes.models import MetodoPago
+from apps.clientes.models import Cliente, MetodoPago
 
 User = get_user_model()
 
@@ -87,6 +87,100 @@ class MetodoPagoTestCase(TestCase):
         response = self.client.get(reverse('clientes:metodo_pago_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Sudameris')
+
+    def test_numero_cuenta_censurado_por_defecto_y_revelable_por_su_creador(self):
+        metodo = MetodoPago.objects.create(
+            cliente=self.user,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Sudameris',
+            numero_cuenta='987654',
+            tipo_cuenta='CORRIENTE'
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+        self.assertContains(response, '*****654')
+        self.assertNotContains(response, '987654')
+
+        response = self.client.post(
+            reverse('clientes:metodo_pago_reveal', args=[metodo.pk]),
+            follow=True
+        )
+        self.assertContains(response, '987654')
+        self.assertContains(response, 'Ocultar datos')
+
+        response = self.client.post(
+            reverse('clientes:metodo_pago_reveal', args=[metodo.pk]),
+            follow=True
+        )
+        self.assertContains(response, '*****654')
+        self.assertNotContains(response, '987654')
+        self.assertContains(response, 'Ver datos')
+
+    def test_cada_metodo_mantiene_su_propio_estado_de_visualizacion(self):
+        primer_metodo = MetodoPago.objects.create(
+            cliente=self.user,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Banco Uno',
+            numero_cuenta='111111111',
+            tipo_cuenta='AHORRO'
+        )
+        segundo_metodo = MetodoPago.objects.create(
+            cliente=self.user,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Banco Dos',
+            numero_cuenta='222222222',
+            tipo_cuenta='CORRIENTE'
+        )
+
+        response = self.client.post(
+            reverse('clientes:metodo_pago_reveal', args=[primer_metodo.pk]),
+            follow=True
+        )
+        self.assertContains(response, '111111111')
+        self.assertContains(response, '*****222')
+        self.assertContains(response, 'Ocultar datos')
+        self.assertContains(response, 'Ver datos')
+
+        response = self.client.post(
+            reverse('clientes:metodo_pago_reveal', args=[segundo_metodo.pk]),
+            follow=True
+        )
+        self.assertContains(response, '111111111')
+        self.assertContains(response, '222222222')
+
+    def test_usuario_asociado_no_puede_revelar_metodo_de_otro_usuario(self):
+        titular = User.objects.create_user(
+            username='titular_test',
+            password='password123'
+        )
+        cliente = Cliente.objects.create(
+            user=titular,
+            identificador='CI-TEST-1',
+            nombre='Titular',
+            email='titular@test.com'
+        )
+        cliente.usuarios.add(self.user)
+        metodo = MetodoPago.objects.create(
+            cliente=titular,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Titular',
+            entidad_financiera='Banco Seguro',
+            numero_cuenta='123456789',
+            tipo_cuenta='AHORRO'
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+        self.assertContains(response, '*****789')
+        self.assertNotContains(response, '123456789')
+
+        response = self.client.post(
+            reverse('clientes:metodo_pago_reveal', args=[metodo.pk]),
+            follow=True
+        )
+        self.assertNotContains(response, '123456789')
 
     def test_modificar_metodo_pago(self):
         """Criterio 4: Modificar datos de un método existente."""

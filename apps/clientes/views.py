@@ -241,10 +241,35 @@ class ClienteSoftDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
 @requiere_rol('cliente')
 def metodo_pago_list(request):
     """
-    Muestra el listado de métodos de pago registrados por el cliente autenticado (Criterio 3).
+    Muestra los métodos del titular del cliente activo, con datos censurados.
     """
-    metodos = MetodoPago.objects.filter(cliente=request.user)
-    return render(request, 'clientes/metodo_pago_list.html', {'metodos': metodos})
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    titular = cliente_activo.user if cliente_activo and cliente_activo.user else request.user
+    metodos = MetodoPago.objects.filter(cliente=titular)
+    metodos_revelados = request.session.get('metodos_pago_revelados', [])
+    return render(
+        request,
+        'clientes/metodo_pago_list.html',
+        {'metodos': metodos, 'metodos_revelados': metodos_revelados},
+    )
+
+
+@requiere_rol('cliente')
+@require_POST
+def metodo_pago_reveal(request, pk):
+    """Alterna la visualización completa para el usuario que registró el método."""
+    metodo = get_object_or_404(MetodoPago, pk=pk)
+    if metodo.cliente_id != request.user.id:
+        return redirect('clientes:metodo_pago_list')
+
+    metodos_revelados = request.session.get('metodos_pago_revelados', [])
+    if metodo.pk in metodos_revelados:
+        metodos_revelados.remove(metodo.pk)
+    else:
+        metodos_revelados.append(metodo.pk)
+    request.session['metodos_pago_revelados'] = metodos_revelados
+    request.session.modified = True
+    return redirect('clientes:metodo_pago_list')
 
 
 @requiere_rol('cliente')
