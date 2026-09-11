@@ -4,6 +4,7 @@ activos). Nada de esto participa en la autorización real: solo decide
 qué ítem de navegación se ve resaltado.
 """
 from django import template
+from apps.authentication.backends import es_rol_tecnico
 
 register = template.Library()
 
@@ -32,3 +33,13 @@ def iniciales(nombre_completo):
     if len(partes) == 1:
         return partes[0][:2].upper()
     return (partes[0][0] + partes[-1][0]).upper()
+
+
+@register.filter
+def get_item(mapping, key):
+    return mapping.get(key, []) if mapping else []
+
+
+@register.filter
+def rol_tecnico(rol):
+    return es_rol_tecnico(rol)

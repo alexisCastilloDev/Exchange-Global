@@ -216,7 +216,7 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.nombre == 'Mario Alberto'
         assert cliente.apellido == 'Silva Franco'
-        assert cliente.email == 'mario.alberto@test.com'
+        assert cliente.user.email == 'm@test.com'
 
     def test_modificar_cliente_datos_invalidos(self, client):
         """
@@ -373,7 +373,7 @@ class TestClienteView:
         assert ficha.context['cliente'] == cliente
         assert 'Empresa Ficha' in ficha.content.decode()
         assert 'RUC-FICHA-1' in ficha.content.decode()
-        assert 'empresa-ficha@test.com' in ficha.content.decode()
+        assert 'usuario-ficha@test.com' in ficha.content.decode()
         assert 'usuario_ficha' in ficha.content.decode()
 
     def test_filtrar_listado_clientes_por_segmento(self, client):
@@ -464,12 +464,10 @@ class TestClienteView:
         assert cliente_activo in clientes_en_contexto
         assert cliente_inactivo not in clientes_en_contexto
 
-    def test_trazabilidad_historial_cliente_inactivo(self, client):
+    def test_listado_clientes_oculta_bajas_logicas(self, client):
         """
-        HU GE-63 - Criterio 3:
-        Dado que un cliente dado de baja tiene operaciones históricas asociadas, 
-        cuando reviso ese historial (simulado pidiendo incluir inactivos), 
-        entonces sigue siendo accesible para trazabilidad.
+        Los clientes dados de baja se conservan en PostgreSQL, pero no aparecen
+        en el listado operativo aunque se envíe el antiguo filtro histórico.
         """
         admin = User.objects.create_user(username='admin_ge63_3', is_superuser=True)
         u1 = User.objects.create_user(username='666', email='6@test.com')
@@ -480,11 +478,9 @@ class TestClienteView:
         client.force_login(admin)
         url = reverse('panel_admin')
         
-        # Enviar parámetro GET para incluir inactivos
         response = client.get(url, {'incluir_inactivos': '1'})
 
         assert response.status_code == 200
         clientes_en_contexto = response.context['clientes']
         
-        # El cliente inactivo ahora debe aparecer listado
-        assert cliente_inactivo in clientes_en_contexto
+        assert cliente_inactivo not in clientes_en_contexto

@@ -16,14 +16,10 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def test_func(self):
         """
         Autorización 100% contra Keycloak (sesión), sin auth.Group.
-        Acceso para 'admin' o para el rol de negocio 'agente'.
-        AJUSTA 'agente' si el rol real en Keycloak se llama distinto.
+        Acceso para 'admin' o para el rol de negocio 'analista_cambiario'.
         """
         roles = self.request.session.get('keycloak_roles', [])
-        return bool(
-            {'admin', 'agente', 'analista', 'analista_cambiario'}
-            & set(roles)
-        )
+        return 'admin' in roles or 'analista_cambiario' in roles
 
     def get_queryset(self):
         """

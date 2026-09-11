@@ -142,7 +142,6 @@
                             <span class="ge-usuario-actual__nombre d-block">{{ user.first_name|default:user.email }} {{ user.last_name }}</span>
                             <span class="ge-usuario-actual__rol d-block">{% if es_admin %}Administrador{% else %}Operador{% endif %}</span>
                         </span>
-                        <i class="bi bi-chevron-down" style="font-size:12px; color: var(--ge-text-muted);"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{% url 'perfil' %}"><i class="bi bi-person-circle me-2"></i>Mi perfil</a></li>

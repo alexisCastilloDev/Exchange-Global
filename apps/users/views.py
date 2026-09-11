@@ -9,6 +9,7 @@ from .services import (
     obtener_roles_disponibles,
     obtener_roles_de_usuario,
     actualizar_roles_de_usuario,
+    sincronizar_usuarios_desde_keycloak,
 )
 
 User = get_user_model()
@@ -17,7 +18,17 @@ User = get_user_model()
 @requiere_permiso('usuarios')
 def lista_usuarios_view(request):
     query = request.GET.get('q', '').strip()
-    usuarios = User.objects.all().order_by('id')
+    try:
+        roles_por_usuario = sincronizar_usuarios_desde_keycloak()
+    except Exception:
+        roles_por_usuario = {}
+        messages.warning(
+            request,
+            'No fue posible actualizar los usuarios desde Keycloak. '
+            'Se muestran los datos locales disponibles.',
+        )
+
+    usuarios = User.objects.filter(is_active=True).order_by('id')
 
     if query:
         usuarios = usuarios.filter(
@@ -28,7 +39,8 @@ def lista_usuarios_view(request):
 
     return render(request, 'user_list.html', {
         'usuarios': usuarios,
-        'query': query
+        'query': query,
+        'roles_por_usuario': roles_por_usuario,
     })
 
 

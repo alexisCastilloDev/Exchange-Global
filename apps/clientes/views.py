@@ -2,10 +2,11 @@
 Módulo de vistas para la aplicación de clientes.
 """
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -13,6 +14,8 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from .forms import AsociarUsuarioClienteForm, ClienteForm
 from .models import Cliente
+
+User = get_user_model()
 
 
 @login_required
@@ -72,10 +75,7 @@ class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        incluir_inactivos = self.request.GET.get('incluir_inactivos') == '1'
-        queryset = (
-            Cliente.objects.all() if incluir_inactivos else Cliente.activos.all()
-        )
+        queryset = Cliente.activos.all()
 
         segmento_seleccionado = self.request.GET.get('segmento')
         if segmento_seleccionado:
@@ -90,16 +90,17 @@ class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 | Q(identificador__icontains=busqueda)
             )
 
-        return queryset.order_by('pk').prefetch_related('usuarios')
+        usuarios_activos = Prefetch(
+            'usuarios',
+            queryset=get_user_model().objects.filter(is_active=True),
+        )
+        return queryset.order_by('pk').prefetch_related(usuarios_activos)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['segmentos'] = Cliente.SEGMENTO_CHOICES
         context['segmento_actual'] = self.request.GET.get('segmento', '')
         context['busqueda'] = self.request.GET.get('q', '').strip()
-        context['incluir_inactivos'] = (
-            self.request.GET.get('incluir_inactivos') == '1'
-        )
         return context
 
     def test_func(self):
@@ -118,6 +119,11 @@ class ClienteDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Cliente
     template_name = 'clientes/cliente_detail.html'
     context_object_name = 'cliente'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['usuarios_activos'] = self.object.usuarios.filter(is_active=True)
+        return context
 
     def test_func(self):
         return self.request.user.is_staff or self.request.user.is_superuser

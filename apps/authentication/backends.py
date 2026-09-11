@@ -31,6 +31,10 @@ ROLES_TECNICOS_EXCLUIDOS = {
 }
 
 
+def es_rol_tecnico(rol):
+    return rol in ROLES_TECNICOS_EXCLUIDOS or rol.startswith('default-roles-')
+
+
 class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
     def verify_claims(self, claims):
         """
@@ -101,7 +105,9 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
         # Consolidar y excluir roles técnicos de Keycloak
         roles_keycloak = set(roles_realm) | set(roles_custom) | set(client_roles)
-        roles_negocio = roles_keycloak - ROLES_TECNICOS_EXCLUIDOS
+        roles_negocio = {
+            rol for rol in roles_keycloak if not es_rol_tecnico(rol)
+        }
 
         # is_staff para acceder al admin site (no sustituye autorización)
         is_staff_value = ('admin' in roles_negocio)

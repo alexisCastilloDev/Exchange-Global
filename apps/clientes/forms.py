@@ -10,6 +10,10 @@ User = get_user_model()
 
 
 class ClienteForm(forms.ModelForm):
+    # Campo legado: se conserva para aceptar datos históricos, pero no se
+    # muestra en la interfaz; el correo operativo pertenece al usuario.
+    email = forms.EmailField(required=False, widget=forms.HiddenInput())
+    segmento = forms.CharField()
 
     class Meta:
         model = Cliente
@@ -19,9 +23,16 @@ class ClienteForm(forms.ModelForm):
             'nombre',
             'apellido',
             'razon_social',
-            'email',
             'segmento',
         ]
+
+    def clean_segmento(self):
+        segmento = self.cleaned_data.get('segmento')
+        segmento = {'ESTANDAR': 'MINORISTA', 'PREMIUM': 'VIP'}.get(segmento, segmento)
+        permitidos = {valor for valor, _ in Cliente.SEGMENTO_CHOICES}
+        if segmento not in permitidos:
+            raise forms.ValidationError('Seleccioná una categoría válida.')
+        return segmento
 
     def clean_identificador(self):
         """Valida únicamente que el identificador/documento no esté registrado

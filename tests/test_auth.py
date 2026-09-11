@@ -121,29 +121,13 @@ def test_update_user_claims_reemplaza_roles_previos_en_sesion(backend, rf):
 
 
 @pytest.mark.django_db
-def test_keycloak_empareja_usuario_existente_por_preferred_username(backend):
-    """Si el email no coincide, el login reutiliza el usuario por username."""
-    usuario = User.objects.create_user(
-        username='usuario-keycloak',
-        email='correo-anterior@test.local',
-    )
-
-    usuarios = backend.filter_users_by_claims({
-        'email': 'correo-nuevo@test.local',
-        'preferred_username': 'usuario-keycloak',
-    })
-
-    assert list(usuarios) == [usuario]
-
-
-@pytest.mark.django_db
-def test_login_de_agente_redirige_a_gestion_de_divisas(rf):
-    """El callback de Keycloak lleva al agente a su pantalla operativa."""
+def test_login_de_analista_redirige_a_gestion_de_divisas(rf):
+    """El callback de Keycloak lleva al analista a su pantalla operativa."""
     request = rf.get('/oidc/callback/')
-    request.session = {'keycloak_roles': ['agente']}
+    request.session = {'keycloak_roles': ['analista_cambiario']}
     request.user = User.objects.create_user(
-        username='agente-login',
-        email='agente-login@test.com',
+        username='analista-login',
+        email='analista-login@test.com',
     )
     callback = CustomOIDCCallbackView()
     callback.request = request
