@@ -7,7 +7,7 @@
     <div>
         <span class="ge-eyebrow"><i class="bi bi-calculator"></i> Operación cambiaria</span>
         <h1>{{ tipo_operacion|title }} de divisas</h1>
-        <p>{% if tipo_operacion == 'COMPRA' %}Calculá cuánto pagarás por la divisa seleccionada.{% else %}Calculá cuánto recibirás por la divisa que vendas.{% endif %}</p>
+        <p>{% if tipo_operacion == 'COMPRA' %}Calculá cuánto pagarás en guaraníes por la divisa que deseas comprar.{% else %}Calculá cuántos guaraníes recibirás por la divisa que deseas vender.{% endif %}</p>
     </div>
     <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Ver tasas</a>
 </div>
@@ -24,19 +24,19 @@
                     <span class="ge-eyebrow">Paso 1</span>
                     <h2>Datos de la operación</h2>
                 </div>
-                <span class="badge-activo">{{ tipo_operacion|title }}</span>
+                <span class="badge-activo">Operación de {{ tipo_operacion|lower }}</span>
             </div>
             <form method="post" novalidate class="ge-form-grid">
                 {% csrf_token %}
                 {{ form.tipo }}
                 {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
                 <div class="ge-form-field">
-                    <label for="{{ form.divisa.id_for_label }}" class="form-label">Divisa a operar</label>
+                    <label for="{{ form.divisa.id_for_label }}" class="form-label">Divisa a {{ tipo_operacion|lower }}</label>
                     {{ form.divisa }}
                     {% if form.divisa.errors %}<div class="text-danger small mt-1">{{ form.divisa.errors|join:', ' }}</div>{% endif %}
                 </div>
                 <div class="ge-form-field">
-                    <label for="{{ form.monto.id_for_label }}" class="form-label">Monto en divisa seleccionada</label>
+                    <label for="{{ form.monto.id_for_label }}" class="form-label">Monto en {{ tipo_operacion|lower }}</label>
                     {{ form.monto }}
                     {% if form.monto.errors %}<div class="text-danger small mt-1">{{ form.monto.errors|join:', ' }}</div>{% endif %}
                 </div>
@@ -57,9 +57,10 @@
             </div>
             {% if calculo %}
                 <div class="operation-summary">
-                    <div class="operation-summary__row"><span>Monto origen</span><strong>{{ calculo.monto_origen|floatformat:2 }} {{ calculo.codigo_divisa }}</strong></div>
-                    <div class="operation-summary__row"><span>Tasa aplicada</span><strong>{{ calculo.tasa_aplicada|floatformat:6 }} PYG</strong></div>
-                    <div class="operation-summary__row"><span>Comisión ({{ calculo.comision_porcentaje|floatformat:3 }}%)</span><strong>{{ calculo.comision|floatformat:2 }} PYG</strong></div>
+                    <div class="operation-summary__row"><span>Operación</span><strong>{{ calculo.get_tipo_display }} de {{ calculo.codigo_divisa }} contra PYG</strong></div>
+                    <div class="operation-summary__row"><span>Monto de {{ tipo_operacion|lower }}</span><strong>{{ calculo.monto_origen|floatformat:2 }} {{ calculo.codigo_divisa }}</strong></div>
+                    <div class="operation-summary__row"><span>Tasa aplicada</span><strong>{{ calculo.tasa_aplicada|floatformat:2 }} PYG</strong></div>
+                    <div class="operation-summary__row"><span>Comisión ({{ calculo.comision_porcentaje|floatformat:2 }}%)</span><strong>{{ calculo.comision|floatformat:2 }} PYG</strong></div>
                     <div class="operation-summary__row operation-summary__row--total"><span>{% if calculo.tipo == 'COMPRA' %}Importe a pagar{% else %}Importe a recibir{% endif %}</span><strong>{{ calculo.monto_final|floatformat:2 }} PYG</strong></div>
                 </div>
                 <div class="operation-expiry mt-3"><i class="bi bi-hourglass-split me-1"></i> Válido hasta {{ calculo.vence_en|date:'d/m/Y H:i:s' }}.</div>

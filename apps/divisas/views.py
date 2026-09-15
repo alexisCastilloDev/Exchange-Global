@@ -5,6 +5,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -201,7 +202,11 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
     def test_func(self):
         """Permite calcular a los roles que pueden operar con divisas."""
         roles = self.request.session.get('keycloak_roles', [])
-        return bool({'admin', 'analista_cambiario', 'cliente'} & set(roles))
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
 
     def _tipo(self):
         """Devuelve el tipo normalizado recibido en la URL."""
@@ -257,9 +262,18 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         return self.render_to_response(self._contexto(form, calculo))
 
 
+@login_required
 def confirmar_calculo_operacion_view(request, calculo_id):
     """Confirma un cálculo vigente o exige recalcular si ya venció."""
     if request.method != 'POST':
+        return redirect('home')
+    roles = request.session.get('keycloak_roles', [])
+    if (
+        'cliente' not in roles
+        or request.user.is_staff
+        or not request.user.clientes.filter(is_active=True).exists()
+    ):
+        messages.error(request, 'Solo un cliente asociado puede confirmar una operación.')
         return redirect('home')
     calculo = get_object_or_404(CalculoOperacion, pk=calculo_id, usuario=request.user)
     if calculo.esta_vencido:

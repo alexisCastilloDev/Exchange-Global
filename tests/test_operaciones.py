@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.clientes.models import Cliente
 from apps.divisas.models import CalculoOperacion, Cotizacion, Divisa
 
 
@@ -18,15 +19,24 @@ class CalculoOperacionTest(TestCase):
     """Verifica tasas, comisión, errores de cotización y vencimiento."""
 
     def setUp(self):
-        """Prepara un analista cambiario autenticado y una divisa cotizada."""
+        """Prepara un cliente asociado y una divisa cotizada."""
         self.usuario = User.objects.create_user(
-            username='analista-operaciones',
+            username='cliente-operaciones',
             password='password123',
         )
-        self.client.login(username='analista-operaciones', password='password123')
+        self.client.login(username='cliente-operaciones', password='password123')
         session = self.client.session
-        session['keycloak_roles'] = ['analista_cambiario']
+        session['keycloak_roles'] = ['cliente']
         session.save()
+        self.cliente = Cliente.objects.create(
+            user=self.usuario,
+            identificador='OPERACION-001',
+            nombre='Cliente',
+            apellido='Operación',
+            email='cliente-operaciones@test.com',
+            is_active=True,
+        )
+        self.usuario.clientes.add(self.cliente)
         self.usd = Divisa.objects.create(
             codigo='USD',
             nombre='Dólar',
@@ -116,3 +126,20 @@ class CalculoOperacionTest(TestCase):
 
         self.assertContains(response, reverse('divisas:operar', kwargs={'tipo': 'compra'}))
         self.assertContains(response, reverse('divisas:operar', kwargs={'tipo': 'venta'}))
+
+    def test_menu_no_expone_compra_venta_a_un_analista(self):
+        """Oculta compra y venta para usuarios analistas."""
+        session = self.client.session
+        session['keycloak_roles'] = ['analista_cambiario']
+        session.save()
+
+        response = self.client.get(reverse('home'))
+
+        self.assertNotContains(response, reverse('divisas:operar', kwargs={'tipo': 'compra'}))
+        self.assertNotContains(response, reverse('divisas:operar', kwargs={'tipo': 'venta'}))
+
+    def test_cliente_no_ve_auditoria_de_ultima_actualizacion(self):
+        """Oculta fecha y usuario de actualización en tasas para clientes."""
+        response = self.client.get(reverse('divisas:tasas_vigentes'))
+
+        self.assertNotContains(response, 'Última actualización')

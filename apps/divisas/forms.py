@@ -40,14 +40,13 @@ class CalculoOperacionForm(forms.Form):
 
     @classmethod
     def opciones_divisas(cls):
-        """Devuelve las divisas activas y siempre incluye el guaraní."""
+        """Devuelve las divisas activas, excluyendo el guaraní base."""
         divisas = list(Divisa.objects.filter(activa=True).order_by('codigo'))
         opciones = [
-            ('PYG' if divisa.codigo == 'PYG' else str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})')
+            (str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})')
             for divisa in divisas
+            if divisa.codigo != 'PYG'
         ]
-        if not any(valor == 'PYG' for valor, _ in opciones):
-            opciones.insert(0, ('PYG', 'Guaraní (PYG)'))
         return opciones
 
     def clean_tipo(self):
@@ -58,10 +57,10 @@ class CalculoOperacionForm(forms.Form):
         return tipo
 
     def clean_divisa(self):
-        """Resuelve la divisa activa elegida, incluyendo el PYG implícito."""
+        """Resuelve una divisa activa distinta del guaraní base."""
         valor = self.cleaned_data['divisa']
         if valor == 'PYG':
-            return self._divisa_guarani_implicit()
+            raise forms.ValidationError('El guaraní es la divisa base y no se puede seleccionar.')
         divisa = Divisa.objects.filter(pk=valor, activa=True).first()
         if not divisa:
             raise forms.ValidationError('Debe elegir una divisa válida.')

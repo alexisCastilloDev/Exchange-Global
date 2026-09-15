@@ -169,14 +169,13 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">opciones_divisas</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve las divisas activas y siempre incluye el guaraní."""</span>
+<span class="w">        </span><span class="sd">"""Devuelve las divisas activas, excluyendo el guaraní base."""</span>
         <span class="n">divisas</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">))</span>
         <span class="n">opciones</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s1">'PYG'</span> <span class="k">if</span> <span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span> <span class="o">==</span> <span class="s1">'PYG'</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">nombre</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
+            <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">nombre</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="n">divisas</span>
+            <span class="k">if</span> <span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span> <span class="o">!=</span> <span class="s1">'PYG'</span>
         <span class="p">]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">valor</span> <span class="o">==</span> <span class="s1">'PYG'</span> <span class="k">for</span> <span class="n">valor</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">opciones</span><span class="p">):</span>
-            <span class="n">opciones</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="s1">'PYG'</span><span class="p">,</span> <span class="s1">'Guaraní (PYG)'</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">opciones</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clean_tipo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -187,10 +186,10 @@
         <span class="k">return</span> <span class="n">tipo</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clean_divisa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Resuelve la divisa activa elegida, incluyendo el PYG implícito."""</span>
+<span class="w">        </span><span class="sd">"""Resuelve una divisa activa distinta del guaraní base."""</span>
         <span class="n">valor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">valor</span> <span class="o">==</span> <span class="s1">'PYG'</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_divisa_guarani_implicit</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'El guaraní es la divisa base y no se puede seleccionar.'</span><span class="p">)</span>
         <span class="n">divisa</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">valor</span><span class="p">,</span> <span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">divisa</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Debe elegir una divisa válida.'</span><span class="p">)</span>
