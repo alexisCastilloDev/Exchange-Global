@@ -37,7 +37,7 @@ class MetodoPagoTestCase(TestCase):
     def test_usuario_sin_rol_cliente_no_puede_gestionar_metodos(self):
         """Deniega métodos de pago a quien no tiene rol cliente."""
         session = self.client.session
-        session['keycloak_roles'] = ['agente']
+        session['keycloak_roles'] = ['analista_cambiario']
         session.save()
 
         response = self.client.get(reverse('clientes:metodo_pago_list'))
@@ -68,7 +68,7 @@ class MetodoPagoTestCase(TestCase):
     def test_menu_no_muestra_metodos_sin_rol_cliente(self):
         """Oculta el acceso de métodos de pago a roles no clientes."""
         session = self.client.session
-        session['keycloak_roles'] = ['agente']
+        session['keycloak_roles'] = ['analista_cambiario']
         session.save()
 
         response = self.client.get(reverse('home'))

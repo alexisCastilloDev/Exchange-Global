@@ -35,12 +35,14 @@ Contenido
    :hidden:
 
    guia
+   base-datos-roles
    reference/modules
 
 Guías rápidas
 -------------
 
 * :doc:`guia`: mapa de componentes y flujo general de la aplicación.
+* :doc:`base-datos-roles`: tablas, relaciones y mecanismo de roles.
 * :doc:`reference/modules`: referencia API generada desde el código fuente.
 
 Navegación

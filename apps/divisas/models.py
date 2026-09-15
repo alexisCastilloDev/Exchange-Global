@@ -1,7 +1,10 @@
 """Modelos de divisas y registro histórico de cotizaciones."""
 
+import uuid
+
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 class Divisa(models.Model):
     """Representa una divisa activa o inactiva del sistema."""
@@ -69,3 +72,49 @@ class Cotizacion(models.Model):
     def __str__(self):
         """Retorna la representación de la cotización con su fecha."""
         return f"{self.divisa.codigo} - Compra: {self.tasa_compra} / Venta: {self.tasa_venta}"
+
+
+class CalculoOperacion(models.Model):
+    """Conserva el importe calculado y la tasa vigente hasta su vencimiento."""
+
+    TIPO_COMPRA = 'COMPRA'
+    TIPO_VENTA = 'VENTA'
+    TIPO_CHOICES = [
+        (TIPO_COMPRA, 'Compra'),
+        (TIPO_VENTA, 'Venta'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='calculos_operacion',
+    )
+    tipo = models.CharField(max_length=7, choices=TIPO_CHOICES)
+    divisa = models.ForeignKey(
+        Divisa,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='calculos_operacion',
+    )
+    codigo_divisa = models.CharField(max_length=3)
+    monto_origen = models.DecimalField(max_digits=18, decimal_places=2)
+    tasa_aplicada = models.DecimalField(max_digits=18, decimal_places=6)
+    comision_porcentaje = models.DecimalField(max_digits=6, decimal_places=3)
+    comision = models.DecimalField(max_digits=18, decimal_places=2)
+    monto_final = models.DecimalField(max_digits=18, decimal_places=2)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    vence_en = models.DateTimeField()
+    confirmado_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        """Define el orden y etiquetas administrativas de los cálculos."""
+        verbose_name = 'Cálculo de operación'
+        verbose_name_plural = 'Cálculos de operaciones'
+        ordering = ['-creado_en']
+
+    @property
+    def esta_vencido(self):
+        """Indica si el cálculo ya superó su tiempo de vigencia."""
+        return timezone.now() >= self.vence_en

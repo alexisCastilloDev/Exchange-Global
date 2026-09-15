@@ -93,7 +93,8 @@ En el Realm `global-exchange` crear únicamente estos roles de negocio:
 | `gestion_roles` | Administración de roles en Keycloak |
 | `cliente` | Usuario cliente con selección de cliente activo |
 
-`agente` no es un rol válido del sistema. No lo crees ni lo asignes.
+No se deben crear roles duplicados para el análisis cambiario; el único rol
+válido para esa función es `analista_cambiario`.
 
 Usuarios recomendados para pruebas:
 

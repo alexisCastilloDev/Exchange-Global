@@ -265,8 +265,8 @@ class ActualizacionCotizacionesTest(TestCase):
         self.assertContains(response, 'Actualizar tasas')
         self.assertContains(response, reverse('divisas:tasas_vigentes'))
 
-    def test_analista_y_agente_comparten_el_acceso_operativo(self):
-        """Verifica los accesos operativos definidos para cada rol."""
+    def test_analista_tiene_acceso_operativo(self):
+        """Verifica el acceso operativo exclusivo del analista cambiario."""
         response = self.client.get(reverse('divisas:tasas_vigentes'))
         self.assertEqual(response.status_code, 200)
 
@@ -376,10 +376,10 @@ class SimuladorDivisasTest(TestCase):
     """Verifica conversiones, PYG implícito y validaciones del simulador."""
     def setUp(self):
         """Prepara divisas y tasas para las conversiones."""
-        self.agente = User.objects.create_user(username='agente-sim', password='password123')
-        self.client.login(username='agente-sim', password='password123')
+        self.analista = User.objects.create_user(username='analista-sim', password='password123')
+        self.client.login(username='analista-sim', password='password123')
         session = self.client.session
-        session['keycloak_roles'] = ['agente']
+        session['keycloak_roles'] = ['analista_cambiario']
         session.save()
 
         self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)

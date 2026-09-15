@@ -53,6 +53,26 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
@@ -141,6 +161,21 @@
 <span class="sig-name descname"><span class="pre">activa</span></span><a class="headerlink" href="#apps.divisas.models.Divisa.activa" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.Divisa.calculos_operacion">
+<span class="sig-name descname"><span class="pre">calculos_operacion</span></span><a class="headerlink" href="#apps.divisas.models.Divisa.calculos_operacion" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
 </dd></dl>
 
 <dl class="py attribute">

@@ -2,7 +2,70 @@
 
 from django import forms
 from django.core.validators import RegexValidator
-from .models import Cotizacion, Divisa
+from .models import CalculoOperacion, Cotizacion, Divisa
+
+
+class CalculoOperacionForm(forms.Form):
+    """Valida el tipo, monto y divisa de una operación cambiaria."""
+
+    tipo = forms.ChoiceField(
+        choices=CalculoOperacion.TIPO_CHOICES,
+        widget=forms.HiddenInput(),
+    )
+    monto = forms.DecimalField(
+        label='Monto de la operación',
+        min_value=0.01,
+        max_digits=18,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'class': 'form-control ge-form-control'}),
+    )
+    divisa = forms.ChoiceField(
+        label='Divisa',
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-select ge-form-control'}),
+    )
+
+    def __init__(self, *args, tipo=None, **kwargs):
+        """Carga divisas activas y fija el tipo de operación solicitado."""
+        super().__init__(*args, **kwargs)
+        tipo_inicial = tipo or self.data.get('tipo') or CalculoOperacion.TIPO_COMPRA
+        self.fields['tipo'].initial = tipo_inicial
+        self.fields['tipo'].disabled = True
+        self.fields['divisa'].choices = self.opciones_divisas()
+
+    @staticmethod
+    def _divisa_guarani_implicit():
+        """Construye el PYG implícito cuando no está registrado."""
+        return Divisa(codigo='PYG', nombre='Guaraní', simbolo='₲', activa=True)
+
+    @classmethod
+    def opciones_divisas(cls):
+        """Devuelve las divisas activas y siempre incluye el guaraní."""
+        divisas = list(Divisa.objects.filter(activa=True).order_by('codigo'))
+        opciones = [
+            ('PYG' if divisa.codigo == 'PYG' else str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})')
+            for divisa in divisas
+        ]
+        if not any(valor == 'PYG' for valor, _ in opciones):
+            opciones.insert(0, ('PYG', 'Guaraní (PYG)'))
+        return opciones
+
+    def clean_tipo(self):
+        """Valida que el tipo sea compra o venta."""
+        tipo = self.cleaned_data['tipo']
+        if tipo not in {CalculoOperacion.TIPO_COMPRA, CalculoOperacion.TIPO_VENTA}:
+            raise forms.ValidationError('El tipo de operación no es válido.')
+        return tipo
+
+    def clean_divisa(self):
+        """Resuelve la divisa activa elegida, incluyendo el PYG implícito."""
+        valor = self.cleaned_data['divisa']
+        if valor == 'PYG':
+            return self._divisa_guarani_implicit()
+        divisa = Divisa.objects.filter(pk=valor, activa=True).first()
+        if not divisa:
+            raise forms.ValidationError('Debe elegir una divisa válida.')
+        return divisa
 
 
 class SimulacionDivisasForm(forms.Form):

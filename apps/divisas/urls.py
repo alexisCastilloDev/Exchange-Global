@@ -11,6 +11,8 @@ from .views import (
     DivisaSoftDeleteView,
     DivisaHistorialBajasView,
     SimulacionDivisasView,
+    CalculoOperacionView,
+    confirmar_calculo_operacion_view,
 )
 """
 Configuración de URLs para la aplicación de divisas.
@@ -22,6 +24,8 @@ app_name = 'divisas'
 urlpatterns = [
     path('tasas-vigentes/', TasasVigentesListView.as_view(), name='tasas_vigentes'),
     path('simulacion/', SimulacionDivisasView.as_view(), name='simulacion_divisas'),
+    path('operar/<str:tipo>/', CalculoOperacionView.as_view(), name='operar'),
+    path('operar/<uuid:calculo_id>/confirmar/', confirmar_calculo_operacion_view, name='confirmar_operacion'),
     path('cotizaciones/<int:divisa_id>/actualizar/', ActualizarCotizacionView.as_view(), name='actualizar_cotizacion'),
     path('cotizaciones/<int:divisa_id>/historial/', HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),
     path('administrar/', DivisaListView.as_view(), name='lista_divisas'),

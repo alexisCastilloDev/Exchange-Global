@@ -96,6 +96,16 @@
                     </li>
                     {% endif %}
                     <li>
+                        <a href="{% url 'divisas:operar' 'compra' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'operar' and request.resolver_match.kwargs.tipo == 'compra' %}is-active{% endif %}">
+                            <i class="bi bi-cart-plus"></i> Comprar divisas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:operar' 'venta' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'operar' and request.resolver_match.kwargs.tipo == 'venta' %}is-active{% endif %}">
+                            <i class="bi bi-cash-coin"></i> Vender divisas
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'divisas:simulacion_divisas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'simulacion_divisas' %}is-active{% endif %}">
                             <i class="bi bi-calculator"></i> Simulador de conversión
                         </a>

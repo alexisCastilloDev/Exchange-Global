@@ -1,18 +1,43 @@
 """Vistas para consultar, administrar y simular cotizaciones de divisas."""
 
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from apps.authentication.forms import CausaBajaForm
 from apps.authentication.models import HistorialBaja
-from apps.divisas.forms import CotizacionForm, DivisaForm, SimulacionDivisasForm
-from apps.divisas.models import Cotizacion, Divisa
+from apps.divisas.forms import CalculoOperacionForm, CotizacionForm, DivisaForm, SimulacionDivisasForm
+from apps.divisas.models import CalculoOperacion, Cotizacion, Divisa
+
+
+def _obtener_cotizacion_operacion(divisa):
+    """Obtiene la cotización vigente de una divisa o la tasa unitaria de PYG."""
+    if divisa.codigo == 'PYG':
+        return Decimal('1.00'), None
+    cotizacion = divisa.ultima_cotizacion
+    if not cotizacion:
+        raise ValueError(f'La divisa {divisa.codigo} no tiene cotización disponible.')
+    return cotizacion.tasa_compra, cotizacion
+
+
+def _calcular_importe_operacion(tipo, monto, tasa_compra, tasa_venta):
+    """Calcula tasa, comisión y total según compra o venta de divisa."""
+    tasa_aplicada = tasa_venta if tipo == CalculoOperacion.TIPO_COMPRA else tasa_compra
+    bruto = (monto * tasa_aplicada).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    porcentaje = Decimal(str(settings.COMISION_OPERACION_PORCENTAJE))
+    comision = (bruto * porcentaje / Decimal('100')).quantize(
+        Decimal('0.01'), rounding=ROUND_HALF_UP
+    )
+    monto_final = bruto + comision if tipo == CalculoOperacion.TIPO_COMPRA else bruto - comision
+    return tasa_aplicada, porcentaje, comision, monto_final
 
 
 class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -24,10 +49,10 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def test_func(self):
         """
         Autorización contra Keycloak: acceso para administración, analista cambiario,
-        cliente o agente.
+        cliente.
         """
         roles = self.request.session.get('keycloak_roles', [])
-        return bool({'admin', 'agente', 'analista_cambiario', 'cliente'} & set(roles))
+        return bool({'admin', 'analista_cambiario', 'cliente'} & set(roles))
 
     def get_queryset(self):
         """
@@ -111,7 +136,7 @@ class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
     def test_func(self):
         """Permite simular a los roles que operan con divisas."""
         roles = self.request.session.get('keycloak_roles', [])
-        return bool({'admin', 'agente', 'analista_cambiario', 'cliente'} & set(roles))
+        return bool({'admin', 'analista_cambiario', 'cliente'} & set(roles))
 
     def get_context_data(self, **kwargs):
         """Prepara el formulario y las divisas activas para la pantalla."""
@@ -166,6 +191,90 @@ class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
             return self.render_to_response(context)
 
         return self.render_to_response({'form': form, 'divisas': divisas, 'resultado': None})
+
+
+class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Calcula el importe de una compra o venta y lo conserva hasta vencer."""
+
+    template_name = 'divisas/calculo_operacion.html'
+
+    def test_func(self):
+        """Permite calcular a los roles que pueden operar con divisas."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return bool({'admin', 'analista_cambiario', 'cliente'} & set(roles))
+
+    def _tipo(self):
+        """Devuelve el tipo normalizado recibido en la URL."""
+        return self.kwargs['tipo'].upper()
+
+    def _contexto(self, form, calculo=None):
+        """Construye el contexto común de la pantalla de operación."""
+        return {
+            'form': form,
+            'tipo_operacion': self._tipo(),
+            'calculo': calculo,
+            'vigencia_segundos': settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS,
+        }
+
+    def get_context_data(self, **kwargs):
+        """Prepara el formulario para compra o venta."""
+        context = super().get_context_data(**kwargs)
+        context.update(self._contexto(CalculoOperacionForm(tipo=self._tipo())))
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Valida datos, obtiene la tasa vigente y guarda el cálculo."""
+        tipo = self._tipo()
+        form = CalculoOperacionForm(request.POST, tipo=tipo)
+        if not form.is_valid():
+            return self.render_to_response(self._contexto(form))
+
+        divisa = form.cleaned_data['divisa']
+        try:
+            tasa_compra, cotizacion = _obtener_cotizacion_operacion(divisa)
+        except ValueError as exc:
+            form.add_error('divisa', str(exc))
+            messages.error(request, str(exc))
+            return self.render_to_response(self._contexto(form))
+
+        tasa_venta = cotizacion.tasa_venta if cotizacion else tasa_compra
+        tasa_aplicada, porcentaje, comision, monto_final = _calcular_importe_operacion(
+            tipo, form.cleaned_data['monto'], tasa_compra, tasa_venta
+        )
+        ahora = timezone.now()
+        calculo = CalculoOperacion.objects.create(
+            usuario=request.user,
+            tipo=tipo,
+            divisa=divisa if divisa.pk else None,
+            codigo_divisa=divisa.codigo,
+            monto_origen=form.cleaned_data['monto'],
+            tasa_aplicada=tasa_aplicada,
+            comision_porcentaje=porcentaje,
+            comision=comision,
+            monto_final=monto_final,
+            vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
+        )
+        return self.render_to_response(self._contexto(form, calculo))
+
+
+def confirmar_calculo_operacion_view(request, calculo_id):
+    """Confirma un cálculo vigente o exige recalcular si ya venció."""
+    if request.method != 'POST':
+        return redirect('home')
+    calculo = get_object_or_404(CalculoOperacion, pk=calculo_id, usuario=request.user)
+    if calculo.esta_vencido:
+        messages.error(
+            request,
+            'El cálculo venció por cambio de cotización. Debe recalcular la operación antes de continuar.',
+        )
+        return redirect('divisas:operar', tipo=calculo.tipo.lower())
+    if calculo.confirmado_en:
+        messages.info(request, 'Este cálculo ya fue confirmado.')
+        return redirect('divisas:operar', tipo=calculo.tipo.lower())
+    calculo.confirmado_en = timezone.now()
+    calculo.save(update_fields=['confirmado_en'])
+    messages.success(request, 'El cálculo fue confirmado con la tasa vigente.')
+    return redirect('divisas:operar', tipo=calculo.tipo.lower())
 
 
 class AdminDivisasMixin(LoginRequiredMixin, UserPassesTestMixin):

@@ -1,0 +1,442 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guía de base de datos y roles &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=6ed61967" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=f85f4cfb"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="next" title="Referencia API" href="reference/modules.html" />
+    <link rel="prev" title="Guía del sistema" href="guia.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Guía de base de datos y roles</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="guia-de-base-de-datos-y-roles">
+<h1>Guía de base de datos y roles<a class="headerlink" href="#guia-de-base-de-datos-y-roles" title="Link to this heading"></a></h1>
+<p>Esta guía describe el estado actual de la base de datos de Global Exchange y el
+mecanismo de roles. La fuente de verdad se verificó contra la configuración de
+Django y las tablas existentes en la base activa el 15/09/2026.</p>
+<section id="resumen-de-responsabilidades">
+<h2>Resumen de responsabilidades<a class="headerlink" href="#resumen-de-responsabilidades" title="Link to this heading"></a></h2>
+<p>El sistema separa dos responsabilidades:</p>
+<ul class="simple">
+<li><p><strong>Keycloak:</strong> autentica al usuario y administra los roles de negocio.</p></li>
+<li><p><strong>Django/PostgreSQL:</strong> conserva los datos operativos, la sesión, las
+auditorías y una representación local del usuario necesaria para relacionar
+esos datos.</p></li>
+</ul>
+<p>Los roles de negocio no se guardan en una columna de <code class="docutils literal notranslate"><span class="pre">auth_user</span></code> ni en un
+modelo propio de Django. Al iniciar sesión, Keycloak entrega las roles en las
+claims OIDC. El backend las filtra y las coloca en
+<code class="docutils literal notranslate"><span class="pre">request.session['keycloak_roles']</span></code>. Las vistas consultan esa sesión durante
+la solicitud.</p>
+</section>
+<section id="base-de-datos-utilizada">
+<h2>Base de datos utilizada<a class="headerlink" href="#base-de-datos-utilizada" title="Link to this heading"></a></h2>
+<p>Los entornos de desarrollo y producción usan PostgreSQL. La conexión se toma
+del archivo <code class="docutils literal notranslate"><span class="pre">.env</span></code> mediante estas variables:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DB_NAME_DEV</span></code> para desarrollo.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DB_NAME_PROD</span></code> para producción.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DB_USER</span></code>, <code class="docutils literal notranslate"><span class="pre">DB_PASSWORD</span></code>, <code class="docutils literal notranslate"><span class="pre">DB_HOST</span></code> y <code class="docutils literal notranslate"><span class="pre">DB_PORT</span></code> como datos comunes.</p></li>
+</ul>
+<p>La base activa verificada contiene estas 17 tablas:</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Tablas actuales</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 28.0%" />
+<col style="width: 48.0%" />
+<col style="width: 24.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Tabla</p></th>
+<th class="head"><p>Propósito</p></th>
+<th class="head"><p>Tipo</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></p></td>
+<td><p>Usuarios locales sincronizados o creados por Django.</p></td>
+<td><p>Negocio / identidad local</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></p></td>
+<td><p>Perfil, identificación, tipo, segmento y estado del cliente.</p></td>
+<td><p>Negocio</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></p></td>
+<td><p>Relación muchos a muchos entre clientes y usuarios operadores.</p></td>
+<td><p>Relación de negocio</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></p></td>
+<td><p>Métodos de pago asociados al usuario cliente.</p></td>
+<td><p>Negocio</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></p></td>
+<td><p>Catálogo de divisas y su estado activo/inactivo.</p></td>
+<td><p>Negocio</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></p></td>
+<td><p>Historial de tasas de compra y venta por divisa.</p></td>
+<td><p>Negocio</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></p></td>
+<td><p>Cálculos de compra/venta, comisión, tasa aplicada y vencimiento.</p></td>
+<td><p>Negocio</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></p></td>
+<td><p>Auditoría de bajas lógicas de usuarios, clientes y divisas.</p></td>
+<td><p>Auditoría</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">django_session</span></code></p></td>
+<td><p>Sesiones HTTP, incluyendo los roles efectivos de Keycloak.</p></td>
+<td><p>Técnica</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">django_migrations</span></code></p></td>
+<td><p>Registro de migraciones aplicadas.</p></td>
+<td><p>Técnica</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">django_content_type</span></code></p></td>
+<td><p>Catálogo interno de modelos de Django.</p></td>
+<td><p>Técnica</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">auth_permission</span></code></p></td>
+<td><p>Permisos nativos de Django.</p></td>
+<td><p>Técnica / histórica</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">auth_group</span></code></p></td>
+<td><p>Grupos nativos de Django.</p></td>
+<td><p>Técnica / histórica</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">auth_group_permissions</span></code></p></td>
+<td><p>Relación entre grupos y permisos nativos.</p></td>
+<td><p>Técnica / histórica</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">auth_user_groups</span></code></p></td>
+<td><p>Relación entre usuarios locales y grupos nativos.</p></td>
+<td><p>Técnica / histórica</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">auth_user_user_permissions</span></code></p></td>
+<td><p>Permisos directos de usuarios locales.</p></td>
+<td><p>Técnica / histórica</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">django_admin_log</span></code></p></td>
+<td><p>Registro de acciones realizadas desde el admin de Django.</p></td>
+<td><p>Técnica</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tablas-de-negocio">
+<h2>Tablas de negocio<a class="headerlink" href="#tablas-de-negocio" title="Link to this heading"></a></h2>
+<section id="auth-user">
+<h3><code class="docutils literal notranslate"><span class="pre">auth_user</span></code><a class="headerlink" href="#auth-user" title="Link to this heading"></a></h3>
+<p>Es el usuario local de Django. Guarda username, correo, nombre, estado activo,
+<code class="docutils literal notranslate"><span class="pre">is_staff</span></code> y <code class="docutils literal notranslate"><span class="pre">is_superuser</span></code>. El backend OIDC busca o crea este registro a
+partir del correo o username recibido desde Keycloak.</p>
+<p>La regla actual es:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">admin</span></code> recibido desde Keycloak activa <code class="docutils literal notranslate"><span class="pre">is_staff</span></code>.</p></li>
+<li><p>El backend fuerza <code class="docutils literal notranslate"><span class="pre">is_superuser</span></code> a <code class="docutils literal notranslate"><span class="pre">False</span></code>; el rol admin no debe saltarse
+los controles de la aplicación mediante el superusuario.</p></li>
+<li><p>Los demás roles no se escriben en <code class="docutils literal notranslate"><span class="pre">auth_user</span></code>.</p></li>
+</ul>
+</section>
+<section id="clientes-cliente">
+<h3><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code><a class="headerlink" href="#clientes-cliente" title="Link to this heading"></a></h3>
+<p>Representa el perfil comercial del cliente. Incluye:</p>
+<ul class="simple">
+<li><p>titular opcional mediante <code class="docutils literal notranslate"><span class="pre">user_id</span></code>;</p></li>
+<li><p>identificación CI/RUC;</p></li>
+<li><p>persona física o jurídica;</p></li>
+<li><p>segmento: minorista, VIP o corporativo;</p></li>
+<li><p>correo y fecha de registro;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_active</span></code> para baja lógica.</p></li>
+</ul>
+</section>
+<section id="clientes-cliente-usuarios">
+<h3><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code><a class="headerlink" href="#clientes-cliente-usuarios" title="Link to this heading"></a></h3>
+<p>Es la tabla intermedia de la relación muchos a muchos entre un cliente y los
+usuarios del sistema que pueden operar o representarlo. No define roles; solo
+define asociaciones de acceso a clientes.</p>
+</section>
+<section id="clientes-metodopago">
+<h3><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code><a class="headerlink" href="#clientes-metodopago" title="Link to this heading"></a></h3>
+<p>Guarda cuentas, tarjetas o billeteras del usuario cliente. Incluye reglas para
+que cada titular tenga como máximo un método predeterminado y permite conservar
+los datos necesarios para la gestión de pagos.</p>
+</section>
+<section id="divisas-divisa">
+<h3><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code><a class="headerlink" href="#divisas-divisa" title="Link to this heading"></a></h3>
+<p>Catálogo de divisas con código ISO, nombre, símbolo y estado <code class="docutils literal notranslate"><span class="pre">activa</span></code>. Las
+divisas inactivas se conservan para mantener historial, pero no aparecen como
+opciones operativas.</p>
+</section>
+<section id="divisas-cotizacion">
+<h3><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code><a class="headerlink" href="#divisas-cotizacion" title="Link to this heading"></a></h3>
+<p>Registra cada actualización de tasas. Cada fila guarda tasa de compra, tasa de
+venta, usuario que actualizó y fecha. No se sobrescribe el historial: la tasa
+vigente es la cotización más reciente de la divisa.</p>
+</section>
+<section id="divisas-calculooperacion">
+<h3><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code><a class="headerlink" href="#divisas-calculooperacion" title="Link to this heading"></a></h3>
+<p>Guarda un cálculo previo de compra o venta. Conserva el monto de origen, la
+tasa aplicada, la comisión, el monto final, la divisa, el usuario y <code class="docutils literal notranslate"><span class="pre">vence_en</span></code>.
+Cuando el cálculo vence, la confirmación se rechaza y se debe recalcular para
+usar una cotización actualizada.</p>
+</section>
+<section id="authentication-historialbaja">
+<h3><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code><a class="headerlink" href="#authentication-historialbaja" title="Link to this heading"></a></h3>
+<p>Es una auditoría de bajas lógicas. Identifica el tipo y el id del recurso,
+guarda su nombre, la causa, quién realizó la baja y cuándo ocurrió. No elimina
+el registro principal de cliente, divisa o usuario.</p>
+</section>
+</section>
+<section id="tablas-tecnicas-de-django">
+<h2>Tablas técnicas de Django<a class="headerlink" href="#tablas-tecnicas-de-django" title="Link to this heading"></a></h2>
+<p>Django crea tablas para administrar migraciones, sesiones, permisos nativos,
+grupos, tipos de contenido y el panel administrativo. Estas tablas deben existir
+para que el proyecto funcione, aunque no todas participan en la autorización de
+negocio.</p>
+<p>En particular, <code class="docutils literal notranslate"><span class="pre">auth_group</span></code> y sus tablas relacionadas pertenecen al sistema
+nativo de Django. El proyecto dejó de usar grupos y permisos como fuente de
+roles de negocio. La migración <code class="docutils literal notranslate"><span class="pre">authentication.0006_eliminar_rol_agente</span></code>
+eliminó el grupo local duplicado anterior sin tocar usuarios, clientes ni sus
+relaciones. Las tablas nativas se conservan porque Django y el admin pueden
+necesitarlas.</p>
+</section>
+<section id="roles-de-negocio-actuales">
+<h2>Roles de negocio actuales<a class="headerlink" href="#roles-de-negocio-actuales" title="Link to this heading"></a></h2>
+<p>Los únicos roles funcionales definidos para el proyecto son:</p>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Roles de Keycloak</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 55.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Rol</p></th>
+<th class="head"><p>Responsabilidad</p></th>
+<th class="head"><p>Persistencia</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">admin</span></code></p></td>
+<td><p>Administración de clientes, usuarios, roles, divisas y tasas.</p></td>
+<td><p>Keycloak + <code class="docutils literal notranslate"><span class="pre">auth_user.is_staff</span></code> local</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">analista_cambiario</span></code></p></td>
+<td><p>Consulta y actualización de cotizaciones y operación cambiaria.</p></td>
+<td><p>Keycloak + sesión</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">usuarios</span></code></p></td>
+<td><p>Listado y edición de usuarios.</p></td>
+<td><p>Keycloak + sesión</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gestion_roles</span></code></p></td>
+<td><p>Administración de roles mediante la API de Keycloak.</p></td>
+<td><p>Keycloak + sesión</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cliente</span></code></p></td>
+<td><p>Operaciones de cliente, selección de cliente y métodos de pago.</p></td>
+<td><p>Keycloak + sesión</p></td>
+</tr>
+</tbody>
+</table>
+<p>No existe un modelo <code class="docutils literal notranslate"><span class="pre">Rol</span></code> propio. Tampoco debe agregarse un campo de rol a
+<code class="docutils literal notranslate"><span class="pre">auth_user</span></code>: eso duplicaría la información administrada por Keycloak.</p>
+</section>
+<section id="mecanismo-de-autorizacion">
+<h2>Mecanismo de autorización<a class="headerlink" href="#mecanismo-de-autorizacion" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>El usuario inicia sesión mediante OIDC en Keycloak.</p></li>
+<li><p>Keycloak devuelve las claims del usuario y sus roles.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KeycloakOIDCAuthenticationBackend</span></code> valida el correo, busca o crea el
+usuario local y extrae roles desde <code class="docutils literal notranslate"><span class="pre">realm_access.roles</span></code>, <code class="docutils literal notranslate"><span class="pre">roles</span></code> o
+<code class="docutils literal notranslate"><span class="pre">resource_access</span></code>.</p></li>
+<li><p>Se eliminan únicamente roles técnicos de Keycloak, como
+<code class="docutils literal notranslate"><span class="pre">offline_access</span></code> y <code class="docutils literal notranslate"><span class="pre">default-roles-*</span></code>.</p></li>
+<li><p>Los roles de negocio se ordenan y guardan en
+<code class="docutils literal notranslate"><span class="pre">request.session['keycloak_roles']</span></code>.</p></li>
+<li><p>Los decoradores <code class="docutils literal notranslate"><span class="pre">requiere_permiso</span></code> y <code class="docutils literal notranslate"><span class="pre">requiere_rol</span></code> consultan esa sesión.
+Las vistas de divisas usan <code class="docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code> con el mismo mecanismo.</p></li>
+<li><p>El context processor calcula los accesos visibles del menú. Esto solo cambia
+la interfaz; nunca reemplaza la protección de la vista.</p></li>
+</ol>
+<p>Por eso un cambio de rol en Keycloak se refleja al volver a iniciar sesión. Una
+sesión ya abierta conserva sus roles hasta que se renueva o se cierra.</p>
+</section>
+<section id="que-debe-existir-y-que-no-debe-modificarse">
+<h2>Qué debe existir y qué no debe modificarse<a class="headerlink" href="#que-debe-existir-y-que-no-debe-modificarse" title="Link to this heading"></a></h2>
+<p>Debe existir:</p>
+<ul class="simple">
+<li><p>todas las tablas listadas por las migraciones aplicadas;</p></li>
+<li><p>al menos un usuario local por cada usuario que deba relacionarse con datos
+de Django;</p></li>
+<li><p>las divisas activas y sus cotizaciones necesarias para operar;</p></li>
+<li><p>la migración de <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> para el cálculo con comisión y
+vencimiento.</p></li>
+</ul>
+<p>No debe gestionarse manualmente en PostgreSQL:</p>
+<ul class="simple">
+<li><p>los roles de negocio de Keycloak;</p></li>
+<li><p>la asignación de roles de usuarios;</p></li>
+<li><p>la eliminación física de clientes, usuarios o divisas que tengan historial;</p></li>
+<li><p>cambios directos en tablas intermedias de clientes sin pasar por la
+aplicación.</p></li>
+</ul>
+<p>Los cambios estructurales deben hacerse mediante migraciones. Los roles deben
+crearse, asignarse o eliminarse en Keycloak; la base de Django solo conserva el
+estado local necesario para operar y auditar.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="guia.html" class="btn btn-neutral float-left" title="Guía del sistema" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="reference/modules.html" class="btn btn-neutral float-right" title="Referencia API" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
