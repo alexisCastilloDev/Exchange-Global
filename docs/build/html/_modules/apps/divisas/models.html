@@ -32,12 +32,15 @@
           <div class="body" role="main">
             
   <h1>Código fuente para apps.divisas.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span></span><span class="sd">"""Modelos de divisas y registro histórico de cotizaciones."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
 
 <div class="viewcode-block" id="Divisa">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Divisa">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Divisa</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Representa una divisa activa o inactiva del sistema."""</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Modelo que representa una divisa disponible en Global Exchange.</span>
 
@@ -54,6 +57,7 @@
     <span class="n">activa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s2">"Activa"</span><span class="p">)</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define las etiquetas administrativas del modelo de divisa."""</span>
         <span class="n">verbose_name</span> <span class="o">=</span> <span class="s2">"Divisa"</span>
         <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">"Divisas"</span>
 
@@ -72,6 +76,7 @@
 <div class="viewcode-block" id="Cotizacion">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Cotizacion">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Cotizacion</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra una tasa histórica de compra y venta para una divisa."""</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Modelo que almacena las tasas de compra y venta de una divisa específica.</span>
 
@@ -95,6 +100,7 @@
     <span class="n">fecha_actualizacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s2">"Fecha de Actualización"</span><span class="p">)</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define las etiquetas y el orden del historial de cotizaciones."""</span>
         <span class="n">verbose_name</span> <span class="o">=</span> <span class="s2">"Cotización"</span>
         <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">"Cotizaciones"</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-fecha_actualizacion'</span><span class="p">]</span>

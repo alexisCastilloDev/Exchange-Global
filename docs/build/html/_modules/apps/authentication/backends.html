@@ -68,6 +68,7 @@
 <div class="viewcode-block" id="es_rol_tecnico">
 <a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.es_rol_tecnico">[documentos]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Indica si un rol de Keycloak es técnico y no representa negocio."""</span>
     <span class="k">return</span> <span class="n">rol</span> <span class="ow">in</span> <span class="n">ROLES_TECNICOS_EXCLUIDOS</span> <span class="ow">or</span> <span class="n">rol</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'default-roles-'</span><span class="p">)</span></div>
 
 
@@ -75,6 +76,8 @@
 <div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend">
 <a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">KeycloakOIDCAuthenticationBackend</span><span class="p">(</span><span class="n">OIDCAuthenticationBackend</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Autentica usuarios OIDC y conserva sus roles efectivos en la sesión."""</span>
+
 <div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.verify_claims">
 <a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.verify_claims">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">verify_claims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
@@ -110,6 +113,7 @@
 <div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.create_user">
 <a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.create_user">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Crea un usuario local y sincroniza sus datos y roles iniciales."""</span>
         <span class="n">user</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="n">claims</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_user_claims</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">user</span></div>
@@ -118,6 +122,7 @@
 <div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.update_user">
 <a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Actualiza un usuario existente con la información de las claims."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_user_claims</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">user</span></div>
 

@@ -79,6 +79,7 @@
 <a class="viewcode-back" href="../../../../reference/apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.get_item">[documentos]</a>
 <span class="nd">@register</span><span class="o">.</span><span class="n">filter</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_item</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Obtiene una clave de un mapa y devuelve una lista si no existe."""</span>
     <span class="k">return</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">mapping</span> <span class="k">else</span> <span class="p">[]</span></div>
 
 
@@ -87,6 +88,7 @@
 <a class="viewcode-back" href="../../../../reference/apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.rol_tecnico">[documentos]</a>
 <span class="nd">@register</span><span class="o">.</span><span class="n">filter</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Indica si el rol recibido es técnico para la interfaz."""</span>
     <span class="k">return</span> <span class="n">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">)</span></div>
 
 </pre></div>

@@ -32,7 +32,9 @@
           <div class="body" role="main">
             
   <h1>Código fuente para apps.clientes.middleware</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">redirect</span>
+<span></span><span class="sd">"""Middleware que mantiene el cliente activo del usuario autenticado."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">redirect</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoReverseMatch</span><span class="p">,</span> <span class="n">reverse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span>
 
@@ -40,11 +42,14 @@
 <div class="viewcode-block" id="ClienteActivoMiddleware">
 <a class="viewcode-back" href="../../../reference/apps.clientes.middleware.html#apps.clientes.middleware.ClienteActivoMiddleware">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteActivoMiddleware</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Selecciona o solicita el cliente operativo según las asociaciones."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">get_response</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Guarda la siguiente aplicación de la cadena de middleware."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">get_response</span> <span class="o">=</span> <span class="n">get_response</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Carga el cliente activo en la solicitud antes de continuar."""</span>
         <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span><span class="p">:</span>
             <span class="n">cliente_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'cliente_activo_id'</span><span class="p">)</span>
             <span class="n">clientes_asociados</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

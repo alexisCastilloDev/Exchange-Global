@@ -47,6 +47,7 @@
 <div class="viewcode-block" id="ClienteForm">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Valida y persiste los datos principales de un cliente."""</span>
     <span class="c1"># Campo legado: se conserva para aceptar datos históricos, pero no se</span>
     <span class="c1"># muestra en la interfaz; el correo operativo pertenece al usuario.</span>
     <span class="n">email</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
@@ -60,12 +61,14 @@
 <div class="viewcode-block" id="ClienteForm.SegmentoChoiceField.clean">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.SegmentoChoiceField.clean">[documentos]</a>
         <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">"""Normaliza nombres históricos de segmentos antes de validar."""</span>
             <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_alias_historicos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="ClienteForm.SegmentoChoiceField.valid_value">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.SegmentoChoiceField.valid_value">[documentos]</a>
         <span class="k">def</span><span class="w"> </span><span class="nf">valid_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">"""Acepta valores vigentes y alias conservados por compatibilidad."""</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alias_historicos</span>
                 <span class="ow">or</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">valid_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -81,6 +84,7 @@
 <div class="viewcode-block" id="ClienteForm.Meta">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.Meta">[documentos]</a>
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define el modelo y los campos visibles del formulario de clientes."""</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s1">'tipo_cliente'</span><span class="p">,</span>
@@ -182,9 +186,12 @@
 <div class="viewcode-block" id="AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField">[documentos]</a>
     <span class="k">class</span><span class="w"> </span><span class="nc">UsuarioModelMultipleChoiceField</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelMultipleChoiceField</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Campo de selección múltiple que muestra el nombre del usuario."""</span>
+
 <div class="viewcode-block" id="AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField.label_from_instance">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField.label_from_instance">[documentos]</a>
         <span class="k">def</span><span class="w"> </span><span class="nf">label_from_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">"""Construye la etiqueta visible para un usuario asociado."""</span>
             <span class="n">nombre_completo</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="n">first_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="n">last_name</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">nombre_completo</span> <span class="k">if</span> <span class="n">nombre_completo</span> <span class="k">else</span> <span class="n">obj</span><span class="o">.</span><span class="n">username</span></div>
 </div>
@@ -198,6 +205,7 @@
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">usuarios_cliente</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Limita las opciones a usuarios activos habilitados por Keycloak."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># Los roles son gestionados exclusivamente por Keycloak. La vista</span>
         <span class="c1"># entrega los IDs sincronizados que poseen el rol de negocio cliente.</span>
@@ -227,6 +235,7 @@
 <div class="viewcode-block" id="MetodoPagoForm.Meta">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.Meta">[documentos]</a>
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define los campos, etiquetas y widgets del método de pago."""</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">MetodoPago</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s1">'tipo_medio'</span><span class="p">,</span>

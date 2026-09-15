@@ -32,7 +32,9 @@
           <div class="body" role="main">
             
   <h1>Código fuente para apps.users.services</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span></span><span class="sd">"""Servicios para sincronizar usuarios y roles con Keycloak."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">es_rol_tecnico</span>
 
@@ -43,6 +45,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_obtener_keycloak_admin</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Construye un cliente administrativo configurado para el realm."""</span>
     <span class="k">if</span> <span class="n">KeycloakAdmin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="s1">'La integración de Keycloak no está disponible. Verifica la dependencia python-keycloak y la configuración del realm.'</span>
@@ -122,6 +125,7 @@
 <div class="viewcode-block" id="actualizar_usuario_en_keycloak">
 <a class="viewcode-back" href="../../../reference/apps.users.services.html#apps.users.services.actualizar_usuario_en_keycloak">[documentos]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">actualizar_usuario_en_keycloak</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">,</span> <span class="n">is_active</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Actualiza nombre, apellido y estado de un usuario en Keycloak."""</span>
     <span class="n">keycloak_admin</span> <span class="o">=</span> <span class="n">_obtener_keycloak_admin</span><span class="p">()</span>
     <span class="n">user_id_keycloak</span> <span class="o">=</span> <span class="n">_obtener_user_id_por_email</span><span class="p">(</span><span class="n">keycloak_admin</span><span class="p">,</span> <span class="n">email</span><span class="p">)</span>
 

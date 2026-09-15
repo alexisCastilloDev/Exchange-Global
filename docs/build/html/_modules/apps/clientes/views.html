@@ -117,6 +117,7 @@
 <div class="viewcode-block" id="PanelAdminView">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PanelAdminView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista y filtra clientes activos para el panel administrativo."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'panel_admin.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'clientes'</span>
@@ -125,6 +126,7 @@
 <div class="viewcode-block" id="PanelAdminView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Obtiene clientes filtrados y usuarios activos precargados."""</span>
         <span class="n">queryset</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">activos</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 
         <span class="n">segmento_seleccionado</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'segmento'</span><span class="p">)</span>
@@ -150,6 +152,7 @@
 <div class="viewcode-block" id="PanelAdminView.get_context_data">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega filtros y segmentos disponibles al contexto."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'segmentos'</span><span class="p">]</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">SEGMENTO_CHOICES</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'segmento_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'segmento'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
@@ -160,6 +163,7 @@
 <div class="viewcode-block" id="PanelAdminView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Permite el panel a personal administrativo autorizado."""</span>
         <span class="n">user</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span>
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 
@@ -167,6 +171,7 @@
 <div class="viewcode-block" id="PanelAdminView.handle_no_permission">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.handle_no_permission">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_no_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Informa el rechazo y redirige al inicio."""</span>
         <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span>
             <span class="s2">"No tienes los permisos necesarios para acceder a este panel."</span><span class="p">,</span>
@@ -179,6 +184,7 @@
 <div class="viewcode-block" id="ClienteDetailView">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteDetailView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">DetailView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra el detalle de un cliente y sus usuarios activos."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'clientes/cliente_detail.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'cliente'</span>
@@ -186,6 +192,7 @@
 <div class="viewcode-block" id="ClienteDetailView.get_context_data">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega los usuarios activos asociados al cliente."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'usuarios_activos'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">usuarios</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">context</span></div>
@@ -194,12 +201,14 @@
 <div class="viewcode-block" id="ClienteDetailView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario tenga permisos administrativos."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 
 
 <div class="viewcode-block" id="ClienteDetailView.handle_no_permission">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView.handle_no_permission">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_no_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Informa el rechazo de acceso al detalle del cliente."""</span>
         <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span>
             <span class="s2">"No tienes los permisos necesarios para acceder a esta ficha."</span><span class="p">,</span>
@@ -214,6 +223,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteCreateView</span><span class="p">(</span>
     <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">SuccessMessageMixin</span><span class="p">,</span> <span class="n">CreateView</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Crea clientes desde el formulario administrativo."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
     <span class="n">form_class</span> <span class="o">=</span> <span class="n">ClienteForm</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'clientes/cliente_form.html'</span>
@@ -222,6 +232,7 @@
 <div class="viewcode-block" id="ClienteCreateView.get_success_message">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.get_success_message">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_success_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cleaned_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construye el mensaje de alta con el nombre del cliente."""</span>
         <span class="n">nombre_display</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">razon_social</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">tipo_cliente</span> <span class="o">==</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">TIPO_JURIDICA</span>
@@ -233,6 +244,7 @@
 <div class="viewcode-block" id="ClienteCreateView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda crear clientes."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 </div>
 
@@ -243,6 +255,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteUpdateView</span><span class="p">(</span>
     <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">SuccessMessageMixin</span><span class="p">,</span> <span class="n">UpdateView</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Actualiza los datos de un cliente existente."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
     <span class="n">form_class</span> <span class="o">=</span> <span class="n">ClienteForm</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'clientes/cliente_form.html'</span>
@@ -251,6 +264,7 @@
 <div class="viewcode-block" id="ClienteUpdateView.get_success_message">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.get_success_message">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_success_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cleaned_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construye el mensaje de actualización del cliente."""</span>
         <span class="n">nombre_display</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">razon_social</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">tipo_cliente</span> <span class="o">==</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">TIPO_JURIDICA</span>
@@ -262,6 +276,7 @@
 <div class="viewcode-block" id="ClienteUpdateView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda editar clientes."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 </div>
 
@@ -281,6 +296,7 @@
 <div class="viewcode-block" id="AsociarUsuariosClienteView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda administrar asociaciones."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 
 
@@ -309,6 +325,7 @@
 <div class="viewcode-block" id="AsociarUsuariosClienteView.get">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.get">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra usuarios elegibles y asociaciones actuales."""</span>
         <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
         <span class="n">usuarios_cliente</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_usuarios_cliente_ids</span><span class="p">()</span>
         <span class="c1"># Pre-seleccionar los usuarios que ya están vinculados</span>
@@ -324,6 +341,7 @@
 <div class="viewcode-block" id="AsociarUsuariosClienteView.post">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Actualiza la relación de usuarios asociados al cliente."""</span>
         <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
         <span class="n">usuarios_cliente</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_usuarios_cliente_ids</span><span class="p">()</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">AsociarUsuarioClienteForm</span><span class="p">(</span>
@@ -349,16 +367,19 @@
 <div class="viewcode-block" id="ClienteSoftDeleteView">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteSoftDeleteView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Gestiona la confirmación y baja lógica de un cliente."""</span>
 
 <div class="viewcode-block" id="ClienteSoftDeleteView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda dar de baja clientes."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 
 
 <div class="viewcode-block" id="ClienteSoftDeleteView.get">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView.get">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el formulario para confirmar la baja."""</span>
         <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
             <span class="n">request</span><span class="p">,</span>
@@ -375,6 +396,7 @@
 <div class="viewcode-block" id="ClienteSoftDeleteView.post">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida la causa y registra la baja lógica del cliente."""</span>
         <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">CausaBajaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
@@ -617,6 +639,7 @@
 <div class="viewcode-block" id="ClienteHistorialBajasView">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteHistorialBajasView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista el historial de bajas lógicas de clientes."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">HistorialBaja</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'bajas/historial_bajas.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'registros'</span>
@@ -624,12 +647,14 @@
 <div class="viewcode-block" id="ClienteHistorialBajasView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda consultar el historial."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 
 
 <div class="viewcode-block" id="ClienteHistorialBajasView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve bajas de clientes junto con el usuario que las realizó."""</span>
         <span class="k">return</span> <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_CLIENTE</span>
         <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'realizado_por'</span><span class="p">)</span></div>
@@ -638,6 +663,7 @@
 <div class="viewcode-block" id="ClienteHistorialBajasView.get_context_data">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega título y navegación de retorno al contexto."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'titulo'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Historial de bajas de clientes'</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'volver_url'</span><span class="p">]</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'panel_admin'</span><span class="p">)</span>

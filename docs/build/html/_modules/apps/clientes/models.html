@@ -51,6 +51,7 @@
 <div class="viewcode-block" id="ClienteActiveManager.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.clientes.models.html#apps.clientes.models.ClienteActiveManager.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve únicamente clientes que siguen activos."""</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 </div>
 
@@ -154,6 +155,7 @@
 <div class="viewcode-block" id="Cliente.soft_delete">
 <a class="viewcode-back" href="../../../reference/apps.clientes.models.html#apps.clientes.models.Cliente.soft_delete">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">soft_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Realiza la baja lógica sin eliminar el registro histórico."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
 
@@ -164,6 +166,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">usuarios</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve una descripción legible del cliente y su estado."""</span>
         <span class="n">estado</span> <span class="o">=</span> <span class="s1">'Activo'</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span> <span class="k">else</span> <span class="s1">'Inactivo'</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tipo_cliente</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">TIPO_JURIDICA</span><span class="p">:</span>
@@ -249,11 +252,13 @@
     <span class="n">actualizado_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define nombres administrativos y orden de los métodos de pago."""</span>
         <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Método de Pago'</span>
         <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Métodos de Pago'</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-es_predeterminado'</span><span class="p">,</span> <span class="s1">'-creado_en'</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve una descripción legible del método de pago."""</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tipo_medio_display</span><span class="p">()</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">entidad_financiera</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nombre_titular</span><span class="si">}</span><span class="s2">)"</span>
 
 <div class="viewcode-block" id="MetodoPago.save">

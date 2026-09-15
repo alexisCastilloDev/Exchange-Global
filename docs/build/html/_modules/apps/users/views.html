@@ -32,7 +32,9 @@
           <div class="body" role="main">
             
   <h1>Código fuente para apps.users.views</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span><span class="p">,</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span>
+<span></span><span class="sd">"""Vistas para usuarios, bajas y roles administrados en Keycloak."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span><span class="p">,</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span>
@@ -56,6 +58,7 @@
 <a class="viewcode-back" href="../../../reference/apps.users.views.html#apps.users.views.lista_usuarios_view">[documentos]</a>
 <span class="nd">@requiere_permiso</span><span class="p">(</span><span class="s1">'usuarios'</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">lista_usuarios_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista usuarios activos, permite filtrar y muestra sus roles."""</span>
     <span class="n">query</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'q'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">roles_por_usuario</span> <span class="o">=</span> <span class="n">sincronizar_usuarios_desde_keycloak</span><span class="p">()</span>
@@ -88,6 +91,7 @@
 <a class="viewcode-back" href="../../../reference/apps.users.views.html#apps.users.views.editar_usuario_view">[documentos]</a>
 <span class="nd">@requiere_permiso</span><span class="p">(</span><span class="s1">'usuarios'</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">editar_usuario_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Edita nombre y apellido localmente y en Keycloak."""</span>
     <span class="n">usuario</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
@@ -120,6 +124,7 @@
 <a class="viewcode-back" href="../../../reference/apps.users.views.html#apps.users.views.baja_usuario_view">[documentos]</a>
 <span class="nd">@requiere_permiso</span><span class="p">(</span><span class="s1">'admin'</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">baja_usuario_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Confirma y registra la baja lógica de un usuario."""</span>
     <span class="n">usuario</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">usuario</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
@@ -176,6 +181,7 @@
 <a class="viewcode-back" href="../../../reference/apps.users.views.html#apps.users.views.historial_bajas_usuarios_view">[documentos]</a>
 <span class="nd">@requiere_permiso</span><span class="p">(</span><span class="s1">'admin'</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">historial_bajas_usuarios_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra el historial de bajas lógicas de usuarios."""</span>
     <span class="n">registros</span> <span class="o">=</span> <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
         <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_USUARIO</span>
     <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'realizado_por'</span><span class="p">)</span>

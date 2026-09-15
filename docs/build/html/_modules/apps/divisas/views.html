@@ -32,7 +32,9 @@
           <div class="body" role="main">
             
   <h1>Código fuente para apps.divisas.views</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span><span class="p">,</span> <span class="n">ROUND_HALF_UP</span>
+<span></span><span class="sd">"""Vistas para consultar, administrar y simular cotizaciones de divisas."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span><span class="p">,</span> <span class="n">ROUND_HALF_UP</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span>
@@ -50,6 +52,7 @@
 <div class="viewcode-block" id="TasasVigentesListView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TasasVigentesListView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista las tasas de las divisas activas para roles operativos."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Divisa</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/tasas_vigentes.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'divisas'</span>
@@ -79,6 +82,7 @@
 <div class="viewcode-block" id="ActualizarCotizacionView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ActualizarCotizacionView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">UpdateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Permite a roles autorizados registrar una nueva cotización."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cotizacion</span>
     <span class="n">form_class</span> <span class="o">=</span> <span class="n">CotizacionForm</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/cotizacion_form.html'</span>
@@ -88,6 +92,7 @@
 <div class="viewcode-block" id="ActualizarCotizacionView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario sea administrador o analista cambiario."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
 
@@ -95,6 +100,7 @@
 <div class="viewcode-block" id="ActualizarCotizacionView.get_object">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_object">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construye una cotización nueva para la divisa solicitada."""</span>
         <span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span>
             <span class="n">Divisa</span><span class="p">,</span>
             <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'divisa_id'</span><span class="p">],</span>
@@ -106,6 +112,7 @@
 <div class="viewcode-block" id="ActualizarCotizacionView.get_context_data">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega la divisa asociada al contexto del formulario."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">divisa</span>
         <span class="k">return</span> <span class="n">context</span></div>
@@ -114,6 +121,7 @@
 <div class="viewcode-block" id="ActualizarCotizacionView.form_valid">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.form_valid">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">form_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Asigna divisa y usuario, guarda la tasa y muestra confirmación."""</span>
         <span class="n">form</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">divisa</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">divisa</span>
         <span class="n">form</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">usuario</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">form_valid</span><span class="p">(</span><span class="n">form</span><span class="p">)</span>
@@ -138,6 +146,7 @@
 <div class="viewcode-block" id="HistorialCotizacionesView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Autoriza la consulta del historial a administración y análisis."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
 
@@ -145,6 +154,7 @@
 <div class="viewcode-block" id="HistorialCotizacionesView.dispatch">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.dispatch">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la divisa antes de despachar la solicitud."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'divisa_id'</span><span class="p">])</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
@@ -152,12 +162,14 @@
 <div class="viewcode-block" id="HistorialCotizacionesView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve las cotizaciones históricas de la divisa seleccionada."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">cotizaciones</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="HistorialCotizacionesView.get_context_data">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega la divisa consultada al contexto de la plantilla."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span>
         <span class="k">return</span> <span class="n">context</span></div>
@@ -168,11 +180,13 @@
 <div class="viewcode-block" id="SimulacionDivisasView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SimulacionDivisasView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Calcula conversiones usando las tasas vigentes disponibles."""</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/simulacion_divisas.html'</span>
 
 <div class="viewcode-block" id="SimulacionDivisasView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Permite simular a los roles que operan con divisas."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'agente'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
 
@@ -180,6 +194,7 @@
 <div class="viewcode-block" id="SimulacionDivisasView.get_context_data">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Prepara el formulario y las divisas activas para la pantalla."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'divisas'</span><span class="p">]</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'form'</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimulacionDivisasForm</span><span class="p">()</span>
@@ -190,6 +205,7 @@
 <div class="viewcode-block" id="SimulacionDivisasView.post">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida una conversión y devuelve el monto calculado."""</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">SimulacionDivisasForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
         <span class="n">divisas</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">)</span>
 
@@ -199,6 +215,7 @@
             <span class="n">monto</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span>
 
             <span class="k">def</span><span class="w"> </span><span class="nf">get_cotizacion</span><span class="p">(</span><span class="n">divisa</span><span class="p">):</span>
+<span class="w">                </span><span class="sd">"""Obtiene la cotización vigente o la tasa unitaria de PYG."""</span>
                 <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">divisa</span><span class="p">,</span> <span class="s1">'codigo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'PYG'</span><span class="p">:</span>
                     <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="s1">'CotizacionPYG'</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{</span><span class="s1">'tasa_compra'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'1.00'</span><span class="p">),</span> <span class="s1">'tasa_venta'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'1.00'</span><span class="p">)})()</span>
                 <span class="n">cotizacion</span> <span class="o">=</span> <span class="n">divisa</span><span class="o">.</span><span class="n">ultima_cotizacion</span>
@@ -243,6 +260,7 @@
 <div class="viewcode-block" id="AdminDivisasMixin.test_func">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el rol de administrador esté en la sesión."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">return</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span></div>
 </div>
@@ -252,6 +270,7 @@
 <div class="viewcode-block" id="DivisaListView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaListView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DivisaListView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista el catálogo administrativo de divisas."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Divisa</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/divisa_list.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'divisas'</span>
@@ -262,6 +281,7 @@
 <div class="viewcode-block" id="DivisaCreateView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaCreateView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DivisaCreateView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">CreateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Permite registrar una divisa nueva en el catálogo."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Divisa</span>
     <span class="n">form_class</span> <span class="o">=</span> <span class="n">DivisaForm</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/divisa_form.html'</span>
@@ -270,6 +290,7 @@
 <div class="viewcode-block" id="DivisaCreateView.form_valid">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaCreateView.form_valid">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">form_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Marca como activa la divisa recién creada."""</span>
         <span class="n">form</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">activa</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">form_valid</span><span class="p">(</span><span class="n">form</span><span class="p">)</span></div>
 </div>
@@ -279,6 +300,7 @@
 <div class="viewcode-block" id="DivisaUpdateView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaUpdateView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DivisaUpdateView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">UpdateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Permite editar los datos de una divisa existente."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Divisa</span>
     <span class="n">form_class</span> <span class="o">=</span> <span class="n">DivisaForm</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/divisa_form.html'</span>
@@ -289,9 +311,12 @@
 <div class="viewcode-block" id="DivisaSoftDeleteView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DivisaSoftDeleteView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Confirma y ejecuta la baja lógica de una divisa."""</span>
+
 <div class="viewcode-block" id="DivisaSoftDeleteView.get">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView.get">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el formulario de confirmación de baja."""</span>
         <span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
             <span class="n">request</span><span class="p">,</span>
@@ -308,6 +333,7 @@
 <div class="viewcode-block" id="DivisaSoftDeleteView.post">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida la causa y registra la baja lógica de la divisa."""</span>
         <span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">CausaBajaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
@@ -339,30 +365,24 @@
 
 
 
-<div class="viewcode-block" id="DivisaHistorialBajasView">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaHistorialBajasView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DivisaHistorialBajasView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista las bajas lógicas registradas para divisas."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">HistorialBaja</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'bajas/historial_bajas.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'registros'</span>
 
-<div class="viewcode-block" id="DivisaHistorialBajasView.get_queryset">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaHistorialBajasView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve el historial de bajas de divisas con su autor."""</span>
         <span class="k">return</span> <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_DIVISA</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'realizado_por'</span><span class="p">)</span></div>
+        <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'realizado_por'</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="DivisaHistorialBajasView.get_context_data">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DivisaHistorialBajasView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega título y URL de retorno al contexto de la plantilla."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'titulo'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Historial de bajas de divisas'</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'volver_url'</span><span class="p">]</span> <span class="o">=</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">context</span></div>
-</div>
-
+        <span class="k">return</span> <span class="n">context</span>
 </pre></div>
 
           </div>

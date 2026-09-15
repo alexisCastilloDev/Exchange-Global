@@ -32,9 +32,11 @@
           <div class="body" role="main">
             
   <h1>Código fuente para apps.clientes.context_processors</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Contexto común con el cliente activo y sus asociaciones."""</span>
+
 <div class="viewcode-block" id="cliente_activo_context">
 <a class="viewcode-back" href="../../../reference/apps.clientes.context_processors.html#apps.clientes.context_processors.cliente_activo_context">[documentos]</a>
-<span></span><span class="k">def</span><span class="w"> </span><span class="nf">cliente_activo_context</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cliente_activo_context</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Hace disponible el cliente_activo y la lista de clientes en todos los templates."""</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
