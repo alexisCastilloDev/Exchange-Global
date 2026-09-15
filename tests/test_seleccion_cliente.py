@@ -52,6 +52,7 @@ class TestSeleccionClienteActivo:
         assert response.status_code == 200
         contenido = response.content.decode()
         assert 'Cliente Visible' in contenido
+        assert 'Persona física' in contenido
         assert 'Segmento: VIP' in contenido
         assert 'Activo' in contenido
         assert 'Prueba' in contenido

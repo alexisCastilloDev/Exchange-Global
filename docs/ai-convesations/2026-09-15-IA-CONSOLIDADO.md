@@ -109,3 +109,12 @@ También se agregó `docs/source/templates.rst`, que incorpora esos encabezados
 mediante `literalinclude` y los organiza por páginas generales, clientes,
 bajas, divisas y parciales. De esta forma Sphinx muestra la documentación de
 templates junto con la referencia Python.
+
+## 8. Ajustes visuales finales
+
+Se corrigió el detalle del importe de compra y venta para separar claramente
+cada etiqueta de su valor mediante una cuadrícula responsive. En pantallas
+pequeñas los datos se apilan para evitar textos pegados o desbordados.
+
+El selector de cliente ahora informa si cada perfil corresponde a una persona
+física o jurídica, además de mostrar su CI/RUC, segmento y estado.
