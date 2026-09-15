@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+"""Punto de entrada para los comandos administrativos de Django."""
+
 import os
 import sys
 
 
 def main():
+    """Configura Django y delega los argumentos al ejecutor de comandos."""
     os.environ.setdefault(
         'DJANGO_SETTINGS_MODULE',
         os.environ.get('DJANGO_SETTINGS_MODULE', 'global_exchange.settings.dev')

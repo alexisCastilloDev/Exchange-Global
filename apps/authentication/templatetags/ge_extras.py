@@ -37,9 +37,11 @@ def iniciales(nombre_completo):
 
 @register.filter
 def get_item(mapping, key):
+    """Obtiene una clave de un mapa y devuelve una lista si no existe."""
     return mapping.get(key, []) if mapping else []
 
 
 @register.filter
 def rol_tecnico(rol):
+    """Indica si el rol recibido es técnico para la interfaz."""
     return es_rol_tecnico(rol)

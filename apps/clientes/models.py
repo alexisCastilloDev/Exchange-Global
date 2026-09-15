@@ -13,6 +13,7 @@ class ClienteActiveManager(models.Manager):
     Manager personalizado que filtra por defecto únicamente los clientes activos.
     """
     def get_queryset(self):
+        """Devuelve únicamente clientes que siguen activos."""
         return super().get_queryset().filter(is_active=True)
 
 
@@ -110,6 +111,7 @@ class Cliente(models.Model):
     activos = ClienteActiveManager()
 
     def soft_delete(self):
+        """Realiza la baja lógica sin eliminar el registro histórico."""
         self.is_active = False
         self.save()
 
@@ -119,6 +121,7 @@ class Cliente(models.Model):
         return self.user or self.usuarios.first()
 
     def __str__(self):
+        """Devuelve una descripción legible del cliente y su estado."""
         estado = 'Activo' if self.is_active else 'Inactivo'
 
         if self.tipo_cliente == self.TIPO_JURIDICA:
@@ -201,11 +204,13 @@ class MetodoPago(models.Model):
     actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Define nombres administrativos y orden de los métodos de pago."""
         verbose_name = 'Método de Pago'
         verbose_name_plural = 'Métodos de Pago'
         ordering = ['-es_predeterminado', '-creado_en']
 
     def __str__(self):
+        """Devuelve una descripción legible del método de pago."""
         return f"{self.get_tipo_medio_display()} - {self.entidad_financiera} ({self.nombre_titular})"
 
     def save(self, *args, **kwargs):

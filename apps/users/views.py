@@ -1,3 +1,5 @@
+"""Vistas para usuarios, bajas y roles administrados en Keycloak."""
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -20,6 +22,7 @@ User = get_user_model()
 
 @requiere_permiso('usuarios')
 def lista_usuarios_view(request):
+    """Lista usuarios activos, permite filtrar y muestra sus roles."""
     query = request.GET.get('q', '').strip()
     try:
         roles_por_usuario = sincronizar_usuarios_desde_keycloak()
@@ -49,6 +52,7 @@ def lista_usuarios_view(request):
 
 @requiere_permiso('usuarios')
 def editar_usuario_view(request, user_id):
+    """Edita nombre y apellido localmente y en Keycloak."""
     usuario = get_object_or_404(User, id=user_id)
 
     if request.method == 'POST':
@@ -78,6 +82,7 @@ def editar_usuario_view(request, user_id):
 
 @requiere_permiso('admin')
 def baja_usuario_view(request, user_id):
+    """Confirma y registra la baja lógica de un usuario."""
     usuario = get_object_or_404(User, id=user_id)
 
     if not usuario.is_active:
@@ -131,6 +136,7 @@ def baja_usuario_view(request, user_id):
 
 @requiere_permiso('admin')
 def historial_bajas_usuarios_view(request):
+    """Muestra el historial de bajas lógicas de usuarios."""
     registros = HistorialBaja.objects.filter(
         tipo_recurso=HistorialBaja.TIPO_USUARIO
     ).select_related('realizado_por')

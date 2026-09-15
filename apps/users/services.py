@@ -1,3 +1,5 @@
+"""Servicios para sincronizar usuarios y roles con Keycloak."""
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from apps.authentication.backends import es_rol_tecnico
@@ -9,6 +11,7 @@ except ImportError:  # pragma: no cover
 
 
 def _obtener_keycloak_admin():
+    """Construye un cliente administrativo configurado para el realm."""
     if KeycloakAdmin is None:
         raise RuntimeError(
             'La integración de Keycloak no está disponible. Verifica la dependencia python-keycloak y la configuración del realm.'
@@ -83,6 +86,7 @@ def _obtener_user_id_por_email(keycloak_admin, email):
 
 
 def actualizar_usuario_en_keycloak(email, first_name, last_name, is_active):
+    """Actualiza nombre, apellido y estado de un usuario en Keycloak."""
     keycloak_admin = _obtener_keycloak_admin()
     user_id_keycloak = _obtener_user_id_por_email(keycloak_admin, email)
 

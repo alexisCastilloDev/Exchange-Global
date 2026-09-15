@@ -1,3 +1,5 @@
+"""Vistas para consultar, administrar y simular cotizaciones de divisas."""
+
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.contrib import messages
@@ -14,6 +16,7 @@ from apps.divisas.models import Cotizacion, Divisa
 
 
 class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista las tasas de las divisas activas para roles operativos."""
     model = Divisa
     template_name = 'divisas/tasas_vigentes.html'
     context_object_name = 'divisas'
@@ -34,6 +37,7 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
 
 class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Permite a roles autorizados registrar una nueva cotización."""
     model = Cotizacion
     form_class = CotizacionForm
     template_name = 'divisas/cotizacion_form.html'
@@ -41,10 +45,12 @@ class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
     success_url = reverse_lazy('divisas:tasas_vigentes')
 
     def test_func(self):
+        """Comprueba que el usuario sea administrador o analista cambiario."""
         roles = self.request.session.get('keycloak_roles', [])
         return bool({'admin', 'analista_cambiario'} & set(roles))
 
     def get_object(self, queryset=None):
+        """Construye una cotización nueva para la divisa solicitada."""
         divisa = get_object_or_404(
             Divisa,
             pk=self.kwargs['divisa_id'],
@@ -53,11 +59,13 @@ class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
         return Cotizacion(divisa=divisa)
 
     def get_context_data(self, **kwargs):
+        """Agrega la divisa asociada al contexto del formulario."""
         context = super().get_context_data(**kwargs)
         context['divisa'] = self.object.divisa
         return context
 
     def form_valid(self, form):
+        """Asigna divisa y usuario, guarda la tasa y muestra confirmación."""
         form.instance.divisa = self.object.divisa
         form.instance.usuario = self.request.user
         super().form_valid(form)
@@ -76,30 +84,37 @@ class HistorialCotizacionesView(LoginRequiredMixin, UserPassesTestMixin, ListVie
     context_object_name = 'cotizaciones'
 
     def test_func(self):
+        """Autoriza la consulta del historial a administración y análisis."""
         roles = self.request.session.get('keycloak_roles', [])
         return bool({'admin', 'analista_cambiario'} & set(roles))
 
     def dispatch(self, request, *args, **kwargs):
+        """Resuelve la divisa antes de despachar la solicitud."""
         self.divisa = get_object_or_404(Divisa, pk=kwargs['divisa_id'])
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
+        """Devuelve las cotizaciones históricas de la divisa seleccionada."""
         return self.divisa.cotizaciones.select_related('usuario')
 
     def get_context_data(self, **kwargs):
+        """Agrega la divisa consultada al contexto de la plantilla."""
         context = super().get_context_data(**kwargs)
         context['divisa'] = self.divisa
         return context
 
 
 class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Calcula conversiones usando las tasas vigentes disponibles."""
     template_name = 'divisas/simulacion_divisas.html'
 
     def test_func(self):
+        """Permite simular a los roles que operan con divisas."""
         roles = self.request.session.get('keycloak_roles', [])
         return bool({'admin', 'agente', 'analista_cambiario', 'cliente'} & set(roles))
 
     def get_context_data(self, **kwargs):
+        """Prepara el formulario y las divisas activas para la pantalla."""
         context = super().get_context_data(**kwargs)
         context['divisas'] = Divisa.objects.filter(activa=True).order_by('codigo')
         context['form'] = SimulacionDivisasForm()
@@ -107,6 +122,7 @@ class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
         return context
 
     def post(self, request, *args, **kwargs):
+        """Valida una conversión y devuelve el monto calculado."""
         form = SimulacionDivisasForm(request.POST)
         divisas = Divisa.objects.filter(activa=True).order_by('codigo')
 
@@ -116,6 +132,7 @@ class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
             monto = form.cleaned_data['monto']
 
             def get_cotizacion(divisa):
+                """Obtiene la cotización vigente o la tasa unitaria de PYG."""
                 if getattr(divisa, 'codigo', None) == 'PYG':
                     return type('CotizacionPYG', (), {'tasa_compra': Decimal('1.00'), 'tasa_venta': Decimal('1.00')})()
                 cotizacion = divisa.ultima_cotizacion
@@ -154,11 +171,13 @@ class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
 class AdminDivisasMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Control de acceso: solo administradores (rol 'admin' en Keycloak)."""
     def test_func(self):
+        """Comprueba que el rol de administrador esté en la sesión."""
         roles = self.request.session.get('keycloak_roles', [])
         return 'admin' in roles
 
 
 class DivisaListView(AdminDivisasMixin, ListView):
+    """Lista el catálogo administrativo de divisas."""
     model = Divisa
     template_name = 'divisas/divisa_list.html'
     context_object_name = 'divisas'
@@ -166,17 +185,20 @@ class DivisaListView(AdminDivisasMixin, ListView):
 
 
 class DivisaCreateView(AdminDivisasMixin, CreateView):
+    """Permite registrar una divisa nueva en el catálogo."""
     model = Divisa
     form_class = DivisaForm
     template_name = 'divisas/divisa_form.html'
     success_url = reverse_lazy('divisas:lista_divisas')
 
     def form_valid(self, form):
+        """Marca como activa la divisa recién creada."""
         form.instance.activa = True
         return super().form_valid(form)
 
 
 class DivisaUpdateView(AdminDivisasMixin, UpdateView):
+    """Permite editar los datos de una divisa existente."""
     model = Divisa
     form_class = DivisaForm
     template_name = 'divisas/divisa_form.html'
@@ -184,7 +206,10 @@ class DivisaUpdateView(AdminDivisasMixin, UpdateView):
 
 
 class DivisaSoftDeleteView(AdminDivisasMixin, View):
+    """Confirma y ejecuta la baja lógica de una divisa."""
+
     def get(self, request, pk, *args, **kwargs):
+        """Muestra el formulario de confirmación de baja."""
         divisa = get_object_or_404(Divisa, pk=pk)
         return render(
             request,
@@ -198,6 +223,7 @@ class DivisaSoftDeleteView(AdminDivisasMixin, View):
         )
 
     def post(self, request, pk, *args, **kwargs):
+        """Valida la causa y registra la baja lógica de la divisa."""
         divisa = get_object_or_404(Divisa, pk=pk)
         form = CausaBajaForm(request.POST)
         if not form.is_valid():
@@ -228,16 +254,19 @@ class DivisaSoftDeleteView(AdminDivisasMixin, View):
 
 
 class DivisaHistorialBajasView(AdminDivisasMixin, ListView):
+    """Lista las bajas lógicas registradas para divisas."""
     model = HistorialBaja
     template_name = 'bajas/historial_bajas.html'
     context_object_name = 'registros'
 
     def get_queryset(self):
+        """Devuelve el historial de bajas de divisas con su autor."""
         return HistorialBaja.objects.filter(
             tipo_recurso=HistorialBaja.TIPO_DIVISA
         ).select_related('realizado_por')
 
     def get_context_data(self, **kwargs):
+        """Agrega título y URL de retorno al contexto de la plantilla."""
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Historial de bajas de divisas'
         context['volver_url'] = reverse_lazy('divisas:lista_divisas')

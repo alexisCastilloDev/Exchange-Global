@@ -1,9 +1,13 @@
+"""Formularios para registrar, actualizar y simular cotizaciones."""
+
 from django import forms
 from django.core.validators import RegexValidator
 from .models import Cotizacion, Divisa
 
 
 class SimulacionDivisasForm(forms.Form):
+    """Valida los datos necesarios para convertir un monto entre divisas."""
+
     monto = forms.DecimalField(
         label='Monto a convertir',
         min_value=0,
@@ -24,10 +28,12 @@ class SimulacionDivisasForm(forms.Form):
 
     @staticmethod
     def _divisa_guarani_implicit():
+        """Construye la divisa PYG implícita cuando no existe en la base."""
         return Divisa(codigo='PYG', nombre='Guaraní', simbolo='₲', activa=True)
 
     @classmethod
     def opciones_divisas(cls):
+        """Devuelve las divisas activas más la opción implícita de guaraní."""
         divisas_activas = list(Divisa.objects.filter(activa=True).order_by('codigo'))
         opciones = []
 
@@ -43,11 +49,13 @@ class SimulacionDivisasForm(forms.Form):
         return opciones
 
     def __init__(self, *args, **kwargs):
+        """Inicializa el formulario con las opciones vigentes de divisas."""
         super().__init__(*args, **kwargs)
         self.fields['divisa_origen'].choices = self.opciones_divisas()
         self.fields['divisa_destino'].choices = self.opciones_divisas()
 
     def clean_divisa_origen(self):
+        """Convierte y valida la divisa seleccionada como origen."""
         valor = self.cleaned_data['divisa_origen']
         if valor == 'PYG':
             return self._divisa_guarani_implicit()
@@ -57,6 +65,7 @@ class SimulacionDivisasForm(forms.Form):
         return divisa
 
     def clean_divisa_destino(self):
+        """Convierte y valida la divisa seleccionada como destino."""
         valor = self.cleaned_data['divisa_destino']
         if valor == 'PYG':
             return self._divisa_guarani_implicit()
@@ -66,12 +75,14 @@ class SimulacionDivisasForm(forms.Form):
         return divisa
 
     def clean_monto(self):
+        """Verifica que el monto de conversión sea positivo."""
         monto = self.cleaned_data['monto']
         if monto <= 0:
             raise forms.ValidationError('El monto debe ser mayor que cero.')
         return monto
 
     def clean(self):
+        """Evita que la conversión use la misma divisa en ambos extremos."""
         cleaned_data = super().clean()
         origen = cleaned_data.get('divisa_origen')
         destino = cleaned_data.get('divisa_destino')
@@ -84,6 +95,7 @@ class SimulacionDivisasForm(forms.Form):
 
 
 class DivisaForm(forms.ModelForm):
+    """Valida los datos básicos de una divisa administrable."""
     codigo = forms.CharField(
         label='Código ISO (Ej. USD, EUR, PYG)',
         max_length=3,
@@ -97,10 +109,12 @@ class DivisaForm(forms.ModelForm):
     nombre = forms.CharField(label='Nombre de la divisa', max_length=50)
     simbolo = forms.CharField(label='Símbolo (Ej. $, €)', max_length=5)
     class Meta:
+        """Define el modelo y los campos editables de la divisa."""
         model = Divisa
         fields = ['codigo', 'nombre', 'simbolo']
 
     def clean_codigo(self):
+        """Normaliza el código ISO y controla que no esté duplicado."""
         codigo = self.cleaned_data['codigo'].strip().upper()
         duplicado = Divisa.objects.filter(codigo__iexact=codigo)
         if self.instance.pk:
@@ -110,12 +124,14 @@ class DivisaForm(forms.ModelForm):
         return codigo
 
     def clean_nombre(self):
+        """Rechaza nombres de divisa vacíos."""
         nombre = self.cleaned_data['nombre'].strip()
         if not nombre:
             raise forms.ValidationError('El nombre de la divisa es obligatorio.')
         return nombre
 
     def clean_simbolo(self):
+        """Rechaza símbolos de divisa vacíos."""
         simbolo = self.cleaned_data['simbolo'].strip()
         if not simbolo:
             raise forms.ValidationError('El símbolo de la divisa es obligatorio.')
@@ -123,7 +139,9 @@ class DivisaForm(forms.ModelForm):
 
 
 class CotizacionForm(forms.ModelForm):
+    """Valida las tasas de compra y venta de una cotización."""
     class Meta:
+        """Define los campos y etiquetas editables de la cotización."""
         model = Cotizacion
         fields = ['tasa_compra', 'tasa_venta']
         labels = {
@@ -136,6 +154,7 @@ class CotizacionForm(forms.ModelForm):
         }
 
     def clean(self):
+        """Comprueba que ambas tasas sean positivas y estén ordenadas."""
         cleaned_data = super().clean()
         compra = cleaned_data.get('tasa_compra')
         venta = cleaned_data.get('tasa_venta')

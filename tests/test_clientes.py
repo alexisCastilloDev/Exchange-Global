@@ -23,6 +23,7 @@ class TestClienteForm:
     """
 
     def test_segmento_se_presenta_como_lista_de_opciones_vigentes(self):
+        """Verifica que el formulario muestre los segmentos actuales."""
         form = ClienteForm()
 
         assert form.fields['segmento'].choices == Cliente.SEGMENTO_CHOICES

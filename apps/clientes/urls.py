@@ -1,3 +1,5 @@
+"""Rutas de clientes, selección de contexto y métodos de pago."""
+
 from django import views
 from django.urls import path
 from .views import (

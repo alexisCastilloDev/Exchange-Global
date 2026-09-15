@@ -1,3 +1,5 @@
+"""Enrutamiento principal del proyecto Global Exchange."""
+
 from django.contrib import admin
 from django.urls import path, include
 from global_exchange.views import home, panel_protegido, perfil

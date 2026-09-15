@@ -37,9 +37,11 @@ class HistorialBaja(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Configura etiquetas administrativas y orden del historial."""
         verbose_name = 'Historial de baja'
         verbose_name_plural = 'Historial de bajas'
         ordering = ['-fecha']
 
     def __str__(self):
+        """Devuelve el tipo y nombre del recurso dado de baja."""
         return f'{self.get_tipo_recurso_display()}: {self.recurso_nombre}'

@@ -1,7 +1,10 @@
+"""Modelos de divisas y registro histórico de cotizaciones."""
+
 from django.conf import settings
 from django.db import models
 
 class Divisa(models.Model):
+    """Representa una divisa activa o inactiva del sistema."""
     """
     Modelo que representa una divisa disponible en Global Exchange.
 
@@ -18,6 +21,7 @@ class Divisa(models.Model):
     activa = models.BooleanField(default=True, verbose_name="Activa")
 
     class Meta:
+        """Define las etiquetas administrativas del modelo de divisa."""
         verbose_name = "Divisa"
         verbose_name_plural = "Divisas"
 
@@ -33,6 +37,7 @@ class Divisa(models.Model):
         return self.cotizaciones.order_by('-fecha_actualizacion').first()
 
 class Cotizacion(models.Model):
+    """Registra una tasa histórica de compra y venta para una divisa."""
     """
     Modelo que almacena las tasas de compra y venta de una divisa específica.
 
@@ -56,6 +61,7 @@ class Cotizacion(models.Model):
     fecha_actualizacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Actualización")
 
     class Meta:
+        """Define las etiquetas y el orden del historial de cotizaciones."""
         verbose_name = "Cotización"
         verbose_name_plural = "Cotizaciones"
         ordering = ['-fecha_actualizacion']

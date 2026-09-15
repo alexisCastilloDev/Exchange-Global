@@ -12,6 +12,7 @@ qué botones/enlaces tiene sentido mostrarle.
 
 
 def permisos_ui_context(request):
+    """Expone en las plantillas los permisos visibles del usuario actual."""
     if not request.user.is_authenticated:
         return {
             'keycloak_roles': [],

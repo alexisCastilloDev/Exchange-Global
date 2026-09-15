@@ -19,10 +19,13 @@ from django.shortcuts import redirect
 
 
 def requiere_permiso(codigo_recurso):
+    """Restringe una vista a usuarios cuyo rol coincide con el recurso."""
     def decorador(view_func):
+        """Aplica autenticación y autorización a la vista recibida."""
         @login_required
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
+            """Comprueba el recurso solicitado antes de ejecutar la vista."""
             roles = request.session.get('keycloak_roles', [])
             if codigo_recurso not in roles and 'admin' not in roles:
                 messages.error(request, 'No tenés permiso para acceder a esta funcionalidad.')
@@ -35,9 +38,11 @@ def requiere_permiso(codigo_recurso):
 def requiere_rol(rol_requerido):
     """Protege una vista por rol, permitiendo también el rol global ``admin``."""
     def decorador(view_func):
+        """Aplica el control de acceso a la vista decorada."""
         @login_required
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
+            """Comprueba la presencia del rol requerido en la sesión."""
             roles = request.session.get('keycloak_roles', [])
             if rol_requerido not in roles and 'admin' not in roles:
                 messages.error(request, 'No tenés el rol necesario para acceder a esta funcionalidad.')

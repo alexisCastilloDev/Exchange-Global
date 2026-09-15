@@ -1,14 +1,19 @@
+"""Middleware que mantiene el cliente activo del usuario autenticado."""
+
 from django.shortcuts import redirect
 from django.urls import NoReverseMatch, reverse
 from apps.clientes.models import Cliente
 
 
 class ClienteActivoMiddleware:
+    """Selecciona o solicita el cliente operativo según las asociaciones."""
 
     def __init__(self, get_response):
+        """Guarda la siguiente aplicación de la cadena de middleware."""
         self.get_response = get_response
 
     def __call__(self, request):
+        """Carga el cliente activo en la solicitud antes de continuar."""
         if request.user.is_authenticated and not request.user.is_staff:
             cliente_id = request.session.get('cliente_activo_id')
             clientes_asociados = request.user.clientes.filter(is_active=True)

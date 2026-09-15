@@ -1,3 +1,5 @@
+"""Pruebas de asociación de usuarios operadores a clientes."""
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -8,8 +10,10 @@ User = get_user_model()
 
 
 class AsociacionUsuarioClienteTest(TestCase):
+    """Verifica alta, consulta, revocación y seguridad de asociaciones."""
 
     def setUp(self):
+        """Prepara usuarios, cliente y roles simulados de Keycloak."""
         # 1. Crear Administrador para acceder a las vistas
         self.admin_user = User.objects.create_superuser(
             username='admin_test',
@@ -62,6 +66,7 @@ class AsociacionUsuarioClienteTest(TestCase):
         self.roles_keycloak.start()
 
     def tearDown(self):
+        """Detiene el mock de sincronización y libera recursos del test."""
         self.roles_keycloak.stop()
         super().tearDown()
 
@@ -143,6 +148,7 @@ class AsociacionUsuarioClienteTest(TestCase):
         self.assertIn(response.status_code, [403, 302])
 
     def test_solo_usuarios_con_rol_cliente_pueden_vincularse(self):
+        """Solo muestra y acepta usuarios con rol de cliente."""
         usuario_sin_rol = User.objects.create_user(
             username='operador-sin-rol',
             email='operador-sin-rol@test.com',

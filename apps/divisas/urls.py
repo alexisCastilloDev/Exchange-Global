@@ -1,3 +1,5 @@
+"""Rutas para consulta, simulación y administración de divisas."""
+
 from django.urls import path
 from .views import (
     TasasVigentesListView,

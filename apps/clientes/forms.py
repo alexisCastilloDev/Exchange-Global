@@ -11,6 +11,7 @@ User = get_user_model()
 
 
 class ClienteForm(forms.ModelForm):
+    """Valida y persiste los datos principales de un cliente."""
     # Campo legado: se conserva para aceptar datos históricos, pero no se
     # muestra en la interfaz; el correo operativo pertenece al usuario.
     email = forms.EmailField(required=False, widget=forms.HiddenInput())
@@ -20,9 +21,11 @@ class ClienteForm(forms.ModelForm):
         _alias_historicos = {'ESTANDAR': 'MINORISTA', 'PREMIUM': 'VIP'}
 
         def clean(self, value):
+            """Normaliza nombres históricos de segmentos antes de validar."""
             return super().clean(self._alias_historicos.get(value, value))
 
         def valid_value(self, value):
+            """Acepta valores vigentes y alias conservados por compatibilidad."""
             return (
                 value in self._alias_historicos
                 or super().valid_value(value)
@@ -34,6 +37,7 @@ class ClienteForm(forms.ModelForm):
     )
 
     class Meta:
+        """Define el modelo y los campos visibles del formulario de clientes."""
         model = Cliente
         fields = [
             'tipo_cliente',
@@ -120,7 +124,10 @@ class AsociarUsuarioClienteForm(forms.Form):
     """Formulario independiente para asociar o desasociar Usuarios a un Cliente."""
 
     class UsuarioModelMultipleChoiceField(forms.ModelMultipleChoiceField):
+        """Campo de selección múltiple que muestra el nombre del usuario."""
+
         def label_from_instance(self, obj):
+            """Construye la etiqueta visible para un usuario asociado."""
             nombre_completo = f"{obj.first_name} {obj.last_name}".strip()
             return nombre_completo if nombre_completo else obj.username
 
@@ -132,6 +139,7 @@ class AsociarUsuarioClienteForm(forms.Form):
     )
 
     def __init__(self, *args, usuarios_cliente=None, **kwargs):
+        """Limita las opciones a usuarios activos habilitados por Keycloak."""
         super().__init__(*args, **kwargs)
         # Los roles son gestionados exclusivamente por Keycloak. La vista
         # entrega los IDs sincronizados que poseen el rol de negocio cliente.
@@ -156,6 +164,7 @@ class MetodoPagoForm(forms.ModelForm):
     """
 
     class Meta:
+        """Define los campos, etiquetas y widgets del método de pago."""
         model = MetodoPago
         fields = [
             'tipo_medio',

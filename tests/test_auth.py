@@ -1,3 +1,5 @@
+"""Pruebas del flujo OIDC y del backend de autenticación."""
+
 from unittest.mock import patch
 import pytest
 from django.urls import reverse
@@ -48,6 +50,7 @@ def test_protected_route_redirects_unauthenticated_user(client):
 
 @pytest.fixture
 def backend():
+    """Construye el backend OIDC bajo prueba."""
     return KeycloakOIDCAuthenticationBackend()
 
 

@@ -1,3 +1,5 @@
+"""Pruebas de permisos, validaciones y ciclo de vida de métodos de pago."""
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -6,11 +8,13 @@ from apps.clientes.models import Cliente, MetodoPago
 User = get_user_model()
 
 class MetodoPagoTestCase(TestCase):
+    """Verifica la gestión segura de métodos de pago del usuario."""
     """
     Pruebas unitarias para validar los criterios de aceptación de la historia GE-19.
     """
 
     def setUp(self):
+        """Prepara usuario cliente, asociación y datos bancarios."""
         self.user = User.objects.create_user(
             username='cliente_test',
             email='cliente@test.com',
@@ -31,6 +35,7 @@ class MetodoPagoTestCase(TestCase):
         session.save()
 
     def test_usuario_sin_rol_cliente_no_puede_gestionar_metodos(self):
+        """Deniega métodos de pago a quien no tiene rol cliente."""
         session = self.client.session
         session['keycloak_roles'] = ['agente']
         session.save()
@@ -40,6 +45,7 @@ class MetodoPagoTestCase(TestCase):
         self.assertRedirects(response, reverse('home'))
 
     def test_administrador_no_puede_gestionar_metodos(self):
+        """Mantiene separado el acceso administrativo del acceso cliente."""
         session = self.client.session
         session['keycloak_roles'] = ['admin']
         session.save()
@@ -49,6 +55,7 @@ class MetodoPagoTestCase(TestCase):
         self.assertRedirects(response, reverse('home'))
 
     def test_cliente_sin_clientes_asignados_no_puede_ver_metodos(self):
+        """Deniega métodos de pago sin clientes asociados."""
         session = self.client.session
         session['keycloak_roles'] = ['cliente']
         session.save()
@@ -59,6 +66,7 @@ class MetodoPagoTestCase(TestCase):
         self.assertRedirects(response, reverse('home'))
 
     def test_menu_no_muestra_metodos_sin_rol_cliente(self):
+        """Oculta el acceso de métodos de pago a roles no clientes."""
         session = self.client.session
         session['keycloak_roles'] = ['agente']
         session.save()
@@ -108,6 +116,7 @@ class MetodoPagoTestCase(TestCase):
         self.assertContains(response, 'Sudameris')
 
     def test_numero_cuenta_censurado_por_defecto_y_revelable_por_su_creador(self):
+        """Comprueba censura inicial y revelación por el titular."""
         metodo = MetodoPago.objects.create(
             cliente=self.user,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
@@ -137,6 +146,7 @@ class MetodoPagoTestCase(TestCase):
         self.assertContains(response, 'Ver datos')
 
     def test_cada_metodo_mantiene_su_propio_estado_de_visualizacion(self):
+        """Verifica que revelar un método no revele los demás."""
         primer_metodo = MetodoPago.objects.create(
             cliente=self.user,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
@@ -171,6 +181,7 @@ class MetodoPagoTestCase(TestCase):
         self.assertContains(response, '222222222')
 
     def test_usuario_asociado_no_puede_revelar_metodo_de_otro_usuario(self):
+        """Impide revelar métodos pertenecientes a otro usuario."""
         titular = User.objects.create_user(
             username='titular_test',
             password='password123'

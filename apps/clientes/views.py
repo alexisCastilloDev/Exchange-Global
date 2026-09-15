@@ -75,12 +75,14 @@ def cambiar_cliente_view(request, cliente_id):
 
 
 class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista y filtra clientes activos para el panel administrativo."""
     model = Cliente
     template_name = 'panel_admin.html'
     context_object_name = 'clientes'
     paginate_by = 10
 
     def get_queryset(self):
+        """Obtiene clientes filtrados y usuarios activos precargados."""
         queryset = Cliente.activos.all()
 
         segmento_seleccionado = self.request.GET.get('segmento')
@@ -103,6 +105,7 @@ class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return queryset.order_by('pk').prefetch_related(usuarios_activos)
 
     def get_context_data(self, **kwargs):
+        """Agrega filtros y segmentos disponibles al contexto."""
         context = super().get_context_data(**kwargs)
         context['segmentos'] = Cliente.SEGMENTO_CHOICES
         context['segmento_actual'] = self.request.GET.get('segmento', '')
@@ -110,10 +113,12 @@ class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return context
 
     def test_func(self):
+        """Permite el panel a personal administrativo autorizado."""
         user = self.request.user
         return user.is_staff or user.is_superuser
 
     def handle_no_permission(self):
+        """Informa el rechazo y redirige al inicio."""
         messages.error(
             self.request,
             "No tienes los permisos necesarios para acceder a este panel.",
@@ -122,19 +127,23 @@ class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
 
 class ClienteDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    """Muestra el detalle de un cliente y sus usuarios activos."""
     model = Cliente
     template_name = 'clientes/cliente_detail.html'
     context_object_name = 'cliente'
 
     def get_context_data(self, **kwargs):
+        """Agrega los usuarios activos asociados al cliente."""
         context = super().get_context_data(**kwargs)
         context['usuarios_activos'] = self.object.usuarios.filter(is_active=True)
         return context
 
     def test_func(self):
+        """Comprueba que el usuario tenga permisos administrativos."""
         return self.request.user.is_staff or self.request.user.is_superuser
 
     def handle_no_permission(self):
+        """Informa el rechazo de acceso al detalle del cliente."""
         messages.error(
             self.request,
             "No tienes los permisos necesarios para acceder a esta ficha.",
@@ -145,12 +154,14 @@ class ClienteDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
 class ClienteCreateView(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, CreateView
 ):
+    """Crea clientes desde el formulario administrativo."""
     model = Cliente
     form_class = ClienteForm
     template_name = 'clientes/cliente_form.html'
     success_url = reverse_lazy('home')
 
     def get_success_message(self, cleaned_data):
+        """Construye el mensaje de alta con el nombre del cliente."""
         nombre_display = (
             self.object.razon_social
             if self.object.tipo_cliente == Cliente.TIPO_JURIDICA
@@ -159,18 +170,21 @@ class ClienteCreateView(
         return f"¡El cliente {nombre_display} ha sido registrado exitosamente!"
 
     def test_func(self):
+        """Comprueba que el usuario pueda crear clientes."""
         return self.request.user.is_staff or self.request.user.is_superuser
 
 
 class ClienteUpdateView(
     LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, UpdateView
 ):
+    """Actualiza los datos de un cliente existente."""
     model = Cliente
     form_class = ClienteForm
     template_name = 'clientes/cliente_form.html'
     success_url = reverse_lazy('home')
 
     def get_success_message(self, cleaned_data):
+        """Construye el mensaje de actualización del cliente."""
         nombre_display = (
             self.object.razon_social
             if self.object.tipo_cliente == Cliente.TIPO_JURIDICA
@@ -179,6 +193,7 @@ class ClienteUpdateView(
         return f"¡Los datos de {nombre_display} se han actualizado correctamente!"
 
     def test_func(self):
+        """Comprueba que el usuario pueda editar clientes."""
         return self.request.user.is_staff or self.request.user.is_superuser
 
 
@@ -192,6 +207,7 @@ class AsociarUsuariosClienteView(
     template_name = 'clientes/asociar_usuarios.html'
 
     def test_func(self):
+        """Comprueba que el usuario pueda administrar asociaciones."""
         return self.request.user.is_staff or self.request.user.is_superuser
 
     def _usuarios_cliente_ids(self):
@@ -217,6 +233,7 @@ class AsociarUsuariosClienteView(
         ]
 
     def get(self, request, pk, *args, **kwargs):
+        """Muestra usuarios elegibles y asociaciones actuales."""
         cliente = get_object_or_404(Cliente, pk=pk)
         usuarios_cliente = self._usuarios_cliente_ids()
         # Pre-seleccionar los usuarios que ya están vinculados
@@ -229,6 +246,7 @@ class AsociarUsuariosClienteView(
         )
 
     def post(self, request, pk, *args, **kwargs):
+        """Actualiza la relación de usuarios asociados al cliente."""
         cliente = get_object_or_404(Cliente, pk=pk)
         usuarios_cliente = self._usuarios_cliente_ids()
         form = AsociarUsuarioClienteForm(
@@ -250,11 +268,14 @@ class AsociarUsuariosClienteView(
 
 
 class ClienteSoftDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Gestiona la confirmación y baja lógica de un cliente."""
 
     def test_func(self):
+        """Comprueba que el usuario pueda dar de baja clientes."""
         return self.request.user.is_staff or self.request.user.is_superuser
 
     def get(self, request, pk, *args, **kwargs):
+        """Muestra el formulario para confirmar la baja."""
         cliente = get_object_or_404(Cliente, pk=pk)
         return render(
             request,
@@ -268,6 +289,7 @@ class ClienteSoftDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
         )
 
     def post(self, request, pk, *args, **kwargs):
+        """Valida la causa y registra la baja lógica del cliente."""
         cliente = get_object_or_404(Cliente, pk=pk)
         form = CausaBajaForm(request.POST)
         if not form.is_valid():
@@ -488,19 +510,23 @@ def metodo_pago_set_default(request, pk):
 
 
 class ClienteHistorialBajasView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista el historial de bajas lógicas de clientes."""
     model = HistorialBaja
     template_name = 'bajas/historial_bajas.html'
     context_object_name = 'registros'
 
     def test_func(self):
+        """Comprueba que el usuario pueda consultar el historial."""
         return self.request.user.is_staff or self.request.user.is_superuser
 
     def get_queryset(self):
+        """Devuelve bajas de clientes junto con el usuario que las realizó."""
         return HistorialBaja.objects.filter(
             tipo_recurso=HistorialBaja.TIPO_CLIENTE
         ).select_related('realizado_por')
 
     def get_context_data(self, **kwargs):
+        """Agrega título y navegación de retorno al contexto."""
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Historial de bajas de clientes'
         context['volver_url'] = reverse('panel_admin')

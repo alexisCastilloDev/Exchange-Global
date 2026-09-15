@@ -32,10 +32,13 @@ ROLES_TECNICOS_EXCLUIDOS = {
 
 
 def es_rol_tecnico(rol):
+    """Indica si un rol de Keycloak es técnico y no representa negocio."""
     return rol in ROLES_TECNICOS_EXCLUIDOS or rol.startswith('default-roles-')
 
 
 class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
+    """Autentica usuarios OIDC y conserva sus roles efectivos en la sesión."""
+
     def verify_claims(self, claims):
         """
         Verifica claims basales y que el email esté verificado.
@@ -63,11 +66,13 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         return self.UserModel.objects.none()
 
     def create_user(self, claims):
+        """Crea un usuario local y sincroniza sus datos y roles iniciales."""
         user = super().create_user(claims)
         self.update_user_claims(user, claims)
         return user
 
     def update_user(self, user, claims):
+        """Actualiza un usuario existente con la información de las claims."""
         self.update_user_claims(user, claims)
         return user
 
