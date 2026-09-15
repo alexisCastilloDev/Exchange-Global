@@ -36,6 +36,7 @@ Contenido
 
    guia
    base-datos-roles
+   templates
    reference/modules
 
 Guías rápidas
@@ -43,6 +44,7 @@ Guías rápidas
 
 * :doc:`guia`: mapa de componentes y flujo general de la aplicación.
 * :doc:`base-datos-roles`: tablas, relaciones y mecanismo de roles.
+* :doc:`templates`: variables, bloques y herencia de los templates Django.
 * :doc:`reference/modules`: referencia API generada desde el código fuente.
 
 Navegación

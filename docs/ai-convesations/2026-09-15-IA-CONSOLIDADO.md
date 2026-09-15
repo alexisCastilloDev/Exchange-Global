@@ -98,3 +98,14 @@ confirmación de la operación; ocultar enlaces no es la única protección.
 - `manage.py check`: sin problemas.
 - Migraciones sincronizadas.
 - Documentación Sphinx compilada con `-W` sin advertencias.
+
+## 7. Documentación de templates
+
+Se documentaron los 25 templates Django con comentarios iniciales tipo
+docstring. Cada encabezado indica el propósito del template, su template padre,
+los bloques que expone y las variables que espera recibir desde la vista.
+
+También se agregó `docs/source/templates.rst`, que incorpora esos encabezados
+mediante `literalinclude` y los organiza por páginas generales, clientes,
+bajas, divisas y parciales. De esta forma Sphinx muestra la documentación de
+templates junto con la referencia Python.

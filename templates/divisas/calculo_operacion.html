@@ -1,3 +1,9 @@
+<!--
+Cálculo previo del importe de una compra o venta contra PYG.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: tipo_operacion, form, calculo y vigencia_segundos.
+-->
 {% extends 'base.html' %}
 
 {% block title %}{{ tipo_operacion|title }} de divisas{% endblock %}
