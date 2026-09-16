@@ -1,3 +1,9 @@
+<!--
+Consulta de tasas vigentes y actualización para roles autorizados.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: divisas, permisos de UI y rol efectivo.
+-->
 {% extends 'base.html' %}
 
 {% block title %}Tasas vigentes - Global Exchange{% endblock %}
@@ -35,7 +41,7 @@
                     <th>Divisa</th>
                     <th>Tasa de compra</th>
                     <th>Tasa de venta</th>
-                    <th>Última actualización</th>
+                    {% if puede_actualizar_tasas %}<th>Última actualización</th>{% endif %}
                     {% if puede_actualizar_tasas %}<th>Acciones</th>{% endif %}
                 </tr>
             </thead>
@@ -46,15 +52,17 @@
                     {% if divisa.ultima_cotizacion %}
                         <td class="ge-num">{{ divisa.ultima_cotizacion.tasa_compra }}</td>
                         <td class="ge-num">{{ divisa.ultima_cotizacion.tasa_venta }}</td>
-                        <td>
-                            {{ divisa.ultima_cotizacion.fecha_actualizacion|date:"d/m/Y H:i" }}
-                            {% if divisa.ultima_cotizacion.usuario %}
-                                <small class="d-block text-muted">por {{ divisa.ultima_cotizacion.usuario.get_full_name|default:divisa.ultima_cotizacion.usuario.username }}</small>
-                            {% endif %}
-                        </td>
+                        {% if puede_actualizar_tasas %}
+                            <td>
+                                {{ divisa.ultima_cotizacion.fecha_actualizacion|date:"d/m/Y H:i" }}
+                                {% if divisa.ultima_cotizacion.usuario %}
+                                    <small class="d-block text-muted">por {{ divisa.ultima_cotizacion.usuario.get_full_name|default:divisa.ultima_cotizacion.usuario.username }}</small>
+                                {% endif %}
+                            </td>
+                        {% endif %}
                     {% else %}
                         <td colspan="2" class="text-muted">sin cotización</td>
-                        <td class="text-muted">-</td>
+                        {% if puede_actualizar_tasas %}<td class="text-muted">-</td>{% endif %}
                     {% endif %}
                     {% if puede_actualizar_tasas %}
                         <td class="text-nowrap">
@@ -65,7 +73,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="{% if puede_actualizar_tasas %}5{% else %}4{% endif %}" class="text-center py-4 text-muted">No hay divisas activas registradas.</td>
+                    <td colspan="{% if puede_actualizar_tasas %}5{% else %}3{% endif %}" class="text-center py-4 text-muted">No hay divisas activas registradas.</td>
                 </tr>
                 {% endfor %}
             </tbody>

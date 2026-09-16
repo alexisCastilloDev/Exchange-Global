@@ -1,3 +1,9 @@
+<!--
+Template base del panel y de las páginas públicas.
+Herencia: no aplica.
+Bloques expuestos: title, extra_head, content, content_publico, extra_scripts.
+Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
+-->
 {% load static ge_extras %}
 <!DOCTYPE html>
 <html lang="es">
@@ -90,8 +96,25 @@
                     </li>
                     {% elif puede_ver_tasas %}
                     <li>
-                        <a href="{% url 'divisas:tasas_vigentes' %}" class="ge-sidebar__link {% if request.resolver_match.namespace == 'divisas' %}is-active{% endif %}">
+                        <a href="{% url 'divisas:tasas_vigentes' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'tasas_vigentes' %}is-active{% endif %}">
                             <i class="bi bi-graph-up-arrow"></i> Tasas actuales
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if puede_operar_divisas %}
+                    <li>
+                        <a href="{% url 'divisas:operar' 'compra' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'operar' and request.resolver_match.kwargs.tipo == 'compra' %}is-active{% endif %}">
+                            <i class="bi bi-cart-plus"></i> Comprar divisas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:operar' 'venta' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'operar' and request.resolver_match.kwargs.tipo == 'venta' %}is-active{% endif %}">
+                            <i class="bi bi-cash-coin"></i> Vender divisas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:triangulacion' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'triangulacion' %}is-active{% endif %}">
+                            <i class="bi bi-shuffle"></i> Cambiar entre divisas
                         </a>
                     </li>
                     {% endif %}
@@ -100,6 +123,13 @@
                             <i class="bi bi-calculator"></i> Simulador de conversión
                         </a>
                     </li>
+                    {% if puede_configurar_comisiones %}
+                    <li>
+                        <a href="{% url 'divisas:comisiones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'comisiones,actualizar_comision' %}is-active{% endif %}">
+                            <i class="bi bi-percent"></i> Comisiones
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}

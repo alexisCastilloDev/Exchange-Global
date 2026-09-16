@@ -16,6 +16,7 @@ RECURSOS_INICIALES = [
 
 
 def cargar_recursos(apps, schema_editor):
+    """Carga recursos protegidos y permisos iniciales para administración."""
     RecursoProtegido = apps.get_model('authentication', 'RecursoProtegido')
     Group = apps.get_model('auth', 'Group')
     Permission = apps.get_model('auth', 'Permission')
@@ -41,6 +42,7 @@ def cargar_recursos(apps, schema_editor):
 
 
 def revertir_carga(apps, schema_editor):
+    """Elimina los recursos protegidos agregados por esta migración."""
     RecursoProtegido = apps.get_model('authentication', 'RecursoProtegido')
     RecursoProtegido.objects.filter(
         codigo__in=[codigo for codigo, _ in RECURSOS_INICIALES]
@@ -48,6 +50,7 @@ def revertir_carga(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    """Registra la carga inicial de recursos y permisos del sistema."""
 
     dependencies = [
         ('authentication', '0001_initial'),

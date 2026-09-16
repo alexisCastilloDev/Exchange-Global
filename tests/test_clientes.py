@@ -23,6 +23,7 @@ class TestClienteForm:
     """
 
     def test_segmento_se_presenta_como_lista_de_opciones_vigentes(self):
+        """Verifica que el formulario muestre los segmentos actuales."""
         form = ClienteForm()
 
         assert form.fields['segmento'].choices == Cliente.SEGMENTO_CHOICES
@@ -298,6 +299,67 @@ class TestClienteView:
 
         cliente.refresh_from_db()
         assert cliente.segmento == 'VIP'
+
+    def test_asignar_comision_personalizada_a_un_cliente(self, client):
+        """Un administrador puede definir una comisión preferencial para un cliente."""
+        admin = User.objects.create_user(username='admin_comision', is_staff=True)
+        user_cliente = User.objects.create_user(username='6666666', email='pref@test.com')
+        cliente = Cliente.objects.create(
+            user=user_cliente,
+            tipo_cliente='FISICA',
+            nombre='Preferencial',
+            apellido='Cliente',
+            identificador='6666666',
+            email='pref@test.com',
+            segmento='ESTANDAR',
+        )
+
+        client.force_login(admin)
+        url = reverse('cliente_update', kwargs={'pk': cliente.pk})
+
+        response = client.post(url, data={
+            'tipo_cliente': 'FISICA',
+            'nombre': 'Preferencial',
+            'apellido': 'Cliente',
+            'identificador': '6666666',
+            'email': 'pref@test.com',
+            'segmento': 'ESTANDAR',
+            'comision_personalizada': '0.500',
+        })
+        assert response.status_code == 302
+
+        cliente.refresh_from_db()
+        assert cliente.comision_personalizada == pytest.approx(0.5)
+
+    def test_comision_personalizada_es_opcional(self, client):
+        """No definir una comisión personalizada deja el campo vacío."""
+        admin = User.objects.create_user(username='admin_sin_comision', is_staff=True)
+        user_cliente = User.objects.create_user(username='6666667', email='sinpref@test.com')
+        cliente = Cliente.objects.create(
+            user=user_cliente,
+            tipo_cliente='FISICA',
+            nombre='Regular',
+            apellido='Cliente',
+            identificador='6666667',
+            email='sinpref@test.com',
+            segmento='ESTANDAR',
+        )
+
+        client.force_login(admin)
+        url = reverse('cliente_update', kwargs={'pk': cliente.pk})
+
+        response = client.post(url, data={
+            'tipo_cliente': 'FISICA',
+            'nombre': 'Regular',
+            'apellido': 'Cliente',
+            'identificador': '6666667',
+            'email': 'sinpref@test.com',
+            'segmento': 'ESTANDAR',
+        })
+        assert response.status_code == 302
+
+        cliente.refresh_from_db()
+        assert cliente.comision_personalizada is None
 
     def test_listado_clientes_es_paginado_y_muestra_datos_principales(self, client):
         """El listado administrativo pagina los clientes y muestra sus datos principales."""

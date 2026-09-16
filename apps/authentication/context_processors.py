@@ -12,6 +12,7 @@ qué botones/enlaces tiene sentido mostrarle.
 
 
 def permisos_ui_context(request):
+    """Expone en las plantillas los permisos visibles del usuario actual."""
     if not request.user.is_authenticated:
         return {
             'keycloak_roles': [],
@@ -28,6 +29,12 @@ def permisos_ui_context(request):
     puede_ver_divisas = es_admin
     puede_actualizar_tasas = es_admin or 'analista_cambiario' in roles
     puede_ver_tasas = puede_actualizar_tasas or 'cliente' in roles
+    puede_operar_divisas = (
+        'cliente' in roles
+        and tiene_clientes_asociados
+        and not es_admin
+    )
+    puede_configurar_comisiones = es_admin or 'analista_cambiario' in roles
 
     return {
         'keycloak_roles': roles,
@@ -37,6 +44,8 @@ def permisos_ui_context(request):
         'puede_ver_divisas': puede_ver_divisas,
         'puede_administrar_divisas': es_admin,
         'puede_gestionar_metodos_pago': 'cliente' in roles and tiene_clientes_asociados,
+        'puede_operar_divisas': puede_operar_divisas,
         'puede_actualizar_tasas': puede_actualizar_tasas,
         'puede_ver_tasas': puede_ver_tasas,
+        'puede_configurar_comisiones': puede_configurar_comisiones,
     }

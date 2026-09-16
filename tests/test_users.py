@@ -1,3 +1,5 @@
+"""Pruebas de listado, sincronización y baja de usuarios."""
+
 from unittest.mock import patch
 import pytest
 from django.urls import reverse
@@ -10,6 +12,7 @@ User = get_user_model()
 
 @pytest.fixture
 def admin_user(db):
+    """Crea un administrador local para los escenarios de usuarios."""
     return User.objects.create_user(username='admin', email='admin@test.com', is_active=True, is_staff=True)
 
 

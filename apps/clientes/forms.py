@@ -11,6 +11,7 @@ User = get_user_model()
 
 
 class ClienteForm(forms.ModelForm):
+    """Valida y persiste los datos principales de un cliente."""
     # Campo legado: se conserva para aceptar datos históricos, pero no se
     # muestra en la interfaz; el correo operativo pertenece al usuario.
     email = forms.EmailField(required=False, widget=forms.HiddenInput())
@@ -20,9 +21,11 @@ class ClienteForm(forms.ModelForm):
         _alias_historicos = {'ESTANDAR': 'MINORISTA', 'PREMIUM': 'VIP'}
 
         def clean(self, value):
+            """Normaliza nombres históricos de segmentos antes de validar."""
             return super().clean(self._alias_historicos.get(value, value))
 
         def valid_value(self, value):
+            """Acepta valores vigentes y alias conservados por compatibilidad."""
             return (
                 value in self._alias_historicos
                 or super().valid_value(value)
@@ -32,8 +35,21 @@ class ClienteForm(forms.ModelForm):
         choices=Cliente.SEGMENTO_CHOICES,
         label='Segmento / Categoría',
     )
+    comision_personalizada = forms.DecimalField(
+        label='Comisión personalizada (%)',
+        required=False,
+        max_digits=6,
+        decimal_places=3,
+        min_value=0,
+        help_text=(
+            'Opcional. Si se define, sobrescribe la comisión de la categoría'
+            ' solo para este cliente.'
+        ),
+        widget=forms.NumberInput(attrs={'step': '0.001', 'min': '0'}),
+    )
 
     class Meta:
+        """Define el modelo y los campos visibles del formulario de clientes."""
         model = Cliente
         fields = [
             'tipo_cliente',
@@ -42,6 +58,7 @@ class ClienteForm(forms.ModelForm):
             'apellido',
             'razon_social',
             'segmento',
+            'comision_personalizada',
         ]
 
     def clean_identificador(self):
@@ -120,7 +137,10 @@ class AsociarUsuarioClienteForm(forms.Form):
     """Formulario independiente para asociar o desasociar Usuarios a un Cliente."""
 
     class UsuarioModelMultipleChoiceField(forms.ModelMultipleChoiceField):
+        """Campo de selección múltiple que muestra el nombre del usuario."""
+
         def label_from_instance(self, obj):
+            """Construye la etiqueta visible para un usuario asociado."""
             nombre_completo = f"{obj.first_name} {obj.last_name}".strip()
             return nombre_completo if nombre_completo else obj.username
 
@@ -132,6 +152,7 @@ class AsociarUsuarioClienteForm(forms.Form):
     )
 
     def __init__(self, *args, usuarios_cliente=None, **kwargs):
+        """Limita las opciones a usuarios activos habilitados por Keycloak."""
         super().__init__(*args, **kwargs)
         # Los roles son gestionados exclusivamente por Keycloak. La vista
         # entrega los IDs sincronizados que poseen el rol de negocio cliente.
@@ -156,6 +177,7 @@ class MetodoPagoForm(forms.ModelForm):
     """
 
     class Meta:
+        """Define los campos, etiquetas y widgets del método de pago."""
         model = MetodoPago
         fields = [
             'tipo_medio',
@@ -163,7 +185,7 @@ class MetodoPagoForm(forms.ModelForm):
             'entidad_financiera',
             'numero_cuenta',
             'tipo_cuenta',
-            'ultimos_4_digitos',
+            'numero_tarjeta',  # Se reemplaza 'ultimos_4_digitos' por 'numero_tarjeta'
             'es_predeterminado'
         ]
         widgets = {
@@ -172,7 +194,13 @@ class MetodoPagoForm(forms.ModelForm):
             'entidad_financiera': forms.TextInput(attrs={'class': 'form-control'}),
             'numero_cuenta': forms.TextInput(attrs={'class': 'form-control'}),
             'tipo_cuenta': forms.Select(attrs={'class': 'form-select'}),
-            'ultimos_4_digitos': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '4'}),
+            'numero_tarjeta': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': '19',
+                'minlength': '13',
+                'placeholder': 'Ej. 4532123456789012',
+                'inputmode': 'numeric'
+            }),
             'es_predeterminado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
@@ -184,7 +212,7 @@ class MetodoPagoForm(forms.ModelForm):
         tipo_medio = cleaned_data.get('tipo_medio')
         numero_cuenta = cleaned_data.get('numero_cuenta')
         tipo_cuenta = cleaned_data.get('tipo_cuenta')
-        ultimos_4_digitos = cleaned_data.get('ultimos_4_digitos')
+        numero_tarjeta = cleaned_data.get('numero_tarjeta')
 
         if tipo_medio == MetodoPago.TIPO_TRANSFERENCIA:
             if not numero_cuenta:
@@ -193,9 +221,9 @@ class MetodoPagoForm(forms.ModelForm):
                 self.add_error('tipo_cuenta', 'Debe seleccionar el tipo de cuenta.')
 
         elif tipo_medio == MetodoPago.TIPO_TARJETA:
-            if not ultimos_4_digitos:
-                self.add_error('ultimos_4_digitos', 'Debe ingresar los últimos 4 dígitos de la tarjeta.')
-            elif not ultimos_4_digitos.isdigit() or len(ultimos_4_digitos) != 4:
-                self.add_error('ultimos_4_digitos', 'Debe ingresar exactamente 4 dígitos numéricos.')
+            if not numero_tarjeta:
+                self.add_error('numero_tarjeta', 'Debe ingresar el número de la tarjeta.')
+            elif not numero_tarjeta.isdigit() or not (13 <= len(numero_tarjeta) <= 19):
+                self.add_error('numero_tarjeta', 'Debe ingresar un número de tarjeta válido (entre 13 y 19 dígitos numéricos).')
 
         return cleaned_data

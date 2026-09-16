@@ -1,3 +1,9 @@
+<!--
+Página de inicio según el rol del usuario.
+Hereda de: base.html.
+Bloques definidos: title, content_publico, content.
+Contexto esperado: user, cliente_activo y permisos de UI.
+-->
 {% extends 'base.html' %}
 {% load static %}
 
@@ -29,22 +35,16 @@
             </div>
 
             <div class="ge-ticker">
+                {% for divisa in divisas_publicas %}
                 <div class="ge-ticker__row">
-                    <span class="ge-ticker__par">USD / PYG</span>
+                    <span class="ge-ticker__par">{{ divisa.codigo }} / PYG</span>
                     <span class="ge-ticker__label">Compra · Venta</span>
-                    <span class="ge-ticker__valor">7.280 / 7.410</span>
+                    <span class="ge-ticker__valor">{{ divisa.ultima_cotizacion.tasa_compra|floatformat:2 }} / {{ divisa.ultima_cotizacion.tasa_venta|floatformat:2 }}</span>
                 </div>
-                <div class="ge-ticker__row">
-                    <span class="ge-ticker__par">EUR / PYG</span>
-                    <span class="ge-ticker__label">Compra · Venta</span>
-                    <span class="ge-ticker__valor">7.850 / 8.020</span>
-                </div>
-                <div class="ge-ticker__row">
-                    <span class="ge-ticker__par">BRL / PYG</span>
-                    <span class="ge-ticker__label">Compra · Venta</span>
-                    <span class="ge-ticker__valor">1.290 / 1.340</span>
-                </div>
-                <p style="font-size:11.5px; color:#6E7A93; margin: 14px 4px 0;">Cotizaciones referenciales, solo a modo ilustrativo.</p>
+                {% empty %}
+                <p style="font-size:13px; color:#6E7A93; margin: 4px;">Todavía no hay tasas cargadas en el sistema.</p>
+                {% endfor %}
+                <p style="font-size:11.5px; color:#6E7A93; margin: 14px 4px 0;">Tasas vigentes del sistema, sujetas a cambio.</p>
             </div>
         </div>
     </div>
@@ -85,6 +85,15 @@
             </div>
         </a>
     </div>
+    <div class="col-md-4">
+        <a href="{% url 'cliente_create' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-person-plus" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Registrar cliente</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Dá de alta un nuevo cliente en el sistema.</p>
+            </div>
+        </a>
+    </div>
     {% endif %}
     {% if puede_ver_usuarios %}
     <div class="col-md-4">
@@ -115,6 +124,68 @@
                 <i class="bi bi-graph-up-arrow" style="font-size: 22px; color: var(--ge-brass);"></i>
                 <h2 style="font-size:16px; margin: 10px 0 4px;">{% if puede_actualizar_tasas %}Actualizar tasas{% else %}Tasas actuales{% endif %}</h2>
                 <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá las tasas de compra y venta vigentes.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_operar_divisas %}
+    <div class="col-md-4">
+        <a href="{% url 'divisas:operar' 'compra' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-cart-plus" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Comprar divisas</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Calculá el importe para comprar una divisa.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'divisas:operar' 'venta' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-cash-coin" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Vender divisas</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Calculá el importe para vender una divisa.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'divisas:triangulacion' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-shuffle" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Cambiar entre divisas</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Cambiá una divisa extranjera por otra.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_ver_divisas or puede_ver_tasas %}
+    <div class="col-md-4">
+        <a href="{% url 'divisas:simulacion_divisas' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-calculator" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Simulador de conversión</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Previsualizá una conversión sin confirmar ninguna operación.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_configurar_comisiones %}
+    <div class="col-md-4">
+        <a href="{% url 'divisas:comisiones' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-percent" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Comisiones</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Configurá el porcentaje de comisión por categoría de cliente.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_gestionar_metodos_pago %}
+    <div class="col-md-4">
+        <a href="{% url 'clientes:metodo_pago_list' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-wallet2" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Métodos de pago</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Administrá tus métodos de pago asociados.</p>
             </div>
         </a>
     </div>

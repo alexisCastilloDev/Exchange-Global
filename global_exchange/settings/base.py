@@ -2,6 +2,7 @@
 Configuración base compartida entre dev y prod.
 """
 from pathlib import Path
+from decimal import Decimal
 import environ
 
 # BASE_DIR: sube 3 niveles porque settings/base.py está en settings/, dentro de global_exchange/
@@ -121,3 +122,7 @@ OIDC_RP_SCOPES = 'openid email profile roles'
 # A dónde redirige después de login/logout exitoso
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Parámetros del cálculo previo de operaciones cambiarias.
+COMISION_OPERACION_PORCENTAJE = Decimal('1.00')
+CALCULO_OPERACION_VIGENCIA_SEGUNDOS = 300

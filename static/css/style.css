@@ -482,6 +482,62 @@ a {
     color: var(--ge-text-muted);
     padding: 18px;
 }
+
+.operation-summary {
+    border-top: 1px solid var(--ge-border);
+}
+
+.operation-summary__row {
+    display: grid;
+    grid-template-columns: minmax(145px, 40%) minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 24px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--ge-border);
+}
+
+.operation-summary__label {
+    color: var(--ge-text-muted);
+    display: block;
+}
+
+.operation-summary__value {
+    color: var(--ge-ink);
+    display: block;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.operation-summary__row--total {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.operation-summary__row--total strong {
+    color: var(--ge-brass-dark);
+    font-size: 1.35rem;
+}
+
+.operation-expiry {
+    padding: 10px 12px;
+    border: 1px solid rgba(179, 129, 46, 0.35);
+    border-radius: var(--ge-radius-sm);
+    background: var(--ge-brass-soft);
+    color: var(--ge-brass-dark);
+    font-size: 13px;
+}
+
+@media (max-width: 575.98px) {
+    .operation-summary__row {
+        grid-template-columns: 1fr;
+        row-gap: 4px;
+    }
+
+    .operation-summary__value {
+        text-align: left;
+    }
+}
 .badge-inactivo {
     display: inline-block;
     padding: 3px 9px;

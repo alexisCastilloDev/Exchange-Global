@@ -1,3 +1,5 @@
+"""Pruebas del flujo OIDC y del backend de autenticación."""
+
 from unittest.mock import patch
 import pytest
 from django.urls import reverse
@@ -14,6 +16,7 @@ User = get_user_model()
 # 1. TESTS DE RUTAS Y VISTAS DE AUTENTICACIÓN
 # ============================================================================
 
+@pytest.mark.django_db
 def test_home_page_unauthenticated(client):
     """CA1 / CA5: El usuario no autenticado ve la opción de login."""
     response = client.get(reverse('home'))
@@ -48,6 +51,7 @@ def test_protected_route_redirects_unauthenticated_user(client):
 
 @pytest.fixture
 def backend():
+    """Construye el backend OIDC bajo prueba."""
     return KeycloakOIDCAuthenticationBackend()
 
 

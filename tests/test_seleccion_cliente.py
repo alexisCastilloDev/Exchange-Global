@@ -1,3 +1,5 @@
+"""Pruebas del cliente activo y su persistencia en la sesión."""
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -9,6 +11,7 @@ User = get_user_model()
 
 
 def crear_cliente(nombre, identificador):
+    """Crea un cliente físico mínimo para los escenarios de selección."""
     return Cliente.objects.create(
         tipo_cliente=Cliente.TIPO_FISICA,
         nombre=nombre,
@@ -19,8 +22,10 @@ def crear_cliente(nombre, identificador):
 
 @pytest.mark.django_db
 class TestSeleccionClienteActivo:
+    """Verifica selección inicial, cambio y aislamiento entre usuarios."""
 
     def test_usuario_con_multiples_clientes_debe_seleccionar_al_iniciar(self, client):
+        """Solicita selección cuando el usuario tiene varios clientes."""
         usuario = User.objects.create_user(username='operador-multiple')
         cliente_uno = crear_cliente('Cliente Uno', '1001')
         cliente_dos = crear_cliente('Cliente Dos', '1002')
@@ -34,6 +39,7 @@ class TestSeleccionClienteActivo:
         assert 'cliente_activo_id' not in client.session
 
     def test_selector_muestra_nombre_completo_documento_segmento_y_estado(self, client):
+        """Muestra los datos relevantes de cada cliente seleccionable."""
         usuario = User.objects.create_user(username='selector-detalle')
         cliente = crear_cliente('Cliente Visible', 'SEG-100')
         cliente.segmento = 'VIP'
@@ -46,12 +52,14 @@ class TestSeleccionClienteActivo:
         assert response.status_code == 200
         contenido = response.content.decode()
         assert 'Cliente Visible' in contenido
+        assert 'Persona física' in contenido
         assert 'Segmento: VIP' in contenido
         assert 'Activo' in contenido
         assert 'Prueba' in contenido
         assert 'CI/RUC: SEG-100' in contenido
 
     def test_seleccion_de_cliente_persiste_y_se_expone_en_las_vistas(self, client):
+        """Persiste el cliente elegido y lo expone en el perfil."""
         usuario = User.objects.create_user(username='operador-seleccion')
         cliente_uno = crear_cliente('Cliente Uno', '2001')
         cliente_dos = crear_cliente('Cliente Dos', '2002')
@@ -72,6 +80,7 @@ class TestSeleccionClienteActivo:
         assert response.context['cliente_activo'] == cliente_dos
 
     def test_usuario_puede_cambiar_de_cliente_sin_cerrar_sesion(self, client):
+        """Permite cambiar de cliente sin invalidar la sesión."""
         usuario = User.objects.create_user(username='operador-cambio')
         cliente_uno = crear_cliente('Cliente Uno', '3001')
         cliente_dos = crear_cliente('Cliente Dos', '3002')
@@ -90,6 +99,7 @@ class TestSeleccionClienteActivo:
         assert client.session.get('_auth_user_id') == str(usuario.pk)
 
     def test_usuario_con_un_cliente_lo_selecciona_automaticamente(self, client):
+        """Selecciona automáticamente el único cliente asociado."""
         usuario = User.objects.create_user(username='operador-unico')
         cliente = crear_cliente('Cliente Único', '4001')
         usuario.clientes.add(cliente)
@@ -104,6 +114,7 @@ class TestSeleccionClienteActivo:
         assert cliente.identificador.encode() in response.content
 
     def test_sesion_no_puede_activar_cliente_de_otro_usuario(self, client):
+        """Impide activar desde sesión un cliente ajeno."""
         usuario = User.objects.create_user(username='operador-seguro')
         cliente_propio = crear_cliente('Cliente Propio', '5001')
         cliente_propio_dos = crear_cliente('Cliente Propio Dos', '5002')

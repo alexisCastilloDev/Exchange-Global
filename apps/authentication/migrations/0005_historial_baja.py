@@ -1,8 +1,12 @@
+"""Crea el modelo de auditoría de bajas lógicas."""
 from django.conf import settings
+"""Crea el modelo de auditoría de bajas lógicas."""
+
 from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Agrega la tabla de historial de bajas."""
     dependencies = [
         ('authentication', '0004_eliminar_recurso_protegido'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

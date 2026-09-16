@@ -1,7 +1,11 @@
+"""Formularios compartidos para operaciones de autenticación y bajas."""
+
 from django import forms
 
 
 class CausaBajaForm(forms.Form):
+    """Recibe y valida la causa de una baja lógica."""
+
     causa = forms.CharField(
         label='Causa de baja',
         max_length=1000,
@@ -15,6 +19,7 @@ class CausaBajaForm(forms.Form):
     )
 
     def clean_causa(self):
+        """Rechaza causas vacías después de quitar espacios exteriores."""
         causa = self.cleaned_data['causa'].strip()
         if not causa:
             raise forms.ValidationError('La causa de baja es obligatoria.')
