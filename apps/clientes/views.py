@@ -334,24 +334,20 @@ class ClienteSoftDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
 @requiere_rol('cliente')
 def metodo_pago_list(request):
     """
-    Muestra los métodos del titular del cliente activo, con datos censurados.
-    Solo clientes con clientes asociados pueden verlo.
+    Muestra los métodos del cliente activo, con datos censurados.
+    Solo clientes con un cliente activo seleccionado pueden verlo.
     """
     roles = request.session.get('keycloak_roles', [])
     if 'admin' in roles or 'cliente' not in roles:
         messages.error(request, 'No tenés permiso para acceder a métodos de pago.')
         return redirect('home')
 
-    clientes_asociados = request.user.clientes.filter(is_active=True)
-    if not clientes_asociados.exists():
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
         messages.error(request, 'No tenés clientes asociados para gestionar métodos de pago.')
         return redirect('home')
 
-    cliente_activo = getattr(request, 'cliente_activo', None)
-    if cliente_activo is None:
-        cliente_activo = request.user.clientes.filter(is_active=True).order_by('-pk').first()
-    titular = cliente_activo.user if cliente_activo and cliente_activo.user else request.user
-    metodos = MetodoPago.objects.filter(cliente=titular)
+    metodos = MetodoPago.objects.filter(cliente=cliente_activo)
     metodos_revelados = request.session.get('metodos_pago_revelados', [])
     return render(
         request,
@@ -363,16 +359,17 @@ def metodo_pago_list(request):
 @requiere_rol('cliente')
 @require_POST
 def metodo_pago_reveal(request, pk):
-    """Alterna la visualización completa para el usuario que registró el método."""
+    """Alterna la visualización completa para el cliente activo que lo registró."""
     roles = request.session.get('keycloak_roles', [])
     if 'admin' in roles or 'cliente' not in roles:
         return redirect('home')
 
-    if not request.user.clientes.filter(is_active=True).exists():
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
         return redirect('home')
 
     metodo = get_object_or_404(MetodoPago, pk=pk)
-    if metodo.cliente_id != request.user.id:
+    if metodo.cliente_id != cliente_activo.id:
         return redirect('clientes:metodo_pago_list')
 
     metodos_revelados = request.session.get('metodos_pago_revelados', [])
@@ -388,15 +385,16 @@ def metodo_pago_reveal(request, pk):
 @requiere_rol('cliente')
 def metodo_pago_create(request):
     """
-    Permite al usuario registrar un nuevo método de pago (Criterio 1 y 2).
-    Solo los clientes con clientes asociados pueden gestionarlos.
+    Permite registrar un nuevo método de pago para el cliente activo (Criterio 1 y 2).
+    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.
     """
     roles = request.session.get('keycloak_roles', [])
     if 'admin' in roles or 'cliente' not in roles:
         messages.error(request, 'No tenés permiso para acceder a métodos de pago.')
         return redirect('home')
 
-    if not request.user.clientes.filter(is_active=True).exists():
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
         messages.error(request, 'No tenés clientes asociados para gestionar métodos de pago.')
         return redirect('home')
 
@@ -404,7 +402,7 @@ def metodo_pago_create(request):
         form = MetodoPagoForm(request.POST)
         if form.is_valid():
             metodo = form.save(commit=False)
-            metodo.cliente = request.user
+            metodo.cliente = cliente_activo
             metodo.save()
             messages.success(request, 'Método de pago agregado exitosamente.')
             return redirect('clientes:metodo_pago_list')
@@ -427,19 +425,20 @@ def metodo_pago_create(request):
 @requiere_rol('cliente')
 def metodo_pago_update(request, pk):
     """
-    Permite modificar los datos de un método de pago existente del usuario (Criterio 4).
-    Solo los clientes con clientes asociados pueden gestionarlos.
+    Permite modificar los datos de un método de pago existente del cliente activo (Criterio 4).
+    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.
     """
     roles = request.session.get('keycloak_roles', [])
     if 'admin' in roles or 'cliente' not in roles:
         messages.error(request, 'No tenés permiso para acceder a métodos de pago.')
         return redirect('home')
 
-    if not request.user.clientes.filter(is_active=True).exists():
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
         messages.error(request, 'No tenés clientes asociados para gestionar métodos de pago.')
         return redirect('home')
 
-    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=request.user)
+    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=cliente_activo)
     if request.method == 'POST':
         form = MetodoPagoForm(request.POST, instance=metodo)
         if form.is_valid():
@@ -465,19 +464,20 @@ def metodo_pago_update(request, pk):
 @requiere_rol('cliente')
 def metodo_pago_delete(request, pk):
     """
-    Confirma y elimina un método de pago del cliente (Criterio 5).
-    Solo los clientes con clientes asociados pueden gestionarlos.
+    Confirma y elimina un método de pago del cliente activo (Criterio 5).
+    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.
     """
     roles = request.session.get('keycloak_roles', [])
     if 'admin' in roles or 'cliente' not in roles:
         messages.error(request, 'No tenés permiso para acceder a métodos de pago.')
         return redirect('home')
 
-    if not request.user.clientes.filter(is_active=True).exists():
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
         messages.error(request, 'No tenés clientes asociados para gestionar métodos de pago.')
         return redirect('home')
 
-    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=request.user)
+    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=cliente_activo)
     if request.method == 'POST':
         metodo.delete()
         messages.success(request, 'El método de pago fue removido exitosamente.')
@@ -491,18 +491,19 @@ def metodo_pago_delete(request, pk):
 def metodo_pago_set_default(request, pk):
     """
     Establece un método de pago específico como el predeterminado (Criterio 6).
-    Solo los clientes con clientes asociados pueden gestionarlos.
+    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.
     """
     roles = request.session.get('keycloak_roles', [])
     if 'admin' in roles or 'cliente' not in roles:
         messages.error(request, 'No tenés permiso para acceder a métodos de pago.')
         return redirect('home')
 
-    if not request.user.clientes.filter(is_active=True).exists():
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
         messages.error(request, 'No tenés clientes asociados para gestionar métodos de pago.')
         return redirect('home')
 
-    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=request.user)
+    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=cliente_activo)
     metodo.es_predeterminado = True
     metodo.save()
     messages.success(request, f'"{metodo}" ha sido establecido como método predeterminado.')

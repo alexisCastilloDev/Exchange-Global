@@ -1,0 +1,59 @@
+<!--
+Configuración del porcentaje de comisión por segmento de cliente.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: filas y comision_default.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Comisiones por categoría - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Comisiones por categoría</h1>
+        <p>Definí el porcentaje de comisión aplicado a cada segmento de cliente.</p>
+    </div>
+</div>
+
+<div class="ge-card p-0">
+    <div class="ge-card__header">
+        <p class="mb-0 text-muted">Comisión por defecto del sistema: {{ comision_default }}%. Se usa cuando un segmento no tiene una comisión configurada.</p>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Segmento</th>
+                    <th>Comisión vigente</th>
+                    <th>Última actualización</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in filas %}
+                <tr>
+                    <td><strong>{{ fila.nombre }}</strong></td>
+                    <td class="ge-num">{{ fila.porcentaje_vigente }}%{% if not fila.configuracion %} <span class="text-muted small">(por defecto)</span>{% endif %}</td>
+                    <td>
+                        {% if fila.configuracion %}
+                            {{ fila.configuracion.actualizado_en|date:"d/m/Y H:i" }}
+                            {% if fila.configuracion.actualizado_por %}
+                                <small class="d-block text-muted">por {{ fila.configuracion.actualizado_por.get_full_name|default:fila.configuracion.actualizado_por.username }}</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-nowrap">
+                        <a href="{% url 'divisas:actualizar_comision' fila.segmento %}" class="btn btn-sm btn-primary"><i class="bi bi-pencil me-1"></i>Configurar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<p class="ge-note mt-3">También podés dar un trato preferencial único a un cliente puntual desde su ficha de edición, con el campo "Comisión personalizada".</p>
+{% endblock %}

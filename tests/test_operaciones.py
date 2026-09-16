@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.clientes.models import Cliente
-from apps.divisas.models import CalculoOperacion, Cotizacion, Divisa
+from apps.divisas.models import CalculoOperacion, CalculoTriangulacion, Cotizacion, Divisa
 
 
 User = get_user_model()
@@ -143,3 +143,100 @@ class CalculoOperacionTest(TestCase):
         response = self.client.get(reverse('divisas:tasas_vigentes'))
 
         self.assertNotContains(response, 'Última actualización')
+
+
+class TriangulacionOperacionTest(TestCase):
+    """Verifica el cambio entre divisas extranjeras triangulando por PYG."""
+
+    def setUp(self):
+        """Prepara un cliente asociado y dos divisas extranjeras cotizadas."""
+        self.usuario = User.objects.create_user(
+            username='cliente-triangulacion',
+            password='password123',
+        )
+        self.client.login(username='cliente-triangulacion', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+        self.cliente = Cliente.objects.create(
+            user=self.usuario,
+            identificador='TRIANGULACION-001',
+            nombre='Cliente',
+            apellido='Triangulación',
+            email='cliente-triangulacion@test.com',
+            is_active=True,
+        )
+        self.usuario.clientes.add(self.cliente)
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+        Cotizacion.objects.create(divisa=self.usd, tasa_compra=Decimal('7300.00'), tasa_venta=Decimal('7400.00'))
+        Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7900.00'), tasa_venta=Decimal('8100.00'))
+
+    def test_triangula_usando_compra_origen_y_venta_destino_con_comision(self):
+        """Calcula el importe cruzado desglosando tasas, cruce y comisión."""
+        response = self.client.post(
+            reverse('divisas:triangulacion'),
+            {'divisa_origen': str(self.usd.pk), 'divisa_destino': str(self.eur.pk), 'monto': '100'},
+        )
+
+        calculo = CalculoTriangulacion.objects.get()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(calculo.tasa_compra_aplicada, Decimal('7300.00'))
+        self.assertEqual(calculo.tasa_venta_aplicada, Decimal('8100.00'))
+        self.assertEqual(calculo.tasa_cruzada, Decimal('0.901235'))
+        self.assertEqual(calculo.monto_equivalente_pyg, Decimal('730000.00'))
+        self.assertEqual(calculo.comision, Decimal('0.90'))
+        self.assertEqual(calculo.monto_final, Decimal('89.22'))
+        self.assertContains(response, '89.22')
+
+    def test_divisa_destino_sin_cotizacion_impide_triangular(self):
+        """Muestra error y no crea el cálculo si falta una cotización."""
+        sin_cotizacion = Divisa.objects.create(codigo='BRL', nombre='Real', simbolo='R$', activa=True)
+        response = self.client.post(
+            reverse('divisas:triangulacion'),
+            {'divisa_origen': str(self.usd.pk), 'divisa_destino': str(sin_cotizacion.pk), 'monto': '100'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(CalculoTriangulacion.objects.exists())
+        self.assertContains(response, 'no tiene cotización disponible')
+
+    def test_rechaza_la_misma_divisa_en_origen_y_destino(self):
+        """No permite triangular una divisa contra sí misma."""
+        response = self.client.post(
+            reverse('divisas:triangulacion'),
+            {'divisa_origen': str(self.usd.pk), 'divisa_destino': str(self.usd.pk), 'monto': '100'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(CalculoTriangulacion.objects.exists())
+        self.assertContains(response, 'Debe seleccionar dos divisas distintas')
+
+    def test_calculo_triangulado_vencido_debe_recalcularse_antes_de_confirmar(self):
+        """Rechaza confirmación cuando la triangulación ya superó su vigencia."""
+        calculo = CalculoTriangulacion.objects.create(
+            usuario=self.usuario,
+            divisa_origen=self.usd,
+            divisa_destino=self.eur,
+            codigo_divisa_origen='USD',
+            codigo_divisa_destino='EUR',
+            monto_origen=Decimal('100.00'),
+            tasa_compra_aplicada=Decimal('7300.00'),
+            tasa_venta_aplicada=Decimal('8100.00'),
+            tasa_cruzada=Decimal('0.901235'),
+            monto_equivalente_pyg=Decimal('730000.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('0.90'),
+            monto_final=Decimal('89.22'),
+            vence_en=timezone.now() - timedelta(seconds=1),
+        )
+
+        response = self.client.post(
+            reverse('divisas:confirmar_triangulacion', kwargs={'calculo_id': calculo.pk}),
+            follow=True,
+        )
+
+        calculo.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(calculo.confirmado_en)
+        self.assertContains(response, 'El cálculo venció')

@@ -9,6 +9,7 @@ Subpackages
 
    apps.authentication
    apps.clientes
+   apps.divisas
    apps.users
 
 Module contents

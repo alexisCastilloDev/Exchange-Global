@@ -1,0 +1,481 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Referencia de templates &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=6ed61967" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=f85f4cfb"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="next" title="Referencia API" href="reference/modules.html" />
+    <link rel="prev" title="Guía de base de datos y roles" href="base-datos-roles.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Referencia de templates</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="referencia-de-templates">
+<h1>Referencia de templates<a class="headerlink" href="#referencia-de-templates" title="Link to this heading"></a></h1>
+<p>Los templates Django no tienen docstrings nativos como los módulos Python. Para
+hacerlos documentables, cada archivo contiene un bloque de comentario inicial
+con el propósito, la herencia, los bloques expuestos y las variables que espera
+recibir desde la vista. Esta página incorpora esos encabezados en la salida de
+Sphinx.</p>
+<section id="template-base">
+<h2>Template base<a class="headerlink" href="#template-base" title="Link to this heading"></a></h2>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Template base del panel y de las páginas públicas.</span>
+<span class="cm">Herencia: no aplica.</span>
+<span class="cm">Bloques expuestos: title, extra_head, content, content_publico, extra_scripts.</span>
+<span class="cm">Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.</span>
+<span class="cm">--&gt;</span>
+{% load static ge_extras %}
+</pre></div>
+</div>
+</section>
+<section id="paginas-generales">
+<h2>Páginas generales<a class="headerlink" href="#paginas-generales" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Template</p></th>
+<th class="head"><p>Responsabilidad</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">home.html</span></code></p></td>
+<td><p>Inicio según el rol del usuario.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">panel.html</span></code></p></td>
+<td><p>Panel protegido de demostración.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">panel_admin.html</span></code></p></td>
+<td><p>Panel administrativo de clientes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">perfil.html</span></code></p></td>
+<td><p>Perfil y contexto operativo.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">user_list.html</span></code></p></td>
+<td><p>Listado de usuarios.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">user_edit.html</span></code></p></td>
+<td><p>Edición de datos de usuario.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">user_roles.html</span></code></p></td>
+<td><p>Administración de roles en Keycloak.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Página de inicio según el rol del usuario.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content_publico, content.</span>
+<span class="cm">Contexto esperado: user, cliente_activo y permisos de UI.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Panel protegido de demostración de autenticación.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: user.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Panel administrativo de clientes y asociaciones.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: clientes, page_obj, segmento_actual, busqueda y segmentos.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Perfil del usuario autenticado y su contexto operativo.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: user, roles y cliente_activo.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Listado y búsqueda de usuarios sincronizados con Keycloak.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: usuarios, query y roles_por_usuario.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario para editar datos básicos de un usuario.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: usuario.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario de administración de roles de un usuario en Keycloak.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: usuario, roles_disponibles y roles_actuales.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+</section>
+<section id="clientes-y-bajas">
+<h2>Clientes y bajas<a class="headerlink" href="#clientes-y-bajas" title="Link to this heading"></a></h2>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario de alta o edición de un cliente.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: form y, opcionalmente, object.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Ficha detallada de un cliente y sus usuarios asociados.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: cliente y usuarios_activos.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Asociación de usuarios habilitados a un cliente.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: cliente y form.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Selector del cliente activo para usuarios con varias asociaciones.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: clientes.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Listado de métodos de pago del cliente activo.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context processor).</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario de creación o edición de un método de pago.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: titulo y form.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Confirmación de eliminación de un método de pago.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: metodo.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Confirmación de baja lógica de un recurso.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: recurso_tipo, recurso_nombre, form y cancelar_url.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Historial de bajas lógicas y datos de auditoría.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: titulo, registros y volver_url.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+</section>
+<section id="divisas">
+<h2>Divisas<a class="headerlink" href="#divisas" title="Link to this heading"></a></h2>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Consulta de tasas vigentes y actualización para roles autorizados.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: divisas, permisos de UI y rol efectivo.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Cálculo previo del importe de una compra o venta contra PYG.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: tipo_operacion, form, calculo y vigencia_segundos.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Cálculo del importe de un cambio entre dos divisas extranjeras, triangulando por PYG.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: form, calculo y vigencia_segundos.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Simulador de compra, venta o cambio entre divisas.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content, extra_scripts.</span>
+<span class="cm">Contexto esperado: form y resultado.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Configuración del porcentaje de comisión por segmento de cliente.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: filas y comision_default.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario para configurar la comisión de un segmento de cliente.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: form y segmento_nombre.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario para registrar una cotización de una divisa.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: divisa y form.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario administrativo de alta o edición de una divisa.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: form y sus fields.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Catálogo administrativo de divisas activas e inactivas.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: divisas y acciones administrativas habilitadas.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Historial de cotizaciones registradas para una divisa.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: divisa y cotizaciones.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+</section>
+<section id="parciales">
+<h2>Parciales<a class="headerlink" href="#parciales" title="Link to this heading"></a></h2>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Parcial reutilizable para mostrar mensajes de Django.</span>
+<span class="cm">Herencia: se incluye con include y no define bloques.</span>
+<span class="cm">Contexto esperado: messages; cada elemento se expone como message.</span>
+<span class="cm">--&gt;</span>
+{% if messages %}
+    {% for message in messages %}
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="base-datos-roles.html" class="btn btn-neutral float-left" title="Guía de base de datos y roles" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="reference/modules.html" class="btn btn-neutral float-right" title="Referencia API" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

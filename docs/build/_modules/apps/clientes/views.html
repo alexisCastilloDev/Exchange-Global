@@ -1,51 +1,165 @@
+
+
 <!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.clientes.views &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
 
-<html lang="es" data-content_root="../../../">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>apps.clientes.views &#8212; documentación de Global Exchange - 0.1</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
-    <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
-    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Índice" href="../../../genindex.html" />
-    <link rel="search" title="Búsqueda" href="../../../search.html" />
-   
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
 
-  
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
 
-  </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
           
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 
-          <div class="body" role="main">
-            
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.clientes.views</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <h1>Código fuente para apps.clientes.views</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""</span>
 <span class="sd">Módulo de vistas para la aplicación de clientes.</span>
 <span class="sd">"""</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">login_required</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.messages.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">SuccessMessageMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Prefetch</span><span class="p">,</span> <span class="n">Q</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.template.response</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemplateResponse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span><span class="p">,</span> <span class="n">reverse_lazy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">View</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">CreateView</span><span class="p">,</span> <span class="n">ListView</span><span class="p">,</span> <span class="n">UpdateView</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.decorators.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_POST</span>  <span class="c1"># Agregado para Metodos de Pago</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">CreateView</span><span class="p">,</span> <span class="n">DetailView</span><span class="p">,</span> <span class="n">ListView</span><span class="p">,</span> <span class="n">UpdateView</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsociarUsuarioClienteForm</span><span class="p">,</span> <span class="n">ClienteForm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">requiere_rol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">CausaBajaForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.authentication.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistorialBaja</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsociarUsuarioClienteForm</span><span class="p">,</span> <span class="n">ClienteForm</span><span class="p">,</span> <span class="n">MetodoPagoForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span><span class="p">,</span> <span class="n">MetodoPago</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.users.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">sincronizar_usuarios_desde_keycloak</span>
+
+<span class="n">User</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="seleccionar_cliente_view">
@@ -107,40 +221,53 @@
 <div class="viewcode-block" id="PanelAdminView">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PanelAdminView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista y filtra clientes activos para el panel administrativo."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'panel_admin.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'clientes'</span>
+    <span class="n">paginate_by</span> <span class="o">=</span> <span class="mi">10</span>
 
 <div class="viewcode-block" id="PanelAdminView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">incluir_inactivos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'incluir_inactivos'</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'1'</span>
-        <span class="n">queryset</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Cliente</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="k">if</span> <span class="n">incluir_inactivos</span> <span class="k">else</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">activos</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-        <span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Obtiene clientes filtrados y usuarios activos precargados."""</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">activos</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 
         <span class="n">segmento_seleccionado</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'segmento'</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">segmento_seleccionado</span><span class="p">:</span>
             <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">segmento</span><span class="o">=</span><span class="n">segmento_seleccionado</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s1">'usuarios'</span><span class="p">)</span></div>
+        <span class="n">busqueda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'q'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">busqueda</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">Q</span><span class="p">(</span><span class="n">nombre__icontains</span><span class="o">=</span><span class="n">busqueda</span><span class="p">)</span>
+                <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">apellido__icontains</span><span class="o">=</span><span class="n">busqueda</span><span class="p">)</span>
+                <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">razon_social__icontains</span><span class="o">=</span><span class="n">busqueda</span><span class="p">)</span>
+                <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">identificador__icontains</span><span class="o">=</span><span class="n">busqueda</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">usuarios_activos</span> <span class="o">=</span> <span class="n">Prefetch</span><span class="p">(</span>
+            <span class="s1">'usuarios'</span><span class="p">,</span>
+            <span class="n">queryset</span><span class="o">=</span><span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'pk'</span><span class="p">)</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="n">usuarios_activos</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PanelAdminView.get_context_data">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega filtros y segmentos disponibles al contexto."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'segmentos'</span><span class="p">]</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">SEGMENTO_CHOICES</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'segmento_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'segmento'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
-        <span class="n">context</span><span class="p">[</span><span class="s1">'incluir_inactivos'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'incluir_inactivos'</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'1'</span>
-        <span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'busqueda'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'q'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">context</span></div>
 
 
 <div class="viewcode-block" id="PanelAdminView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Permite el panel a personal administrativo autorizado."""</span>
         <span class="n">user</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span>
         <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 
@@ -148,9 +275,47 @@
 <div class="viewcode-block" id="PanelAdminView.handle_no_permission">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.handle_no_permission">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_no_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Informa el rechazo y redirige al inicio."""</span>
         <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span>
             <span class="s2">"No tienes los permisos necesarios para acceder a este panel."</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ClienteDetailView">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ClienteDetailView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">DetailView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra el detalle de un cliente y sus usuarios activos."""</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'clientes/cliente_detail.html'</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'cliente'</span>
+
+<div class="viewcode-block" id="ClienteDetailView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega los usuarios activos asociados al cliente."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'usuarios_activos'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">usuarios</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+
+
+<div class="viewcode-block" id="ClienteDetailView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario tenga permisos administrativos."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
+
+
+<div class="viewcode-block" id="ClienteDetailView.handle_no_permission">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView.handle_no_permission">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_no_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Informa el rechazo de acceso al detalle del cliente."""</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span>
+            <span class="s2">"No tienes los permisos necesarios para acceder a esta ficha."</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span></div>
 </div>
@@ -162,6 +327,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteCreateView</span><span class="p">(</span>
     <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">SuccessMessageMixin</span><span class="p">,</span> <span class="n">CreateView</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Crea clientes desde el formulario administrativo."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
     <span class="n">form_class</span> <span class="o">=</span> <span class="n">ClienteForm</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'clientes/cliente_form.html'</span>
@@ -170,6 +336,7 @@
 <div class="viewcode-block" id="ClienteCreateView.get_success_message">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.get_success_message">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_success_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cleaned_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construye el mensaje de alta con el nombre del cliente."""</span>
         <span class="n">nombre_display</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">razon_social</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">tipo_cliente</span> <span class="o">==</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">TIPO_JURIDICA</span>
@@ -181,6 +348,7 @@
 <div class="viewcode-block" id="ClienteCreateView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda crear clientes."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 </div>
 
@@ -191,6 +359,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteUpdateView</span><span class="p">(</span>
     <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">SuccessMessageMixin</span><span class="p">,</span> <span class="n">UpdateView</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Actualiza los datos de un cliente existente."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cliente</span>
     <span class="n">form_class</span> <span class="o">=</span> <span class="n">ClienteForm</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'clientes/cliente_form.html'</span>
@@ -199,6 +368,7 @@
 <div class="viewcode-block" id="ClienteUpdateView.get_success_message">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.get_success_message">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_success_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cleaned_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construye el mensaje de actualización del cliente."""</span>
         <span class="n">nombre_display</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">razon_social</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">tipo_cliente</span> <span class="o">==</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">TIPO_JURIDICA</span>
@@ -210,6 +380,7 @@
 <div class="viewcode-block" id="ClienteUpdateView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda editar clientes."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 </div>
 
@@ -229,16 +400,42 @@
 <div class="viewcode-block" id="AsociarUsuariosClienteView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda administrar asociaciones."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_usuarios_cliente_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Obtiene los usuarios activos que Keycloak identifica como clientes.</span>
+
+<span class="sd">        Si la sincronización no está disponible, se devuelve una lista vacía:</span>
+<span class="sd">        así nunca se habilita accidentalmente asociar a un usuario sin el rol</span>
+<span class="sd">        requerido.</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">roles_por_usuario</span> <span class="o">=</span> <span class="n">sincronizar_usuarios_desde_keycloak</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span>
+                <span class="s1">'No fue posible verificar los roles en Keycloak. '</span>
+                <span class="s1">'No se modificaron las vinculaciones.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">user_id</span>
+            <span class="k">for</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">roles</span> <span class="ow">in</span> <span class="n">roles_por_usuario</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
+        <span class="p">]</span>
 
 <div class="viewcode-block" id="AsociarUsuariosClienteView.get">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.get">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra usuarios elegibles y asociaciones actuales."""</span>
         <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="n">usuarios_cliente</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_usuarios_cliente_ids</span><span class="p">()</span>
         <span class="c1"># Pre-seleccionar los usuarios que ya están vinculados</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">AsociarUsuarioClienteForm</span><span class="p">(</span>
-            <span class="n">initial</span><span class="o">=</span><span class="p">{</span><span class="s1">'usuarios'</span><span class="p">:</span> <span class="n">cliente</span><span class="o">.</span><span class="n">usuarios</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
+            <span class="n">initial</span><span class="o">=</span><span class="p">{</span><span class="s1">'usuarios'</span><span class="p">:</span> <span class="n">cliente</span><span class="o">.</span><span class="n">usuarios</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk__in</span><span class="o">=</span><span class="n">usuarios_cliente</span><span class="p">)},</span>
+            <span class="n">usuarios_cliente</span><span class="o">=</span><span class="n">usuarios_cliente</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
             <span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">template_name</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">:</span> <span class="n">cliente</span><span class="p">}</span>
@@ -248,8 +445,13 @@
 <div class="viewcode-block" id="AsociarUsuariosClienteView.post">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Actualiza la relación de usuarios asociados al cliente."""</span>
         <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
-        <span class="n">form</span> <span class="o">=</span> <span class="n">AsociarUsuarioClienteForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">usuarios_cliente</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_usuarios_cliente_ids</span><span class="p">()</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">AsociarUsuarioClienteForm</span><span class="p">(</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">,</span>
+            <span class="n">usuarios_cliente</span><span class="o">=</span><span class="n">usuarios_cliente</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
             <span class="n">nuevos_usuarios</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'usuarios'</span><span class="p">]</span>
             <span class="c1"># Actualiza la relación Muchos a Muchos</span>
@@ -269,18 +471,60 @@
 <div class="viewcode-block" id="ClienteSoftDeleteView">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClienteSoftDeleteView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Gestiona la confirmación y baja lógica de un cliente."""</span>
 
 <div class="viewcode-block" id="ClienteSoftDeleteView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda dar de baja clientes."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
+
+
+<div class="viewcode-block" id="ClienteSoftDeleteView.get">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el formulario para confirmar la baja."""</span>
+        <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span>
+            <span class="s1">'bajas/confirmar_baja.html'</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s1">'form'</span><span class="p">:</span> <span class="n">CausaBajaForm</span><span class="p">(),</span>
+                <span class="s1">'recurso_tipo'</span><span class="p">:</span> <span class="s1">'cliente'</span><span class="p">,</span>
+                <span class="s1">'recurso_nombre'</span><span class="p">:</span> <span class="n">cliente</span><span class="p">,</span>
+                <span class="s1">'cancelar_url'</span><span class="p">:</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'panel_admin'</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ClienteSoftDeleteView.post">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida la causa y registra la baja lógica del cliente."""</span>
         <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CausaBajaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'bajas/confirmar_baja.html'</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span>
+                    <span class="s1">'recurso_tipo'</span><span class="p">:</span> <span class="s1">'cliente'</span><span class="p">,</span>
+                    <span class="s1">'recurso_nombre'</span><span class="p">:</span> <span class="n">cliente</span><span class="p">,</span>
+                    <span class="s1">'cancelar_url'</span><span class="p">:</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'panel_admin'</span><span class="p">),</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cliente</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El cliente ya se encontraba inactivo.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'panel_admin'</span><span class="p">)</span>
         <span class="n">cliente</span><span class="o">.</span><span class="n">soft_delete</span><span class="p">()</span>
+        <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_CLIENTE</span><span class="p">,</span>
+            <span class="n">recurso_id</span><span class="o">=</span><span class="n">cliente</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="n">recurso_nombre</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">cliente</span><span class="p">),</span>
+            <span class="n">causa</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'causa'</span><span class="p">],</span>
+            <span class="n">realizado_por</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">nombre_display</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">cliente</span><span class="o">.</span><span class="n">razon_social</span>
             <span class="k">if</span> <span class="n">cliente</span><span class="o">.</span><span class="n">tipo_cliente</span> <span class="o">==</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">TIPO_JURIDICA</span>
@@ -294,70 +538,270 @@
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_previa</span><span class="p">)</span> <span class="k">if</span> <span class="n">url_previa</span> <span class="k">else</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span></div>
 </div>
 
-</pre></div>
-
-          </div>
-          
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="Main">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">Global Exchange</a></h1>
 
 
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># VISTAS PARA GE-19: Gestión de métodos de pago</span>
+<span class="c1"># ==============================================================================</span>
+
+<div class="viewcode-block" id="metodo_pago_list">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.metodo_pago_list">[documentos]</a>
+<span class="nd">@requiere_rol</span><span class="p">(</span><span class="s1">'cliente'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">metodo_pago_list</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Muestra los métodos del cliente activo, con datos censurados.</span>
+<span class="sd">    Solo clientes con un cliente activo seleccionado pueden verlo.</span>
+<span class="sd">    """</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="s1">'cliente'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés permiso para acceder a métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés clientes asociados para gestionar métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">metodos</span> <span class="o">=</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">)</span>
+    <span class="n">metodos_revelados</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'metodos_pago_revelados'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="s1">'clientes/metodo_pago_list.html'</span><span class="p">,</span>
+        <span class="p">{</span><span class="s1">'metodos'</span><span class="p">:</span> <span class="n">metodos</span><span class="p">,</span> <span class="s1">'metodos_revelados'</span><span class="p">:</span> <span class="n">metodos_revelados</span><span class="p">},</span>
+    <span class="p">)</span></div>
 
 
 
+<div class="viewcode-block" id="metodo_pago_reveal">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.metodo_pago_reveal">[documentos]</a>
+<span class="nd">@requiere_rol</span><span class="p">(</span><span class="s1">'cliente'</span><span class="p">)</span>
+<span class="nd">@require_POST</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">metodo_pago_reveal</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Alterna la visualización completa para el cliente activo que lo registró."""</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="s1">'cliente'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">metodo</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">MetodoPago</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">metodo</span><span class="o">.</span><span class="n">cliente_id</span> <span class="o">!=</span> <span class="n">cliente_activo</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="n">metodos_revelados</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'metodos_pago_revelados'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">metodo</span><span class="o">.</span><span class="n">pk</span> <span class="ow">in</span> <span class="n">metodos_revelados</span><span class="p">:</span>
+        <span class="n">metodos_revelados</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">metodo</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">metodos_revelados</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">metodo</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'metodos_pago_revelados'</span><span class="p">]</span> <span class="o">=</span> <span class="n">metodos_revelados</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span></div>
 
 
 
+<div class="viewcode-block" id="metodo_pago_create">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.metodo_pago_create">[documentos]</a>
+<span class="nd">@requiere_rol</span><span class="p">(</span><span class="s1">'cliente'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">metodo_pago_create</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Permite registrar un nuevo método de pago para el cliente activo (Criterio 1 y 2).</span>
+<span class="sd">    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.</span>
+<span class="sd">    """</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="s1">'cliente'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés permiso para acceder a métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
 
-<search id="searchbox" style="display: none" role="search">
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
-      <input type="submit" value="Ir a" />
-    </form>
-    </div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navegación</h3>
-<p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">IS2_REPO</a></li>
-</ul>
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés clientes asociados para gestionar métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
 
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  <li><a href="../../index.html">Código de módulo</a><ul>
-  </ul></li>
-  </ul></li>
-</ul>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MetodoPagoForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">metodo</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">commit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">metodo</span><span class="o">.</span><span class="n">cliente</span> <span class="o">=</span> <span class="n">cliente_activo</span>
+            <span class="n">metodo</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Método de pago agregado exitosamente.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Por favor, corrija los errores en el formulario.'</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MetodoPagoForm</span><span class="p">()</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">TemplateResponse</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="s1">'clientes/metodo_pago_form.html'</span><span class="p">,</span>
+        <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Agregar Método de Pago'</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">context_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Agregar Método de Pago'</span><span class="p">}</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">context_data</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">response</span></div>
+
+
+
+<div class="viewcode-block" id="metodo_pago_update">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.metodo_pago_update">[documentos]</a>
+<span class="nd">@requiere_rol</span><span class="p">(</span><span class="s1">'cliente'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">metodo_pago_update</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Permite modificar los datos de un método de pago existente del cliente activo (Criterio 4).</span>
+<span class="sd">    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.</span>
+<span class="sd">    """</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="s1">'cliente'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés permiso para acceder a métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés clientes asociados para gestionar métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">metodo</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">MetodoPago</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MetodoPagoForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="n">metodo</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Método de pago actualizado correctamente.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Por favor, corrija los errores en el formulario.'</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MetodoPagoForm</span><span class="p">(</span><span class="n">instance</span><span class="o">=</span><span class="n">metodo</span><span class="p">)</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">TemplateResponse</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="s1">'clientes/metodo_pago_form.html'</span><span class="p">,</span>
+        <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Editar Método de Pago'</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">context_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Editar Método de Pago'</span><span class="p">}</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">context_data</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">response</span></div>
+
+
+
+<div class="viewcode-block" id="metodo_pago_delete">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.metodo_pago_delete">[documentos]</a>
+<span class="nd">@requiere_rol</span><span class="p">(</span><span class="s1">'cliente'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">metodo_pago_delete</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Confirma y elimina un método de pago del cliente activo (Criterio 5).</span>
+<span class="sd">    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.</span>
+<span class="sd">    """</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="s1">'cliente'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés permiso para acceder a métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés clientes asociados para gestionar métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">metodo</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">MetodoPago</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="n">metodo</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El método de pago fue removido exitosamente.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'clientes/metodo_pago_confirm_delete.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'metodo'</span><span class="p">:</span> <span class="n">metodo</span><span class="p">})</span></div>
+
+
+
+<div class="viewcode-block" id="metodo_pago_set_default">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.metodo_pago_set_default">[documentos]</a>
+<span class="nd">@requiere_rol</span><span class="p">(</span><span class="s1">'cliente'</span><span class="p">)</span>
+<span class="nd">@require_POST</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">metodo_pago_set_default</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Establece un método de pago específico como el predeterminado (Criterio 6).</span>
+<span class="sd">    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.</span>
+<span class="sd">    """</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="s1">'cliente'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés permiso para acceder a métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés clientes asociados para gestionar métodos de pago.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+
+    <span class="n">metodo</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">MetodoPago</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">)</span>
+    <span class="n">metodo</span><span class="o">.</span><span class="n">es_predeterminado</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">metodo</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+    <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">metodo</span><span class="si">}</span><span class="s1">" ha sido establecido como método predeterminado.'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ClienteHistorialBajasView">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ClienteHistorialBajasView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista el historial de bajas lógicas de clientes."""</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">HistorialBaja</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'bajas/historial_bajas.html'</span>
+    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'registros'</span>
+
+<div class="viewcode-block" id="ClienteHistorialBajasView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el usuario pueda consultar el historial."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span></div>
+
+
+<div class="viewcode-block" id="ClienteHistorialBajasView.get_queryset">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView.get_queryset">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve bajas de clientes junto con el usuario que las realizó."""</span>
+        <span class="k">return</span> <span class="n">HistorialBaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">HistorialBaja</span><span class="o">.</span><span class="n">TIPO_CLIENTE</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'realizado_por'</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ClienteHistorialBajasView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega título y navegación de retorno al contexto."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'titulo'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Historial de bajas de clientes'</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'volver_url'</span><span class="p">]</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'panel_admin'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">context</span></div>
 </div>
 
+</pre></div>
 
+           </div>
+          </div>
+          <footer>
 
+  <hr/>
 
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
 
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
-
-
+</footer>
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &#169;2026, Tu Equipo.
-      
-      |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
-      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
-      
-    </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-    
-
-    
-  </body>
+</body>
 </html>

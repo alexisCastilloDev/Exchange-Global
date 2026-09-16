@@ -112,12 +112,24 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                             <i class="bi bi-cash-coin"></i> Vender divisas
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'divisas:triangulacion' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'triangulacion' %}is-active{% endif %}">
+                            <i class="bi bi-shuffle"></i> Cambiar entre divisas
+                        </a>
+                    </li>
                     {% endif %}
                     <li>
                         <a href="{% url 'divisas:simulacion_divisas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'simulacion_divisas' %}is-active{% endif %}">
                             <i class="bi bi-calculator"></i> Simulador de conversión
                         </a>
                     </li>
+                    {% if puede_configurar_comisiones %}
+                    <li>
+                        <a href="{% url 'divisas:comisiones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'comisiones,actualizar_comision' %}is-active{% endif %}">
+                            <i class="bi bi-percent"></i> Comisiones
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}

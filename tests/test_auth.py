@@ -16,6 +16,7 @@ User = get_user_model()
 # 1. TESTS DE RUTAS Y VISTAS DE AUTENTICACIÓN
 # ============================================================================
 
+@pytest.mark.django_db
 def test_home_page_unauthenticated(client):
     """CA1 / CA5: El usuario no autenticado ve la opción de login."""
     response = client.get(reverse('home'))

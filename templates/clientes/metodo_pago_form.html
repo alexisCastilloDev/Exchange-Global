@@ -59,9 +59,11 @@ Contexto esperado: titulo y form.
     <div id="campo-tarjeta" class="ge-form-section">
       <span class="ge-eyebrow">Datos de la tarjeta</span>
       <div class="mb-3">
-      <label for="{{ form.ultimos_4_digitos.id_for_label }}" class="form-label">Últimos 4 dígitos</label>
-      {{ form.ultimos_4_digitos }}
-      {% if form.ultimos_4_digitos.errors %}<div class="text-danger small">{{ form.ultimos_4_digitos.errors.0 }}</div>{% endif %}
+        <label for="{{ form.numero_tarjeta.id_for_label }}" class="form-label">Número de tarjeta</label>
+        {{ form.numero_tarjeta }}
+        {% if form.numero_tarjeta.errors %}
+          <div class="text-danger small">{{ form.numero_tarjeta.errors.0 }}</div>
+        {% endif %}
       </div>
     </div>
 

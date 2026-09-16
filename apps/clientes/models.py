@@ -98,6 +98,18 @@ class Cliente(models.Model):
         help_text='Permite clasificar al cliente.',
     )
 
+    comision_personalizada = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        verbose_name='Comisión personalizada (%)',
+        help_text=(
+            'Opcional. Si se define, sobrescribe la comisión de la categoría'
+            ' para dar un trato preferencial único a este cliente.'
+        ),
+    )
+
     is_active = models.BooleanField(
         default=True,
         verbose_name='Activo',
@@ -157,9 +169,11 @@ class MetodoPago(models.Model):
         ('CORRIENTE', 'Cuenta Corriente'),
     ]
 
-    # Relacionado al usuario del sistema que autentica desde Keycloak
+    # Anclado al perfil de Cliente activo, no al usuario que autentica: así
+    # cada cliente conserva sus propios métodos y un operador con varios
+    # clientes asociados ve solo los del cliente que tiene seleccionado.
     cliente = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        Cliente,
         on_delete=models.CASCADE,
         related_name='metodos_pago',
         verbose_name='Cliente'
@@ -190,11 +204,11 @@ class MetodoPago(models.Model):
         null=True,
         verbose_name='Tipo de Cuenta'
     )
-    ultimos_4_digitos = models.CharField(
-        max_length=4,
+    numero_tarjeta = models.CharField(
+        max_length=19,
         blank=True,
         null=True,
-        verbose_name='Últimos 4 dígitos'
+        verbose_name='Número de Tarjeta'
     )
     es_predeterminado = models.BooleanField(
         default=False,

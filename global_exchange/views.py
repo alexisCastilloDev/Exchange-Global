@@ -14,12 +14,22 @@ para no tener dos implementaciones compitiendo por la misma URL.
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+from apps.divisas.models import Divisa
+
 
 def home(request):
     """
     Vista pública de bienvenida.
+
+    Para visitantes sin sesión iniciada, muestra las tasas vigentes de las
+    divisas activas del sistema en lugar de valores de ejemplo.
     """
-    return render(request, 'home.html')
+    divisas_publicas = [
+        divisa
+        for divisa in Divisa.objects.filter(activa=True).order_by('codigo')
+        if divisa.ultima_cotizacion
+    ]
+    return render(request, 'home.html', {'divisas_publicas': divisas_publicas})
 
 
 @login_required

@@ -373,7 +373,7 @@ class ConsultaTasasClienteTest(TestCase):
 
 @pytest.mark.django_db
 class SimuladorDivisasTest(TestCase):
-    """Verifica conversiones, PYG implícito y validaciones del simulador."""
+    """Verifica la simulación de compra, venta y cambio entre divisas."""
     def setUp(self):
         """Prepara divisas y tasas para las conversiones."""
         self.analista = User.objects.create_user(username='analista-sim', password='password123')
@@ -384,60 +384,87 @@ class SimuladorDivisasTest(TestCase):
 
         self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
         self.eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
-        self.pyg = Divisa.objects.create(codigo='PYG', nombre='Guaraní', simbolo='₲', activa=True)
 
         Cotizacion.objects.create(divisa=self.usd, tasa_compra=7300.00, tasa_venta=7400.00)
         Cotizacion.objects.create(divisa=self.eur, tasa_compra=7900.00, tasa_venta=8100.00)
-        Cotizacion.objects.create(divisa=self.pyg, tasa_compra=1.00, tasa_venta=1.00)
 
-    def test_simulacion_calcula_monto_resultante_con_tasa_vigente(self):
-        """Calcula el monto resultante usando una tasa vigente."""
+    def test_simulacion_compra_usa_tasa_venta_y_suma_comision(self):
+        """Simula una compra aplicando la tasa de venta y sumando la comisión."""
         response = self.client.post(
             reverse('divisas:simulacion_divisas'),
-            {'monto': '100', 'divisa_origen': str(self.usd.pk), 'divisa_destino': str(self.eur.pk)},
+            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Monto origen')
-        self.assertContains(response, 'Tasa aplicada')
         self.assertContains(response, 'Monto final')
-        self.assertContains(response, '93.67')
+        self.assertContains(response, '747400.00')
 
-    def test_simulacion_incluye_guarani_implicitamente_en_las_opciones(self):
-        """Incluye PYG aunque no exista como registro persistido."""
+    def test_simulacion_venta_usa_tasa_compra_y_resta_comision(self):
+        """Simula una venta aplicando la tasa de compra y descontando la comisión."""
+        response = self.client.post(
+            reverse('divisas:simulacion_divisas'),
+            {'tipo': 'VENTA', 'divisa': str(self.usd.pk), 'monto': '100'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '722700.00')
+
+    def test_simulacion_cambio_triangula_por_pyg_con_comision(self):
+        """Simula un cambio entre divisas triangulando por PYG."""
+        response = self.client.post(
+            reverse('divisas:simulacion_divisas'),
+            {
+                'tipo': 'CAMBIO',
+                'divisa_origen': str(self.usd.pk),
+                'divisa_destino': str(self.eur.pk),
+                'monto': '100',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tasa cruzada implícita')
+        self.assertContains(response, '89.22')
+
+    def test_simulacion_incluye_placeholder_para_no_repetir_divisa(self):
+        """Incluye la opción 'Seleccionar divisa' para no preseleccionar ninguna."""
         response = self.client.get(reverse('divisas:simulacion_divisas'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Guaraní (PYG)')
+        self.assertContains(response, 'Seleccionar divisa')
 
-    def test_simulacion_calcula_conversion_con_guarani_implicitamente(self):
-        """Calcula conversiones que involucran el guaraní implícito."""
-        response = self.client.post(
-            reverse('divisas:simulacion_divisas'),
-            {'monto': '100', 'divisa_origen': str(self.usd.pk), 'divisa_destino': 'PYG'},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '740000.00')
-
-    def test_simulacion_rechaza_divisa_sin_tasa_vigente(self):
-        """Informa cuando una divisa no tiene una tasa vigente."""
+    def test_simulacion_rechaza_divisa_sin_cotizacion(self):
+        """Informa cuando una divisa no tiene una cotización vigente."""
         divisa_sin_tasa = Divisa.objects.create(codigo='BRL', nombre='Real', simbolo='R$', activa=True)
 
         response = self.client.post(
             reverse('divisas:simulacion_divisas'),
-            {'monto': '100', 'divisa_origen': str(self.usd.pk), 'divisa_destino': str(divisa_sin_tasa.pk)},
+            {'tipo': 'COMPRA', 'divisa': str(divisa_sin_tasa.pk), 'monto': '100'},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'no tiene tasa disponible')
+        self.assertContains(response, 'no tiene cotización disponible')
 
     def test_simulacion_rechaza_monto_invalido(self):
         """Rechaza montos nulos o negativos en la simulación."""
         response = self.client.post(
             reverse('divisas:simulacion_divisas'),
-            {'monto': '0', 'divisa_origen': str(self.usd.pk), 'divisa_destino': str(self.eur.pk)},
+            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '0'},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'El monto debe ser mayor que cero')
+        self.assertContains(response, 'greater than or equal to 0.01')
+
+    def test_simulacion_cambio_rechaza_misma_divisa(self):
+        """No permite cambiar una divisa contra sí misma."""
+        response = self.client.post(
+            reverse('divisas:simulacion_divisas'),
+            {
+                'tipo': 'CAMBIO',
+                'divisa_origen': str(self.usd.pk),
+                'divisa_destino': str(self.usd.pk),
+                'monto': '100',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Debe seleccionar dos divisas distintas')

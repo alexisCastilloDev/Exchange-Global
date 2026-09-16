@@ -8,7 +8,7 @@ from apps.clientes.models import Cliente, MetodoPago
 User = get_user_model()
 
 class MetodoPagoTestCase(TestCase):
-    """Verifica la gestión segura de métodos de pago del usuario."""
+    """Verifica la gestión segura de métodos de pago del cliente activo."""
     """
     Pruebas unitarias para validar los criterios de aceptación de la historia GE-19.
     """
@@ -76,7 +76,7 @@ class MetodoPagoTestCase(TestCase):
         self.assertNotContains(response, 'Métodos de pago')
 
     def test_registro_metodo_pago_exitoso(self):
-        """Criterio 1: Registro exitoso de método de pago."""
+        """Criterio 1: Registro exitoso de método de pago, anclado al cliente activo."""
         response = self.client.post(reverse('clientes:metodo_pago_create'), {
             'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
             'nombre_titular': 'Juan Pérez',
@@ -86,7 +86,7 @@ class MetodoPagoTestCase(TestCase):
             'es_predeterminado': True
         })
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(MetodoPago.objects.filter(cliente=self.user).count(), 1)
+        self.assertEqual(MetodoPago.objects.filter(cliente=self.cliente).count(), 1)
 
     def test_validacion_campos_incompletos(self):
         """Criterio 2: Muestra errores de validación si faltan datos requeridos."""
@@ -102,9 +102,9 @@ class MetodoPagoTestCase(TestCase):
         self.assertFormError(form, 'numero_cuenta', 'El número de cuenta es obligatorio para transferencias bancarias.')
 
     def test_listar_metodos_pago(self):
-        """Criterio 3: El cliente puede ver sus métodos de pago."""
+        """Criterio 3: El cliente puede ver los métodos del cliente activo."""
         MetodoPago.objects.create(
-            cliente=self.user,
+            cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Sudameris',
@@ -118,7 +118,7 @@ class MetodoPagoTestCase(TestCase):
     def test_numero_cuenta_censurado_por_defecto_y_revelable_por_su_creador(self):
         """Comprueba censura inicial y revelación por el titular."""
         metodo = MetodoPago.objects.create(
-            cliente=self.user,
+            cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Sudameris',
@@ -148,7 +148,7 @@ class MetodoPagoTestCase(TestCase):
     def test_cada_metodo_mantiene_su_propio_estado_de_visualizacion(self):
         """Verifica que revelar un método no revele los demás."""
         primer_metodo = MetodoPago.objects.create(
-            cliente=self.user,
+            cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Banco Uno',
@@ -156,7 +156,7 @@ class MetodoPagoTestCase(TestCase):
             tipo_cuenta='AHORRO'
         )
         segundo_metodo = MetodoPago.objects.create(
-            cliente=self.user,
+            cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Banco Dos',
@@ -180,21 +180,20 @@ class MetodoPagoTestCase(TestCase):
         self.assertContains(response, '111111111')
         self.assertContains(response, '222222222')
 
-    def test_usuario_asociado_no_puede_revelar_metodo_de_otro_usuario(self):
-        """Impide revelar métodos pertenecientes a otro usuario."""
+    def test_usuario_no_puede_revelar_metodo_de_otro_cliente(self):
+        """Impide revelar métodos que no pertenecen al cliente activo."""
         titular = User.objects.create_user(
             username='titular_test',
             password='password123'
         )
-        cliente = Cliente.objects.create(
+        otro_cliente = Cliente.objects.create(
             user=titular,
             identificador='CI-TEST-1',
             nombre='Titular',
             email='titular@test.com'
         )
-        cliente.usuarios.add(self.user)
         metodo = MetodoPago.objects.create(
-            cliente=titular,
+            cliente=otro_cliente,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
             nombre_titular='Titular',
             entidad_financiera='Banco Seguro',
@@ -203,7 +202,7 @@ class MetodoPagoTestCase(TestCase):
         )
 
         response = self.client.get(reverse('clientes:metodo_pago_list'))
-        self.assertContains(response, '*****789')
+        self.assertNotContains(response, '*****789')
         self.assertNotContains(response, '123456789')
 
         response = self.client.post(
@@ -212,10 +211,49 @@ class MetodoPagoTestCase(TestCase):
         )
         self.assertNotContains(response, '123456789')
 
+    def test_cambiar_cliente_activo_cambia_los_metodos_visibles(self):
+        """Un operador con varios clientes ve solo los métodos del cliente activo."""
+        # Con un único cliente asociado, la sesión ya lo deja seleccionado
+        # como activo antes de asociar un segundo cliente.
+        self.client.get(reverse('clientes:metodo_pago_list'))
+
+        otro_cliente = Cliente.objects.create(
+            identificador='CI-TEST-2',
+            nombre='Otro',
+            apellido='Cliente',
+            email='otro-cliente@test.com',
+            is_active=True,
+        )
+        otro_cliente.usuarios.add(self.user)
+
+        MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Banco Propio',
+            ultimos_4_digitos='1111',
+        )
+        MetodoPago.objects.create(
+            cliente=otro_cliente,
+            tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Otro Cliente',
+            entidad_financiera='Banco Ajeno',
+            ultimos_4_digitos='2222',
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+        self.assertContains(response, 'Banco Propio')
+        self.assertNotContains(response, 'Banco Ajeno')
+
+        self.client.post(reverse('cambiar_cliente', args=[otro_cliente.pk]))
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+        self.assertContains(response, 'Banco Ajeno')
+        self.assertNotContains(response, 'Banco Propio')
+
     def test_modificar_metodo_pago(self):
         """Criterio 4: Modificar datos de un método existente."""
         metodo = MetodoPago.objects.create(
-            cliente=self.user,
+            cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Sudameris',
@@ -235,7 +273,7 @@ class MetodoPagoTestCase(TestCase):
     def test_eliminar_metodo_pago(self):
         """Criterio 5: Eliminar un método de pago."""
         metodo = MetodoPago.objects.create(
-            cliente=self.user,
+            cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Visa Bank',
@@ -247,7 +285,7 @@ class MetodoPagoTestCase(TestCase):
     def test_solo_un_metodo_predeterminado(self):
         """Criterio 6: Solo un método de pago puede estar marcado como predeterminado."""
         metodo1 = MetodoPago.objects.create(
-            cliente=self.user,
+            cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Banco A',
@@ -255,7 +293,7 @@ class MetodoPagoTestCase(TestCase):
             es_predeterminado=True
         )
         metodo2 = MetodoPago.objects.create(
-            cliente=self.user,
+            cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Banco B',

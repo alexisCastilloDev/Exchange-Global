@@ -1,8 +1,8 @@
 <!--
-Simulador histórico de conversión entre dos divisas.
+Simulador de compra, venta o cambio entre divisas.
 Hereda de: base.html.
-Bloques definidos: title, content.
-Contexto esperado: form, divisas y resultado.
+Bloques definidos: title, content, extra_scripts.
+Contexto esperado: form y resultado.
 -->
 {% extends 'base.html' %}
 
@@ -12,7 +12,7 @@ Contexto esperado: form, divisas y resultado.
 <div class="ge-page-header">
     <div>
         <h1>Simulador de conversión</h1>
-        <p>Calculá el monto resultante antes de operar.</p>
+        <p>Previsualizá el importe de una compra, venta o cambio antes de operar.</p>
     </div>
     <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary">Volver a tasas</a>
 </div>
@@ -35,26 +35,52 @@ Contexto esperado: form, divisas y resultado.
                 {% endif %}
 
                 <div class="ge-form-field">
-                    <label for="id_monto" class="form-label">Monto</label>
-                    {{ form.monto }}
-                    {% if form.monto.errors %}
-                        <div class="text-danger small mt-1">{{ form.monto.errors|join:', ' }}</div>
+                    <label class="form-label">{{ form.tipo.label }}</label>
+                    <div class="d-flex flex-column gap-1" id="tipoSimulacionGrupo">
+                        {% for radio in form.tipo %}
+                            <div class="form-check">
+                                {{ radio.tag }}
+                                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.tipo.errors %}
+                        <div class="text-danger small mt-1">{{ form.tipo.errors|join:', ' }}</div>
                     {% endif %}
                 </div>
 
-                <div class="ge-form-field">
-                    <label for="id_divisa_origen" class="form-label">Divisa origen</label>
+                <div class="ge-form-field" id="campoDivisaUnica">
+                    <label for="{{ form.divisa.id_for_label }}" class="form-label">Divisa</label>
+                    {{ form.divisa }}
+                    {% if form.divisa.errors %}
+                        <div class="text-danger small mt-1">{{ form.divisa.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="ge-form-field" id="campoDivisaOrigen">
+                    <label for="{{ form.divisa_origen.id_for_label }}" class="form-label">Divisa origen</label>
                     {{ form.divisa_origen }}
                     {% if form.divisa_origen.errors %}
                         <div class="text-danger small mt-1">{{ form.divisa_origen.errors|join:', ' }}</div>
                     {% endif %}
                 </div>
 
-                <div class="ge-form-field">
-                    <label for="id_divisa_destino" class="form-label">Divisa destino</label>
+                <div class="ge-form-field" id="campoDivisaDestino">
+                    <label for="{{ form.divisa_destino.id_for_label }}" class="form-label">Divisa destino</label>
                     {{ form.divisa_destino }}
                     {% if form.divisa_destino.errors %}
                         <div class="text-danger small mt-1">{{ form.divisa_destino.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="ge-form-field">
+                    <label for="{{ form.monto.id_for_label }}" class="form-label">Monto</label>
+                    <div class="input-group">
+                        {{ form.monto }}
+                        <span class="input-group-text" id="montoSimulacionAddon"></span>
+                    </div>
+                    {% if form.monto.errors %}
+                        <div class="text-danger small mt-1">{{ form.monto.errors|join:', ' }}</div>
                     {% endif %}
                 </div>
 
@@ -74,25 +100,21 @@ Contexto esperado: form, divisas y resultado.
             </div>
 
             {% if resultado %}
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="ge-stat-box">
-                            <small>Monto origen</small>
-                            <strong>{{ resultado.monto_origen }} {{ resultado.divisa_origen.codigo }}</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="ge-stat-box">
-                            <small>Tasa aplicada</small>
-                            <strong>{{ resultado.tasa_aplicada|floatformat:4 }}</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="ge-stat-box ge-stat-box--accent">
-                            <small>Monto final</small>
-                            <strong>{{ resultado.monto_final }} {{ resultado.divisa_destino.codigo }}</strong>
-                        </div>
-                    </div>
+                <div class="operation-summary">
+                    {% if resultado.tipo == 'CAMBIO' %}
+                        <div class="operation-summary__row"><span class="operation-summary__label">Operación: </span><strong class="operation-summary__value">{{ resultado.divisa_origen.codigo }} → {{ resultado.divisa_destino.codigo }}</strong></div>
+                        <div class="operation-summary__row"><span class="operation-summary__label">Monto origen: </span><strong class="operation-summary__value">{{ resultado.monto_origen|floatformat:2 }} {{ resultado.divisa_origen.codigo }}</strong></div>
+                        <div class="operation-summary__row"><span class="operation-summary__label">Tasa cruzada implícita: </span><strong class="operation-summary__value">1 {{ resultado.divisa_origen.codigo }} = {{ resultado.tasa_aplicada|floatformat:6 }} {{ resultado.divisa_destino.codigo }}</strong></div>
+                        <div class="operation-summary__row"><span class="operation-summary__label">Equivalente en guaraníes: </span><strong class="operation-summary__value">{{ resultado.monto_equivalente_pyg|floatformat:2 }} PYG</strong></div>
+                        <div class="operation-summary__row"><span class="operation-summary__label">Comisión ({{ resultado.comision_porcentaje|floatformat:2 }}%): </span><strong class="operation-summary__value">{{ resultado.comision|floatformat:2 }} {{ resultado.divisa_destino.codigo }}</strong></div>
+                        <div class="operation-summary__row operation-summary__row--total"><span class="operation-summary__label">Monto final: </span><strong class="operation-summary__value">{{ resultado.monto_final|floatformat:2 }} {{ resultado.divisa_destino.codigo }}</strong></div>
+                    {% else %}
+                        <div class="operation-summary__row"><span class="operation-summary__label">Operación: </span><strong class="operation-summary__value">{{ resultado.tipo|title }} de {{ resultado.divisa_origen.codigo }} contra PYG</strong></div>
+                        <div class="operation-summary__row"><span class="operation-summary__label">Monto: </span><strong class="operation-summary__value">{{ resultado.monto_origen|floatformat:2 }} {{ resultado.divisa_origen.codigo }}</strong></div>
+                        <div class="operation-summary__row"><span class="operation-summary__label">Tasa aplicada: </span><strong class="operation-summary__value">{{ resultado.tasa_aplicada|floatformat:2 }} PYG</strong></div>
+                        <div class="operation-summary__row"><span class="operation-summary__label">Comisión ({{ resultado.comision_porcentaje|floatformat:2 }}%): </span><strong class="operation-summary__value">{{ resultado.comision|floatformat:2 }} PYG</strong></div>
+                        <div class="operation-summary__row operation-summary__row--total"><span class="operation-summary__label">Monto final: </span><strong class="operation-summary__value">{{ resultado.monto_final|floatformat:2 }} PYG</strong></div>
+                    {% endif %}
                 </div>
                 <p class="ge-note mt-3 mb-0">Esta es una simulación, no registra ninguna operación real.</p>
             {% else %}
@@ -103,4 +125,48 @@ Contexto esperado: form, divisas y resultado.
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (function () {
+        const radios = document.querySelectorAll('#tipoSimulacionGrupo input[name="tipo"]');
+        const campoDivisaUnica = document.getElementById('campoDivisaUnica');
+        const campoDivisaOrigen = document.getElementById('campoDivisaOrigen');
+        const campoDivisaDestino = document.getElementById('campoDivisaDestino');
+        const selectDivisa = document.getElementById('{{ form.divisa.id_for_label }}');
+        const selectOrigen = document.getElementById('{{ form.divisa_origen.id_for_label }}');
+        const addon = document.getElementById('montoSimulacionAddon');
+        if (!radios.length || !selectDivisa || !selectOrigen || !addon) {
+            return;
+        }
+
+        function tipoSeleccionado() {
+            const marcado = document.querySelector('#tipoSimulacionGrupo input[name="tipo"]:checked');
+            return marcado ? marcado.value : 'COMPRA';
+        }
+
+        function actualizarAddon() {
+            const esCambio = tipoSeleccionado() === 'CAMBIO';
+            const select = esCambio ? selectOrigen : selectDivisa;
+            const opcion = select.options[select.selectedIndex];
+            addon.textContent = (opcion && opcion.dataset.simbolo) || '';
+        }
+
+        function actualizarCampos() {
+            const esCambio = tipoSeleccionado() === 'CAMBIO';
+            campoDivisaUnica.style.display = esCambio ? 'none' : '';
+            campoDivisaOrigen.style.display = esCambio ? '' : 'none';
+            campoDivisaDestino.style.display = esCambio ? '' : 'none';
+            actualizarAddon();
+        }
+
+        radios.forEach(function (radio) {
+            radio.addEventListener('change', actualizarCampos);
+        });
+        selectDivisa.addEventListener('change', actualizarAddon);
+        selectOrigen.addEventListener('change', actualizarAddon);
+        actualizarCampos();
+    })();
+</script>
 {% endblock %}

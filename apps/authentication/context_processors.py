@@ -34,6 +34,7 @@ def permisos_ui_context(request):
         and tiene_clientes_asociados
         and not es_admin
     )
+    puede_configurar_comisiones = es_admin or 'analista_cambiario' in roles
 
     return {
         'keycloak_roles': roles,
@@ -46,4 +47,5 @@ def permisos_ui_context(request):
         'puede_operar_divisas': puede_operar_divisas,
         'puede_actualizar_tasas': puede_actualizar_tasas,
         'puede_ver_tasas': puede_ver_tasas,
+        'puede_configurar_comisiones': puede_configurar_comisiones,
     }
