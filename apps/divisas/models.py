@@ -78,7 +78,13 @@ class Cotizacion(models.Model):
 
 
 class CalculoOperacion(models.Model):
-    """Conserva el importe calculado y la tasa vigente hasta su vencimiento."""
+    """Representa una transacción de compra o venta ya confirmada por el cliente.
+
+    El cálculo previo (Paso 1: "Calcular importe") es solo una previsualización
+    y no se persiste; el registro se crea recién cuando el cliente confirma
+    (Paso 2: "Confirmar importe", ver ``confirmar_calculo_operacion_view``),
+    siempre en estado "Pendiente de confirmación".
+    """
 
     TIPO_COMPRA = 'COMPRA'
     TIPO_VENTA = 'VENTA'
@@ -87,11 +93,22 @@ class CalculoOperacion(models.Model):
         (TIPO_VENTA, 'Venta'),
     ]
 
+    ESTADO_PENDIENTE = 'PENDIENTE_CONFIRMACION'
+    ESTADO_CHOICES = [
+        (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='calculos_operacion',
+    )
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.PROTECT,
+        related_name='calculos_operacion',
+        verbose_name='Cliente',
     )
     tipo = models.CharField(max_length=7, choices=TIPO_CHOICES)
     divisa = models.ForeignKey(
@@ -107,6 +124,7 @@ class CalculoOperacion(models.Model):
     comision_porcentaje = models.DecimalField(max_digits=6, decimal_places=3)
     comision = models.DecimalField(max_digits=18, decimal_places=2)
     monto_final = models.DecimalField(max_digits=18, decimal_places=2)
+    estado = models.CharField(max_length=25, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
     creado_en = models.DateTimeField(auto_now_add=True)
     vence_en = models.DateTimeField()
     confirmado_en = models.DateTimeField(null=True, blank=True)

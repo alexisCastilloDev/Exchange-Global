@@ -203,6 +203,21 @@ object the first time, the query is executed.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.Cliente.calculos_operacion">
+<span class="sig-name descname"><span class="pre">calculos_operacion</span></span><a class="headerlink" href="#apps.clientes.models.Cliente.calculos_operacion" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.models.Cliente.comision_personalizada">
 <span class="sig-name descname"><span class="pre">comision_personalizada</span></span><a class="headerlink" href="#apps.clientes.models.Cliente.comision_personalizada" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
@@ -522,6 +537,13 @@ object the first time, the query is executed.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.numero_tarjeta">
+<span class="sig-name descname"><span class="pre">numero_tarjeta</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.numero_tarjeta" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.objects">
 <span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.objects" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -543,13 +565,6 @@ object the first time, the query is executed.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.tipo_medio">
 <span class="sig-name descname"><span class="pre">tipo_medio</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.tipo_medio" title="Link to this definition"></a></dt>
-<dd><p>A wrapper for a deferred-loading field. When the value is read from this
-object the first time, the query is executed.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.ultimos_4_digitos">
-<span class="sig-name descname"><span class="pre">ultimos_4_digitos</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.ultimos_4_digitos" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
 </dd></dl>

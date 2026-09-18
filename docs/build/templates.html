@@ -355,7 +355,7 @@ Sphinx.</p>
 <span class="cm">Cálculo previo del importe de una compra o venta contra PYG.</span>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
-<span class="cm">Contexto esperado: tipo_operacion, form, calculo y vigencia_segundos.</span>
+<span class="cm">Contexto esperado: tipo_operacion, form, resultado y vigencia_segundos.</span>
 <span class="cm">--&gt;</span>
 {% extends 'base.html' %}
 </pre></div>
@@ -428,6 +428,15 @@ Sphinx.</p>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
 <span class="cm">Contexto esperado: divisa y cotizaciones.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Historial de transacciones de compra/venta para administración y análisis.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: transacciones, page_obj, is_paginated.</span>
 <span class="cm">--&gt;</span>
 {% extends 'base.html' %}
 </pre></div>

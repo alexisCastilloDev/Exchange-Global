@@ -148,6 +148,10 @@ Divisas
    :language: html
    :lines: 1-7
 
+.. literalinclude:: ../../templates/divisas/historial_transacciones.html
+   :language: html
+   :lines: 1-7
+
 Parciales
 ---------
 

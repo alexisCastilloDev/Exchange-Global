@@ -20,6 +20,7 @@ from apps.clientes.models import Cliente
 from apps.divisas.forms import (
     CalculoOperacionForm,
     ConfiguracionComisionForm,
+    ConfirmarCalculoOperacionForm,
     CotizacionForm,
     DivisaForm,
     SimulacionDivisasForm,
@@ -185,6 +186,24 @@ class HistorialCotizacionesView(LoginRequiredMixin, UserPassesTestMixin, ListVie
         return context
 
 
+class HistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista las transacciones de compra/venta realizadas por los clientes."""
+
+    model = CalculoOperacion
+    template_name = 'divisas/historial_transacciones.html'
+    context_object_name = 'transacciones'
+    paginate_by = 20
+
+    def test_func(self):
+        """Autoriza la consulta a administración y análisis cambiario."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return bool({'admin', 'analista_cambiario'} & set(roles))
+
+    def get_queryset(self):
+        """Devuelve todas las transacciones con sus relaciones precargadas."""
+        return CalculoOperacion.objects.select_related('usuario', 'cliente', 'divisa')
+
+
 class ConfiguracionComisionListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """Lista el porcentaje de comisión vigente para cada segmento de clientes."""
     template_name = 'divisas/comision_list.html'
@@ -338,7 +357,13 @@ class SimulacionDivisasView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
 
 
 class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """Calcula el importe de una compra o venta y lo conserva hasta vencer."""
+    """Calcula el importe de una compra o venta, como previsualización sin persistir.
+
+    La transacción recién se crea cuando el cliente confirma (ver
+    ``confirmar_calculo_operacion_view``); este cálculo es un Paso 1 efímero,
+    igual que el simulador, con la diferencia de que expone los campos ocultos
+    necesarios para poder confirmarlo en un segundo paso.
+    """
 
     template_name = 'divisas/calculo_operacion.html'
 
@@ -355,12 +380,12 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         """Devuelve el tipo normalizado recibido en la URL."""
         return self.kwargs['tipo'].upper()
 
-    def _contexto(self, form, calculo=None):
+    def _contexto(self, form, resultado=None):
         """Construye el contexto común de la pantalla de operación."""
         return {
             'form': form,
             'tipo_operacion': self._tipo(),
-            'calculo': calculo,
+            'resultado': resultado,
             'vigencia_segundos': settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS,
         }
 
@@ -371,10 +396,15 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         return context
 
     def post(self, request, *args, **kwargs):
-        """Valida datos, obtiene la tasa vigente y guarda el cálculo."""
+        """Valida datos y calcula el importe, sin crear todavía la transacción."""
         tipo = self._tipo()
         form = CalculoOperacionForm(request.POST, tipo=tipo)
         if not form.is_valid():
+            return self.render_to_response(self._contexto(form))
+
+        cliente_activo = getattr(request, 'cliente_activo', None)
+        if cliente_activo is None:
+            messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
             return self.render_to_response(self._contexto(form))
 
         divisa = form.cleaned_data['divisa']
@@ -386,24 +416,26 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
             return self.render_to_response(self._contexto(form))
 
         tasa_venta = cotizacion.tasa_venta if cotizacion else tasa_compra
-        cliente_activo = getattr(request, 'cliente_activo', None)
+        monto = form.cleaned_data['monto']
         tasa_aplicada, porcentaje, comision, monto_final = _calcular_importe_operacion(
-            tipo, form.cleaned_data['monto'], tasa_compra, tasa_venta, cliente_activo
+            tipo, monto, tasa_compra, tasa_venta, cliente_activo
         )
         ahora = timezone.now()
-        calculo = CalculoOperacion.objects.create(
-            usuario=request.user,
-            tipo=tipo,
-            divisa=divisa if divisa.pk else None,
-            codigo_divisa=divisa.codigo,
-            monto_origen=form.cleaned_data['monto'],
-            tasa_aplicada=tasa_aplicada,
-            comision_porcentaje=porcentaje,
-            comision=comision,
-            monto_final=monto_final,
-            vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
-        )
-        return self.render_to_response(self._contexto(form, calculo))
+        vence_en = ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS)
+        resultado = {
+            'tipo': tipo,
+            'divisa': divisa,
+            'codigo_divisa': divisa.codigo,
+            'monto_origen': monto,
+            'tasa_aplicada': tasa_aplicada,
+            'comision_porcentaje': porcentaje,
+            'comision': comision,
+            'monto_final': monto_final,
+            'vence_en': vence_en,
+            'vence_en_timestamp': vence_en.timestamp(),
+            'cotizacion_id': cotizacion.pk,
+        }
+        return self.render_to_response(self._contexto(form, resultado))
 
 
 class TriangulacionOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -504,8 +536,15 @@ def confirmar_triangulacion_view(request, calculo_id):
 
 
 @login_required
-def confirmar_calculo_operacion_view(request, calculo_id):
-    """Confirma un cálculo vigente o exige recalcular si ya venció."""
+def confirmar_calculo_operacion_view(request, tipo):
+    """Revalida el cálculo previo (Paso 1) y recién ahí crea la transacción.
+
+    El Paso 1 ("Calcular importe") no persiste nada: viaja como campos
+    ocultos. Acá se revalida que la cotización usada siga siendo la vigente y
+    que no haya pasado el tiempo de reserva antes de crear el registro, ya
+    directamente en estado "Pendiente de confirmación".
+    """
+    tipo = tipo.upper()
     if request.method != 'POST':
         return redirect('home')
     roles = request.session.get('keycloak_roles', [])
@@ -516,20 +555,58 @@ def confirmar_calculo_operacion_view(request, calculo_id):
     ):
         messages.error(request, 'Solo un cliente asociado puede confirmar una operación.')
         return redirect('home')
-    calculo = get_object_or_404(CalculoOperacion, pk=calculo_id, usuario=request.user)
-    if calculo.esta_vencido:
-        messages.error(
-            request,
-            'El cálculo venció por cambio de cotización. Debe recalcular la operación antes de continuar.',
-        )
-        return redirect('divisas:operar', tipo=calculo.tipo.lower())
-    if calculo.confirmado_en:
-        messages.info(request, 'Este cálculo ya fue confirmado.')
-        return redirect('divisas:operar', tipo=calculo.tipo.lower())
-    calculo.confirmado_en = timezone.now()
-    calculo.save(update_fields=['confirmado_en'])
-    messages.success(request, 'El cálculo fue confirmado con la tasa vigente.')
-    return redirect('divisas:operar', tipo=calculo.tipo.lower())
+
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
+        messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
+        return redirect('divisas:operar', tipo=tipo.lower())
+
+    mensaje_vencido = (
+        'El cálculo venció por cambio de cotización. Debe recalcular la operación antes de continuar.'
+    )
+    form = ConfirmarCalculoOperacionForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, mensaje_vencido)
+        return redirect('divisas:operar', tipo=tipo.lower())
+
+    divisa = form.cleaned_data['divisa']
+    monto = form.cleaned_data['monto']
+    cotizacion_actual = divisa.ultima_cotizacion
+    vencido = (
+        timezone.now().timestamp() >= form.cleaned_data['vence_en_timestamp']
+        or cotizacion_actual is None
+        or cotizacion_actual.pk != form.cleaned_data['cotizacion_id']
+    )
+    if vencido:
+        messages.error(request, mensaje_vencido)
+        return redirect('divisas:operar', tipo=tipo.lower())
+
+    tasa_aplicada, porcentaje, comision, monto_final = _calcular_importe_operacion(
+        tipo, monto, cotizacion_actual.tasa_compra, cotizacion_actual.tasa_venta, cliente_activo
+    )
+    ahora = timezone.now()
+    CalculoOperacion.objects.create(
+        usuario=request.user,
+        cliente=cliente_activo,
+        tipo=tipo,
+        divisa=divisa,
+        codigo_divisa=divisa.codigo,
+        monto_origen=monto,
+        tasa_aplicada=tasa_aplicada,
+        comision_porcentaje=porcentaje,
+        comision=comision,
+        monto_final=monto_final,
+        estado=CalculoOperacion.ESTADO_PENDIENTE,
+        confirmado_en=ahora,
+        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
+    )
+    tipo_display = dict(CalculoOperacion.TIPO_CHOICES).get(tipo, tipo)
+    messages.success(
+        request,
+        f'{tipo_display} de {divisa.codigo} registrada. Estado: Pendiente de confirmación. '
+        f'Importe: {monto_final} PYG.',
+    )
+    return redirect('divisas:operar', tipo=tipo.lower())
 
 
 class AdminDivisasMixin(LoginRequiredMixin, UserPassesTestMixin):

@@ -129,6 +129,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                             <i class="bi bi-percent"></i> Comisiones
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'divisas:historial_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'historial_transacciones' %}is-active{% endif %}">
+                            <i class="bi bi-clock-history"></i> Historial de transacciones
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
             </div>

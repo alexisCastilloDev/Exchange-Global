@@ -231,14 +231,14 @@ class MetodoPagoTestCase(TestCase):
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Banco Propio',
-            ultimos_4_digitos='1111',
+            numero_tarjeta='4111111111111111',
         )
         MetodoPago.objects.create(
             cliente=otro_cliente,
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Otro Cliente',
             entidad_financiera='Banco Ajeno',
-            ultimos_4_digitos='2222',
+            numero_tarjeta='4222222222222222',
         )
 
         response = self.client.get(reverse('clientes:metodo_pago_list'))
@@ -277,7 +277,7 @@ class MetodoPagoTestCase(TestCase):
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Visa Bank',
-            ultimos_4_digitos='1234'
+            numero_tarjeta='4123412341234123'
         )
         response = self.client.post(reverse('clientes:metodo_pago_delete', args=[metodo.pk]))
         self.assertEqual(MetodoPago.objects.filter(pk=metodo.pk).count(), 0)
@@ -289,7 +289,7 @@ class MetodoPagoTestCase(TestCase):
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Banco A',
-            ultimos_4_digitos='1111',
+            numero_tarjeta='4111111111111111',
             es_predeterminado=True
         )
         metodo2 = MetodoPago.objects.create(
@@ -297,7 +297,7 @@ class MetodoPagoTestCase(TestCase):
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Juan Pérez',
             entidad_financiera='Banco B',
-            ultimos_4_digitos='2222',
+            numero_tarjeta='4222222222222222',
             es_predeterminado=True
         )
 

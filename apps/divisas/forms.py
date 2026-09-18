@@ -74,6 +74,40 @@ class CalculoOperacionForm(forms.Form):
         return divisa
 
 
+class ConfirmarCalculoOperacionForm(forms.Form):
+    """Valida los datos ocultos que viajan del cálculo previo a la confirmación.
+
+    El Paso 1 ("Calcular importe") no persiste nada; estos campos ocultos son
+    la única forma en la que el Paso 2 ("Confirmar importe") conoce qué se
+    calculó, para poder revalidar la cotización y el tiempo de vigencia antes
+    de recién ahí crear la transacción.
+    """
+
+    tipo = forms.ChoiceField(choices=CalculoOperacion.TIPO_CHOICES, widget=forms.HiddenInput())
+    divisa = forms.ChoiceField(choices=[], widget=forms.HiddenInput())
+    monto = forms.DecimalField(
+        min_value=0.01, max_digits=18, decimal_places=2, widget=forms.HiddenInput()
+    )
+    cotizacion_id = forms.IntegerField(widget=forms.HiddenInput())
+    vence_en_timestamp = forms.FloatField(widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        """Acepta cualquier divisa activa distinta del guaraní base."""
+        super().__init__(*args, **kwargs)
+        self.fields['divisa'].choices = [
+            (str(divisa.pk), divisa.codigo)
+            for divisa in Divisa.objects.filter(activa=True).exclude(codigo='PYG')
+        ]
+
+    def clean_divisa(self):
+        """Resuelve la divisa indicada, validando que siga activa."""
+        valor = self.cleaned_data['divisa']
+        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo='PYG').first()
+        if not divisa:
+            raise forms.ValidationError('La divisa ya no está disponible. Recalculá la operación.')
+        return divisa
+
+
 class TriangulacionForm(forms.Form):
     """Valida el monto y las dos divisas extranjeras de un cambio triangulado."""
 
