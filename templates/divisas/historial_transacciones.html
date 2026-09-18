@@ -1,0 +1,70 @@
+<!--
+Historial de transacciones de compra/venta para administración y análisis.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: transacciones, page_obj, is_paginated.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Historial de transacciones - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Historial de transacciones</h1>
+        <p>Consultá las operaciones de compra y venta realizadas por los clientes.</p>
+    </div>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha de creación</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Usuario</th>
+                    <th>Cliente</th>
+                    <th>Divisa</th>
+                    <th>Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaccion in transacciones %}
+                <tr>
+                    <td>{{ transaccion.creado_en|date:"d/m/Y H:i" }}</td>
+                    <td>{{ transaccion.get_tipo_display }}</td>
+                    <td>{{ transaccion.get_estado_display }}</td>
+                    <td>{{ transaccion.usuario.get_full_name|default:transaccion.usuario.username }}</td>
+                    <td>{{ transaccion.cliente }}</td>
+                    <td>{{ transaccion.codigo_divisa }}</td>
+                    <td class="ge-num">{{ transaccion.monto_origen|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center py-4 text-muted">Todavía no hay transacciones registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación de transacciones">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

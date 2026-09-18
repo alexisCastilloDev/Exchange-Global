@@ -363,7 +363,7 @@
             <span class="s1">'entidad_financiera'</span><span class="p">,</span>
             <span class="s1">'numero_cuenta'</span><span class="p">,</span>
             <span class="s1">'tipo_cuenta'</span><span class="p">,</span>
-            <span class="s1">'ultimos_4_digitos'</span><span class="p">,</span>
+            <span class="s1">'numero_tarjeta'</span><span class="p">,</span>  <span class="c1"># Se reemplaza 'ultimos_4_digitos' por 'numero_tarjeta'</span>
             <span class="s1">'es_predeterminado'</span>
         <span class="p">]</span>
         <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
@@ -372,7 +372,13 @@
             <span class="s1">'entidad_financiera'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
             <span class="s1">'numero_cuenta'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
             <span class="s1">'tipo_cuenta'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-select'</span><span class="p">}),</span>
-            <span class="s1">'ultimos_4_digitos'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">,</span> <span class="s1">'maxlength'</span><span class="p">:</span> <span class="s1">'4'</span><span class="p">}),</span>
+            <span class="s1">'numero_tarjeta'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">,</span>
+                <span class="s1">'maxlength'</span><span class="p">:</span> <span class="s1">'19'</span><span class="p">,</span>
+                <span class="s1">'minlength'</span><span class="p">:</span> <span class="s1">'13'</span><span class="p">,</span>
+                <span class="s1">'placeholder'</span><span class="p">:</span> <span class="s1">'Ej. 4532123456789012'</span><span class="p">,</span>
+                <span class="s1">'inputmode'</span><span class="p">:</span> <span class="s1">'numeric'</span>
+            <span class="p">}),</span>
             <span class="s1">'es_predeterminado'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-check-input'</span><span class="p">}),</span>
         <span class="p">}</span></div>
 
@@ -387,7 +393,7 @@
         <span class="n">tipo_medio</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo_medio'</span><span class="p">)</span>
         <span class="n">numero_cuenta</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'numero_cuenta'</span><span class="p">)</span>
         <span class="n">tipo_cuenta</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo_cuenta'</span><span class="p">)</span>
-        <span class="n">ultimos_4_digitos</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ultimos_4_digitos'</span><span class="p">)</span>
+        <span class="n">numero_tarjeta</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'numero_tarjeta'</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">tipo_medio</span> <span class="o">==</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TRANSFERENCIA</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">numero_cuenta</span><span class="p">:</span>
@@ -396,10 +402,10 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'tipo_cuenta'</span><span class="p">,</span> <span class="s1">'Debe seleccionar el tipo de cuenta.'</span><span class="p">)</span>
 
         <span class="k">elif</span> <span class="n">tipo_medio</span> <span class="o">==</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">ultimos_4_digitos</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'ultimos_4_digitos'</span><span class="p">,</span> <span class="s1">'Debe ingresar los últimos 4 dígitos de la tarjeta.'</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">ultimos_4_digitos</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">ultimos_4_digitos</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'ultimos_4_digitos'</span><span class="p">,</span> <span class="s1">'Debe ingresar exactamente 4 dígitos numéricos.'</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">numero_tarjeta</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'numero_tarjeta'</span><span class="p">,</span> <span class="s1">'Debe ingresar el número de la tarjeta.'</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">numero_tarjeta</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">13</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">numero_tarjeta</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">19</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'numero_tarjeta'</span><span class="p">,</span> <span class="s1">'Debe ingresar un número de tarjeta válido (entre 13 y 19 dígitos numéricos).'</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">cleaned_data</span></div>
 </div>

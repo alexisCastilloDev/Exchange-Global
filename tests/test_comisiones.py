@@ -134,34 +134,30 @@ class ComisionEnCalculoOperacionTest(TestCase):
 
     def test_compra_usa_la_comision_configurada_para_el_segmento(self):
         """La comisión configurada para VIP reemplaza a la comisión por defecto."""
-        from apps.divisas.models import CalculoOperacion
-
         ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('2.000'))
 
-        self.client.post(
+        response = self.client.post(
             reverse('divisas:operar', kwargs={'tipo': 'compra'}),
             {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
         )
 
-        calculo = CalculoOperacion.objects.get()
-        self.assertEqual(calculo.comision_porcentaje, Decimal('2.000'))
-        self.assertEqual(calculo.comision, Decimal('14800.00'))
-        self.assertEqual(calculo.monto_final, Decimal('754800.00'))
+        resultado = response.context['resultado']
+        self.assertEqual(resultado['comision_porcentaje'], Decimal('2.000'))
+        self.assertEqual(resultado['comision'], Decimal('14800.00'))
+        self.assertEqual(resultado['monto_final'], Decimal('754800.00'))
 
     def test_comision_personalizada_del_cliente_prevalece(self):
         """La comisión personalizada del cliente gana incluso con una comisión de segmento."""
-        from apps.divisas.models import CalculoOperacion
-
         ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('2.000'))
         self.cliente.comision_personalizada = Decimal('0.000')
         self.cliente.save(update_fields=['comision_personalizada'])
 
-        self.client.post(
+        response = self.client.post(
             reverse('divisas:operar', kwargs={'tipo': 'compra'}),
             {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
         )
 
-        calculo = CalculoOperacion.objects.get()
-        self.assertEqual(calculo.comision_porcentaje, Decimal('0.000'))
-        self.assertEqual(calculo.comision, Decimal('0.00'))
-        self.assertEqual(calculo.monto_final, Decimal('740000.00'))
+        resultado = response.context['resultado']
+        self.assertEqual(resultado['comision_porcentaje'], Decimal('0.000'))
+        self.assertEqual(resultado['comision'], Decimal('0.00'))
+        self.assertEqual(resultado['monto_final'], Decimal('740000.00'))
