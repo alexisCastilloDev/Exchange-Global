@@ -13,6 +13,10 @@ apps.divisas.forms module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.forms.ConfirmarTriangulacionForm
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.forms.SimulacionDivisasForm
    :members:
    :show-inheritance:

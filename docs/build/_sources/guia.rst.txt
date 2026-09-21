@@ -31,19 +31,28 @@ Las divisas activas se muestran en las tasas vigentes. Los roles autorizados
 pueden registrar nuevas cotizaciones, que conservan el usuario y la fecha de
 actualización.
 
-Un cliente con un cliente activo seleccionado puede calcular tres tipos de
+Un cliente con un cliente activo seleccionado puede realizar tres tipos de
 operación. El cálculo previo ("Calcular importe") no persiste nada: solo
 muestra el detalle y su vigencia. La operación se registra recién al
-confirmar el importe:
+confirmar el importe, siempre en estado "Pendiente de confirmación" y a
+nombre del cliente activo:
 
 * **Compra/venta contra PYG**: usa la tasa de venta (compra) o de compra
   (venta) de la divisa elegida. Al confirmarse crea un
-  ``apps.divisas.models.CalculoOperacion`` en estado "Pendiente de
-  confirmación".
+  ``apps.divisas.models.CalculoOperacion``.
 * **Cambio entre dos divisas extranjeras**: triangula por PYG, usando la
   tasa de compra de la divisa origen y la tasa de venta de la divisa
-  destino, y expone la tasa cruzada implícita resultante. Se persiste con su
-  vencimiento hasta que se confirma o se recalcula.
+  destino, y expone la tasa cruzada implícita resultante. Al confirmarse
+  (``apps.divisas.views.confirmar_triangulacion_view``) crea un
+  ``apps.divisas.models.CalculoTriangulacion`` con las tasas, el equivalente
+  en guaraníes, la comisión y el importe a recibir en la divisa destino. Si
+  venció el tiempo de reserva o cambió la cotización de cualquiera de las
+  dos divisas, exige recalcular.
+
+Los administradores y analistas cambiarios consultan todas las transacciones
+(compras, ventas y cambios) en el historial de transacciones
+(``apps.divisas.views.HistorialTransaccionesView``), con tipo, estado,
+usuario, cliente, divisa, monto, tasa aplicada, comisión e importe final.
 
 El simulador de conversión ofrece los mismos tres modos (compra, venta,
 cambio) sin persistir el resultado ni exigir confirmación.

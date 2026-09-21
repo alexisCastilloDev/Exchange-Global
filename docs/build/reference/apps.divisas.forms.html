@@ -274,6 +274,57 @@ de recién ahí crear la transacción.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.forms.ConfirmarTriangulacionForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ConfirmarTriangulacionForm</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#ConfirmarTriangulacionForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.ConfirmarTriangulacionForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
+<p>Valida los datos ocultos que viajan del cálculo de un cambio a su confirmación.</p>
+<p>El cálculo previo no persiste nada; estos campos ocultos son la única
+forma en la que la confirmación conoce qué se calculó, para poder
+revalidar ambas cotizaciones y el tiempo de vigencia antes de crear la
+transacción.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.forms.ConfirmarTriangulacionForm.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#ConfirmarTriangulacionForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.ConfirmarTriangulacionForm.__init__" title="Link to this definition"></a></dt>
+<dd><p>Acepta cualquier divisa activa distinta del guaraní base.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.forms.ConfirmarTriangulacionForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cotizacion_destino_id':</span> <span class="pre">&lt;django.forms.fields.IntegerField</span> <span class="pre">object&gt;,</span> <span class="pre">'cotizacion_origen_id':</span> <span class="pre">&lt;django.forms.fields.IntegerField</span> <span class="pre">object&gt;,</span> <span class="pre">'divisa_destino':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'divisa_origen':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;,</span> <span class="pre">'vence_en_timestamp':</span> <span class="pre">&lt;django.forms.fields.FloatField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.divisas.forms.ConfirmarTriangulacionForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.forms.ConfirmarTriangulacionForm.clean">
+<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#ConfirmarTriangulacionForm.clean"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.ConfirmarTriangulacionForm.clean" title="Link to this definition"></a></dt>
+<dd><p>Evita confirmar un cambio de una divisa contra sí misma.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.forms.ConfirmarTriangulacionForm.clean_divisa_destino">
+<span class="sig-name descname"><span class="pre">clean_divisa_destino</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#ConfirmarTriangulacionForm.clean_divisa_destino"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.ConfirmarTriangulacionForm.clean_divisa_destino" title="Link to this definition"></a></dt>
+<dd><p>Resuelve la divisa de destino del cambio.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.forms.ConfirmarTriangulacionForm.clean_divisa_origen">
+<span class="sig-name descname"><span class="pre">clean_divisa_origen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#ConfirmarTriangulacionForm.clean_divisa_origen"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.ConfirmarTriangulacionForm.clean_divisa_origen" title="Link to this definition"></a></dt>
+<dd><p>Resuelve la divisa de origen del cambio.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.forms.ConfirmarTriangulacionForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cotizacion_destino_id':</span> <span class="pre">&lt;django.forms.fields.IntegerField</span> <span class="pre">object&gt;,</span> <span class="pre">'cotizacion_origen_id':</span> <span class="pre">&lt;django.forms.fields.IntegerField</span> <span class="pre">object&gt;,</span> <span class="pre">'divisa_destino':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'divisa_origen':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;,</span> <span class="pre">'vence_en_timestamp':</span> <span class="pre">&lt;django.forms.fields.FloatField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.divisas.forms.ConfirmarTriangulacionForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.forms.ConfirmarTriangulacionForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.divisas.forms.ConfirmarTriangulacionForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.forms.SimulacionDivisasForm">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SimulacionDivisasForm</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#SimulacionDivisasForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.SimulacionDivisasForm" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>

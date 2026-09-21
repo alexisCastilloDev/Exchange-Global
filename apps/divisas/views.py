@@ -21,6 +21,7 @@ from apps.divisas.forms import (
     CalculoOperacionForm,
     ConfiguracionComisionForm,
     ConfirmarCalculoOperacionForm,
+    ConfirmarTriangulacionForm,
     CotizacionForm,
     DivisaForm,
     SimulacionDivisasForm,
@@ -217,9 +218,14 @@ class HistorialCotizacionesView(LoginRequiredMixin, UserPassesTestMixin, ListVie
 
 
 class HistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    """Lista las transacciones de compra/venta realizadas por los clientes."""
+    """Lista las transacciones de compra, venta y cambio realizadas por los clientes.
 
-    model = CalculoOperacion
+    Reúne en una misma lista ordenada por fecha las compras y ventas
+    (``CalculoOperacion``) y los cambios entre divisas (``CalculoTriangulacion``),
+    con tipo, estado, usuario, cliente activo, divisa, monto, tasa, comisión e
+    importe final de cada una.
+    """
+
     template_name = 'divisas/historial_transacciones.html'
     context_object_name = 'transacciones'
     paginate_by = 20
@@ -229,9 +235,53 @@ class HistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListVi
         roles = self.request.session.get('keycloak_roles', [])
         return bool({'admin', 'analista_cambiario'} & set(roles))
 
+    @staticmethod
+    def _fila_operacion(operacion):
+        """Normaliza una compra o venta para mostrarla en el historial."""
+        return {
+            'creado_en': operacion.creado_en,
+            'tipo': operacion.get_tipo_display(),
+            'estado': operacion.get_estado_display(),
+            'usuario': operacion.usuario,
+            'cliente': operacion.cliente,
+            'divisa': operacion.codigo_divisa,
+            'monto_origen': operacion.monto_origen,
+            'tasa': operacion.tasa_aplicada,
+            'decimales_tasa': 2,
+            'comision': operacion.comision,
+            'monto_final': operacion.monto_final,
+            'moneda_final': 'PYG',
+        }
+
+    @staticmethod
+    def _fila_cambio(cambio):
+        """Normaliza un cambio entre divisas para mostrarlo en el historial."""
+        return {
+            'creado_en': cambio.creado_en,
+            'tipo': CalculoTriangulacion.TIPO_DISPLAY,
+            'estado': cambio.get_estado_display(),
+            'usuario': cambio.usuario,
+            'cliente': cambio.cliente,
+            'divisa': f'{cambio.codigo_divisa_origen} → {cambio.codigo_divisa_destino}',
+            'monto_origen': cambio.monto_origen,
+            'tasa': cambio.tasa_cruzada,
+            'decimales_tasa': 6,
+            'comision': cambio.comision,
+            'monto_final': cambio.monto_final,
+            'moneda_final': cambio.codigo_divisa_destino,
+        }
+
     def get_queryset(self):
-        """Devuelve todas las transacciones con sus relaciones precargadas."""
-        return CalculoOperacion.objects.select_related('usuario', 'cliente', 'divisa')
+        """Devuelve compras, ventas y cambios de todos los clientes, del más reciente al más antiguo."""
+        filas = [
+            self._fila_operacion(operacion)
+            for operacion in CalculoOperacion.objects.select_related('usuario', 'cliente')
+        ]
+        filas.extend(
+            self._fila_cambio(cambio)
+            for cambio in CalculoTriangulacion.objects.select_related('usuario', 'cliente')
+        )
+        return sorted(filas, key=lambda fila: fila['creado_en'], reverse=True)
 
 
 class ConfiguracionComisionListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -484,7 +534,13 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
 
 
 class TriangulacionOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """Calcula el importe de un cambio entre dos divisas extranjeras triangulando por PYG."""
+    """Calcula el importe de un cambio entre dos divisas extranjeras triangulando por PYG.
+
+    Igual que en la compra y la venta, el cálculo es un Paso 1 efímero: no
+    persiste nada y expone los campos ocultos necesarios para confirmarlo en
+    un segundo paso (ver ``confirmar_triangulacion_view``), que es el que
+    registra la transacción.
+    """
 
     template_name = 'divisas/triangulacion.html'
 
@@ -497,11 +553,11 @@ class TriangulacionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Templa
             and self.request.user.clientes.filter(is_active=True).exists()
         )
 
-    def _contexto(self, form, calculo=None):
+    def _contexto(self, form, resultado=None):
         """Construye el contexto común de la pantalla de triangulación."""
         return {
             'form': form,
-            'calculo': calculo,
+            'resultado': resultado,
             'vigencia_segundos': settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS,
         }
 
@@ -512,9 +568,23 @@ class TriangulacionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Templa
         return context
 
     def post(self, request, *args, **kwargs):
-        """Valida datos, verifica ambas cotizaciones y guarda el cálculo."""
+        """Valida datos, verifica ambas cotizaciones y calcula el importe sin persistirlo.
+
+        Args:
+            request (HttpRequest): Solicitud POST con ``divisa_origen``,
+                ``divisa_destino`` y ``monto``.
+
+        Returns:
+            HttpResponse: La pantalla del cambio con el detalle del importe o
+            con los errores de validación.
+        """
         form = TriangulacionForm(request.POST)
         if not form.is_valid():
+            return self.render_to_response(self._contexto(form))
+
+        cliente_activo = getattr(request, 'cliente_activo', None)
+        if cliente_activo is None:
+            messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
             return self.render_to_response(self._contexto(form))
 
         origen = form.cleaned_data['divisa_origen']
@@ -527,33 +597,48 @@ class TriangulacionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Templa
             return self.render_to_response(self._contexto(form))
 
         monto = form.cleaned_data['monto']
-        cliente_activo = getattr(request, 'cliente_activo', None)
         monto_equivalente_pyg, tasa_cruzada, porcentaje, comision, monto_final = _calcular_triangulacion(
             monto, cotizacion_origen.tasa_compra, cotizacion_destino.tasa_venta, cliente_activo
         )
-        ahora = timezone.now()
-        calculo = CalculoTriangulacion.objects.create(
-            usuario=request.user,
-            divisa_origen=origen,
-            divisa_destino=destino,
-            codigo_divisa_origen=origen.codigo,
-            codigo_divisa_destino=destino.codigo,
-            monto_origen=monto,
-            tasa_compra_aplicada=cotizacion_origen.tasa_compra,
-            tasa_venta_aplicada=cotizacion_destino.tasa_venta,
-            tasa_cruzada=tasa_cruzada,
-            monto_equivalente_pyg=monto_equivalente_pyg,
-            comision_porcentaje=porcentaje,
-            comision=comision,
-            monto_final=monto_final,
-            vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
-        )
-        return self.render_to_response(self._contexto(form, calculo))
+        vence_en = timezone.now() + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS)
+        resultado = {
+            'divisa_origen': origen,
+            'divisa_destino': destino,
+            'codigo_divisa_origen': origen.codigo,
+            'codigo_divisa_destino': destino.codigo,
+            'monto_origen': monto,
+            'tasa_compra_aplicada': cotizacion_origen.tasa_compra,
+            'tasa_venta_aplicada': cotizacion_destino.tasa_venta,
+            'tasa_cruzada': tasa_cruzada,
+            'monto_equivalente_pyg': monto_equivalente_pyg,
+            'comision_porcentaje': porcentaje,
+            'comision': comision,
+            'monto_final': monto_final,
+            'vence_en': vence_en,
+            'vence_en_timestamp': vence_en.timestamp(),
+            'cotizacion_origen_id': cotizacion_origen.pk,
+            'cotizacion_destino_id': cotizacion_destino.pk,
+        }
+        return self.render_to_response(self._contexto(form, resultado))
 
 
 @login_required
-def confirmar_triangulacion_view(request, calculo_id):
-    """Confirma una triangulación vigente o exige recalcular si ya venció."""
+def confirmar_triangulacion_view(request):
+    """Revalida el cálculo previo de un cambio y recién ahí crea la transacción.
+
+    Comprueba que no haya vencido el tiempo de reserva y que ambas
+    cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el
+    importe con las tasas actuales (nunca confía en los montos que viajan
+    desde el navegador) y registra el cambio en estado "Pendiente de
+    confirmación", a nombre del cliente activo, para que figure en el
+    historial de transacciones.
+
+    Args:
+        request (HttpRequest): Solicitud POST con los campos ocultos del cálculo.
+
+    Returns:
+        HttpResponse: Redirección a la pantalla de cambio o al inicio.
+    """
     if request.method != 'POST':
         return redirect('home')
     roles = request.session.get('keycloak_roles', [])
@@ -564,19 +649,67 @@ def confirmar_triangulacion_view(request, calculo_id):
     ):
         messages.error(request, 'Solo un cliente asociado puede confirmar una operación.')
         return redirect('home')
-    calculo = get_object_or_404(CalculoTriangulacion, pk=calculo_id, usuario=request.user)
-    if calculo.esta_vencido:
-        messages.error(
-            request,
-            'El cálculo venció por cambio de cotización. Debe recalcular la operación antes de continuar.',
-        )
+
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
+        messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
         return redirect('divisas:triangulacion')
-    if calculo.confirmado_en:
-        messages.info(request, 'Este cálculo ya fue confirmado.')
+
+    mensaje_vencido = (
+        'El cálculo venció por cambio de cotización. Debe recalcular la operación antes de continuar.'
+    )
+    form = ConfirmarTriangulacionForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, mensaje_vencido)
         return redirect('divisas:triangulacion')
-    calculo.confirmado_en = timezone.now()
-    calculo.save(update_fields=['confirmado_en'])
-    messages.success(request, 'El cálculo fue confirmado con la tasa vigente.')
+
+    origen = form.cleaned_data['divisa_origen']
+    destino = form.cleaned_data['divisa_destino']
+    monto = form.cleaned_data['monto']
+    try:
+        cotizacion_origen = _obtener_cotizacion_vigente(origen)
+        cotizacion_destino = _obtener_cotizacion_vigente(destino)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect('divisas:triangulacion')
+
+    vencido = (
+        timezone.now().timestamp() >= form.cleaned_data['vence_en_timestamp']
+        or cotizacion_origen.pk != form.cleaned_data['cotizacion_origen_id']
+        or cotizacion_destino.pk != form.cleaned_data['cotizacion_destino_id']
+    )
+    if vencido:
+        messages.error(request, mensaje_vencido)
+        return redirect('divisas:triangulacion')
+
+    monto_equivalente_pyg, tasa_cruzada, porcentaje, comision, monto_final = _calcular_triangulacion(
+        monto, cotizacion_origen.tasa_compra, cotizacion_destino.tasa_venta, cliente_activo
+    )
+    ahora = timezone.now()
+    CalculoTriangulacion.objects.create(
+        usuario=request.user,
+        cliente=cliente_activo,
+        divisa_origen=origen,
+        divisa_destino=destino,
+        codigo_divisa_origen=origen.codigo,
+        codigo_divisa_destino=destino.codigo,
+        monto_origen=monto,
+        tasa_compra_aplicada=cotizacion_origen.tasa_compra,
+        tasa_venta_aplicada=cotizacion_destino.tasa_venta,
+        tasa_cruzada=tasa_cruzada,
+        monto_equivalente_pyg=monto_equivalente_pyg,
+        comision_porcentaje=porcentaje,
+        comision=comision,
+        monto_final=monto_final,
+        estado=CalculoTriangulacion.ESTADO_PENDIENTE,
+        confirmado_en=ahora,
+        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
+    )
+    messages.success(
+        request,
+        f'Cambio de {origen.codigo} a {destino.codigo} registrado. Estado: Pendiente de confirmación. '
+        f'Importe a recibir: {monto_final} {destino.codigo}.',
+    )
     return redirect('divisas:triangulacion')
 
 

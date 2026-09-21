@@ -169,20 +169,28 @@ de Keycloak.</p></li>
 <p>Las divisas activas se muestran en las tasas vigentes. Los roles autorizados
 pueden registrar nuevas cotizaciones, que conservan el usuario y la fecha de
 actualización.</p>
-<p>Un cliente con un cliente activo seleccionado puede calcular tres tipos de
+<p>Un cliente con un cliente activo seleccionado puede realizar tres tipos de
 operación. El cálculo previo («Calcular importe») no persiste nada: solo
 muestra el detalle y su vigencia. La operación se registra recién al
-confirmar el importe:</p>
+confirmar el importe, siempre en estado «Pendiente de confirmación» y a
+nombre del cliente activo:</p>
 <ul class="simple">
 <li><p><strong>Compra/venta contra PYG</strong>: usa la tasa de venta (compra) o de compra
 (venta) de la divisa elegida. Al confirmarse crea un
-<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.CalculoOperacion</span></code> en estado «Pendiente de
-confirmación».</p></li>
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.CalculoOperacion</span></code>.</p></li>
 <li><p><strong>Cambio entre dos divisas extranjeras</strong>: triangula por PYG, usando la
 tasa de compra de la divisa origen y la tasa de venta de la divisa
-destino, y expone la tasa cruzada implícita resultante. Se persiste con su
-vencimiento hasta que se confirma o se recalcula.</p></li>
+destino, y expone la tasa cruzada implícita resultante. Al confirmarse
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.confirmar_triangulacion_view</span></code>) crea un
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.CalculoTriangulacion</span></code> con las tasas, el equivalente
+en guaraníes, la comisión y el importe a recibir en la divisa destino. Si
+venció el tiempo de reserva o cambió la cotización de cualquiera de las
+dos divisas, exige recalcular.</p></li>
 </ul>
+<p>Los administradores y analistas cambiarios consultan todas las transacciones
+(compras, ventas y cambios) en el historial de transacciones
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.HistorialTransaccionesView</span></code>), con tipo, estado,
+usuario, cliente, divisa, monto, tasa aplicada, comisión e importe final.</p>
 <p>El simulador de conversión ofrece los mismos tres modos (compra, venta,
 cambio) sin persistir el resultado ni exigir confirmación.</p>
 </section>

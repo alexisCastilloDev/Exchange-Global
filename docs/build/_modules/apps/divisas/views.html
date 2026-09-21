@@ -160,6 +160,7 @@
     <span class="n">CalculoOperacionForm</span><span class="p">,</span>
     <span class="n">ConfiguracionComisionForm</span><span class="p">,</span>
     <span class="n">ConfirmarCalculoOperacionForm</span><span class="p">,</span>
+    <span class="n">ConfirmarTriangulacionForm</span><span class="p">,</span>
     <span class="n">CotizacionForm</span><span class="p">,</span>
     <span class="n">DivisaForm</span><span class="p">,</span>
     <span class="n">SimulacionDivisasForm</span><span class="p">,</span>
@@ -397,9 +398,14 @@
 <div class="viewcode-block" id="HistorialTransaccionesView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HistorialTransaccionesView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Lista las transacciones de compra/venta realizadas por los clientes."""</span>
+<span class="w">    </span><span class="sd">"""Lista las transacciones de compra, venta y cambio realizadas por los clientes.</span>
 
-    <span class="n">model</span> <span class="o">=</span> <span class="n">CalculoOperacion</span>
+<span class="sd">    Reúne en una misma lista ordenada por fecha las compras y ventas</span>
+<span class="sd">    (``CalculoOperacion``) y los cambios entre divisas (``CalculoTriangulacion``),</span>
+<span class="sd">    con tipo, estado, usuario, cliente activo, divisa, monto, tasa, comisión e</span>
+<span class="sd">    importe final de cada una.</span>
+<span class="sd">    """</span>
+
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/historial_transacciones.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'transacciones'</span>
     <span class="n">paginate_by</span> <span class="o">=</span> <span class="mi">20</span>
@@ -412,11 +418,55 @@
         <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
 
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fila_operacion</span><span class="p">(</span><span class="n">operacion</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Normaliza una compra o venta para mostrarla en el historial."""</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
+            <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">(),</span>
+            <span class="s1">'estado'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">(),</span>
+            <span class="s1">'usuario'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
+            <span class="s1">'cliente'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="s1">'divisa'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">codigo_divisa</span><span class="p">,</span>
+            <span class="s1">'monto_origen'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">monto_origen</span><span class="p">,</span>
+            <span class="s1">'tasa'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">tasa_aplicada</span><span class="p">,</span>
+            <span class="s1">'decimales_tasa'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">'comision'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">comision</span><span class="p">,</span>
+            <span class="s1">'monto_final'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">monto_final</span><span class="p">,</span>
+            <span class="s1">'moneda_final'</span><span class="p">:</span> <span class="s1">'PYG'</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fila_cambio</span><span class="p">(</span><span class="n">cambio</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Normaliza un cambio entre divisas para mostrarlo en el historial."""</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
+            <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">TIPO_DISPLAY</span><span class="p">,</span>
+            <span class="s1">'estado'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">(),</span>
+            <span class="s1">'usuario'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
+            <span class="s1">'cliente'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="s1">'divisa'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_origen</span><span class="si">}</span><span class="s1"> → </span><span class="si">{</span><span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+            <span class="s1">'monto_origen'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">monto_origen</span><span class="p">,</span>
+            <span class="s1">'tasa'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">tasa_cruzada</span><span class="p">,</span>
+            <span class="s1">'decimales_tasa'</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+            <span class="s1">'comision'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">comision</span><span class="p">,</span>
+            <span class="s1">'monto_final'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">monto_final</span><span class="p">,</span>
+            <span class="s1">'moneda_final'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="p">,</span>
+        <span class="p">}</span>
+
 <div class="viewcode-block" id="HistorialTransaccionesView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve todas las transacciones con sus relaciones precargadas."""</span>
-        <span class="k">return</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">,</span> <span class="s1">'divisa'</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""Devuelve compras, ventas y cambios de todos los clientes, del más reciente al más antiguo."""</span>
+        <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fila_operacion</span><span class="p">(</span><span class="n">operacion</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">operacion</span> <span class="ow">in</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">filas</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fila_cambio</span><span class="p">(</span><span class="n">cambio</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">cambio</span> <span class="ow">in</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">fila</span><span class="p">:</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 </div>
 
 
@@ -721,7 +771,13 @@
 <div class="viewcode-block" id="TriangulacionOperacionView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TriangulacionOperacionView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Calcula el importe de un cambio entre dos divisas extranjeras triangulando por PYG."""</span>
+<span class="w">    </span><span class="sd">"""Calcula el importe de un cambio entre dos divisas extranjeras triangulando por PYG.</span>
+
+<span class="sd">    Igual que en la compra y la venta, el cálculo es un Paso 1 efímero: no</span>
+<span class="sd">    persiste nada y expone los campos ocultos necesarios para confirmarlo en</span>
+<span class="sd">    un segundo paso (ver ``confirmar_triangulacion_view``), que es el que</span>
+<span class="sd">    registra la transacción.</span>
+<span class="sd">    """</span>
 
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/triangulacion.html'</span>
 
@@ -737,11 +793,11 @@
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_contexto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">calculo</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_contexto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">resultado</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Construye el contexto común de la pantalla de triangulación."""</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span>
-            <span class="s1">'calculo'</span><span class="p">:</span> <span class="n">calculo</span><span class="p">,</span>
+            <span class="s1">'resultado'</span><span class="p">:</span> <span class="n">resultado</span><span class="p">,</span>
             <span class="s1">'vigencia_segundos'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">,</span>
         <span class="p">}</span>
 
@@ -757,9 +813,23 @@
 <div class="viewcode-block" id="TriangulacionOperacionView.post">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Valida datos, verifica ambas cotizaciones y guarda el cálculo."""</span>
+<span class="w">        </span><span class="sd">"""Valida datos, verifica ambas cotizaciones y calcula el importe sin persistirlo.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST con ``divisa_origen``,</span>
+<span class="sd">                ``divisa_destino`` y ``monto``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: La pantalla del cambio con el detalle del importe o</span>
+<span class="sd">            con los errores de validación.</span>
+<span class="sd">        """</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">TriangulacionForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">))</span>
+
+        <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés un cliente activo seleccionado para operar.'</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">))</span>
 
         <span class="n">origen</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa_origen'</span><span class="p">]</span>
@@ -772,28 +842,29 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">))</span>
 
         <span class="n">monto</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span>
-        <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">monto_equivalente_pyg</span><span class="p">,</span> <span class="n">tasa_cruzada</span><span class="p">,</span> <span class="n">porcentaje</span><span class="p">,</span> <span class="n">comision</span><span class="p">,</span> <span class="n">monto_final</span> <span class="o">=</span> <span class="n">_calcular_triangulacion</span><span class="p">(</span>
             <span class="n">monto</span><span class="p">,</span> <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span> <span class="n">cliente_activo</span>
         <span class="p">)</span>
-        <span class="n">ahora</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-        <span class="n">calculo</span> <span class="o">=</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-            <span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
-            <span class="n">divisa_origen</span><span class="o">=</span><span class="n">origen</span><span class="p">,</span>
-            <span class="n">divisa_destino</span><span class="o">=</span><span class="n">destino</span><span class="p">,</span>
-            <span class="n">codigo_divisa_origen</span><span class="o">=</span><span class="n">origen</span><span class="o">.</span><span class="n">codigo</span><span class="p">,</span>
-            <span class="n">codigo_divisa_destino</span><span class="o">=</span><span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="p">,</span>
-            <span class="n">monto_origen</span><span class="o">=</span><span class="n">monto</span><span class="p">,</span>
-            <span class="n">tasa_compra_aplicada</span><span class="o">=</span><span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span>
-            <span class="n">tasa_venta_aplicada</span><span class="o">=</span><span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span>
-            <span class="n">tasa_cruzada</span><span class="o">=</span><span class="n">tasa_cruzada</span><span class="p">,</span>
-            <span class="n">monto_equivalente_pyg</span><span class="o">=</span><span class="n">monto_equivalente_pyg</span><span class="p">,</span>
-            <span class="n">comision_porcentaje</span><span class="o">=</span><span class="n">porcentaje</span><span class="p">,</span>
-            <span class="n">comision</span><span class="o">=</span><span class="n">comision</span><span class="p">,</span>
-            <span class="n">monto_final</span><span class="o">=</span><span class="n">monto_final</span><span class="p">,</span>
-            <span class="n">vence_en</span><span class="o">=</span><span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">calculo</span><span class="p">))</span></div>
+        <span class="n">vence_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">)</span>
+        <span class="n">resultado</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'divisa_origen'</span><span class="p">:</span> <span class="n">origen</span><span class="p">,</span>
+            <span class="s1">'divisa_destino'</span><span class="p">:</span> <span class="n">destino</span><span class="p">,</span>
+            <span class="s1">'codigo_divisa_origen'</span><span class="p">:</span> <span class="n">origen</span><span class="o">.</span><span class="n">codigo</span><span class="p">,</span>
+            <span class="s1">'codigo_divisa_destino'</span><span class="p">:</span> <span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="p">,</span>
+            <span class="s1">'monto_origen'</span><span class="p">:</span> <span class="n">monto</span><span class="p">,</span>
+            <span class="s1">'tasa_compra_aplicada'</span><span class="p">:</span> <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span>
+            <span class="s1">'tasa_venta_aplicada'</span><span class="p">:</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span>
+            <span class="s1">'tasa_cruzada'</span><span class="p">:</span> <span class="n">tasa_cruzada</span><span class="p">,</span>
+            <span class="s1">'monto_equivalente_pyg'</span><span class="p">:</span> <span class="n">monto_equivalente_pyg</span><span class="p">,</span>
+            <span class="s1">'comision_porcentaje'</span><span class="p">:</span> <span class="n">porcentaje</span><span class="p">,</span>
+            <span class="s1">'comision'</span><span class="p">:</span> <span class="n">comision</span><span class="p">,</span>
+            <span class="s1">'monto_final'</span><span class="p">:</span> <span class="n">monto_final</span><span class="p">,</span>
+            <span class="s1">'vence_en'</span><span class="p">:</span> <span class="n">vence_en</span><span class="p">,</span>
+            <span class="s1">'vence_en_timestamp'</span><span class="p">:</span> <span class="n">vence_en</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+            <span class="s1">'cotizacion_origen_id'</span><span class="p">:</span> <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="s1">'cotizacion_destino_id'</span><span class="p">:</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">resultado</span><span class="p">))</span></div>
 </div>
 
 
@@ -801,8 +872,22 @@
 <div class="viewcode-block" id="confirmar_triangulacion_view">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.confirmar_triangulacion_view">[documentos]</a>
 <span class="nd">@login_required</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">confirmar_triangulacion_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">calculo_id</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Confirma una triangulación vigente o exige recalcular si ya venció."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">confirmar_triangulacion_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Revalida el cálculo previo de un cambio y recién ahí crea la transacción.</span>
+
+<span class="sd">    Comprueba que no haya vencido el tiempo de reserva y que ambas</span>
+<span class="sd">    cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el</span>
+<span class="sd">    importe con las tasas actuales (nunca confía en los montos que viajan</span>
+<span class="sd">    desde el navegador) y registra el cambio en estado "Pendiente de</span>
+<span class="sd">    confirmación", a nombre del cliente activo, para que figure en el</span>
+<span class="sd">    historial de transacciones.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        request (HttpRequest): Solicitud POST con los campos ocultos del cálculo.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HttpResponse: Redirección a la pantalla de cambio o al inicio.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s1">'POST'</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
     <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
@@ -813,19 +898,67 @@
     <span class="p">):</span>
         <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Solo un cliente asociado puede confirmar una operación.'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
-    <span class="n">calculo</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">CalculoTriangulacion</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">calculo_id</span><span class="p">,</span> <span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">calculo</span><span class="o">.</span><span class="n">esta_vencido</span><span class="p">:</span>
-        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-            <span class="n">request</span><span class="p">,</span>
-            <span class="s1">'El cálculo venció por cambio de cotización. Debe recalcular la operación antes de continuar.'</span><span class="p">,</span>
-        <span class="p">)</span>
+
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés un cliente activo seleccionado para operar.'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:triangulacion'</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">calculo</span><span class="o">.</span><span class="n">confirmado_en</span><span class="p">:</span>
-        <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Este cálculo ya fue confirmado.'</span><span class="p">)</span>
+
+    <span class="n">mensaje_vencido</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">'El cálculo venció por cambio de cotización. Debe recalcular la operación antes de continuar.'</span>
+    <span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">ConfirmarTriangulacionForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">mensaje_vencido</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:triangulacion'</span><span class="p">)</span>
-    <span class="n">calculo</span><span class="o">.</span><span class="n">confirmado_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-    <span class="n">calculo</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'confirmado_en'</span><span class="p">])</span>
-    <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El cálculo fue confirmado con la tasa vigente.'</span><span class="p">)</span>
+
+    <span class="n">origen</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa_origen'</span><span class="p">]</span>
+    <span class="n">destino</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa_destino'</span><span class="p">]</span>
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cotizacion_origen</span> <span class="o">=</span> <span class="n">_obtener_cotizacion_vigente</span><span class="p">(</span><span class="n">origen</span><span class="p">)</span>
+        <span class="n">cotizacion_destino</span> <span class="o">=</span> <span class="n">_obtener_cotizacion_vigente</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:triangulacion'</span><span class="p">)</span>
+
+    <span class="n">vencido</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'vence_en_timestamp'</span><span class="p">]</span>
+        <span class="ow">or</span> <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">pk</span> <span class="o">!=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'cotizacion_origen_id'</span><span class="p">]</span>
+        <span class="ow">or</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">pk</span> <span class="o">!=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'cotizacion_destino_id'</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">vencido</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">mensaje_vencido</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:triangulacion'</span><span class="p">)</span>
+
+    <span class="n">monto_equivalente_pyg</span><span class="p">,</span> <span class="n">tasa_cruzada</span><span class="p">,</span> <span class="n">porcentaje</span><span class="p">,</span> <span class="n">comision</span><span class="p">,</span> <span class="n">monto_final</span> <span class="o">=</span> <span class="n">_calcular_triangulacion</span><span class="p">(</span>
+        <span class="n">monto</span><span class="p">,</span> <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span> <span class="n">cliente_activo</span>
+    <span class="p">)</span>
+    <span class="n">ahora</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+        <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">,</span>
+        <span class="n">divisa_origen</span><span class="o">=</span><span class="n">origen</span><span class="p">,</span>
+        <span class="n">divisa_destino</span><span class="o">=</span><span class="n">destino</span><span class="p">,</span>
+        <span class="n">codigo_divisa_origen</span><span class="o">=</span><span class="n">origen</span><span class="o">.</span><span class="n">codigo</span><span class="p">,</span>
+        <span class="n">codigo_divisa_destino</span><span class="o">=</span><span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="p">,</span>
+        <span class="n">monto_origen</span><span class="o">=</span><span class="n">monto</span><span class="p">,</span>
+        <span class="n">tasa_compra_aplicada</span><span class="o">=</span><span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span>
+        <span class="n">tasa_venta_aplicada</span><span class="o">=</span><span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span>
+        <span class="n">tasa_cruzada</span><span class="o">=</span><span class="n">tasa_cruzada</span><span class="p">,</span>
+        <span class="n">monto_equivalente_pyg</span><span class="o">=</span><span class="n">monto_equivalente_pyg</span><span class="p">,</span>
+        <span class="n">comision_porcentaje</span><span class="o">=</span><span class="n">porcentaje</span><span class="p">,</span>
+        <span class="n">comision</span><span class="o">=</span><span class="n">comision</span><span class="p">,</span>
+        <span class="n">monto_final</span><span class="o">=</span><span class="n">monto_final</span><span class="p">,</span>
+        <span class="n">estado</span><span class="o">=</span><span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span>
+        <span class="n">confirmado_en</span><span class="o">=</span><span class="n">ahora</span><span class="p">,</span>
+        <span class="n">vence_en</span><span class="o">=</span><span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'Cambio de </span><span class="si">{</span><span class="n">origen</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> a </span><span class="si">{</span><span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> registrado. Estado: Pendiente de confirmación. '</span>
+        <span class="sa">f</span><span class="s1">'Importe a recibir: </span><span class="si">{</span><span class="n">monto_final</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">.'</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:triangulacion'</span><span class="p">)</span></div>
 
 

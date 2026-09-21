@@ -32,11 +32,7 @@ urlpatterns = [
     path('operar/<str:tipo>/', CalculoOperacionView.as_view(), name='operar'),
     path('operar/<str:tipo>/confirmar/', confirmar_calculo_operacion_view, name='confirmar_operacion'),
     path('triangulacion/', TriangulacionOperacionView.as_view(), name='triangulacion'),
-    path(
-        'triangulacion/<uuid:calculo_id>/confirmar/',
-        confirmar_triangulacion_view,
-        name='confirmar_triangulacion',
-    ),
+    path('triangulacion/confirmar/', confirmar_triangulacion_view, name='confirmar_triangulacion'),
     path('cotizaciones/<int:divisa_id>/actualizar/', ActualizarCotizacionView.as_view(), name='actualizar_cotizacion'),
     path('cotizaciones/<int:divisa_id>/historial/', HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),
     path('transacciones/', HistorialTransaccionesView.as_view(), name='historial_transacciones'),

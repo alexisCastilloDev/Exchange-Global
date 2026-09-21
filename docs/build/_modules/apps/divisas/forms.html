@@ -362,6 +362,76 @@
 
 
 
+<div class="viewcode-block" id="ConfirmarTriangulacionForm">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarTriangulacionForm">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfirmarTriangulacionForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Valida los datos ocultos que viajan del cálculo de un cambio a su confirmación.</span>
+
+<span class="sd">    El cálculo previo no persiste nada; estos campos ocultos son la única</span>
+<span class="sd">    forma en la que la confirmación conoce qué se calculó, para poder</span>
+<span class="sd">    revalidar ambas cotizaciones y el tiempo de vigencia antes de crear la</span>
+<span class="sd">    transacción.</span>
+<span class="sd">    """</span>
+
+    <span class="n">divisa_origen</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="p">[],</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
+    <span class="n">divisa_destino</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span><span class="n">choices</span><span class="o">=</span><span class="p">[],</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
+        <span class="n">min_value</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">cotizacion_origen_id</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
+    <span class="n">cotizacion_destino_id</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
+    <span class="n">vence_en_timestamp</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
+
+<div class="viewcode-block" id="ConfirmarTriangulacionForm.__init__">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarTriangulacionForm.__init__">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Acepta cualquier divisa activa distinta del guaraní base."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">opciones</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span> <span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="s1">'PYG'</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa_origen'</span><span class="p">]</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">opciones</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa_destino'</span><span class="p">]</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">opciones</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_divisa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">campo</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la divisa indicada, validando que siga activa."""</span>
+        <span class="n">divisa</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="n">campo</span><span class="p">],</span> <span class="n">activa</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="s1">'PYG'</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">divisa</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'La divisa ya no está disponible. Recalculá la operación.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">divisa</span>
+
+<div class="viewcode-block" id="ConfirmarTriangulacionForm.clean_divisa_origen">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarTriangulacionForm.clean_divisa_origen">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_divisa_origen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la divisa de origen del cambio."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_divisa</span><span class="p">(</span><span class="s1">'divisa_origen'</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConfirmarTriangulacionForm.clean_divisa_destino">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarTriangulacionForm.clean_divisa_destino">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_divisa_destino</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la divisa de destino del cambio."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_divisa</span><span class="p">(</span><span class="s1">'divisa_destino'</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConfirmarTriangulacionForm.clean">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarTriangulacionForm.clean">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Evita confirmar un cambio de una divisa contra sí misma."""</span>
+        <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="n">origen</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'divisa_origen'</span><span class="p">)</span>
+        <span class="n">destino</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'divisa_destino'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">origen</span> <span class="ow">and</span> <span class="n">destino</span> <span class="ow">and</span> <span class="n">origen</span><span class="o">.</span><span class="n">pk</span> <span class="o">==</span> <span class="n">destino</span><span class="o">.</span><span class="n">pk</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Debe seleccionar dos divisas distintas.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cleaned_data</span></div>
+</div>
+
+
+
 <div class="viewcode-block" id="SimulacionDivisasForm">
 <a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SimulacionDivisasForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>

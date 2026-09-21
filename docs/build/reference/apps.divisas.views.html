@@ -288,7 +288,11 @@ cliente.</p>
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">HistorialTransaccionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialTransaccionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
-<p>Lista las transacciones de compra/venta realizadas por los clientes.</p>
+<p>Lista las transacciones de compra, venta y cambio realizadas por los clientes.</p>
+<p>Reúne en una misma lista ordenada por fecha las compras y ventas
+(<code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>) y los cambios entre divisas (<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>),
+con tipo, estado, usuario, cliente activo, divisa, monto, tasa, comisión e
+importe final de cada una.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.context_object_name">
 <span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'transacciones'</span></span><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.context_object_name" title="Link to this definition"></a></dt>
@@ -297,13 +301,7 @@ cliente.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.get_queryset">
 <span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialTransaccionesView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.get_queryset" title="Link to this definition"></a></dt>
-<dd><p>Devuelve todas las transacciones con sus relaciones precargadas.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.model">
-<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.model" title="Link to this definition"></a></dt>
-<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion" title="apps.divisas.models.CalculoOperacion"><code class="xref py py-class docutils literal notranslate"><span class="pre">CalculoOperacion</span></code></a></p>
+<dd><p>Devuelve compras, ventas y cambios de todos los clientes, del más reciente al más antiguo.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -518,6 +516,10 @@ de creación.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">TriangulacionOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#TriangulacionOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TriangulacionOperacionView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
 <p>Calcula el importe de un cambio entre dos divisas extranjeras triangulando por PYG.</p>
+<p>Igual que en la compra y la venta, el cálculo es un Paso 1 efímero: no
+persiste nada y expone los campos ocultos necesarios para confirmarlo en
+un segundo paso (ver <code class="docutils literal notranslate"><span class="pre">confirmar_triangulacion_view</span></code>), que es el que
+registra la transacción.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.TriangulacionOperacionView.get_context_data">
 <span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TriangulacionOperacionView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TriangulacionOperacionView.get_context_data" title="Link to this definition"></a></dt>
@@ -527,7 +529,20 @@ de creación.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.TriangulacionOperacionView.post">
 <span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TriangulacionOperacionView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TriangulacionOperacionView.post" title="Link to this definition"></a></dt>
-<dd><p>Valida datos, verifica ambas cotizaciones y guarda el cálculo.</p>
+<dd><p>Valida datos, verifica ambas cotizaciones y calcula el importe sin persistirlo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con <code class="docutils literal notranslate"><span class="pre">divisa_origen</span></code>,
+<code class="docutils literal notranslate"><span class="pre">divisa_destino</span></code> y <code class="docutils literal notranslate"><span class="pre">monto</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>La pantalla del cambio con el detalle del importe o
+con los errores de validación.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -545,8 +560,25 @@ de creación.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="apps.divisas.views.confirmar_triangulacion_view">
-<span class="sig-name descname"><span class="pre">confirmar_triangulacion_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calculo_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#confirmar_triangulacion_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.confirmar_triangulacion_view" title="Link to this definition"></a></dt>
-<dd><p>Confirma una triangulación vigente o exige recalcular si ya venció.</p>
+<span class="sig-name descname"><span class="pre">confirmar_triangulacion_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#confirmar_triangulacion_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.confirmar_triangulacion_view" title="Link to this definition"></a></dt>
+<dd><p>Revalida el cálculo previo de un cambio y recién ahí crea la transacción.</p>
+<p>Comprueba que no haya vencido el tiempo de reserva y que ambas
+cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el
+importe con las tasas actuales (nunca confía en los montos que viajan
+desde el navegador) y registra el cambio en estado «Pendiente de
+confirmación», a nombre del cliente activo, para que figure en el
+historial de transacciones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con los campos ocultos del cálculo.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección a la pantalla de cambio o al inicio.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
