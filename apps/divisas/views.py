@@ -53,12 +53,42 @@ def _obtener_cotizacion_vigente(divisa):
     return cotizacion
 
 
+def _normalizar_tipo_operacion(tipo):
+    """Normaliza el tipo de operación recibido por URL y valida que exista.
+
+    Args:
+        tipo (str): Tipo indicado en la ruta (por ejemplo ``venta``).
+
+    Returns:
+        str: El tipo en mayúsculas, ``COMPRA`` o ``VENTA``.
+
+    Raises:
+        Http404: Si el tipo no corresponde a una operación conocida.
+    """
+    tipo = tipo.upper()
+    if tipo not in dict(CalculoOperacion.TIPO_CHOICES):
+        raise Http404('El tipo de operación solicitado no existe.')
+    return tipo
+
+
 def _calcular_importe_operacion(tipo, monto, tasa_compra, tasa_venta, cliente=None):
     """Calcula tasa, comisión y total según compra o venta de divisa.
 
-    La comisión aplicada depende del cliente que opera: su comisión
-    personalizada, si tiene una, o la de su segmento (ver
+    En una compra el cliente paga con la tasa de venta de la casa más la
+    comisión; en una venta recibe el monto valuado con la tasa de compra de
+    la casa menos la comisión. La comisión aplicada depende del cliente que
+    opera: su comisión personalizada, si tiene una, o la de su segmento (ver
     ``ConfiguracionComision.porcentaje_para``).
+
+    Args:
+        tipo (str): ``COMPRA`` o ``VENTA``.
+        monto (Decimal): Monto de la divisa extranjera a operar.
+        tasa_compra (Decimal): Tasa de compra vigente de la divisa.
+        tasa_venta (Decimal): Tasa de venta vigente de la divisa.
+        cliente (Cliente): Cliente activo que opera, si lo hay.
+
+    Returns:
+        tuple: ``(tasa_aplicada, porcentaje, comision, monto_final)``.
     """
     tasa_aplicada = tasa_venta if tipo == CalculoOperacion.TIPO_COMPRA else tasa_compra
     bruto = (monto * tasa_aplicada).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
@@ -363,6 +393,13 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
     ``confirmar_calculo_operacion_view``); este cálculo es un Paso 1 efímero,
     igual que el simulador, con la diferencia de que expone los campos ocultos
     necesarios para poder confirmarlo en un segundo paso.
+
+    En una venta (``/divisas/operar/venta/``) el importe a recibir se calcula
+    con la tasa de compra vigente de la divisa, descontando la comisión del
+    cliente activo (ver ``_calcular_importe_operacion``). Un monto inválido
+    (negativo, cero o no numérico), una divisa inactiva o una divisa sin
+    cotización vigente se rechazan con un mensaje y sin generar ningún
+    resultado confirmable.
     """
 
     template_name = 'divisas/calculo_operacion.html'
@@ -377,8 +414,8 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         )
 
     def _tipo(self):
-        """Devuelve el tipo normalizado recibido en la URL."""
-        return self.kwargs['tipo'].upper()
+        """Devuelve el tipo recibido en la URL, respondiendo 404 si no es compra ni venta."""
+        return _normalizar_tipo_operacion(self.kwargs['tipo'])
 
     def _contexto(self, form, resultado=None):
         """Construye el contexto común de la pantalla de operación."""
@@ -396,7 +433,15 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         return context
 
     def post(self, request, *args, **kwargs):
-        """Valida datos y calcula el importe, sin crear todavía la transacción."""
+        """Valida datos y calcula el importe, sin crear todavía la transacción.
+
+        Args:
+            request (HttpRequest): Solicitud POST con ``divisa`` y ``monto``.
+
+        Returns:
+            HttpResponse: La pantalla de operación con el detalle del importe
+            o con los errores de validación.
+        """
         tipo = self._tipo()
         form = CalculoOperacionForm(request.POST, tipo=tipo)
         if not form.is_valid():
@@ -542,9 +587,22 @@ def confirmar_calculo_operacion_view(request, tipo):
     El Paso 1 ("Calcular importe") no persiste nada: viaja como campos
     ocultos. Acá se revalida que la cotización usada siga siendo la vigente y
     que no haya pasado el tiempo de reserva antes de crear el registro, ya
-    directamente en estado "Pendiente de confirmación".
+    directamente en estado "Pendiente de confirmación". Sirve tanto para la
+    compra como para la venta de divisas; la transacción queda registrada
+    con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha
+    de creación.
+
+    Args:
+        request (HttpRequest): Solicitud POST con los campos ocultos del Paso 1.
+        tipo (str): ``compra`` o ``venta``, según la ruta.
+
+    Returns:
+        HttpResponse: Redirección a la pantalla de operación o al inicio.
+
+    Raises:
+        Http404: Si el tipo de la ruta no es compra ni venta.
     """
-    tipo = tipo.upper()
+    tipo = _normalizar_tipo_operacion(tipo)
     if request.method != 'POST':
         return redirect('home')
     roles = request.session.get('keycloak_roles', [])
@@ -572,9 +630,11 @@ def confirmar_calculo_operacion_view(request, tipo):
     divisa = form.cleaned_data['divisa']
     monto = form.cleaned_data['monto']
     cotizacion_actual = divisa.ultima_cotizacion
+    if cotizacion_actual is None:
+        messages.error(request, f'La divisa {divisa.codigo} no tiene cotización disponible.')
+        return redirect('divisas:operar', tipo=tipo.lower())
     vencido = (
         timezone.now().timestamp() >= form.cleaned_data['vence_en_timestamp']
-        or cotizacion_actual is None
         or cotizacion_actual.pk != form.cleaned_data['cotizacion_id']
     )
     if vencido:
@@ -600,11 +660,12 @@ def confirmar_calculo_operacion_view(request, tipo):
         confirmado_en=ahora,
         vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
     )
-    tipo_display = dict(CalculoOperacion.TIPO_CHOICES).get(tipo, tipo)
+    tipo_display = dict(CalculoOperacion.TIPO_CHOICES)[tipo]
+    etiqueta_importe = 'a pagar' if tipo == CalculoOperacion.TIPO_COMPRA else 'a recibir'
     messages.success(
         request,
         f'{tipo_display} de {divisa.codigo} registrada. Estado: Pendiente de confirmación. '
-        f'Importe: {monto_final} PYG.',
+        f'Importe {etiqueta_importe}: {monto_final} PYG.',
     )
     return redirect('divisas:operar', tipo=tipo.lower())
 

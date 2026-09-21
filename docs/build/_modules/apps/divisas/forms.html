@@ -47,6 +47,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -160,8 +161,15 @@
         <span class="k">return</span> <span class="n">option</span>
 
 
+<div class="viewcode-block" id="CalculoOperacionForm">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CalculoOperacionForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Valida el tipo, monto y divisa de una operación cambiaria."""</span>
+<span class="w">    </span><span class="sd">"""Valida el tipo, monto y divisa de una operación de compra o venta.</span>
+
+<span class="sd">    Rechaza montos negativos, en cero o no numéricos, y divisas inactivas o</span>
+<span class="sd">    inexistentes, con mensajes en español. La divisa PYG queda fuera porque es</span>
+<span class="sd">    la moneda contra la que siempre se opera.</span>
+<span class="sd">    """</span>
 
     <span class="n">tipo</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_CHOICES</span><span class="p">,</span>
@@ -173,13 +181,27 @@
         <span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
         <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">NumberInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'step'</span><span class="p">:</span> <span class="s1">'0.01'</span><span class="p">,</span> <span class="s1">'min'</span><span class="p">:</span> <span class="s1">'0.01'</span><span class="p">,</span> <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control ge-form-control'</span><span class="p">}),</span>
+        <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">'required'</span><span class="p">:</span> <span class="s1">'Debe ingresar un monto.'</span><span class="p">,</span>
+            <span class="s1">'invalid'</span><span class="p">:</span> <span class="s1">'El monto debe ser un número válido.'</span><span class="p">,</span>
+            <span class="s1">'min_value'</span><span class="p">:</span> <span class="s1">'El monto debe ser mayor que cero.'</span><span class="p">,</span>
+            <span class="s1">'max_digits'</span><span class="p">:</span> <span class="s1">'El monto supera la cantidad de dígitos permitida.'</span><span class="p">,</span>
+            <span class="s1">'max_decimal_places'</span><span class="p">:</span> <span class="s1">'El monto admite como máximo 2 decimales.'</span><span class="p">,</span>
+            <span class="s1">'max_whole_digits'</span><span class="p">:</span> <span class="s1">'El monto supera la cantidad de dígitos permitida.'</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">)</span>
     <span class="n">divisa</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span>
         <span class="n">label</span><span class="o">=</span><span class="s1">'Divisa'</span><span class="p">,</span>
         <span class="n">choices</span><span class="o">=</span><span class="p">[],</span>
         <span class="n">widget</span><span class="o">=</span><span class="n">DivisaSelect</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-select ge-form-control'</span><span class="p">}),</span>
+        <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">'required'</span><span class="p">:</span> <span class="s1">'Debe seleccionar una divisa.'</span><span class="p">,</span>
+            <span class="s1">'invalid_choice'</span><span class="p">:</span> <span class="s1">'La divisa seleccionada está inactiva o no está disponible para operar.'</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">)</span>
 
+<div class="viewcode-block" id="CalculoOperacionForm.__init__">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.__init__">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">tipo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Carga divisas activas y fija el tipo de operación solicitado."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -192,15 +214,21 @@
         <span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">simbolos</span> <span class="o">=</span> <span class="p">{</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">):</span> <span class="n">divisa</span><span class="o">.</span><span class="n">simbolo</span> <span class="ow">or</span> <span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span> <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="n">divisas</span>
-        <span class="p">}</span>
+        <span class="p">}</span></div>
 
+
+<div class="viewcode-block" id="CalculoOperacionForm.clean_tipo">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.clean_tipo">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean_tipo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Valida que el tipo sea compra o venta."""</span>
         <span class="n">tipo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">tipo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_VENTA</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'El tipo de operación no es válido.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">tipo</span>
+        <span class="k">return</span> <span class="n">tipo</span></div>
 
+
+<div class="viewcode-block" id="CalculoOperacionForm.clean_divisa">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.clean_divisa">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean_divisa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Resuelve una divisa activa distinta del guaraní base."""</span>
         <span class="n">valor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span>
@@ -209,9 +237,13 @@
         <span class="n">divisa</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">valor</span><span class="p">,</span> <span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="s1">'PYG'</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">divisa</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Debe elegir una divisa válida.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">divisa</span>
+        <span class="k">return</span> <span class="n">divisa</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="ConfirmarCalculoOperacionForm">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConfirmarCalculoOperacionForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Valida los datos ocultos que viajan del cálculo previo a la confirmación.</span>
 
@@ -229,23 +261,32 @@
     <span class="n">cotizacion_id</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
     <span class="n">vence_en_timestamp</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">HiddenInput</span><span class="p">())</span>
 
+<div class="viewcode-block" id="ConfirmarCalculoOperacionForm.__init__">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm.__init__">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Acepta cualquier divisa activa distinta del guaraní base."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span> <span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="s1">'PYG'</span><span class="p">)</span>
-        <span class="p">]</span>
+        <span class="p">]</span></div>
 
+
+<div class="viewcode-block" id="ConfirmarCalculoOperacionForm.clean_divisa">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm.clean_divisa">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean_divisa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Resuelve la divisa indicada, validando que siga activa."""</span>
         <span class="n">valor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span>
         <span class="n">divisa</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">valor</span><span class="p">,</span> <span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="s1">'PYG'</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">divisa</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'La divisa ya no está disponible. Recalculá la operación.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">divisa</span>
+        <span class="k">return</span> <span class="n">divisa</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="TriangulacionForm">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TriangulacionForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Valida el monto y las dos divisas extranjeras de un cambio triangulado."""</span>
 
@@ -267,6 +308,8 @@
         <span class="n">widget</span><span class="o">=</span><span class="n">DivisaSelect</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-select ge-form-control'</span><span class="p">}),</span>
     <span class="p">)</span>
 
+<div class="viewcode-block" id="TriangulacionForm.__init__">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.__init__">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Carga las divisas extranjeras activas en ambos selectores."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -278,7 +321,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa_origen'</span><span class="p">]</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">opciones</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa_destino'</span><span class="p">]</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">opciones</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa_origen'</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">simbolos</span> <span class="o">=</span> <span class="n">simbolos</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa_destino'</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">simbolos</span> <span class="o">=</span> <span class="n">simbolos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa_destino'</span><span class="p">]</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">simbolos</span> <span class="o">=</span> <span class="n">simbolos</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_divisa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">campo</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Resuelve y valida una divisa extranjera activa."""</span>
@@ -290,14 +334,22 @@
             <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Debe elegir una divisa válida.'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">divisa</span>
 
+<div class="viewcode-block" id="TriangulacionForm.clean_divisa_origen">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.clean_divisa_origen">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean_divisa_origen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Valida la divisa de origen de la triangulación."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_divisa</span><span class="p">(</span><span class="s1">'divisa_origen'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_divisa</span><span class="p">(</span><span class="s1">'divisa_origen'</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TriangulacionForm.clean_divisa_destino">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.clean_divisa_destino">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean_divisa_destino</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Valida la divisa de destino de la triangulación."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_divisa</span><span class="p">(</span><span class="s1">'divisa_destino'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_divisa</span><span class="p">(</span><span class="s1">'divisa_destino'</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TriangulacionForm.clean">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.clean">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Evita triangular una divisa contra sí misma."""</span>
         <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
@@ -305,7 +357,9 @@
         <span class="n">destino</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'divisa_destino'</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">origen</span> <span class="ow">and</span> <span class="n">destino</span> <span class="ow">and</span> <span class="n">origen</span><span class="o">.</span><span class="n">codigo</span> <span class="o">==</span> <span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Debe seleccionar dos divisas distintas.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">cleaned_data</span>
+        <span class="k">return</span> <span class="n">cleaned_data</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="SimulacionDivisasForm">
@@ -425,9 +479,13 @@
 
 
 
+<div class="viewcode-block" id="ConfiguracionComisionForm">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConfiguracionComisionForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Valida el porcentaje de comisión configurado para un segmento de clientes."""</span>
 
+<div class="viewcode-block" id="ConfiguracionComisionForm.Meta">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.Meta">[documentos]</a>
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Define el modelo y el campo editable de la comisión por segmento."""</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">ConfiguracionComision</span>
@@ -435,14 +493,19 @@
         <span class="n">labels</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'porcentaje'</span><span class="p">:</span> <span class="s1">'Porcentaje de comisión (%)'</span><span class="p">}</span>
         <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">'porcentaje'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">NumberInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'step'</span><span class="p">:</span> <span class="s1">'0.001'</span><span class="p">,</span> <span class="s1">'min'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span> <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control ge-form-control'</span><span class="p">}),</span>
-        <span class="p">}</span>
+        <span class="p">}</span></div>
 
+
+<div class="viewcode-block" id="ConfiguracionComisionForm.clean_porcentaje">
+<a class="viewcode-back" href="../../../reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.clean_porcentaje">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean_porcentaje</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Rechaza porcentajes de comisión negativos."""</span>
         <span class="n">porcentaje</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'porcentaje'</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">porcentaje</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'El porcentaje de comisión no puede ser negativo.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">porcentaje</span>
+        <span class="k">return</span> <span class="n">porcentaje</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="DivisaForm">

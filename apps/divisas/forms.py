@@ -23,7 +23,12 @@ class DivisaSelect(forms.Select):
 
 
 class CalculoOperacionForm(forms.Form):
-    """Valida el tipo, monto y divisa de una operación cambiaria."""
+    """Valida el tipo, monto y divisa de una operación de compra o venta.
+
+    Rechaza montos negativos, en cero o no numéricos, y divisas inactivas o
+    inexistentes, con mensajes en español. La divisa PYG queda fuera porque es
+    la moneda contra la que siempre se opera.
+    """
 
     tipo = forms.ChoiceField(
         choices=CalculoOperacion.TIPO_CHOICES,
@@ -35,11 +40,23 @@ class CalculoOperacionForm(forms.Form):
         max_digits=18,
         decimal_places=2,
         widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'class': 'form-control ge-form-control'}),
+        error_messages={
+            'required': 'Debe ingresar un monto.',
+            'invalid': 'El monto debe ser un número válido.',
+            'min_value': 'El monto debe ser mayor que cero.',
+            'max_digits': 'El monto supera la cantidad de dígitos permitida.',
+            'max_decimal_places': 'El monto admite como máximo 2 decimales.',
+            'max_whole_digits': 'El monto supera la cantidad de dígitos permitida.',
+        },
     )
     divisa = forms.ChoiceField(
         label='Divisa',
         choices=[],
         widget=DivisaSelect(attrs={'class': 'form-select ge-form-control'}),
+        error_messages={
+            'required': 'Debe seleccionar una divisa.',
+            'invalid_choice': 'La divisa seleccionada está inactiva o no está disponible para operar.',
+        },
     )
 
     def __init__(self, *args, tipo=None, **kwargs):

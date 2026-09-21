@@ -47,6 +47,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -191,12 +192,42 @@
     <span class="k">return</span> <span class="n">cotizacion</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalizar_tipo_operacion</span><span class="p">(</span><span class="n">tipo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Normaliza el tipo de operación recibido por URL y valida que exista.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tipo (str): Tipo indicado en la ruta (por ejemplo ``venta``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: El tipo en mayúsculas, ``COMPRA`` o ``VENTA``.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Http404: Si el tipo no corresponde a una operación conocida.</span>
+<span class="sd">    """</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="n">tipo</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">tipo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_CHOICES</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'El tipo de operación solicitado no existe.'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tipo</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_calcular_importe_operacion</span><span class="p">(</span><span class="n">tipo</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="n">tasa_compra</span><span class="p">,</span> <span class="n">tasa_venta</span><span class="p">,</span> <span class="n">cliente</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Calcula tasa, comisión y total según compra o venta de divisa.</span>
 
-<span class="sd">    La comisión aplicada depende del cliente que opera: su comisión</span>
-<span class="sd">    personalizada, si tiene una, o la de su segmento (ver</span>
+<span class="sd">    En una compra el cliente paga con la tasa de venta de la casa más la</span>
+<span class="sd">    comisión; en una venta recibe el monto valuado con la tasa de compra de</span>
+<span class="sd">    la casa menos la comisión. La comisión aplicada depende del cliente que</span>
+<span class="sd">    opera: su comisión personalizada, si tiene una, o la de su segmento (ver</span>
 <span class="sd">    ``ConfiguracionComision.porcentaje_para``).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tipo (str): ``COMPRA`` o ``VENTA``.</span>
+<span class="sd">        monto (Decimal): Monto de la divisa extranjera a operar.</span>
+<span class="sd">        tasa_compra (Decimal): Tasa de compra vigente de la divisa.</span>
+<span class="sd">        tasa_venta (Decimal): Tasa de venta vigente de la divisa.</span>
+<span class="sd">        cliente (Cliente): Cliente activo que opera, si lo hay.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: ``(tasa_aplicada, porcentaje, comision, monto_final)``.</span>
 <span class="sd">    """</span>
     <span class="n">tasa_aplicada</span> <span class="o">=</span> <span class="n">tasa_venta</span> <span class="k">if</span> <span class="n">tipo</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span> <span class="k">else</span> <span class="n">tasa_compra</span>
     <span class="n">bruto</span> <span class="o">=</span> <span class="p">(</span><span class="n">monto</span> <span class="o">*</span> <span class="n">tasa_aplicada</span><span class="p">)</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.01'</span><span class="p">),</span> <span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span><span class="p">)</span>
@@ -363,6 +394,8 @@
 
 
 
+<div class="viewcode-block" id="HistorialTransaccionesView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HistorialTransaccionesView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Lista las transacciones de compra/venta realizadas por los clientes."""</span>
 
@@ -371,25 +404,39 @@
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'transacciones'</span>
     <span class="n">paginate_by</span> <span class="o">=</span> <span class="mi">20</span>
 
+<div class="viewcode-block" id="HistorialTransaccionesView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Autoriza la consulta a administración y análisis cambiario."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
 
+
+<div class="viewcode-block" id="HistorialTransaccionesView.get_queryset">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Devuelve todas las transacciones con sus relaciones precargadas."""</span>
-        <span class="k">return</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">,</span> <span class="s1">'divisa'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">,</span> <span class="s1">'divisa'</span><span class="p">)</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="ConfiguracionComisionListView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConfiguracionComisionListView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Lista el porcentaje de comisión vigente para cada segmento de clientes."""</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/comision_list.html'</span>
 
+<div class="viewcode-block" id="ConfiguracionComisionListView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Permite configurar comisiones a administración y análisis cambiario."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
 
+
+<div class="viewcode-block" id="ConfiguracionComisionListView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Combina cada segmento con su comisión configurada o el valor por defecto."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -411,9 +458,13 @@
             <span class="k">for</span> <span class="n">codigo</span><span class="p">,</span> <span class="n">nombre</span> <span class="ow">in</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">SEGMENTO_CHOICES</span>
         <span class="p">]</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'comision_default'</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMISION_OPERACION_PORCENTAJE</span>
-        <span class="k">return</span> <span class="n">context</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="ActualizarComisionView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ActualizarComisionView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">UpdateView</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Permite crear o actualizar la comisión configurada para un segmento."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">ConfiguracionComision</span>
@@ -421,11 +472,16 @@
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/comision_form.html'</span>
     <span class="n">success_url</span> <span class="o">=</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:comisiones'</span><span class="p">)</span>
 
+<div class="viewcode-block" id="ActualizarComisionView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Permite configurar comisiones a administración y análisis cambiario."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
 
+
+<div class="viewcode-block" id="ActualizarComisionView.get_object">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.get_object">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Recupera la configuración del segmento o construye una nueva."""</span>
         <span class="n">segmento</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'segmento'</span><span class="p">]</span>
@@ -433,14 +489,20 @@
             <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'El segmento solicitado no existe.'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ConfiguracionComision</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">segmento</span><span class="o">=</span><span class="n">segmento</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="ow">or</span> <span class="n">ConfiguracionComision</span><span class="p">(</span>
             <span class="n">segmento</span><span class="o">=</span><span class="n">segmento</span><span class="p">,</span> <span class="n">porcentaje</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMISION_OPERACION_PORCENTAJE</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="ActualizarComisionView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Agrega el nombre legible del segmento al contexto del formulario."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'segmento_nombre'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Cliente</span><span class="o">.</span><span class="n">SEGMENTO_CHOICES</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">segmento</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">context</span>
+        <span class="k">return</span> <span class="n">context</span></div>
 
+
+<div class="viewcode-block" id="ActualizarComisionView.form_valid">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.form_valid">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">form_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Asigna el segmento y el usuario responsable antes de guardar."""</span>
         <span class="n">form</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">segmento</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">segmento</span>
@@ -450,7 +512,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span>
             <span class="sa">f</span><span class="s1">'Comisión de </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">get_segmento_display</span><span class="p">()</span><span class="si">}</span><span class="s1"> actualizada correctamente.'</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:comisiones'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:comisiones'</span><span class="p">)</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="SimulacionDivisasView">
@@ -545,6 +609,8 @@
 
 
 
+<div class="viewcode-block" id="CalculoOperacionView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CalculoOperacionView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Calcula el importe de una compra o venta, como previsualización sin persistir.</span>
 
@@ -552,10 +618,19 @@
 <span class="sd">    ``confirmar_calculo_operacion_view``); este cálculo es un Paso 1 efímero,</span>
 <span class="sd">    igual que el simulador, con la diferencia de que expone los campos ocultos</span>
 <span class="sd">    necesarios para poder confirmarlo en un segundo paso.</span>
+
+<span class="sd">    En una venta (``/divisas/operar/venta/``) el importe a recibir se calcula</span>
+<span class="sd">    con la tasa de compra vigente de la divisa, descontando la comisión del</span>
+<span class="sd">    cliente activo (ver ``_calcular_importe_operacion``). Un monto inválido</span>
+<span class="sd">    (negativo, cero o no numérico), una divisa inactiva o una divisa sin</span>
+<span class="sd">    cotización vigente se rechazan con un mensaje y sin generar ningún</span>
+<span class="sd">    resultado confirmable.</span>
 <span class="sd">    """</span>
 
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/calculo_operacion.html'</span>
 
+<div class="viewcode-block" id="CalculoOperacionView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Permite calcular a los roles que pueden operar con divisas."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
@@ -563,11 +638,12 @@
             <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_tipo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve el tipo normalizado recibido en la URL."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+<span class="w">        </span><span class="sd">"""Devuelve el tipo recibido en la URL, respondiendo 404 si no es compra ni venta."""</span>
+        <span class="k">return</span> <span class="n">_normalizar_tipo_operacion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_contexto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">resultado</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Construye el contexto común de la pantalla de operación."""</span>
@@ -578,14 +654,27 @@
             <span class="s1">'vigencia_segundos'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">,</span>
         <span class="p">}</span>
 
+<div class="viewcode-block" id="CalculoOperacionView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Prepara el formulario para compra o venta."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">CalculoOperacionForm</span><span class="p">(</span><span class="n">tipo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_tipo</span><span class="p">())))</span>
-        <span class="k">return</span> <span class="n">context</span>
+        <span class="k">return</span> <span class="n">context</span></div>
 
+
+<div class="viewcode-block" id="CalculoOperacionView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Valida datos y calcula el importe, sin crear todavía la transacción."""</span>
+<span class="w">        </span><span class="sd">"""Valida datos y calcula el importe, sin crear todavía la transacción.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST con ``divisa`` y ``monto``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: La pantalla de operación con el detalle del importe</span>
+<span class="sd">            o con los errores de validación.</span>
+<span class="sd">        """</span>
         <span class="n">tipo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tipo</span><span class="p">()</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">CalculoOperacionForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">,</span> <span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
@@ -624,14 +713,20 @@
             <span class="s1">'vence_en_timestamp'</span><span class="p">:</span> <span class="n">vence_en</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
             <span class="s1">'cotizacion_id'</span><span class="p">:</span> <span class="n">cotizacion</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">resultado</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">resultado</span><span class="p">))</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="TriangulacionOperacionView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TriangulacionOperacionView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Calcula el importe de un cambio entre dos divisas extranjeras triangulando por PYG."""</span>
 
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/triangulacion.html'</span>
 
+<div class="viewcode-block" id="TriangulacionOperacionView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Permite triangular a los mismos roles habilitados para operar."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
@@ -639,7 +734,8 @@
             <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_contexto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">,</span> <span class="n">calculo</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Construye el contexto común de la pantalla de triangulación."""</span>
@@ -649,12 +745,17 @@
             <span class="s1">'vigencia_segundos'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">,</span>
         <span class="p">}</span>
 
+<div class="viewcode-block" id="TriangulacionOperacionView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Prepara el formulario de cambio entre divisas extranjeras."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">TriangulacionForm</span><span class="p">()))</span>
-        <span class="k">return</span> <span class="n">context</span>
+        <span class="k">return</span> <span class="n">context</span></div>
 
+
+<div class="viewcode-block" id="TriangulacionOperacionView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.post">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Valida datos, verifica ambas cotizaciones y guarda el cálculo."""</span>
         <span class="n">form</span> <span class="o">=</span> <span class="n">TriangulacionForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
@@ -692,9 +793,13 @@
             <span class="n">monto_final</span><span class="o">=</span><span class="n">monto_final</span><span class="p">,</span>
             <span class="n">vence_en</span><span class="o">=</span><span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">calculo</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_to_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contexto</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">calculo</span><span class="p">))</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="confirmar_triangulacion_view">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.confirmar_triangulacion_view">[documentos]</a>
 <span class="nd">@login_required</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">confirmar_triangulacion_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">calculo_id</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Confirma una triangulación vigente o exige recalcular si ya venció."""</span>
@@ -721,9 +826,12 @@
     <span class="n">calculo</span><span class="o">.</span><span class="n">confirmado_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
     <span class="n">calculo</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'confirmado_en'</span><span class="p">])</span>
     <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El cálculo fue confirmado con la tasa vigente.'</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:triangulacion'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:triangulacion'</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="confirmar_calculo_operacion_view">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.confirmar_calculo_operacion_view">[documentos]</a>
 <span class="nd">@login_required</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">confirmar_calculo_operacion_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">tipo</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Revalida el cálculo previo (Paso 1) y recién ahí crea la transacción.</span>
@@ -731,9 +839,22 @@
 <span class="sd">    El Paso 1 ("Calcular importe") no persiste nada: viaja como campos</span>
 <span class="sd">    ocultos. Acá se revalida que la cotización usada siga siendo la vigente y</span>
 <span class="sd">    que no haya pasado el tiempo de reserva antes de crear el registro, ya</span>
-<span class="sd">    directamente en estado "Pendiente de confirmación".</span>
+<span class="sd">    directamente en estado "Pendiente de confirmación". Sirve tanto para la</span>
+<span class="sd">    compra como para la venta de divisas; la transacción queda registrada</span>
+<span class="sd">    con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha</span>
+<span class="sd">    de creación.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        request (HttpRequest): Solicitud POST con los campos ocultos del Paso 1.</span>
+<span class="sd">        tipo (str): ``compra`` o ``venta``, según la ruta.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HttpResponse: Redirección a la pantalla de operación o al inicio.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Http404: Si el tipo de la ruta no es compra ni venta.</span>
 <span class="sd">    """</span>
-    <span class="n">tipo</span> <span class="o">=</span> <span class="n">tipo</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="n">_normalizar_tipo_operacion</span><span class="p">(</span><span class="n">tipo</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s1">'POST'</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
     <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
@@ -761,9 +882,11 @@
     <span class="n">divisa</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span>
     <span class="n">monto</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span>
     <span class="n">cotizacion_actual</span> <span class="o">=</span> <span class="n">divisa</span><span class="o">.</span><span class="n">ultima_cotizacion</span>
+    <span class="k">if</span> <span class="n">cotizacion_actual</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'La divisa </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> no tiene cotización disponible.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:operar'</span><span class="p">,</span> <span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
     <span class="n">vencido</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'vence_en_timestamp'</span><span class="p">]</span>
-        <span class="ow">or</span> <span class="n">cotizacion_actual</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="ow">or</span> <span class="n">cotizacion_actual</span><span class="o">.</span><span class="n">pk</span> <span class="o">!=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'cotizacion_id'</span><span class="p">]</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">vencido</span><span class="p">:</span>
@@ -789,13 +912,15 @@
         <span class="n">confirmado_en</span><span class="o">=</span><span class="n">ahora</span><span class="p">,</span>
         <span class="n">vence_en</span><span class="o">=</span><span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">tipo_display</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_CHOICES</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tipo</span><span class="p">,</span> <span class="n">tipo</span><span class="p">)</span>
+    <span class="n">tipo_display</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_CHOICES</span><span class="p">)[</span><span class="n">tipo</span><span class="p">]</span>
+    <span class="n">etiqueta_importe</span> <span class="o">=</span> <span class="s1">'a pagar'</span> <span class="k">if</span> <span class="n">tipo</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span> <span class="k">else</span> <span class="s1">'a recibir'</span>
     <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span>
         <span class="n">request</span><span class="p">,</span>
         <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">tipo_display</span><span class="si">}</span><span class="s1"> de </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> registrada. Estado: Pendiente de confirmación. '</span>
-        <span class="sa">f</span><span class="s1">'Importe: </span><span class="si">{</span><span class="n">monto_final</span><span class="si">}</span><span class="s1"> PYG.'</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'Importe </span><span class="si">{</span><span class="n">etiqueta_importe</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">monto_final</span><span class="si">}</span><span class="s1"> PYG.'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:operar'</span><span class="p">,</span> <span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:operar'</span><span class="p">,</span> <span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+
 
 
 <div class="viewcode-block" id="AdminDivisasMixin">

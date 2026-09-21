@@ -47,6 +47,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#arquitectura">Arquitectura</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -168,9 +169,15 @@
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.__init__">__init__() (método de AsociarUsuarioClienteForm)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.__init__">(método de CalculoOperacionForm)</a>
+</li>
         <li><a href="reference/apps.clientes.middleware.html#apps.clientes.middleware.ClienteActivoMiddleware.__init__">(método de ClienteActivoMiddleware)</a>
 </li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm.__init__">(método de ConfirmarCalculoOperacionForm)</a>
+</li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.__init__">(método de SimulacionDivisasForm)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.__init__">(método de TriangulacionForm)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -183,11 +190,21 @@
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.activos">activos (atributo de Cliente)</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.actualizado_en">actualizado_en (atributo de MetodoPago)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.actualizado_en">actualizado_en (atributo de ConfiguracionComision)</a>
+
+      <ul>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.actualizado_en">(atributo de MetodoPago)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.actualizado_por">actualizado_por (atributo de ConfiguracionComision)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.actualizado_por_id">actualizado_por_id (atributo de ConfiguracionComision)</a>
 </li>
       <li><a href="reference/apps.users.services.html#apps.users.services.actualizar_roles_de_usuario">actualizar_roles_de_usuario() (en el módulo apps.users.services)</a>
 </li>
       <li><a href="reference/apps.users.services.html#apps.users.services.actualizar_usuario_en_keycloak">actualizar_usuario_en_keycloak() (en el módulo apps.users.services)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView">ActualizarComisionView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView">ActualizarCotizacionView (clase en apps.divisas.views)</a>
 </li>
@@ -279,6 +296,8 @@
         <li><a href="reference/apps.clientes.context_processors.html#module-apps.clientes.context_processors">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     apps.clientes.forms
 
@@ -286,8 +305,6 @@
         <li><a href="reference/apps.clientes.forms.html#module-apps.clientes.forms">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     apps.clientes.middleware
 
@@ -405,7 +422,13 @@
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.base_fields">base_fields (atributo de AsociarUsuarioClienteForm)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.base_fields">(atributo de CalculoOperacionForm)</a>
+</li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.base_fields">(atributo de ClienteForm)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.base_fields">(atributo de ConfiguracionComisionForm)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm.base_fields">(atributo de ConfirmarCalculoOperacionForm)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.base_fields">(atributo de CotizacionForm)</a>
 </li>
@@ -415,6 +438,8 @@
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.base_fields">(atributo de SimulacionDivisasForm)</a>
 </li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.base_fields">(atributo de TriangulacionForm)</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -422,12 +447,32 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion">CalculoOperacion (clase en apps.divisas.models)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.DoesNotExist">CalculoOperacion.DoesNotExist</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.MultipleObjectsReturned">CalculoOperacion.MultipleObjectsReturned</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.NotUpdated">CalculoOperacion.NotUpdated</a>
+</li>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm">CalculoOperacionForm (clase en apps.divisas.forms)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView">CalculoOperacionView (clase en apps.divisas.views)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.calculos_operacion">calculos_operacion (atributo de Cliente)</a>
 
       <ul>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.calculos_operacion">(atributo de Divisa)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion">CalculoTriangulacion (clase en apps.divisas.models)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.DoesNotExist">CalculoTriangulacion.DoesNotExist</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.MultipleObjectsReturned">CalculoTriangulacion.MultipleObjectsReturned</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.NotUpdated">CalculoTriangulacion.NotUpdated</a>
+</li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.cambiar_cliente_view">cambiar_cliente_view() (en el módulo apps.clientes.views)</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.causa">causa (atributo de HistorialBaja)</a>
@@ -443,23 +488,47 @@
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.clean">(método de SimulacionDivisasForm)</a>
 </li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.clean">(método de TriangulacionForm)</a>
+</li>
       </ul></li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.DivisaForm.clean_codigo">clean_codigo() (método de DivisaForm)</a>
 </li>
-      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.clean_divisa">clean_divisa() (método de SimulacionDivisasForm)</a>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.clean_divisa">clean_divisa() (método de CalculoOperacionForm)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm.clean_divisa">(método de ConfirmarCalculoOperacionForm)</a>
 </li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.clean_divisa">(método de SimulacionDivisasForm)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.clean_divisa_destino">clean_divisa_destino() (método de SimulacionDivisasForm)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.clean_divisa_destino">(método de TriangulacionForm)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.clean_divisa_origen">clean_divisa_origen() (método de SimulacionDivisasForm)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.clean_divisa_origen">(método de TriangulacionForm)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.clean_identificador">clean_identificador() (método de ClienteForm)</a>
 </li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.DivisaForm.clean_nombre">clean_nombre() (método de DivisaForm)</a>
 </li>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.clean_porcentaje">clean_porcentaje() (método de ConfiguracionComisionForm)</a>
+</li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.DivisaForm.clean_simbolo">clean_simbolo() (método de DivisaForm)</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.cliente">cliente (atributo de MetodoPago)</a>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.clean_tipo">clean_tipo() (método de CalculoOperacionForm)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.cliente">cliente (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.cliente">(atributo de MetodoPago)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente">Cliente (clase en apps.clientes.models)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.DoesNotExist">Cliente.DoesNotExist</a>
@@ -470,8 +539,12 @@
 </li>
       <li><a href="reference/apps.clientes.context_processors.html#apps.clientes.context_processors.cliente_activo_context">cliente_activo_context() (en el módulo apps.clientes.context_processors)</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.cliente_id">cliente_id (atributo de MetodoPago)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.cliente_id">cliente_id (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.cliente_id">(atributo de MetodoPago)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.ClienteActiveManager">ClienteActiveManager (clase en apps.clientes.models)</a>
 </li>
       <li><a href="reference/apps.clientes.middleware.html#apps.clientes.middleware.ClienteActivoMiddleware">ClienteActivoMiddleware (clase en apps.clientes.middleware)</a>
@@ -480,12 +553,12 @@
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView">ClienteDetailView (clase en apps.clientes.views)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm">ClienteForm (clase en apps.clientes.forms)</a>
 </li>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.Meta">ClienteForm.Meta (clase en apps.clientes.forms)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.SegmentoChoiceField">ClienteForm.SegmentoChoiceField (clase en apps.clientes.forms)</a>
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView">ClienteHistorialBajasView (clase en apps.clientes.views)</a>
@@ -496,7 +569,51 @@
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.codigo">codigo (atributo de Divisa)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.codigo_divisa">codigo_divisa (atributo de CalculoOperacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.codigo_divisa_destino">codigo_divisa_destino (atributo de CalculoTriangulacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.codigo_divisa_origen">codigo_divisa_origen (atributo de CalculoTriangulacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.comision">comision (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.comision">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.comision_personalizada">comision_personalizada (atributo de Cliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.comision_porcentaje">comision_porcentaje (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.comision_porcentaje">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision">ConfiguracionComision (clase en apps.divisas.models)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.DoesNotExist">ConfiguracionComision.DoesNotExist</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.MultipleObjectsReturned">ConfiguracionComision.MultipleObjectsReturned</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.NotUpdated">ConfiguracionComision.NotUpdated</a>
+</li>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm">ConfiguracionComisionForm (clase en apps.divisas.forms)</a>
+</li>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.Meta">ConfiguracionComisionForm.Meta (clase en apps.divisas.forms)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView">ConfiguracionComisionListView (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.confirmado_en">confirmado_en (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.confirmado_en">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.confirmar_calculo_operacion_view">confirmar_calculo_operacion_view() (en el módulo apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.confirmar_triangulacion_view">confirmar_triangulacion_view() (en el módulo apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm">ConfirmarCalculoOperacionForm (clase en apps.divisas.forms)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.context_object_name">context_object_name (atributo de ActualizarCotizacionView)</a>
 
@@ -508,6 +625,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaListView.context_object_name">(atributo de DivisaListView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.context_object_name">(atributo de HistorialCotizacionesView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.context_object_name">(atributo de HistorialTransaccionesView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.context_object_name">(atributo de PanelAdminView)</a>
 </li>
@@ -528,8 +647,14 @@
 </li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta">CotizacionForm.Meta (clase en apps.divisas.forms)</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.creado_en">creado_en (atributo de MetodoPago)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.creado_en">creado_en (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.creado_en">(atributo de CalculoTriangulacion)</a>
 </li>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.creado_en">(atributo de MetodoPago)</a>
+</li>
+      </ul></li>
       <li><a href="reference/global_exchange.auth.html#global_exchange.auth.CustomOIDCBackend.create_user">create_user() (método de CustomOIDCBackend)</a>
 
       <ul>
@@ -551,7 +676,13 @@
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.declared_fields">declared_fields (atributo de AsociarUsuarioClienteForm)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.declared_fields">(atributo de CalculoOperacionForm)</a>
+</li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.declared_fields">(atributo de ClienteForm)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.declared_fields">(atributo de ConfiguracionComisionForm)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm.declared_fields">(atributo de ConfirmarCalculoOperacionForm)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.declared_fields">(atributo de CotizacionForm)</a>
 </li>
@@ -561,13 +692,19 @@
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.declared_fields">(atributo de SimulacionDivisasForm)</a>
 </li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.declared_fields">(atributo de TriangulacionForm)</a>
+</li>
       </ul></li>
       <li><a href="reference/apps.authentication.apps.html#apps.authentication.apps.AuthenticationConfig.default_auto_field">default_auto_field (atributo de AuthenticationConfig)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.dispatch">dispatch() (método de HistorialCotizacionesView)</a>
 </li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.divisa">divisa (atributo de Cotizacion)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.divisa">divisa (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.divisa">(atributo de Cotizacion)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa">Divisa (clase en apps.divisas.models)</a>
 </li>
   </ul></td>
@@ -578,7 +715,19 @@
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.NotUpdated">Divisa.NotUpdated</a>
 </li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.divisa_id">divisa_id (atributo de Cotizacion)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.divisa_destino">divisa_destino (atributo de CalculoTriangulacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.divisa_destino_id">divisa_destino_id (atributo de CalculoTriangulacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.divisa_id">divisa_id (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.divisa_id">(atributo de Cotizacion)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.divisa_origen">divisa_origen (atributo de CalculoTriangulacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.divisa_origen_id">divisa_origen_id (atributo de CalculoTriangulacion)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaCreateView">DivisaCreateView (clase en apps.divisas.views)</a>
 </li>
@@ -604,15 +753,27 @@
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.email">email (atributo de Cliente)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.en_lista">en_lista() (en el módulo apps.authentication.templatetags.ge_extras)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.entidad_financiera">entidad_financiera (atributo de MetodoPago)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.es_predeterminado">es_predeterminado (atributo de MetodoPago)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.backends.html#apps.authentication.backends.es_rol_tecnico">es_rol_tecnico() (en el módulo apps.authentication.backends)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.esta_vencido">esta_vencido (CalculoOperacion propiedad)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.esta_vencido">(CalculoTriangulacion propiedad)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.estado">estado (atributo de CalculoOperacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.ESTADO_CHOICES">ESTADO_CHOICES (atributo de CalculoOperacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.ESTADO_PENDIENTE">ESTADO_PENDIENTE (atributo de CalculoOperacion)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -629,6 +790,8 @@
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.Meta.fields">fields (atributo de ClienteForm.Meta)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.Meta.fields">(atributo de ConfiguracionComisionForm.Meta)</a>
+</li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta.fields">(atributo de CotizacionForm.Meta)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.DivisaForm.Meta.fields">(atributo de DivisaForm.Meta)</a>
@@ -636,13 +799,15 @@
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.Meta.fields">(atributo de MetodoPagoForm.Meta)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.filter_users_by_claims">filter_users_by_claims() (método de KeycloakOIDCAuthenticationBackend)</a>
 </li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.form_class">form_class (atributo de ActualizarCotizacionView)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.form_class">form_class (atributo de ActualizarComisionView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.form_class">(atributo de ActualizarCotizacionView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.form_class">(atributo de ClienteCreateView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.form_class">(atributo de ClienteUpdateView)</a>
@@ -652,9 +817,11 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaUpdateView.form_class">(atributo de DivisaUpdateView)</a>
 </li>
       </ul></li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.form_valid">form_valid() (método de ActualizarCotizacionView)</a>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.form_valid">form_valid() (método de ActualizarComisionView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.form_valid">(método de ActualizarCotizacionView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaCreateView.form_valid">(método de DivisaCreateView)</a>
 </li>
       </ul></li>
@@ -674,12 +841,18 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView.get">(método de DivisaSoftDeleteView)</a>
 </li>
       </ul></li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_context_data">get_context_data() (método de ActualizarCotizacionView)</a>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.get_context_data">get_context_data() (método de ActualizarComisionView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_context_data">(método de ActualizarCotizacionView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView.get_context_data">(método de CalculoOperacionView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView.get_context_data">(método de ClienteDetailView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView.get_context_data">(método de ClienteHistorialBajasView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView.get_context_data">(método de ConfiguracionComisionListView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_context_data">(método de HistorialCotizacionesView)</a>
 </li>
@@ -687,31 +860,73 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.get_context_data">(método de SimulacionDivisasView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.get_context_data">(método de TriangulacionOperacionView)</a>
+</li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_estado_display">get_estado_display() (método de CalculoOperacion)</a>
+</li>
       <li><a href="reference/apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.get_item">get_item() (en el módulo apps.authentication.templatetags.ge_extras)</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_next_by_actualizado_en">get_next_by_actualizado_en() (método de MetodoPago)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.get_next_by_actualizado_en">get_next_by_actualizado_en() (método de ConfiguracionComision)</a>
+
+      <ul>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_next_by_actualizado_en">(método de MetodoPago)</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_next_by_creado_en">get_next_by_creado_en() (método de MetodoPago)</a>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_next_by_creado_en">get_next_by_creado_en() (método de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.get_next_by_creado_en">(método de CalculoTriangulacion)</a>
 </li>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_next_by_creado_en">(método de MetodoPago)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_next_by_fecha">get_next_by_fecha() (método de HistorialBaja)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.get_next_by_fecha_actualizacion">get_next_by_fecha_actualizacion() (método de Cotizacion)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.get_next_by_fecha_registro">get_next_by_fecha_registro() (método de Cliente)</a>
 </li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_object">get_object() (método de ActualizarCotizacionView)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_next_by_vence_en">get_next_by_vence_en() (método de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.get_next_by_vence_en">(método de CalculoTriangulacion)</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_previous_by_actualizado_en">get_previous_by_actualizado_en() (método de MetodoPago)</a>
+      </ul></li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.get_object">get_object() (método de ActualizarComisionView)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_object">(método de ActualizarCotizacionView)</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_previous_by_creado_en">get_previous_by_creado_en() (método de MetodoPago)</a>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.get_previous_by_actualizado_en">get_previous_by_actualizado_en() (método de ConfiguracionComision)</a>
+
+      <ul>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_previous_by_actualizado_en">(método de MetodoPago)</a>
 </li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_previous_by_creado_en">get_previous_by_creado_en() (método de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.get_previous_by_creado_en">(método de CalculoTriangulacion)</a>
+</li>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_previous_by_creado_en">(método de MetodoPago)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_previous_by_fecha">get_previous_by_fecha() (método de HistorialBaja)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.get_previous_by_fecha_actualizacion">get_previous_by_fecha_actualizacion() (método de Cotizacion)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.get_previous_by_fecha_registro">get_previous_by_fecha_registro() (método de Cliente)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_previous_by_vence_en">get_previous_by_vence_en() (método de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.get_previous_by_vence_en">(método de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.ClienteActiveManager.get_queryset">get_queryset() (método de ClienteActiveManager)</a>
 
       <ul>
@@ -719,15 +934,19 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_queryset">(método de HistorialCotizacionesView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.get_queryset">(método de HistorialTransaccionesView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_queryset">(método de PanelAdminView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.get_queryset">(método de TasasVigentesListView)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.get_segmento_display">get_segmento_display() (método de Cliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.get_segmento_display">(método de ConfiguracionComision)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.get_success_message">get_success_message() (método de ClienteCreateView)</a>
 
       <ul>
@@ -737,6 +956,8 @@
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.get_tipo_cliente_display">get_tipo_cliente_display() (método de Cliente)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_tipo_cuenta_display">get_tipo_cuenta_display() (método de MetodoPago)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_tipo_display">get_tipo_display() (método de CalculoOperacion)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_tipo_medio_display">get_tipo_medio_display() (método de MetodoPago)</a>
 </li>
@@ -821,15 +1042,17 @@
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja">HistorialBaja (clase en apps.authentication.models)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.DoesNotExist">HistorialBaja.DoesNotExist</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.MultipleObjectsReturned">HistorialBaja.MultipleObjectsReturned</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.NotUpdated">HistorialBaja.NotUpdated</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView">HistorialCotizacionesView (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView">HistorialTransaccionesView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/global_exchange.views.html#global_exchange.views.home">home() (en el módulo global_exchange.views)</a>
 </li>
@@ -839,9 +1062,15 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.id">id (atributo de Cliente)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.id">id (atributo de CalculoOperacion)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.id">(atributo de CalculoTriangulacion)</a>
+</li>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.id">(atributo de Cliente)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.id">(atributo de ConfiguracionComision)</a>
+</li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.id">(atributo de Cotizacion)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.id">(atributo de Divisa)</a>
@@ -875,8 +1104,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField.label_from_instance">label_from_instance() (método de AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField)</a>
 </li>
-      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta.labels">labels (atributo de CotizacionForm.Meta)</a>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.Meta.labels">labels (atributo de ConfiguracionComisionForm.Meta)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta.labels">(atributo de CotizacionForm.Meta)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.users.views.html#apps.users.views.lista_usuarios_view">lista_usuarios_view() (en el módulo apps.users.views)</a>
@@ -892,7 +1125,13 @@
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.media">media (AsociarUsuarioClienteForm propiedad)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.media">(CalculoOperacionForm propiedad)</a>
+</li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.media">(ClienteForm propiedad)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.media">(ConfiguracionComisionForm propiedad)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm.media">(ConfirmarCalculoOperacionForm propiedad)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.media">(CotizacionForm propiedad)</a>
 </li>
@@ -901,6 +1140,8 @@
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.media">(MetodoPagoForm propiedad)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.media">(SimulacionDivisasForm propiedad)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.media">(TriangulacionForm propiedad)</a>
 </li>
       </ul></li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.metodo_pago_create">metodo_pago_create() (en el módulo apps.clientes.views)</a>
@@ -929,9 +1170,11 @@
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.metodos_pago">metodos_pago (atributo de Cliente)</a>
 </li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.model">model (atributo de ActualizarCotizacionView)</a>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.model">model (atributo de ActualizarComisionView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.model">(atributo de ActualizarCotizacionView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.model">(atributo de ClienteCreateView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteDetailView.model">(atributo de ClienteDetailView)</a>
@@ -941,6 +1184,8 @@
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteHistorialBajasView.model">(atributo de ClienteHistorialBajasView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.model">(atributo de ClienteUpdateView)</a>
+</li>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.Meta.model">(atributo de ConfiguracionComisionForm.Meta)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta.model">(atributo de CotizacionForm.Meta)</a>
 </li>
@@ -954,6 +1199,8 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.model">(atributo de HistorialCotizacionesView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.model">(atributo de HistorialTransaccionesView)</a>
+</li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.Meta.model">(atributo de MetodoPagoForm.Meta)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.model">(atributo de PanelAdminView)</a>
@@ -961,6 +1208,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.model">(atributo de TasasVigentesListView)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
 
@@ -1038,6 +1287,20 @@
         <li><a href="reference/global_exchange.wsgi.html#module-global_exchange.wsgi">global_exchange.wsgi</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.monto_equivalente_pyg">monto_equivalente_pyg (atributo de CalculoTriangulacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.monto_final">monto_final (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.monto_final">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.monto_origen">monto_origen (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.monto_origen">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -1070,9 +1333,15 @@
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.objects">objects (atributo de Cliente)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.objects">objects (atributo de CalculoOperacion)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.objects">(atributo de CalculoTriangulacion)</a>
+</li>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.objects">(atributo de Cliente)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.objects">(atributo de ConfiguracionComision)</a>
+</li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.objects">(atributo de Cotizacion)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.objects">(atributo de Divisa)</a>
@@ -1096,8 +1365,12 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.paginate_by">paginate_by (atributo de PanelAdminView)</a>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.paginate_by">paginate_by (atributo de HistorialTransaccionesView)</a>
+
+      <ul>
+        <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.paginate_by">(atributo de PanelAdminView)</a>
 </li>
+      </ul></li>
       <li><a href="reference/global_exchange.views.html#global_exchange.views.panel_protegido">panel_protegido() (en el módulo global_exchange.views)</a>
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView">PanelAdminView (clase en apps.clientes.views)</a>
@@ -1106,11 +1379,17 @@
 </li>
       <li><a href="reference/apps.authentication.context_processors.html#apps.authentication.context_processors.permisos_ui_context">permisos_ui_context() (en el módulo apps.authentication.context_processors)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.porcentaje">porcentaje (atributo de ConfiguracionComision)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.porcentaje_para">porcentaje_para() (método estático de ConfiguracionComision)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.post">post() (método de AsociarUsuariosClienteView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView.post">(método de CalculoOperacionView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteSoftDeleteView.post">(método de ClienteSoftDeleteView)</a>
 </li>
         <li><a href="reference/apps.authentication.views.html#apps.authentication.views.CustomOIDCLogoutView.post">(método de CustomOIDCLogoutView)</a>
@@ -1118,6 +1397,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView.post">(método de DivisaSoftDeleteView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.post">(método de SimulacionDivisasView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.post">(método de TriangulacionOperacionView)</a>
 </li>
       </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.primer_usuario">primer_usuario (Cliente propiedad)</a>
@@ -1159,7 +1440,11 @@
 </li>
       </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.segmento">segmento (atributo de Cliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.segmento">(atributo de ConfiguracionComision)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.SEGMENTO_CHOICES">SEGMENTO_CHOICES (atributo de Cliente)</a>
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.seleccionar_cliente_view">seleccionar_cliente_view() (en el módulo apps.clientes.views)</a>
@@ -1176,9 +1461,11 @@
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.soft_delete">soft_delete() (método de Cliente)</a>
 </li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.success_url">success_url (atributo de ActualizarCotizacionView)</a>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.success_url">success_url (atributo de ActualizarComisionView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.success_url">(atributo de ActualizarCotizacionView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.success_url">(atributo de ClienteCreateView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.success_url">(atributo de ClienteUpdateView)</a>
@@ -1194,16 +1481,28 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.tasa_aplicada">tasa_aplicada (atributo de CalculoOperacion)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.tasa_compra">tasa_compra (atributo de Cotizacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.tasa_compra_aplicada">tasa_compra_aplicada (atributo de CalculoTriangulacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.tasa_cruzada">tasa_cruzada (atributo de CalculoTriangulacion)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.tasa_venta">tasa_venta (atributo de Cotizacion)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.tasa_venta_aplicada">tasa_venta_aplicada (atributo de CalculoTriangulacion)</a>
+</li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView">TasasVigentesListView (clase en apps.divisas.views)</a>
 </li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.template_name">template_name (atributo de ActualizarCotizacionView)</a>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.template_name">template_name (atributo de ActualizarComisionView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.template_name">(atributo de ActualizarCotizacionView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.template_name">(atributo de AsociarUsuariosClienteView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView.template_name">(atributo de CalculoOperacionView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.template_name">(atributo de ClienteCreateView)</a>
 </li>
@@ -1213,6 +1512,8 @@
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.template_name">(atributo de ClienteUpdateView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView.template_name">(atributo de ConfiguracionComisionListView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaCreateView.template_name">(atributo de DivisaCreateView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaListView.template_name">(atributo de DivisaListView)</a>
@@ -1221,19 +1522,27 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.template_name">(atributo de HistorialCotizacionesView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.template_name">(atributo de HistorialTransaccionesView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.template_name">(atributo de PanelAdminView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.template_name">(atributo de SimulacionDivisasView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.template_name">(atributo de TasasVigentesListView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.template_name">(atributo de TriangulacionOperacionView)</a>
+</li>
       </ul></li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.test_func">test_func() (método de ActualizarCotizacionView)</a>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.test_func">test_func() (método de ActualizarComisionView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.test_func">(método de ActualizarCotizacionView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin.test_func">(método de AdminDivisasMixin)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.test_func">(método de AsociarUsuariosClienteView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.CalculoOperacionView.test_func">(método de CalculoOperacionView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteCreateView.test_func">(método de ClienteCreateView)</a>
 </li>
@@ -1245,7 +1554,11 @@
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.ClienteUpdateView.test_func">(método de ClienteUpdateView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView.test_func">(método de ConfiguracionComisionListView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.test_func">(método de HistorialCotizacionesView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView.test_func">(método de HistorialTransaccionesView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.test_func">(método de PanelAdminView)</a>
 </li>
@@ -1253,23 +1566,35 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.test_func">(método de TasasVigentesListView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.test_func">(método de TriangulacionOperacionView)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.tipo">tipo (atributo de CalculoOperacion)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.TIPO_BILLETERA">TIPO_BILLETERA (atributo de MetodoPago)</a>
 </li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.TIPO_CAMBIO">TIPO_CAMBIO (atributo de SimulacionDivisasForm)</a>
 </li>
-      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.TIPO_CHOICES">TIPO_CHOICES (atributo de SimulacionDivisasForm)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.TIPO_CHOICES">TIPO_CHOICES (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.TIPO_CHOICES">(atributo de SimulacionDivisasForm)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.tipo_cliente">tipo_cliente (atributo de Cliente)</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.TIPO_CLIENTE">TIPO_CLIENTE (atributo de HistorialBaja)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.TIPO_CLIENTE_CHOICES">TIPO_CLIENTE_CHOICES (atributo de Cliente)</a>
 </li>
-      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.TIPO_COMPRA">TIPO_COMPRA (atributo de SimulacionDivisasForm)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.TIPO_COMPRA">TIPO_COMPRA (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.TIPO_COMPRA">(atributo de SimulacionDivisasForm)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.tipo_cuenta">tipo_cuenta (atributo de MetodoPago)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.TIPO_CUENTA_CHOICES">TIPO_CUENTA_CHOICES (atributo de MetodoPago)</a>
@@ -1294,11 +1619,19 @@
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.TIPO_USUARIO">TIPO_USUARIO (atributo de HistorialBaja)</a>
 </li>
-      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.TIPO_VENTA">TIPO_VENTA (atributo de SimulacionDivisasForm)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.TIPO_VENTA">TIPO_VENTA (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.TIPO_VENTA">(atributo de SimulacionDivisasForm)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.triangulaciones_destino">triangulaciones_destino (atributo de Divisa)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.triangulaciones_origen">triangulaciones_origen (atributo de Divisa)</a>
+</li>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm">TriangulacionForm (clase en apps.divisas.forms)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView">TriangulacionOperacionView (clase en apps.divisas.views)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1318,16 +1651,28 @@
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.user">user (atributo de Cliente)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.user_id">user_id (atributo de Cliente)</a>
 </li>
       <li><a href="reference/apps.users.apps.html#apps.users.apps.UsersConfig">UsersConfig (clase en apps.users.apps)</a>
 </li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario">usuario (atributo de Cotizacion)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.usuario">usuario (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.usuario">(atributo de CalculoTriangulacion)</a>
 </li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario_id">usuario_id (atributo de Cotizacion)</a>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario">(atributo de Cotizacion)</a>
 </li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.usuario_id">usuario_id (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.usuario_id">(atributo de CalculoTriangulacion)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario_id">(atributo de Cotizacion)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.usuarios">usuarios (atributo de Cliente)</a>
 </li>
   </ul></td>
@@ -1338,6 +1683,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.ClienteForm.SegmentoChoiceField.valid_value">valid_value() (método de ClienteForm.SegmentoChoiceField)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.vence_en">vence_en (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.vence_en">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.verify_claims">verify_claims() (método de KeycloakOIDCAuthenticationBackend)</a>
@@ -1348,9 +1699,11 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta.widgets">widgets (atributo de CotizacionForm.Meta)</a>
+      <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.Meta.widgets">widgets (atributo de ConfiguracionComisionForm.Meta)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta.widgets">(atributo de CotizacionForm.Meta)</a>
+</li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.Meta.widgets">(atributo de MetodoPagoForm.Meta)</a>
 </li>
       </ul></li>
