@@ -23,7 +23,12 @@ class DivisaSelect(forms.Select):
 
 
 class CalculoOperacionForm(forms.Form):
-    """Valida el tipo, monto y divisa de una operación cambiaria."""
+    """Valida el tipo, monto y divisa de una operación de compra o venta.
+
+    Rechaza montos negativos, en cero o no numéricos, y divisas inactivas o
+    inexistentes, con mensajes en español. La divisa PYG queda fuera porque es
+    la moneda contra la que siempre se opera.
+    """
 
     tipo = forms.ChoiceField(
         choices=CalculoOperacion.TIPO_CHOICES,
@@ -35,11 +40,23 @@ class CalculoOperacionForm(forms.Form):
         max_digits=18,
         decimal_places=2,
         widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'class': 'form-control ge-form-control'}),
+        error_messages={
+            'required': 'Debe ingresar un monto.',
+            'invalid': 'El monto debe ser un número válido.',
+            'min_value': 'El monto debe ser mayor que cero.',
+            'max_digits': 'El monto supera la cantidad de dígitos permitida.',
+            'max_decimal_places': 'El monto admite como máximo 2 decimales.',
+            'max_whole_digits': 'El monto supera la cantidad de dígitos permitida.',
+        },
     )
     divisa = forms.ChoiceField(
         label='Divisa',
         choices=[],
         widget=DivisaSelect(attrs={'class': 'form-select ge-form-control'}),
+        error_messages={
+            'required': 'Debe seleccionar una divisa.',
+            'invalid_choice': 'La divisa seleccionada está inactiva o no está disponible para operar.',
+        },
     )
 
     def __init__(self, *args, tipo=None, **kwargs):
@@ -166,6 +183,61 @@ class TriangulacionForm(forms.Form):
         origen = cleaned_data.get('divisa_origen')
         destino = cleaned_data.get('divisa_destino')
         if origen and destino and origen.codigo == destino.codigo:
+            raise forms.ValidationError('Debe seleccionar dos divisas distintas.')
+        return cleaned_data
+
+
+class ConfirmarTriangulacionForm(forms.Form):
+    """Valida los datos ocultos que viajan del cálculo de un cambio a su confirmación.
+
+    El cálculo previo no persiste nada; estos campos ocultos son la única
+    forma en la que la confirmación conoce qué se calculó, para poder
+    revalidar ambas cotizaciones y el tiempo de vigencia antes de crear la
+    transacción.
+    """
+
+    divisa_origen = forms.ChoiceField(choices=[], widget=forms.HiddenInput())
+    divisa_destino = forms.ChoiceField(choices=[], widget=forms.HiddenInput())
+    monto = forms.DecimalField(
+        min_value=0.01, max_digits=18, decimal_places=2, widget=forms.HiddenInput()
+    )
+    cotizacion_origen_id = forms.IntegerField(widget=forms.HiddenInput())
+    cotizacion_destino_id = forms.IntegerField(widget=forms.HiddenInput())
+    vence_en_timestamp = forms.FloatField(widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        """Acepta cualquier divisa activa distinta del guaraní base."""
+        super().__init__(*args, **kwargs)
+        opciones = [
+            (str(divisa.pk), divisa.codigo)
+            for divisa in Divisa.objects.filter(activa=True).exclude(codigo='PYG')
+        ]
+        self.fields['divisa_origen'].choices = opciones
+        self.fields['divisa_destino'].choices = opciones
+
+    def _clean_divisa(self, campo):
+        """Resuelve la divisa indicada, validando que siga activa."""
+        divisa = Divisa.objects.filter(
+            pk=self.cleaned_data[campo], activa=True
+        ).exclude(codigo='PYG').first()
+        if not divisa:
+            raise forms.ValidationError('La divisa ya no está disponible. Recalculá la operación.')
+        return divisa
+
+    def clean_divisa_origen(self):
+        """Resuelve la divisa de origen del cambio."""
+        return self._clean_divisa('divisa_origen')
+
+    def clean_divisa_destino(self):
+        """Resuelve la divisa de destino del cambio."""
+        return self._clean_divisa('divisa_destino')
+
+    def clean(self):
+        """Evita confirmar un cambio de una divisa contra sí misma."""
+        cleaned_data = super().clean()
+        origen = cleaned_data.get('divisa_origen')
+        destino = cleaned_data.get('divisa_destino')
+        if origen and destino and origen.pk == destino.pk:
             raise forms.ValidationError('Debe seleccionar dos divisas distintas.')
         return cleaned_data
 

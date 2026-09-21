@@ -13,9 +13,33 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.HistorialTransaccionesView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ConfiguracionComisionListView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ActualizarComisionView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.SimulacionDivisasView
    :members:
    :show-inheritance:
+
+.. autoclass:: apps.divisas.views.CalculoOperacionView
+   :members:
+   :show-inheritance:
+
+.. autofunction:: apps.divisas.views.confirmar_calculo_operacion_view
+
+.. autoclass:: apps.divisas.views.TriangulacionOperacionView
+   :members:
+   :show-inheritance:
+
+.. autofunction:: apps.divisas.views.confirmar_triangulacion_view
 
 .. autoclass:: apps.divisas.views.AdminDivisasMixin
    :members:

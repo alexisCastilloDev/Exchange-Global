@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#arquitectura">Arquitectura</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -364,7 +365,7 @@ Sphinx.</p>
 <span class="cm">Cálculo del importe de un cambio entre dos divisas extranjeras, triangulando por PYG.</span>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
-<span class="cm">Contexto esperado: form, calculo y vigencia_segundos.</span>
+<span class="cm">Contexto esperado: form, resultado y vigencia_segundos.</span>
 <span class="cm">--&gt;</span>
 {% extends 'base.html' %}
 </pre></div>
@@ -433,7 +434,7 @@ Sphinx.</p>
 </pre></div>
 </div>
 <div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
-<span class="cm">Historial de transacciones de compra/venta para administración y análisis.</span>
+<span class="cm">Historial de transacciones de compra, venta y cambio para administración y análisis.</span>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
 <span class="cm">Contexto esperado: transacciones, page_obj, is_paginated.</span>

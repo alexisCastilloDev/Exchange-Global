@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#arquitectura">Arquitectura</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -168,17 +169,62 @@ de Keycloak.</p></li>
 <p>Las divisas activas se muestran en las tasas vigentes. Los roles autorizados
 pueden registrar nuevas cotizaciones, que conservan el usuario y la fecha de
 actualización.</p>
-<p>Un cliente puede calcular tres tipos de operación, cada una persistida con
-tasa, comisión y vencimiento hasta que se confirma o se recalcula:</p>
+<p>Un cliente con un cliente activo seleccionado puede realizar tres tipos de
+operación. El cálculo previo («Calcular importe») no persiste nada: solo
+muestra el detalle y su vigencia. La operación se registra recién al
+confirmar el importe, siempre en estado «Pendiente de confirmación» y a
+nombre del cliente activo:</p>
 <ul class="simple">
 <li><p><strong>Compra/venta contra PYG</strong>: usa la tasa de venta (compra) o de compra
-(venta) de la divisa elegida.</p></li>
+(venta) de la divisa elegida. Al confirmarse crea un
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.CalculoOperacion</span></code>.</p></li>
 <li><p><strong>Cambio entre dos divisas extranjeras</strong>: triangula por PYG, usando la
 tasa de compra de la divisa origen y la tasa de venta de la divisa
-destino, y expone la tasa cruzada implícita resultante.</p></li>
+destino, y expone la tasa cruzada implícita resultante. Al confirmarse
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.confirmar_triangulacion_view</span></code>) crea un
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.CalculoTriangulacion</span></code> con las tasas, el equivalente
+en guaraníes, la comisión y el importe a recibir en la divisa destino. Si
+venció el tiempo de reserva o cambió la cotización de cualquiera de las
+dos divisas, exige recalcular.</p></li>
 </ul>
+<p>Los administradores y analistas cambiarios consultan todas las transacciones
+(compras, ventas y cambios) en el historial de transacciones
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.HistorialTransaccionesView</span></code>), con tipo, estado,
+usuario, cliente, divisa, monto, tasa aplicada, comisión e importe final.</p>
 <p>El simulador de conversión ofrece los mismos tres modos (compra, venta,
 cambio) sin persistir el resultado ni exigir confirmación.</p>
+</section>
+<section id="venta-de-divisas">
+<h2>Venta de divisas<a class="headerlink" href="#venta-de-divisas" title="Link to this heading"></a></h2>
+<p>Un cliente vende divisas desde <code class="docutils literal notranslate"><span class="pre">/divisas/operar/venta/</span></code> (vista
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.CalculoOperacionView</span></code> con <code class="docutils literal notranslate"><span class="pre">tipo=venta</span></code>). El flujo es:</p>
+<ol class="arabic simple">
+<li><p><strong>Cálculo (Paso 1).</strong> El cliente indica divisa y monto. El importe a
+recibir se calcula con la tasa de compra vigente de la divisa, restando la
+comisión del cliente activo
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views._calcular_importe_operacion</span></code>, mismo cálculo de la
+HU «Cálculo del importe de la operación»). No se crea ninguna
+transacción todavía.</p></li>
+<li><p><strong>Confirmación (Paso 2).</strong> <code class="docutils literal notranslate"><span class="pre">apps.divisas.views.confirmar_calculo_operacion_view</span></code>
+revalida que el cálculo no haya vencido y que la cotización siga siendo
+la usada, recalcula el importe con la tasa actual y crea el
+<code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> con estado «Pendiente de confirmación».</p></li>
+</ol>
+<p>Cada transacción registra el tipo de operación («Venta»), el cliente activo,
+la divisa, el monto y la fecha de creación. La operación se rechaza, sin
+crear ninguna transacción, cuando:</p>
+<ul class="simple">
+<li><p>El monto es negativo, cero o no numérico
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.forms.CalculoOperacionForm</span></code>).</p></li>
+<li><p>La divisa está inactiva o no existe: el formulario la rechaza con el
+mensaje «La divisa seleccionada está inactiva o no está disponible para
+operar», tanto en el cálculo como en la confirmación.</p></li>
+<li><p>La divisa no tiene cotización vigente: se informa que no hay cotización
+disponible.</p></li>
+<li><p>El tipo de la ruta no es <code class="docutils literal notranslate"><span class="pre">compra</span></code> ni <code class="docutils literal notranslate"><span class="pre">venta</span></code> (responde 404).</p></li>
+<li><p>El usuario no es un cliente asociado o no tiene un cliente activo
+seleccionado.</p></li>
+</ul>
 </section>
 <section id="comision-configurable">
 <h2>Comisión configurable<a class="headerlink" href="#comision-configurable" title="Link to this heading"></a></h2>

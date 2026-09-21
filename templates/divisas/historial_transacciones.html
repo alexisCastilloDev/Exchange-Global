@@ -1,5 +1,5 @@
 <!--
-Historial de transacciones de compra/venta para administración y análisis.
+Historial de transacciones de compra, venta y cambio para administración y análisis.
 Hereda de: base.html.
 Bloques definidos: title, content.
 Contexto esperado: transacciones, page_obj, is_paginated.
@@ -12,7 +12,7 @@ Contexto esperado: transacciones, page_obj, is_paginated.
 <div class="ge-page-header">
     <div>
         <h1>Historial de transacciones</h1>
-        <p>Consultá las operaciones de compra y venta realizadas por los clientes.</p>
+        <p>Consultá las operaciones de compra, venta y cambio de divisas realizadas por los clientes.</p>
     </div>
 </div>
 
@@ -28,21 +28,27 @@ Contexto esperado: transacciones, page_obj, is_paginated.
                     <th>Cliente</th>
                     <th>Divisa</th>
                     <th>Monto</th>
+                    <th>Tasa aplicada</th>
+                    <th>Comisión</th>
+                    <th>Importe final</th>
                 </tr>
             </thead>
             <tbody>
                 {% for transaccion in transacciones %}
                 <tr>
                     <td>{{ transaccion.creado_en|date:"d/m/Y H:i" }}</td>
-                    <td>{{ transaccion.get_tipo_display }}</td>
-                    <td>{{ transaccion.get_estado_display }}</td>
+                    <td>{{ transaccion.tipo }}</td>
+                    <td>{{ transaccion.estado }}</td>
                     <td>{{ transaccion.usuario.get_full_name|default:transaccion.usuario.username }}</td>
                     <td>{{ transaccion.cliente }}</td>
-                    <td>{{ transaccion.codigo_divisa }}</td>
+                    <td>{{ transaccion.divisa }}</td>
                     <td class="ge-num">{{ transaccion.monto_origen|floatformat:2 }}</td>
+                    <td class="ge-num">{{ transaccion.tasa|floatformat:transaccion.decimales_tasa }}</td>
+                    <td class="ge-num">{{ transaccion.comision|floatformat:2 }} {{ transaccion.moneda_final }}</td>
+                    <td class="ge-num">{{ transaccion.monto_final|floatformat:2 }} {{ transaccion.moneda_final }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-center py-4 text-muted">Todavía no hay transacciones registradas.</td></tr>
+                <tr><td colspan="10" class="text-center py-4 text-muted">Todavía no hay transacciones registradas.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

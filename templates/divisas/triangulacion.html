@@ -2,7 +2,7 @@
 Cálculo del importe de un cambio entre dos divisas extranjeras, triangulando por PYG.
 Hereda de: base.html.
 Bloques definidos: title, content.
-Contexto esperado: form, calculo y vigencia_segundos.
+Contexto esperado: form, resultado y vigencia_segundos.
 -->
 {% extends 'base.html' %}
 
@@ -61,22 +61,28 @@ Contexto esperado: form, calculo y vigencia_segundos.
                     <span class="ge-eyebrow">Paso 2</span>
                     <h2>Detalle del importe</h2>
                 </div>
-                {% if calculo %}<span class="badge-activo">Tasa reservada</span>{% endif %}
+                {% if resultado %}<span class="badge-activo">Tasa reservada</span>{% endif %}
             </div>
-            {% if calculo %}
+            {% if resultado %}
                 <div class="operation-summary">
-                    <div class="operation-summary__row"><span class="operation-summary__label">Operación: </span><strong class="operation-summary__value">{{ calculo.codigo_divisa_origen }} → {{ calculo.codigo_divisa_destino }}</strong></div>
-                    <div class="operation-summary__row"><span class="operation-summary__label">Monto origen: </span><strong class="operation-summary__value">{{ calculo.monto_origen|floatformat:2 }} {{ calculo.codigo_divisa_origen }}</strong></div>
-                    <div class="operation-summary__row"><span class="operation-summary__label">Tasa de compra ({{ calculo.codigo_divisa_origen }}): </span><strong class="operation-summary__value">{{ calculo.tasa_compra_aplicada|floatformat:2 }} PYG</strong></div>
-                    <div class="operation-summary__row"><span class="operation-summary__label">Tasa de venta ({{ calculo.codigo_divisa_destino }}): </span><strong class="operation-summary__value">{{ calculo.tasa_venta_aplicada|floatformat:2 }} PYG</strong></div>
-                    <div class="operation-summary__row"><span class="operation-summary__label">Tasa cruzada implícita: </span><strong class="operation-summary__value">1 {{ calculo.codigo_divisa_origen }} = {{ calculo.tasa_cruzada|floatformat:6 }} {{ calculo.codigo_divisa_destino }}</strong></div>
-                    <div class="operation-summary__row"><span class="operation-summary__label">Equivalente en guaraníes: </span><strong class="operation-summary__value">{{ calculo.monto_equivalente_pyg|floatformat:2 }} PYG</strong></div>
-                    <div class="operation-summary__row"><span class="operation-summary__label">Comisión ({{ calculo.comision_porcentaje|floatformat:2 }}%): </span><strong class="operation-summary__value">{{ calculo.comision|floatformat:2 }} {{ calculo.codigo_divisa_destino }}</strong></div>
-                    <div class="operation-summary__row operation-summary__row--total"><span class="operation-summary__label">Importe a recibir: </span><strong class="operation-summary__value">{{ calculo.monto_final|floatformat:2 }} {{ calculo.codigo_divisa_destino }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Operación: </span><strong class="operation-summary__value">{{ resultado.codigo_divisa_origen }} → {{ resultado.codigo_divisa_destino }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Monto origen: </span><strong class="operation-summary__value">{{ resultado.monto_origen|floatformat:2 }} {{ resultado.codigo_divisa_origen }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Tasa de compra ({{ resultado.codigo_divisa_origen }}): </span><strong class="operation-summary__value">{{ resultado.tasa_compra_aplicada|floatformat:2 }} PYG</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Tasa de venta ({{ resultado.codigo_divisa_destino }}): </span><strong class="operation-summary__value">{{ resultado.tasa_venta_aplicada|floatformat:2 }} PYG</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Tasa cruzada implícita: </span><strong class="operation-summary__value">1 {{ resultado.codigo_divisa_origen }} = {{ resultado.tasa_cruzada|floatformat:6 }} {{ resultado.codigo_divisa_destino }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Equivalente en guaraníes: </span><strong class="operation-summary__value">{{ resultado.monto_equivalente_pyg|floatformat:2 }} PYG</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Comisión ({{ resultado.comision_porcentaje|floatformat:2 }}%): </span><strong class="operation-summary__value">{{ resultado.comision|floatformat:2 }} {{ resultado.codigo_divisa_destino }}</strong></div>
+                    <div class="operation-summary__row operation-summary__row--total"><span class="operation-summary__label">Importe a recibir: </span><strong class="operation-summary__value">{{ resultado.monto_final|floatformat:2 }} {{ resultado.codigo_divisa_destino }}</strong></div>
                 </div>
-                <div class="operation-expiry mt-3"><i class="bi bi-hourglass-split me-1"></i> Válido hasta {{ calculo.vence_en|date:'d/m/Y H:i:s' }}.</div>
-                <form method="post" action="{% url 'divisas:confirmar_triangulacion' calculo.id %}" class="mt-3">
+                <div class="operation-expiry mt-3"><i class="bi bi-hourglass-split me-1"></i> Válido hasta {{ resultado.vence_en|date:'d/m/Y H:i:s' }}.</div>
+                <form method="post" action="{% url 'divisas:confirmar_triangulacion' %}" class="mt-3">
                     {% csrf_token %}
+                    <input type="hidden" name="divisa_origen" value="{{ resultado.divisa_origen.pk }}">
+                    <input type="hidden" name="divisa_destino" value="{{ resultado.divisa_destino.pk }}">
+                    <input type="hidden" name="monto" value="{{ resultado.monto_origen }}">
+                    <input type="hidden" name="cotizacion_origen_id" value="{{ resultado.cotizacion_origen_id }}">
+                    <input type="hidden" name="cotizacion_destino_id" value="{{ resultado.cotizacion_destino_id }}">
+                    <input type="hidden" name="vence_en_timestamp" value="{{ resultado.vence_en_timestamp }}">
                     <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i> Confirmar importe</button>
                 </form>
             {% else %}

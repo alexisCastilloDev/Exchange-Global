@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -235,7 +236,12 @@
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.forms.html">apps.divisas.forms module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm"><code class="docutils literal notranslate"><span class="pre">CalculoOperacionForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm"><code class="docutils literal notranslate"><span class="pre">ConfirmarCalculoOperacionForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm"><code class="docutils literal notranslate"><span class="pre">TriangulacionForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.ConfirmarTriangulacionForm"><code class="docutils literal notranslate"><span class="pre">ConfirmarTriangulacionForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm"><code class="docutils literal notranslate"><span class="pre">SimulacionDivisasForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComisionForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.DivisaForm"><code class="docutils literal notranslate"><span class="pre">DivisaForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.CotizacionForm"><code class="docutils literal notranslate"><span class="pre">CotizacionForm</span></code></a></li>
 </ul>
@@ -243,6 +249,9 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html">apps.divisas.models module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa"><code class="docutils literal notranslate"><span class="pre">Divisa</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion"><code class="docutils literal notranslate"><span class="pre">Cotizacion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.ConfiguracionComision"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComision</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.urls.html">apps.divisas.urls module</a></li>
@@ -250,7 +259,14 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.TasasVigentesListView"><code class="docutils literal notranslate"><span class="pre">TasasVigentesListView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView"><code class="docutils literal notranslate"><span class="pre">HistorialTransaccionesView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComisionListView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarComisionView"><code class="docutils literal notranslate"><span class="pre">ActualizarComisionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView"><code class="docutils literal notranslate"><span class="pre">SimulacionDivisasView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.CalculoOperacionView"><code class="docutils literal notranslate"><span class="pre">CalculoOperacionView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.confirmar_calculo_operacion_view"><code class="docutils literal notranslate"><span class="pre">confirmar_calculo_operacion_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView"><code class="docutils literal notranslate"><span class="pre">TriangulacionOperacionView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.confirmar_triangulacion_view"><code class="docutils literal notranslate"><span class="pre">confirmar_triangulacion_view()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin"><code class="docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaListView"><code class="docutils literal notranslate"><span class="pre">DivisaListView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaCreateView"><code class="docutils literal notranslate"><span class="pre">DivisaCreateView</span></code></a></li>

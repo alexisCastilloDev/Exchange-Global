@@ -191,7 +191,23 @@ class ConfiguracionComision(models.Model):
 
 
 class CalculoTriangulacion(models.Model):
-    """Conserva el resultado de un cambio entre dos divisas extranjeras vía PYG."""
+    """Representa un cambio entre dos divisas extranjeras vía PYG ya confirmado.
+
+    Igual que en ``CalculoOperacion``, el cálculo previo es solo una
+    previsualización y no se persiste: el registro se crea cuando el cliente
+    confirma el importe (ver ``confirmar_triangulacion_view``), siempre en
+    estado "Pendiente de confirmación" y a nombre del cliente activo. Así el
+    cambio aparece en el historial de transacciones junto con las compras y
+    ventas. ``TIPO_DISPLAY`` es el nombre del tipo de operación que muestra
+    el historial.
+    """
+
+    TIPO_DISPLAY = 'Cambio'
+
+    ESTADO_PENDIENTE = 'PENDIENTE_CONFIRMACION'
+    ESTADO_CHOICES = [
+        (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     usuario = models.ForeignKey(
@@ -199,6 +215,13 @@ class CalculoTriangulacion(models.Model):
         on_delete=models.CASCADE,
         related_name='triangulaciones',
     )
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.PROTECT,
+        related_name='calculos_triangulacion',
+        verbose_name='Cliente',
+    )
+    estado = models.CharField(max_length=25, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
     divisa_origen = models.ForeignKey(
         Divisa,
         on_delete=models.PROTECT,

@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -205,6 +206,21 @@ object the first time, the query is executed.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.models.Cliente.calculos_operacion">
 <span class="sig-name descname"><span class="pre">calculos_operacion</span></span><a class="headerlink" href="#apps.clientes.models.Cliente.calculos_operacion" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.Cliente.calculos_triangulacion">
+<span class="sig-name descname"><span class="pre">calculos_triangulacion</span></span><a class="headerlink" href="#apps.clientes.models.Cliente.calculos_triangulacion" title="Link to this definition"></a></dt>
 <dd><p>Accessor to the related objects manager on the reverse side of a
 many-to-one relation.</p>
 <p>In the example:</p>
