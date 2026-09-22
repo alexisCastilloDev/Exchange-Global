@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -292,7 +293,11 @@ cliente.</p>
 <p>Reúne en una misma lista ordenada por fecha las compras y ventas
 (<code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>) y los cambios entre divisas (<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>),
 con tipo, estado, usuario, cliente activo, divisa, monto, tasa, comisión e
-importe final de cada una.</p>
+importe final de cada una. El estado que se muestra es el «efectivo»
+(<code class="docutils literal notranslate"><span class="pre">get_estado_efectivo_display</span></code>): si una transacción sigue «Pendiente de
+confirmación» en la base de datos pero ya venció el tiempo para
+confirmarla, se ve como «Vencida» aunque todavía nadie haya vuelto a
+abrir su pantalla de confirmación para que eso quede guardado.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.context_object_name">
 <span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'transacciones'</span></span><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.context_object_name" title="Link to this definition"></a></dt>
@@ -491,7 +496,8 @@ que no haya pasado el tiempo de reserva antes de crear el registro, ya
 directamente en estado «Pendiente de confirmación». Sirve tanto para la
 compra como para la venta de divisas; la transacción queda registrada
 con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha
-de creación.</p>
+de creación, para que el cliente la revise y la confirme o cancele en
+<code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionOperacionView</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parámetros<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -500,7 +506,9 @@ de creación.</p>
 </ul>
 </dd>
 <dt class="field-even">Devuelve<span class="colon">:</span></dt>
-<dd class="field-even"><p>Redirección a la pantalla de operación o al inicio.</p>
+<dd class="field-even"><p>Redirección a la pantalla de confirmación de la
+transacción recién creada, o al inicio si algo falla antes de
+crearla.</p>
 </dd>
 <dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
 <dd class="field-odd"><p>HttpResponse</p>
@@ -566,14 +574,15 @@ con los errores de validación.</p>
 cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el
 importe con las tasas actuales (nunca confía en los montos que viajan
 desde el navegador) y registra el cambio en estado «Pendiente de
-confirmación», a nombre del cliente activo, para que figure en el
-historial de transacciones.</p>
+confirmación», a nombre del cliente activo, para que el cliente lo revise
+y lo confirme o cancele en <code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionCambioView</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parámetros<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con los campos ocultos del cálculo.</p>
 </dd>
 <dt class="field-even">Devuelve<span class="colon">:</span></dt>
-<dd class="field-even"><p>Redirección a la pantalla de cambio o al inicio.</p>
+<dd class="field-even"><p>Redirección a la pantalla de confirmación del cambio
+recién creado, o al inicio si algo falla antes de crearlo.</p>
 </dd>
 <dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
 <dd class="field-odd"><p>HttpResponse</p>

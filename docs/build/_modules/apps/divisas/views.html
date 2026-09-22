@@ -49,6 +49,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -159,6 +160,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.forms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalculoOperacionForm</span><span class="p">,</span>
     <span class="n">ConfiguracionComisionForm</span><span class="p">,</span>
+    <span class="n">ConfiguracionVigenciaForm</span><span class="p">,</span>
     <span class="n">ConfirmarCalculoOperacionForm</span><span class="p">,</span>
     <span class="n">ConfirmarTriangulacionForm</span><span class="p">,</span>
     <span class="n">CotizacionForm</span><span class="p">,</span>
@@ -170,6 +172,7 @@
     <span class="n">CalculoOperacion</span><span class="p">,</span>
     <span class="n">CalculoTriangulacion</span><span class="p">,</span>
     <span class="n">ConfiguracionComision</span><span class="p">,</span>
+    <span class="n">ConfiguracionVigencia</span><span class="p">,</span>
     <span class="n">Cotizacion</span><span class="p">,</span>
     <span class="n">Divisa</span><span class="p">,</span>
 <span class="p">)</span>
@@ -403,7 +406,11 @@
 <span class="sd">    Reúne en una misma lista ordenada por fecha las compras y ventas</span>
 <span class="sd">    (``CalculoOperacion``) y los cambios entre divisas (``CalculoTriangulacion``),</span>
 <span class="sd">    con tipo, estado, usuario, cliente activo, divisa, monto, tasa, comisión e</span>
-<span class="sd">    importe final de cada una.</span>
+<span class="sd">    importe final de cada una. El estado que se muestra es el "efectivo"</span>
+<span class="sd">    (``get_estado_efectivo_display``): si una transacción sigue "Pendiente de</span>
+<span class="sd">    confirmación" en la base de datos pero ya venció el tiempo para</span>
+<span class="sd">    confirmarla, se ve como "Vencida" aunque todavía nadie haya vuelto a</span>
+<span class="sd">    abrir su pantalla de confirmación para que eso quede guardado.</span>
 <span class="sd">    """</span>
 
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/historial_transacciones.html'</span>
@@ -424,7 +431,7 @@
         <span class="k">return</span> <span class="p">{</span>
             <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
             <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">(),</span>
-            <span class="s1">'estado'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">(),</span>
+            <span class="s1">'estado'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">get_estado_efectivo_display</span><span class="p">(),</span>
             <span class="s1">'usuario'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
             <span class="s1">'cliente'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
             <span class="s1">'divisa'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">codigo_divisa</span><span class="p">,</span>
@@ -442,7 +449,7 @@
         <span class="k">return</span> <span class="p">{</span>
             <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
             <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">TIPO_DISPLAY</span><span class="p">,</span>
-            <span class="s1">'estado'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">(),</span>
+            <span class="s1">'estado'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">get_estado_efectivo_display</span><span class="p">(),</span>
             <span class="s1">'usuario'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
             <span class="s1">'cliente'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
             <span class="s1">'divisa'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_origen</span><span class="si">}</span><span class="s1"> → </span><span class="si">{</span><span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
@@ -701,7 +708,7 @@
             <span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span>
             <span class="s1">'tipo_operacion'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tipo</span><span class="p">(),</span>
             <span class="s1">'resultado'</span><span class="p">:</span> <span class="n">resultado</span><span class="p">,</span>
-            <span class="s1">'vigencia_segundos'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">,</span>
+            <span class="s1">'vigencia_segundos'</span><span class="p">:</span> <span class="n">ConfiguracionVigencia</span><span class="o">.</span><span class="n">vigencia_calculo_segundos</span><span class="p">(),</span>
         <span class="p">}</span>
 
 <div class="viewcode-block" id="CalculoOperacionView.get_context_data">
@@ -749,7 +756,7 @@
             <span class="n">tipo</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="n">tasa_compra</span><span class="p">,</span> <span class="n">tasa_venta</span><span class="p">,</span> <span class="n">cliente_activo</span>
         <span class="p">)</span>
         <span class="n">ahora</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-        <span class="n">vence_en</span> <span class="o">=</span> <span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">)</span>
+        <span class="n">vence_en</span> <span class="o">=</span> <span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">ConfiguracionVigencia</span><span class="o">.</span><span class="n">vigencia_calculo_segundos</span><span class="p">())</span>
         <span class="n">resultado</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span>
             <span class="s1">'divisa'</span><span class="p">:</span> <span class="n">divisa</span><span class="p">,</span>
@@ -798,7 +805,7 @@
         <span class="k">return</span> <span class="p">{</span>
             <span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span>
             <span class="s1">'resultado'</span><span class="p">:</span> <span class="n">resultado</span><span class="p">,</span>
-            <span class="s1">'vigencia_segundos'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">,</span>
+            <span class="s1">'vigencia_segundos'</span><span class="p">:</span> <span class="n">ConfiguracionVigencia</span><span class="o">.</span><span class="n">vigencia_calculo_segundos</span><span class="p">(),</span>
         <span class="p">}</span>
 
 <div class="viewcode-block" id="TriangulacionOperacionView.get_context_data">
@@ -845,7 +852,7 @@
         <span class="n">monto_equivalente_pyg</span><span class="p">,</span> <span class="n">tasa_cruzada</span><span class="p">,</span> <span class="n">porcentaje</span><span class="p">,</span> <span class="n">comision</span><span class="p">,</span> <span class="n">monto_final</span> <span class="o">=</span> <span class="n">_calcular_triangulacion</span><span class="p">(</span>
             <span class="n">monto</span><span class="p">,</span> <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span> <span class="n">cliente_activo</span>
         <span class="p">)</span>
-        <span class="n">vence_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">)</span>
+        <span class="n">vence_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">ConfiguracionVigencia</span><span class="o">.</span><span class="n">vigencia_calculo_segundos</span><span class="p">())</span>
         <span class="n">resultado</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">'divisa_origen'</span><span class="p">:</span> <span class="n">origen</span><span class="p">,</span>
             <span class="s1">'divisa_destino'</span><span class="p">:</span> <span class="n">destino</span><span class="p">,</span>
@@ -869,6 +876,89 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfirmarTransaccionCambioView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra el resumen de un cambio pendiente y permite confirmarlo o cancelarlo.</span>
+
+<span class="sd">    Implementa la HU "Confirmación de operación cambiaria" para los cambios</span>
+<span class="sd">    entre divisas: el cliente ve el resumen completo de una transacción en</span>
+<span class="sd">    estado "Pendiente de confirmación" y decide si la confirma (si las tasas</span>
+<span class="sd">    vigentes no cambiaron desde el cálculo inicial) o la cancela.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Permite revisar el cambio solo a los roles que pueden operar."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Recupera el cambio del usuario autenticado o responde 404."""</span>
+        <span class="k">return</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">CalculoTriangulacion</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'pk'</span><span class="p">],</span> <span class="n">usuario</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el resumen completo del cambio pendiente.</span>
+
+<span class="sd">        Si el tiempo para confirmarlo ya venció (por ejemplo, el cliente</span>
+<span class="sd">        cerró la pestaña sin decidir nada), lo marca "Vencida" en este mismo</span>
+<span class="sd">        acceso, antes de mostrarlo.</span>
+<span class="sd">        """</span>
+        <span class="n">transaccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object</span><span class="p">()</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">marcar_vencida_si_corresponde</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'divisas/confirmar_transaccion_cambio.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'transaccion'</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Confirma o cancela el cambio según la acción elegida.</span>
+
+<span class="sd">        Antes de procesar la acción, revisa si el tiempo para confirmar ya</span>
+<span class="sd">        venció (ya sea recién ahora o desde una visita anterior) y, de ser</span>
+<span class="sd">        así, bloquea la acción en vez de procesarla.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST con el campo ``accion``</span>
+<span class="sd">                (``confirmar`` o ``cancelar``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección a la misma pantalla con el resultado.</span>
+<span class="sd">        """</span>
+        <span class="n">transaccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object</span><span class="p">()</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">marcar_vencida_si_corresponde</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">!=</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">ESTADO_VENCIDA</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="n">request</span><span class="p">,</span>
+                    <span class="s1">'El tiempo para confirmar este cambio venció. Debe recalcular la operación.'</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Este cambio ya fue procesado.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion_cambio'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">accion</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'accion'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">accion</span> <span class="o">==</span> <span class="s1">'cancelar'</span><span class="p">:</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">ESTADO_CANCELADA</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El cambio fue cancelado.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion_cambio'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">accion</span> <span class="o">==</span> <span class="s1">'confirmar'</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tasas_vigentes_cambiaron</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="n">request</span><span class="p">,</span>
+                    <span class="s1">'Las tasas vigentes cambiaron desde el cálculo inicial. Debe recalcular el cambio.'</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion_cambio'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">ESTADO_CONFIRMADA</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">confirmado_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'confirmado_en'</span><span class="p">])</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El cambio fue confirmado.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion_cambio'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Acción no reconocida.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion_cambio'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="confirmar_triangulacion_view">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.confirmar_triangulacion_view">[documentos]</a>
 <span class="nd">@login_required</span>
@@ -879,14 +969,15 @@
 <span class="sd">    cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el</span>
 <span class="sd">    importe con las tasas actuales (nunca confía en los montos que viajan</span>
 <span class="sd">    desde el navegador) y registra el cambio en estado "Pendiente de</span>
-<span class="sd">    confirmación", a nombre del cliente activo, para que figure en el</span>
-<span class="sd">    historial de transacciones.</span>
+<span class="sd">    confirmación", a nombre del cliente activo, para que el cliente lo revise</span>
+<span class="sd">    y lo confirme o cancele en ``ConfirmarTransaccionCambioView``.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        request (HttpRequest): Solicitud POST con los campos ocultos del cálculo.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        HttpResponse: Redirección a la pantalla de cambio o al inicio.</span>
+<span class="sd">        HttpResponse: Redirección a la pantalla de confirmación del cambio</span>
+<span class="sd">        recién creado, o al inicio si algo falla antes de crearlo.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s1">'POST'</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
@@ -935,7 +1026,7 @@
         <span class="n">monto</span><span class="p">,</span> <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span> <span class="n">cliente_activo</span>
     <span class="p">)</span>
     <span class="n">ahora</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-    <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">transaccion</span> <span class="o">=</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
         <span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
         <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">,</span>
         <span class="n">divisa_origen</span><span class="o">=</span><span class="n">origen</span><span class="p">,</span>
@@ -951,16 +1042,100 @@
         <span class="n">comision</span><span class="o">=</span><span class="n">comision</span><span class="p">,</span>
         <span class="n">monto_final</span><span class="o">=</span><span class="n">monto_final</span><span class="p">,</span>
         <span class="n">estado</span><span class="o">=</span><span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span>
-        <span class="n">confirmado_en</span><span class="o">=</span><span class="n">ahora</span><span class="p">,</span>
-        <span class="n">vence_en</span><span class="o">=</span><span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">),</span>
+        <span class="n">vence_en</span><span class="o">=</span><span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">ConfiguracionVigencia</span><span class="o">.</span><span class="n">vigencia_confirmacion_segundos</span><span class="p">()),</span>
     <span class="p">)</span>
     <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span>
         <span class="n">request</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s1">'Cambio de </span><span class="si">{</span><span class="n">origen</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> a </span><span class="si">{</span><span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> registrado. Estado: Pendiente de confirmación. '</span>
-        <span class="sa">f</span><span class="s1">'Importe a recibir: </span><span class="si">{</span><span class="n">monto_final</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">.'</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'Cambio de </span><span class="si">{</span><span class="n">origen</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> a </span><span class="si">{</span><span class="n">destino</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> registrado. Revisá el resumen para confirmarlo.'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:triangulacion'</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion_cambio'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span></div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfirmarTransaccionOperacionView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra el resumen de una compra o venta pendiente y permite confirmarla o cancelarla.</span>
+
+<span class="sd">    Implementa la HU "Confirmación de operación cambiaria": el cliente ve el</span>
+<span class="sd">    resumen completo (tipo de operación, divisa, monto, tasa aplicada,</span>
+<span class="sd">    comisión y monto final) de una transacción en estado "Pendiente de</span>
+<span class="sd">    confirmación" y decide si la confirma (si la tasa vigente no cambió desde</span>
+<span class="sd">    el cálculo inicial, pasa a "Confirmada" y se registra la fecha y hora de</span>
+<span class="sd">    confirmación) o la cancela manualmente (pasa a "Cancelada" y no se</span>
+<span class="sd">    procesa más).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Permite revisar la transacción solo a los roles que pueden operar."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Recupera la transacción del usuario autenticado o responde 404."""</span>
+        <span class="k">return</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">CalculoOperacion</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'pk'</span><span class="p">],</span> <span class="n">usuario</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el resumen completo de la transacción pendiente.</span>
+
+<span class="sd">        Si el tiempo para confirmarla ya venció (por ejemplo, el cliente</span>
+<span class="sd">        cerró la pestaña sin decidir nada), la marca "Vencida" en este mismo</span>
+<span class="sd">        acceso, antes de mostrarla.</span>
+<span class="sd">        """</span>
+        <span class="n">transaccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object</span><span class="p">()</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">marcar_vencida_si_corresponde</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'divisas/confirmar_transaccion.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'transaccion'</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Confirma o cancela la transacción según la acción elegida.</span>
+
+<span class="sd">        Antes de procesar la acción, revisa si el tiempo para confirmar ya</span>
+<span class="sd">        venció (ya sea recién ahora o desde una visita anterior) y, de ser</span>
+<span class="sd">        así, bloquea la acción en vez de procesarla.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST con el campo ``accion``</span>
+<span class="sd">                (``confirmar`` o ``cancelar``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección a la misma pantalla con el resultado.</span>
+<span class="sd">        """</span>
+        <span class="n">transaccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object</span><span class="p">()</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">marcar_vencida_si_corresponde</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">!=</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_VENCIDA</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="n">request</span><span class="p">,</span>
+                    <span class="s1">'El tiempo para confirmar esta operación venció. Debe recalcular la operación.'</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Esta transacción ya fue procesada.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">accion</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'accion'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">accion</span> <span class="o">==</span> <span class="s1">'cancelar'</span><span class="p">:</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_CANCELADA</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'La operación fue cancelada.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">accion</span> <span class="o">==</span> <span class="s1">'confirmar'</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_vigente_cambio</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="n">request</span><span class="p">,</span>
+                    <span class="s1">'La tasa vigente cambió desde el cálculo inicial. Debe recalcular la operación.'</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_CONFIRMADA</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">confirmado_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'confirmado_en'</span><span class="p">])</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'La operación fue confirmada.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Acción no reconocida.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="confirmar_calculo_operacion_view">
@@ -975,14 +1150,17 @@
 <span class="sd">    directamente en estado "Pendiente de confirmación". Sirve tanto para la</span>
 <span class="sd">    compra como para la venta de divisas; la transacción queda registrada</span>
 <span class="sd">    con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha</span>
-<span class="sd">    de creación.</span>
+<span class="sd">    de creación, para que el cliente la revise y la confirme o cancele en</span>
+<span class="sd">    ``ConfirmarTransaccionOperacionView``.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        request (HttpRequest): Solicitud POST con los campos ocultos del Paso 1.</span>
 <span class="sd">        tipo (str): ``compra`` o ``venta``, según la ruta.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        HttpResponse: Redirección a la pantalla de operación o al inicio.</span>
+<span class="sd">        HttpResponse: Redirección a la pantalla de confirmación de la</span>
+<span class="sd">        transacción recién creada, o al inicio si algo falla antes de</span>
+<span class="sd">        crearla.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        Http404: Si el tipo de la ruta no es compra ni venta.</span>
@@ -1030,7 +1208,7 @@
         <span class="n">tipo</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="n">cotizacion_actual</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span> <span class="n">cotizacion_actual</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span> <span class="n">cliente_activo</span>
     <span class="p">)</span>
     <span class="n">ahora</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-    <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">transaccion</span> <span class="o">=</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
         <span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
         <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">,</span>
         <span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="p">,</span>
@@ -1042,17 +1220,14 @@
         <span class="n">comision</span><span class="o">=</span><span class="n">comision</span><span class="p">,</span>
         <span class="n">monto_final</span><span class="o">=</span><span class="n">monto_final</span><span class="p">,</span>
         <span class="n">estado</span><span class="o">=</span><span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span>
-        <span class="n">confirmado_en</span><span class="o">=</span><span class="n">ahora</span><span class="p">,</span>
-        <span class="n">vence_en</span><span class="o">=</span><span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">),</span>
+        <span class="n">vence_en</span><span class="o">=</span><span class="n">ahora</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">ConfiguracionVigencia</span><span class="o">.</span><span class="n">vigencia_confirmacion_segundos</span><span class="p">()),</span>
     <span class="p">)</span>
     <span class="n">tipo_display</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_CHOICES</span><span class="p">)[</span><span class="n">tipo</span><span class="p">]</span>
-    <span class="n">etiqueta_importe</span> <span class="o">=</span> <span class="s1">'a pagar'</span> <span class="k">if</span> <span class="n">tipo</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span> <span class="k">else</span> <span class="s1">'a recibir'</span>
     <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span>
         <span class="n">request</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">tipo_display</span><span class="si">}</span><span class="s1"> de </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> registrada. Estado: Pendiente de confirmación. '</span>
-        <span class="sa">f</span><span class="s1">'Importe </span><span class="si">{</span><span class="n">etiqueta_importe</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">monto_final</span><span class="si">}</span><span class="s1"> PYG.'</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">tipo_display</span><span class="si">}</span><span class="s1"> de </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> registrada. Revisá el resumen para confirmarla.'</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:operar'</span><span class="p">,</span> <span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:confirmar_transaccion'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span></div>
 
 
 
@@ -1068,6 +1243,33 @@
         <span class="k">return</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span></div>
 </div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfiguracionVigenciaUpdateView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">UpdateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Permite al administrador configurar los tiempos de espera de las operaciones.</span>
+
+<span class="sd">    Edita el único registro de ``ConfiguracionVigencia`` (lo crea la primera</span>
+<span class="sd">    vez, con los valores por defecto de ``settings``, si todavía no existe).</span>
+<span class="sd">    """</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">ConfiguracionVigencia</span>
+    <span class="n">form_class</span> <span class="o">=</span> <span class="n">ConfiguracionVigenciaForm</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/configuracion_vigencia_form.html'</span>
+    <span class="n">success_url</span> <span class="o">=</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:configuracion_vigencia'</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Recupera la configuración existente o construye una con los valores por defecto."""</span>
+        <span class="k">return</span> <span class="n">ConfiguracionVigencia</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="ow">or</span> <span class="n">ConfiguracionVigencia</span><span class="p">(</span>
+            <span class="n">calculo_vigencia_segundos</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">,</span>
+            <span class="n">confirmacion_vigencia_segundos</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">form_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">form</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Registra quién actualizó la configuración y confirma el guardado."""</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">actualizado_por</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">form_valid</span><span class="p">(</span><span class="n">form</span><span class="p">)</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Los tiempos de espera se actualizaron correctamente.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:configuracion_vigencia'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="DivisaListView">

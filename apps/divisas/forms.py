@@ -2,7 +2,7 @@
 
 from django import forms
 from django.core.validators import RegexValidator
-from .models import CalculoOperacion, ConfiguracionComision, Cotizacion, Divisa
+from .models import CalculoOperacion, ConfiguracionComision, ConfiguracionVigencia, Cotizacion, Divisa
 
 
 class DivisaSelect(forms.Select):
@@ -359,6 +359,41 @@ class ConfiguracionComisionForm(forms.ModelForm):
         if porcentaje < 0:
             raise forms.ValidationError('El porcentaje de comisión no puede ser negativo.')
         return porcentaje
+
+
+class ConfiguracionVigenciaForm(forms.ModelForm):
+    """Valida los tiempos de espera configurados para confirmar el importe y la operación."""
+
+    class Meta:
+        """Define el modelo y los campos editables de la configuración de vigencia."""
+        model = ConfiguracionVigencia
+        fields = ['calculo_vigencia_segundos', 'confirmacion_vigencia_segundos']
+        labels = {
+            'calculo_vigencia_segundos': 'Tiempo de espera para confirmar el importe (segundos)',
+            'confirmacion_vigencia_segundos': 'Tiempo de espera para confirmar la operación (segundos)',
+        }
+        widgets = {
+            'calculo_vigencia_segundos': forms.NumberInput(
+                attrs={'step': '1', 'min': '1', 'class': 'form-control ge-form-control'}
+            ),
+            'confirmacion_vigencia_segundos': forms.NumberInput(
+                attrs={'step': '1', 'min': '1', 'class': 'form-control ge-form-control'}
+            ),
+        }
+
+    def clean_calculo_vigencia_segundos(self):
+        """Rechaza un tiempo de espera para el importe menor o igual a cero."""
+        valor = self.cleaned_data['calculo_vigencia_segundos']
+        if valor <= 0:
+            raise forms.ValidationError('El tiempo de espera debe ser mayor que cero.')
+        return valor
+
+    def clean_confirmacion_vigencia_segundos(self):
+        """Rechaza un tiempo de espera para la operación menor o igual a cero."""
+        valor = self.cleaned_data['confirmacion_vigencia_segundos']
+        if valor <= 0:
+            raise forms.ValidationError('El tiempo de espera debe ser mayor que cero.')
+        return valor
 
 
 class DivisaForm(forms.ModelForm):

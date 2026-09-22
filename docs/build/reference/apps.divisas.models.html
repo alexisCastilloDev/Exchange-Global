@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -382,11 +383,22 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CalculoOperacion</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#CalculoOperacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.CalculoOperacion" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
-<p>Representa una transacción de compra o venta ya confirmada por el cliente.</p>
+<p>Representa una transacción de compra o venta iniciada por el cliente.</p>
 <p>El cálculo previo (Paso 1: «Calcular importe») es solo una previsualización
-y no se persiste; el registro se crea recién cuando el cliente confirma
+y no se persiste; el registro se crea cuando el cliente confirma el importe
 (Paso 2: «Confirmar importe», ver <code class="docutils literal notranslate"><span class="pre">confirmar_calculo_operacion_view</span></code>),
-siempre en estado «Pendiente de confirmación».</p>
+siempre en estado «Pendiente de confirmación» y con <code class="docutils literal notranslate"><span class="pre">vence_en</span></code> fijado a
+<code class="docutils literal notranslate"><span class="pre">settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS</span></code> más adelante. Desde
+ahí, en la pantalla de confirmación (ver
+<code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionOperacionView</span></code>), el cliente revisa el resumen
+completo y decide si la confirma (si la tasa vigente no cambió, pasa a
+«Confirmada» y se registra <code class="docutils literal notranslate"><span class="pre">confirmado_en</span></code>) o la cancela manualmente
+(pasa a «Cancelada» y no se procesa más). Si el cliente nunca vuelve a
+esa pantalla (por ejemplo, cierra la pestaña) y se cumple <code class="docutils literal notranslate"><span class="pre">vence_en</span></code>
+sin que la transacción se haya confirmado ni cancelado, se considera
+«Vencida»: <code class="docutils literal notranslate"><span class="pre">estado_efectivo</span></code> refleja esto de inmediato para quien la
+consulte, aunque el campo <code class="docutils literal notranslate"><span class="pre">estado</span></code> recién se actualice en la base de
+datos la próxima vez que alguien con permiso visite esa transacción.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.DoesNotExist">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.DoesNotExist" title="Link to this definition"></a></dt>
@@ -394,13 +406,28 @@ siempre en estado «Pendiente de confirmación».</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA">
+<span class="sig-name descname"><span class="pre">ESTADO_CANCELADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CANCELADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_CHOICES">
-<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación')]</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación'),</span> <span class="pre">('CONFIRMADA',</span> <span class="pre">'Confirmada'),</span> <span class="pre">('CANCELADA',</span> <span class="pre">'Cancelada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida')]</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_CONFIRMADA">
+<span class="sig-name descname"><span class="pre">ESTADO_CONFIRMADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CONFIRMADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CONFIRMADA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_PENDIENTE">
 <span class="sig-name descname"><span class="pre">ESTADO_PENDIENTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PENDIENTE_CONFIRMACION'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_PENDIENTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_VENCIDA">
+<span class="sig-name descname"><span class="pre">ESTADO_VENCIDA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'VENCIDA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_VENCIDA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
@@ -514,10 +541,28 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 object the first time, the query is executed.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.estado_efectivo">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">estado_efectivo</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.estado_efectivo" title="Link to this definition"></a></dt>
+<dd><p>Devuelve el estado real, aunque el vencimiento todavía no se haya guardado.</p>
+<p>Una transacción «Pendiente de confirmación» cuyo <code class="docutils literal notranslate"><span class="pre">vence_en</span></code> ya pasó
+está, en la práctica, vencida (el cliente no la confirmó ni canceló a
+tiempo, por ejemplo porque cerró la pestaña), aunque nadie haya vuelto
+a visitarla todavía para que <code class="docutils literal notranslate"><span class="pre">marcar_vencida_si_corresponde</span></code> lo
+persista. Se usa para mostrar el estado correcto en el historial de
+transacciones sin depender de que alguien haya «tocado» el registro.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.get_estado_display">
 <span class="sig-name descname"><span class="pre">get_estado_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">estado&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.get_estado_display" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.get_estado_efectivo_display">
+<span class="sig-name descname"><span class="pre">get_estado_efectivo_display</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#CalculoOperacion.get_estado_efectivo_display"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.get_estado_efectivo_display" title="Link to this definition"></a></dt>
+<dd><p>Etiqueta legible de <code class="docutils literal notranslate"><span class="pre">estado_efectivo</span></code> (equivalente a <code class="docutils literal notranslate"><span class="pre">get_estado_display</span></code>).</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.get_next_by_creado_en">
@@ -551,6 +596,25 @@ object the first time, the query is executed.</p>
 object the first time, the query is executed.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.marcar_vencida_si_corresponde">
+<span class="sig-name descname"><span class="pre">marcar_vencida_si_corresponde</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#CalculoOperacion.marcar_vencida_si_corresponde"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.marcar_vencida_si_corresponde" title="Link to this definition"></a></dt>
+<dd><p>Persiste el paso a «Vencida» si la transacción pendiente ya venció.</p>
+<p>Se llama al acceder a la pantalla de confirmación (GET o POST): es el
+único punto de escritura de este vencimiento, siguiendo el mismo
+patrón perezoso que ya usa <code class="docutils literal notranslate"><span class="pre">esta_vencido</span></code> en el resto del sistema
+(nada expira en segundo plano; se resuelve la próxima vez que alguien
+interactúa con el registro).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> si la transacción quedó «Vencida» recién ahora.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.monto_final">
 <span class="sig-name descname"><span class="pre">monto_final</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.monto_final" title="Link to this definition"></a></dt>
@@ -575,6 +639,16 @@ object the first time, the query is executed.</p>
 <span class="sig-name descname"><span class="pre">tasa_aplicada</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.tasa_aplicada" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.tasa_vigente_cambio">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tasa_vigente_cambio</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.tasa_vigente_cambio" title="Link to this definition"></a></dt>
+<dd><p>Indica si la tasa vigente de la divisa ya no coincide con la aplicada.</p>
+<p>Se usa al confirmar una transacción pendiente: si la divisa no tiene
+cotización vigente, o la tasa que correspondería aplicar ahora (venta
+para una compra, compra para una venta) es distinta de la que se
+guardó al calcular, la tasa «cambió» y no debe confirmarse.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -615,14 +689,21 @@ object the first time, the query is executed.</p>
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CalculoTriangulacion</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#CalculoTriangulacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
-<p>Representa un cambio entre dos divisas extranjeras vía PYG ya confirmado.</p>
+<p>Representa un cambio entre dos divisas extranjeras vía PYG.</p>
 <p>Igual que en <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>, el cálculo previo es solo una
 previsualización y no se persiste: el registro se crea cuando el cliente
 confirma el importe (ver <code class="docutils literal notranslate"><span class="pre">confirmar_triangulacion_view</span></code>), siempre en
-estado «Pendiente de confirmación» y a nombre del cliente activo. Así el
-cambio aparece en el historial de transacciones junto con las compras y
-ventas. <code class="docutils literal notranslate"><span class="pre">TIPO_DISPLAY</span></code> es el nombre del tipo de operación que muestra
-el historial.</p>
+estado «Pendiente de confirmación», a nombre del cliente activo y con
+<code class="docutils literal notranslate"><span class="pre">vence_en</span></code> fijado a <code class="docutils literal notranslate"><span class="pre">settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS</span></code>
+más adelante. Desde ahí, en la pantalla de confirmación (ver
+<code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionCambioView</span></code>), el cliente revisa el resumen completo
+y decide si lo confirma (si las tasas vigentes no cambiaron, pasa a
+«Confirmada» y se registra <code class="docutils literal notranslate"><span class="pre">confirmado_en</span></code>) o lo cancela manualmente
+(pasa a «Cancelada»). Si el cliente nunca vuelve a esa pantalla y se
+cumple <code class="docutils literal notranslate"><span class="pre">vence_en</span></code> sin resolución, se considera «Vencida» (ver
+<code class="docutils literal notranslate"><span class="pre">estado_efectivo</span></code>). Así aparece en el historial de transacciones junto
+con las compras y ventas. <code class="docutils literal notranslate"><span class="pre">TIPO_DISPLAY</span></code> es el nombre del tipo de
+operación que muestra el historial.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.DoesNotExist">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.DoesNotExist" title="Link to this definition"></a></dt>
@@ -630,13 +711,28 @@ el historial.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA">
+<span class="sig-name descname"><span class="pre">ESTADO_CANCELADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CANCELADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_CHOICES">
-<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación')]</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación'),</span> <span class="pre">('CONFIRMADA',</span> <span class="pre">'Confirmada'),</span> <span class="pre">('CANCELADA',</span> <span class="pre">'Cancelada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida')]</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_CONFIRMADA">
+<span class="sig-name descname"><span class="pre">ESTADO_CONFIRMADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CONFIRMADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CONFIRMADA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_PENDIENTE">
 <span class="sig-name descname"><span class="pre">ESTADO_PENDIENTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PENDIENTE_CONFIRMACION'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_PENDIENTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_VENCIDA">
+<span class="sig-name descname"><span class="pre">ESTADO_VENCIDA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'VENCIDA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_VENCIDA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
@@ -765,10 +861,24 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 object the first time, the query is executed.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.estado_efectivo">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">estado_efectivo</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.estado_efectivo" title="Link to this definition"></a></dt>
+<dd><p>Devuelve el estado real, aunque el vencimiento todavía no se haya guardado.</p>
+<p>Ver <code class="docutils literal notranslate"><span class="pre">CalculoOperacion.estado_efectivo</span></code>: mismo criterio, aplicado al
+cambio entre divisas.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.get_estado_display">
 <span class="sig-name descname"><span class="pre">get_estado_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">estado&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.get_estado_display" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.get_estado_efectivo_display">
+<span class="sig-name descname"><span class="pre">get_estado_efectivo_display</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#CalculoTriangulacion.get_estado_efectivo_display"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.get_estado_efectivo_display" title="Link to this definition"></a></dt>
+<dd><p>Etiqueta legible de <code class="docutils literal notranslate"><span class="pre">estado_efectivo</span></code> (equivalente a <code class="docutils literal notranslate"><span class="pre">get_estado_display</span></code>).</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.get_next_by_creado_en">
@@ -795,6 +905,22 @@ object the first time, the query is executed.</p>
 <span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.id" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.marcar_vencida_si_corresponde">
+<span class="sig-name descname"><span class="pre">marcar_vencida_si_corresponde</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#CalculoTriangulacion.marcar_vencida_si_corresponde"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.marcar_vencida_si_corresponde" title="Link to this definition"></a></dt>
+<dd><p>Persiste el paso a «Vencida» si el cambio pendiente ya venció.</p>
+<p>Ver <code class="docutils literal notranslate"><span class="pre">CalculoOperacion.marcar_vencida_si_corresponde</span></code>: mismo patrón
+perezoso, aplicado al cambio entre divisas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> si el cambio quedó «Vencida» recién ahora.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -842,6 +968,16 @@ object the first time, the query is executed.</p>
 <span class="sig-name descname"><span class="pre">tasa_venta_aplicada</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.tasa_venta_aplicada" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.tasas_vigentes_cambiaron">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tasas_vigentes_cambiaron</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.tasas_vigentes_cambiaron" title="Link to this definition"></a></dt>
+<dd><p>Indica si alguna cotización usada al calcular ya no está vigente.</p>
+<p>Se usa al confirmar el cambio: si cualquiera de las dos divisas
+(origen o destino) se quedó sin cotización, o la tasa que
+correspondería aplicar ahora es distinta de la que se guardó al
+calcular, las tasas «cambiaron» y no debe confirmarse.</p>
 </dd></dl>
 
 <dl class="py attribute">

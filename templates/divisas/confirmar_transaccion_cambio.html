@@ -1,0 +1,62 @@
+<!--
+Resumen de un cambio entre divisas pendiente, con acciones para confirmarlo o cancelarlo.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: transaccion.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Confirmar cambio de divisas - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-clipboard-check"></i> Operación cambiaria</span>
+        <h1>Confirmar cambio de divisas</h1>
+        <p>Revisá el resumen antes de confirmar o cancelar el cambio.</p>
+    </div>
+    <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Ver tasas</a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+        <div class="ge-card ge-result-panel">
+            <div class="ge-card__header mb-3">
+                <h2>Resumen del cambio</h2>
+                <span class="badge-activo">{{ transaccion.get_estado_display }}</span>
+            </div>
+            <div class="operation-summary">
+                <div class="operation-summary__row"><span class="operation-summary__label">Operación: </span><strong class="operation-summary__value">{{ transaccion.codigo_divisa_origen }} → {{ transaccion.codigo_divisa_destino }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Monto origen: </span><strong class="operation-summary__value">{{ transaccion.monto_origen|floatformat:2 }} {{ transaccion.codigo_divisa_origen }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Tasa de compra ({{ transaccion.codigo_divisa_origen }}): </span><strong class="operation-summary__value">{{ transaccion.tasa_compra_aplicada|floatformat:2 }} PYG</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Tasa de venta ({{ transaccion.codigo_divisa_destino }}): </span><strong class="operation-summary__value">{{ transaccion.tasa_venta_aplicada|floatformat:2 }} PYG</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Tasa cruzada implícita: </span><strong class="operation-summary__value">1 {{ transaccion.codigo_divisa_origen }} = {{ transaccion.tasa_cruzada|floatformat:6 }} {{ transaccion.codigo_divisa_destino }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Comisión ({{ transaccion.comision_porcentaje|floatformat:2 }}%): </span><strong class="operation-summary__value">{{ transaccion.comision|floatformat:2 }} {{ transaccion.codigo_divisa_destino }}</strong></div>
+                <div class="operation-summary__row operation-summary__row--total"><span class="operation-summary__label">Importe a recibir: </span><strong class="operation-summary__value">{{ transaccion.monto_final|floatformat:2 }} {{ transaccion.codigo_divisa_destino }}</strong></div>
+            </div>
+
+            {% if transaccion.estado == 'PENDIENTE_CONFIRMACION' %}
+                <div class="d-flex gap-2 mt-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="confirmar">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i> Confirmar operación</button>
+                    </form>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="cancelar">
+                        <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i> Cancelar</button>
+                    </form>
+                </div>
+            {% elif transaccion.estado == 'CONFIRMADA' %}
+                <div class="operation-expiry mt-3"><i class="bi bi-check2-circle me-1"></i> Confirmada el {{ transaccion.confirmado_en|date:'d/m/Y H:i:s' }}.</div>
+            {% elif transaccion.estado == 'CANCELADA' %}
+                <div class="operation-expiry mt-3"><i class="bi bi-x-circle me-1"></i> Este cambio fue cancelado.</div>
+            {% elif transaccion.estado == 'VENCIDA' %}
+                <div class="operation-expiry mt-3"><i class="bi bi-hourglass-split me-1"></i> El tiempo para confirmar este cambio venció sin que se haya confirmado ni cancelado.</div>
+                <a href="{% url 'divisas:triangulacion' %}" class="btn btn-primary mt-3"><i class="bi bi-arrow-repeat me-1"></i> Recalcular</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

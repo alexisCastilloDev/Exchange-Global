@@ -9,7 +9,13 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.clientes.models import Cliente
-from apps.divisas.models import CalculoOperacion, CalculoTriangulacion, Cotizacion, Divisa
+from apps.divisas.models import (
+    CalculoOperacion,
+    CalculoTriangulacion,
+    ConfiguracionVigencia,
+    Cotizacion,
+    Divisa,
+)
 
 
 User = get_user_model()
@@ -195,6 +201,30 @@ class CalculoOperacionTest(TestCase):
         response = self.client.get(reverse('divisas:tasas_vigentes'))
 
         self.assertNotContains(response, 'Última actualización')
+
+    def test_la_vigencia_configurada_por_el_administrador_se_usa_al_calcular_y_confirmar(self):
+        """Los tiempos configurados en ConfiguracionVigencia reemplazan a los de settings."""
+        ConfiguracionVigencia.objects.create(
+            calculo_vigencia_segundos=120,
+            confirmacion_vigencia_segundos=900,
+        )
+
+        response = self.client.post(
+            reverse('divisas:operar', kwargs={'tipo': 'compra'}),
+            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
+        )
+        resultado = response.context['resultado']
+        esperado_calculo = (timezone.now() + timedelta(seconds=120)).timestamp()
+        self.assertAlmostEqual(resultado['vence_en_timestamp'], esperado_calculo, delta=5)
+
+        self.client.post(
+            reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),
+            self._datos_confirmacion(resultado),
+        )
+
+        calculo = CalculoOperacion.objects.get()
+        esperado_confirmacion = (timezone.now() + timedelta(seconds=900)).timestamp()
+        self.assertAlmostEqual(calculo.vence_en.timestamp(), esperado_confirmacion, delta=5)
 
 
 class CompraDeDivisasTest(TestCase):
@@ -419,7 +449,8 @@ class VentaDeDivisasTest(TestCase):
         self.assertEqual(calculo.tasa_aplicada, Decimal('7300.00'))
         self.assertEqual(calculo.monto_final, Decimal('722700.00'))
         self.assertContains(response, 'Pendiente de confirmación')
-        self.assertContains(response, 'Importe a recibir: 722700.00 PYG')
+        self.assertContains(response, 'Importe a recibir')
+        self.assertContains(response, '722700.00')
 
     def test_venta_usa_la_comision_del_cliente_activo(self):
         """Criterio 1: la comisión del cliente activo se descuenta del importe a recibir."""
@@ -705,7 +736,8 @@ class TriangulacionOperacionTest(TestCase):
         self.assertEqual(calculo.monto_final, Decimal('89.22'))
         self.assertIsNotNone(calculo.creado_en)
         self.assertContains(response, 'Pendiente de confirmación')
-        self.assertContains(response, 'Importe a recibir: 89.22 EUR')
+        self.assertContains(response, 'Importe a recibir')
+        self.assertContains(response, '89.22')
 
     def test_confirmar_recalcula_con_datos_del_servidor_y_no_con_los_del_navegador(self):
         """Los importes no viajan desde el navegador: se recalculan al confirmar."""
@@ -913,7 +945,7 @@ class HistorialTransaccionesTest(TestCase):
         self.assertContains(response, 'Cliente Historial')
         self.assertContains(response, 'USD')
         self.assertContains(response, '100.00')
-        self.assertContains(response, self.transaccion.creado_en.strftime('%d/%m/%Y'))
+        self.assertContains(response, timezone.localtime(self.transaccion.creado_en).strftime('%d/%m/%Y'))
 
     def test_historial_incluye_transacciones_de_todos_los_clientes(self):
         """El historial no se limita a un único cliente, a diferencia de las vistas del cliente."""
@@ -1038,3 +1070,402 @@ class HistorialTransaccionesTest(TestCase):
         tipos = [fila['tipo'] for fila in response.context['transacciones']]
         self.assertEqual(tipos, ['Cambio', 'Compra'])
         self.assertGreater(cambio.creado_en, self.transaccion.creado_en)
+
+
+class ConfirmacionOperacionCambiariaTest(TestCase):
+    """Verifica la HU 'Confirmación de operación cambiaria' para compra y venta."""
+
+    def setUp(self):
+        """Prepara un cliente activo, una divisa cotizada y una compra pendiente."""
+        self.usuario = User.objects.create_user(
+            username='cliente-confirmacion',
+            password='password123',
+        )
+        self.client.login(username='cliente-confirmacion', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+        self.cliente = Cliente.objects.create(
+            user=self.usuario,
+            identificador='CONFIRMACION-001',
+            nombre='Cliente',
+            apellido='Confirmación',
+            email='cliente-confirmacion@test.com',
+            is_active=True,
+        )
+        self.usuario.clientes.add(self.cliente)
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        Cotizacion.objects.create(
+            divisa=self.usd,
+            tasa_compra=Decimal('7300.00'),
+            tasa_venta=Decimal('7400.00'),
+        )
+        self.transaccion = CalculoOperacion.objects.create(
+            usuario=self.usuario,
+            cliente=self.cliente,
+            tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd,
+            codigo_divisa='USD',
+            monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7400.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('7400.00'),
+            monto_final=Decimal('747400.00'),
+            estado=CalculoOperacion.ESTADO_PENDIENTE,
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+        self.url = reverse('divisas:confirmar_transaccion', kwargs={'pk': self.transaccion.pk})
+
+    def test_pantalla_de_confirmacion_muestra_el_resumen_completo(self):
+        """Criterio 1: la pantalla muestra tipo, divisa, monto, tasa, comisión y monto final."""
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Compra')
+        self.assertContains(response, 'USD')
+        self.assertContains(response, '100.00')
+        self.assertContains(response, '7400.00')
+        self.assertContains(response, 'Comisión')
+        self.assertContains(response, '747400.00')
+        self.assertContains(response, 'Pendiente de confirmación')
+
+    def test_confirmar_con_tasa_vigente_sin_cambios_marca_confirmada(self):
+        """Criterio 2: si la tasa vigente no cambió, la transacción pasa a 'Confirmada'."""
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+        self.assertContains(response, 'La operación fue confirmada')
+        self.assertContains(response, 'Confirmada')
+
+    def test_confirmar_rechaza_si_la_tasa_vigente_cambio(self):
+        """Si la tasa vigente cambió desde el cálculo inicial, no se confirma."""
+        Cotizacion.objects.create(
+            divisa=self.usd,
+            tasa_compra=Decimal('7350.00'),
+            tasa_venta=Decimal('7450.00'),
+        )
+
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PENDIENTE)
+        self.assertIsNone(self.transaccion.confirmado_en)
+        self.assertContains(response, 'La tasa vigente cambió')
+
+    def test_cancelar_manualmente_marca_cancelada_y_no_se_procesa(self):
+        """Criterio 3: al cancelar manualmente, la transacción pasa a 'Cancelada'."""
+        response = self.client.post(self.url, {'accion': 'cancelar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA)
+        self.assertIsNone(self.transaccion.confirmado_en)
+        self.assertContains(response, 'La operación fue cancelada')
+        self.assertContains(response, 'Cancelada')
+
+    def test_confirmar_registra_fecha_y_hora_de_confirmacion(self):
+        """Criterio 4: al confirmarse, se registra la fecha y hora de confirmación."""
+        antes = timezone.now()
+
+        self.client.post(self.url, {'accion': 'confirmar'})
+
+        self.transaccion.refresh_from_db()
+        self.assertIsNotNone(self.transaccion.confirmado_en)
+        self.assertGreaterEqual(self.transaccion.confirmado_en, antes)
+
+    def test_no_se_puede_reprocesar_una_transaccion_ya_confirmada(self):
+        """Una transacción ya confirmada no puede volver a confirmarse o cancelarse."""
+        self.transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA
+        self.transaccion.confirmado_en = timezone.now()
+        self.transaccion.save(update_fields=['estado', 'confirmado_en'])
+        confirmado_en_original = self.transaccion.confirmado_en
+
+        response = self.client.post(self.url, {'accion': 'cancelar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertContains(response, 'ya fue procesada')
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+        self.assertEqual(self.transaccion.confirmado_en, confirmado_en_original)
+
+    def test_otro_cliente_no_puede_ver_ni_confirmar_la_transaccion(self):
+        """Solo el cliente dueño de la transacción puede verla o accionarla."""
+        otro_usuario = User.objects.create_user(username='otro-usuario', password='password123')
+        otro_cliente = Cliente.objects.create(
+            user=otro_usuario,
+            identificador='CONFIRMACION-002',
+            nombre='Otro',
+            apellido='Cliente',
+            email='otro-cliente-confirmacion@test.com',
+            is_active=True,
+        )
+        otro_usuario.clientes.add(otro_cliente)
+        self.client.logout()
+        self.client.login(username='otro-usuario', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        response_get = self.client.get(self.url)
+        response_post = self.client.post(self.url, {'accion': 'confirmar'})
+
+        self.assertEqual(response_get.status_code, 404)
+        self.assertEqual(response_post.status_code, 404)
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PENDIENTE)
+
+    def test_administrador_no_puede_acceder_a_la_pantalla_de_confirmacion(self):
+        """Solo clientes con rol y cliente activo pueden usar esta pantalla."""
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_visitar_la_pantalla_marca_vencida_una_transaccion_que_nunca_se_resolvio(self):
+        """Si el cliente cerró la pestaña y nunca decidió nada, vencido el plazo pasa a 'Vencida'."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+
+        response = self.client.get(self.url)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_VENCIDA)
+        self.assertContains(response, 'venció')
+        self.assertContains(response, 'Recalcular')
+
+    def test_confirmar_una_transaccion_vencida_no_la_confirma(self):
+        """Una transacción vencida no puede confirmarse, aunque la tasa siga igual."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_VENCIDA)
+        self.assertIsNone(self.transaccion.confirmado_en)
+        self.assertContains(response, 'El tiempo para confirmar esta operación venció')
+
+    def test_cancelar_una_transaccion_vencida_no_la_cancela(self):
+        """Cancelar una transacción ya vencida no tiene efecto: queda 'Vencida', no 'Cancelada'."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+
+        response = self.client.post(self.url, {'accion': 'cancelar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_VENCIDA)
+
+    def test_estado_efectivo_no_persiste_por_si_solo(self):
+        """Leer el estado efectivo no escribe nada: la base sigue diciendo 'Pendiente'."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+
+        self.assertEqual(self.transaccion.estado_efectivo, CalculoOperacion.ESTADO_VENCIDA)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PENDIENTE)
+
+    def test_historial_muestra_vencida_sin_que_nadie_haya_visitado_la_transaccion(self):
+        """El historial de administración ve 'Vencida' aunque la base siga en 'Pendiente'."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+        User.objects.create_user(username='admin-vencida', password='password123')
+        self.client.logout()
+        self.client.login(username='admin-vencida', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+        response = self.client.get(reverse('divisas:historial_transacciones'))
+
+        self.assertContains(response, 'Vencida')
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PENDIENTE)
+
+
+class ConfirmacionCambioDivisasTest(TestCase):
+    """Verifica la HU 'Confirmación de operación cambiaria' para el cambio entre divisas."""
+
+    def setUp(self):
+        """Prepara un cliente activo, dos divisas cotizadas y un cambio pendiente."""
+        self.usuario = User.objects.create_user(
+            username='cliente-confirmacion-cambio',
+            password='password123',
+        )
+        self.client.login(username='cliente-confirmacion-cambio', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+        self.cliente = Cliente.objects.create(
+            user=self.usuario,
+            identificador='CONF-CAMBIO-001',
+            nombre='Cliente',
+            apellido='Cambio',
+            email='cliente-confirmacion-cambio@test.com',
+            is_active=True,
+        )
+        self.usuario.clientes.add(self.cliente)
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+        Cotizacion.objects.create(divisa=self.usd, tasa_compra=Decimal('7300.00'), tasa_venta=Decimal('7400.00'))
+        Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7900.00'), tasa_venta=Decimal('8100.00'))
+        self.transaccion = CalculoTriangulacion.objects.create(
+            usuario=self.usuario,
+            cliente=self.cliente,
+            divisa_origen=self.usd,
+            divisa_destino=self.eur,
+            codigo_divisa_origen='USD',
+            codigo_divisa_destino='EUR',
+            monto_origen=Decimal('100.00'),
+            tasa_compra_aplicada=Decimal('7300.00'),
+            tasa_venta_aplicada=Decimal('8100.00'),
+            tasa_cruzada=Decimal('0.901235'),
+            monto_equivalente_pyg=Decimal('730000.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('0.90'),
+            monto_final=Decimal('89.22'),
+            estado=CalculoTriangulacion.ESTADO_PENDIENTE,
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+        self.url = reverse('divisas:confirmar_transaccion_cambio', kwargs={'pk': self.transaccion.pk})
+
+    def test_pantalla_de_confirmacion_muestra_el_resumen_completo(self):
+        """Criterio 1: la pantalla muestra ambas divisas, monto, tasas, comisión y monto final."""
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'USD')
+        self.assertContains(response, 'EUR')
+        self.assertContains(response, '100.00')
+        self.assertContains(response, 'Comisión')
+        self.assertContains(response, '89.22')
+        self.assertContains(response, 'Pendiente de confirmación')
+
+    def test_confirmar_con_tasas_vigentes_sin_cambios_marca_confirmada(self):
+        """Criterio 2: si las tasas vigentes no cambiaron, el cambio pasa a 'Confirmada'."""
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CONFIRMADA)
+        self.assertContains(response, 'El cambio fue confirmado')
+
+    def test_confirmar_rechaza_si_alguna_tasa_vigente_cambio(self):
+        """Si cambió la cotización de cualquiera de las dos divisas, no se confirma."""
+        Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7950.00'), tasa_venta=Decimal('8150.00'))
+
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PENDIENTE)
+        self.assertIsNone(self.transaccion.confirmado_en)
+        self.assertContains(response, 'Las tasas vigentes cambiaron')
+
+    def test_cancelar_manualmente_marca_cancelada(self):
+        """Criterio 3: al cancelar manualmente, el cambio pasa a 'Cancelada' y no se procesa."""
+        response = self.client.post(self.url, {'accion': 'cancelar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CANCELADA)
+        self.assertIsNone(self.transaccion.confirmado_en)
+        self.assertContains(response, 'El cambio fue cancelado')
+
+    def test_confirmar_registra_fecha_y_hora_de_confirmacion(self):
+        """Criterio 4: al confirmarse, se registra la fecha y hora de confirmación."""
+        antes = timezone.now()
+
+        self.client.post(self.url, {'accion': 'confirmar'})
+
+        self.transaccion.refresh_from_db()
+        self.assertIsNotNone(self.transaccion.confirmado_en)
+        self.assertGreaterEqual(self.transaccion.confirmado_en, antes)
+
+    def test_otro_cliente_no_puede_ver_ni_confirmar_el_cambio(self):
+        """Solo el cliente dueño del cambio puede verlo o accionarlo."""
+        otro_usuario = User.objects.create_user(username='otro-usuario-cambio', password='password123')
+        otro_cliente = Cliente.objects.create(
+            user=otro_usuario,
+            identificador='CONF-CAMBIO-002',
+            nombre='Otro',
+            apellido='Cliente',
+            email='otro-cliente-confirmacion-cambio@test.com',
+            is_active=True,
+        )
+        otro_usuario.clientes.add(otro_cliente)
+        self.client.logout()
+        self.client.login(username='otro-usuario-cambio', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        response_get = self.client.get(self.url)
+        response_post = self.client.post(self.url, {'accion': 'confirmar'})
+
+        self.assertEqual(response_get.status_code, 404)
+        self.assertEqual(response_post.status_code, 404)
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PENDIENTE)
+
+    def test_visitar_la_pantalla_marca_vencida_un_cambio_que_nunca_se_resolvio(self):
+        """Si el cliente cerró la pestaña y nunca decidió nada, vencido el plazo pasa a 'Vencida'."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+
+        response = self.client.get(self.url)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_VENCIDA)
+        self.assertContains(response, 'venció')
+        self.assertContains(response, 'Recalcular')
+
+    def test_confirmar_un_cambio_vencido_no_lo_confirma(self):
+        """Un cambio vencido no puede confirmarse, aunque las tasas sigan iguales."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_VENCIDA)
+        self.assertIsNone(self.transaccion.confirmado_en)
+        self.assertContains(response, 'El tiempo para confirmar este cambio venció')
+
+    def test_cancelar_un_cambio_vencido_no_lo_cancela(self):
+        """Cancelar un cambio ya vencido no tiene efecto: queda 'Vencida', no 'Cancelada'."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+
+        response = self.client.post(self.url, {'accion': 'cancelar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_VENCIDA)
+
+    def test_historial_muestra_vencida_sin_que_nadie_haya_visitado_el_cambio(self):
+        """El historial de administración ve 'Vencida' aunque la base siga en 'Pendiente'."""
+        self.transaccion.vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['vence_en'])
+        User.objects.create_user(username='admin-vencida-cambio', password='password123')
+        self.client.logout()
+        self.client.login(username='admin-vencida-cambio', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+        response = self.client.get(reverse('divisas:historial_transacciones'))
+
+        self.assertContains(response, 'Vencida')
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PENDIENTE)

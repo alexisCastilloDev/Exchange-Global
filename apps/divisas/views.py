@@ -20,6 +20,7 @@ from apps.clientes.models import Cliente
 from apps.divisas.forms import (
     CalculoOperacionForm,
     ConfiguracionComisionForm,
+    ConfiguracionVigenciaForm,
     ConfirmarCalculoOperacionForm,
     ConfirmarTriangulacionForm,
     CotizacionForm,
@@ -31,6 +32,7 @@ from apps.divisas.models import (
     CalculoOperacion,
     CalculoTriangulacion,
     ConfiguracionComision,
+    ConfiguracionVigencia,
     Cotizacion,
     Divisa,
 )
@@ -223,7 +225,11 @@ class HistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListVi
     Reúne en una misma lista ordenada por fecha las compras y ventas
     (``CalculoOperacion``) y los cambios entre divisas (``CalculoTriangulacion``),
     con tipo, estado, usuario, cliente activo, divisa, monto, tasa, comisión e
-    importe final de cada una.
+    importe final de cada una. El estado que se muestra es el "efectivo"
+    (``get_estado_efectivo_display``): si una transacción sigue "Pendiente de
+    confirmación" en la base de datos pero ya venció el tiempo para
+    confirmarla, se ve como "Vencida" aunque todavía nadie haya vuelto a
+    abrir su pantalla de confirmación para que eso quede guardado.
     """
 
     template_name = 'divisas/historial_transacciones.html'
@@ -241,7 +247,7 @@ class HistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListVi
         return {
             'creado_en': operacion.creado_en,
             'tipo': operacion.get_tipo_display(),
-            'estado': operacion.get_estado_display(),
+            'estado': operacion.get_estado_efectivo_display(),
             'usuario': operacion.usuario,
             'cliente': operacion.cliente,
             'divisa': operacion.codigo_divisa,
@@ -259,7 +265,7 @@ class HistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListVi
         return {
             'creado_en': cambio.creado_en,
             'tipo': CalculoTriangulacion.TIPO_DISPLAY,
-            'estado': cambio.get_estado_display(),
+            'estado': cambio.get_estado_efectivo_display(),
             'usuario': cambio.usuario,
             'cliente': cambio.cliente,
             'divisa': f'{cambio.codigo_divisa_origen} → {cambio.codigo_divisa_destino}',
@@ -473,7 +479,7 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
             'form': form,
             'tipo_operacion': self._tipo(),
             'resultado': resultado,
-            'vigencia_segundos': settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS,
+            'vigencia_segundos': ConfiguracionVigencia.vigencia_calculo_segundos(),
         }
 
     def get_context_data(self, **kwargs):
@@ -516,7 +522,7 @@ class CalculoOperacionView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
             tipo, monto, tasa_compra, tasa_venta, cliente_activo
         )
         ahora = timezone.now()
-        vence_en = ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS)
+        vence_en = ahora + timedelta(seconds=ConfiguracionVigencia.vigencia_calculo_segundos())
         resultado = {
             'tipo': tipo,
             'divisa': divisa,
@@ -558,7 +564,7 @@ class TriangulacionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Templa
         return {
             'form': form,
             'resultado': resultado,
-            'vigencia_segundos': settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS,
+            'vigencia_segundos': ConfiguracionVigencia.vigencia_calculo_segundos(),
         }
 
     def get_context_data(self, **kwargs):
@@ -600,7 +606,7 @@ class TriangulacionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Templa
         monto_equivalente_pyg, tasa_cruzada, porcentaje, comision, monto_final = _calcular_triangulacion(
             monto, cotizacion_origen.tasa_compra, cotizacion_destino.tasa_venta, cliente_activo
         )
-        vence_en = timezone.now() + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS)
+        vence_en = timezone.now() + timedelta(seconds=ConfiguracionVigencia.vigencia_calculo_segundos())
         resultado = {
             'divisa_origen': origen,
             'divisa_destino': destino,
@@ -622,6 +628,89 @@ class TriangulacionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Templa
         return self.render_to_response(self._contexto(form, resultado))
 
 
+class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Muestra el resumen de un cambio pendiente y permite confirmarlo o cancelarlo.
+
+    Implementa la HU "Confirmación de operación cambiaria" para los cambios
+    entre divisas: el cliente ve el resumen completo de una transacción en
+    estado "Pendiente de confirmación" y decide si la confirma (si las tasas
+    vigentes no cambiaron desde el cálculo inicial) o la cancela.
+    """
+
+    def test_func(self):
+        """Permite revisar el cambio solo a los roles que pueden operar."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
+
+    def get_object(self):
+        """Recupera el cambio del usuario autenticado o responde 404."""
+        return get_object_or_404(CalculoTriangulacion, pk=self.kwargs['pk'], usuario=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        """Muestra el resumen completo del cambio pendiente.
+
+        Si el tiempo para confirmarlo ya venció (por ejemplo, el cliente
+        cerró la pestaña sin decidir nada), lo marca "Vencida" en este mismo
+        acceso, antes de mostrarlo.
+        """
+        transaccion = self.get_object()
+        transaccion.marcar_vencida_si_corresponde()
+        return render(request, 'divisas/confirmar_transaccion_cambio.html', {'transaccion': transaccion})
+
+    def post(self, request, *args, **kwargs):
+        """Confirma o cancela el cambio según la acción elegida.
+
+        Antes de procesar la acción, revisa si el tiempo para confirmar ya
+        venció (ya sea recién ahora o desde una visita anterior) y, de ser
+        así, bloquea la acción en vez de procesarla.
+
+        Args:
+            request (HttpRequest): Solicitud POST con el campo ``accion``
+                (``confirmar`` o ``cancelar``).
+
+        Returns:
+            HttpResponse: Redirección a la misma pantalla con el resultado.
+        """
+        transaccion = self.get_object()
+        transaccion.marcar_vencida_si_corresponde()
+        if transaccion.estado != CalculoTriangulacion.ESTADO_PENDIENTE:
+            if transaccion.estado == CalculoTriangulacion.ESTADO_VENCIDA:
+                messages.error(
+                    request,
+                    'El tiempo para confirmar este cambio venció. Debe recalcular la operación.',
+                )
+            else:
+                messages.info(request, 'Este cambio ya fue procesado.')
+            return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
+
+        accion = request.POST.get('accion')
+        if accion == 'cancelar':
+            transaccion.estado = CalculoTriangulacion.ESTADO_CANCELADA
+            transaccion.save(update_fields=['estado'])
+            messages.success(request, 'El cambio fue cancelado.')
+            return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
+
+        if accion == 'confirmar':
+            if transaccion.tasas_vigentes_cambiaron:
+                messages.error(
+                    request,
+                    'Las tasas vigentes cambiaron desde el cálculo inicial. Debe recalcular el cambio.',
+                )
+                return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
+            transaccion.estado = CalculoTriangulacion.ESTADO_CONFIRMADA
+            transaccion.confirmado_en = timezone.now()
+            transaccion.save(update_fields=['estado', 'confirmado_en'])
+            messages.success(request, 'El cambio fue confirmado.')
+            return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
+
+        messages.error(request, 'Acción no reconocida.')
+        return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
+
+
 @login_required
 def confirmar_triangulacion_view(request):
     """Revalida el cálculo previo de un cambio y recién ahí crea la transacción.
@@ -630,14 +719,15 @@ def confirmar_triangulacion_view(request):
     cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el
     importe con las tasas actuales (nunca confía en los montos que viajan
     desde el navegador) y registra el cambio en estado "Pendiente de
-    confirmación", a nombre del cliente activo, para que figure en el
-    historial de transacciones.
+    confirmación", a nombre del cliente activo, para que el cliente lo revise
+    y lo confirme o cancele en ``ConfirmarTransaccionCambioView``.
 
     Args:
         request (HttpRequest): Solicitud POST con los campos ocultos del cálculo.
 
     Returns:
-        HttpResponse: Redirección a la pantalla de cambio o al inicio.
+        HttpResponse: Redirección a la pantalla de confirmación del cambio
+        recién creado, o al inicio si algo falla antes de crearlo.
     """
     if request.method != 'POST':
         return redirect('home')
@@ -686,7 +776,7 @@ def confirmar_triangulacion_view(request):
         monto, cotizacion_origen.tasa_compra, cotizacion_destino.tasa_venta, cliente_activo
     )
     ahora = timezone.now()
-    CalculoTriangulacion.objects.create(
+    transaccion = CalculoTriangulacion.objects.create(
         usuario=request.user,
         cliente=cliente_activo,
         divisa_origen=origen,
@@ -702,15 +792,99 @@ def confirmar_triangulacion_view(request):
         comision=comision,
         monto_final=monto_final,
         estado=CalculoTriangulacion.ESTADO_PENDIENTE,
-        confirmado_en=ahora,
-        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
+        vence_en=ahora + timedelta(seconds=ConfiguracionVigencia.vigencia_confirmacion_segundos()),
     )
     messages.success(
         request,
-        f'Cambio de {origen.codigo} a {destino.codigo} registrado. Estado: Pendiente de confirmación. '
-        f'Importe a recibir: {monto_final} {destino.codigo}.',
+        f'Cambio de {origen.codigo} a {destino.codigo} registrado. Revisá el resumen para confirmarlo.',
     )
-    return redirect('divisas:triangulacion')
+    return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
+
+
+class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Muestra el resumen de una compra o venta pendiente y permite confirmarla o cancelarla.
+
+    Implementa la HU "Confirmación de operación cambiaria": el cliente ve el
+    resumen completo (tipo de operación, divisa, monto, tasa aplicada,
+    comisión y monto final) de una transacción en estado "Pendiente de
+    confirmación" y decide si la confirma (si la tasa vigente no cambió desde
+    el cálculo inicial, pasa a "Confirmada" y se registra la fecha y hora de
+    confirmación) o la cancela manualmente (pasa a "Cancelada" y no se
+    procesa más).
+    """
+
+    def test_func(self):
+        """Permite revisar la transacción solo a los roles que pueden operar."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
+
+    def get_object(self):
+        """Recupera la transacción del usuario autenticado o responde 404."""
+        return get_object_or_404(CalculoOperacion, pk=self.kwargs['pk'], usuario=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        """Muestra el resumen completo de la transacción pendiente.
+
+        Si el tiempo para confirmarla ya venció (por ejemplo, el cliente
+        cerró la pestaña sin decidir nada), la marca "Vencida" en este mismo
+        acceso, antes de mostrarla.
+        """
+        transaccion = self.get_object()
+        transaccion.marcar_vencida_si_corresponde()
+        return render(request, 'divisas/confirmar_transaccion.html', {'transaccion': transaccion})
+
+    def post(self, request, *args, **kwargs):
+        """Confirma o cancela la transacción según la acción elegida.
+
+        Antes de procesar la acción, revisa si el tiempo para confirmar ya
+        venció (ya sea recién ahora o desde una visita anterior) y, de ser
+        así, bloquea la acción en vez de procesarla.
+
+        Args:
+            request (HttpRequest): Solicitud POST con el campo ``accion``
+                (``confirmar`` o ``cancelar``).
+
+        Returns:
+            HttpResponse: Redirección a la misma pantalla con el resultado.
+        """
+        transaccion = self.get_object()
+        transaccion.marcar_vencida_si_corresponde()
+        if transaccion.estado != CalculoOperacion.ESTADO_PENDIENTE:
+            if transaccion.estado == CalculoOperacion.ESTADO_VENCIDA:
+                messages.error(
+                    request,
+                    'El tiempo para confirmar esta operación venció. Debe recalcular la operación.',
+                )
+            else:
+                messages.info(request, 'Esta transacción ya fue procesada.')
+            return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
+
+        accion = request.POST.get('accion')
+        if accion == 'cancelar':
+            transaccion.estado = CalculoOperacion.ESTADO_CANCELADA
+            transaccion.save(update_fields=['estado'])
+            messages.success(request, 'La operación fue cancelada.')
+            return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
+
+        if accion == 'confirmar':
+            if transaccion.tasa_vigente_cambio:
+                messages.error(
+                    request,
+                    'La tasa vigente cambió desde el cálculo inicial. Debe recalcular la operación.',
+                )
+                return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
+            transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA
+            transaccion.confirmado_en = timezone.now()
+            transaccion.save(update_fields=['estado', 'confirmado_en'])
+            messages.success(request, 'La operación fue confirmada.')
+            return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
+
+        messages.error(request, 'Acción no reconocida.')
+        return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
 
 
 @login_required
@@ -723,14 +897,17 @@ def confirmar_calculo_operacion_view(request, tipo):
     directamente en estado "Pendiente de confirmación". Sirve tanto para la
     compra como para la venta de divisas; la transacción queda registrada
     con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha
-    de creación.
+    de creación, para que el cliente la revise y la confirme o cancele en
+    ``ConfirmarTransaccionOperacionView``.
 
     Args:
         request (HttpRequest): Solicitud POST con los campos ocultos del Paso 1.
         tipo (str): ``compra`` o ``venta``, según la ruta.
 
     Returns:
-        HttpResponse: Redirección a la pantalla de operación o al inicio.
+        HttpResponse: Redirección a la pantalla de confirmación de la
+        transacción recién creada, o al inicio si algo falla antes de
+        crearla.
 
     Raises:
         Http404: Si el tipo de la ruta no es compra ni venta.
@@ -778,7 +955,7 @@ def confirmar_calculo_operacion_view(request, tipo):
         tipo, monto, cotizacion_actual.tasa_compra, cotizacion_actual.tasa_venta, cliente_activo
     )
     ahora = timezone.now()
-    CalculoOperacion.objects.create(
+    transaccion = CalculoOperacion.objects.create(
         usuario=request.user,
         cliente=cliente_activo,
         tipo=tipo,
@@ -790,17 +967,14 @@ def confirmar_calculo_operacion_view(request, tipo):
         comision=comision,
         monto_final=monto_final,
         estado=CalculoOperacion.ESTADO_PENDIENTE,
-        confirmado_en=ahora,
-        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
+        vence_en=ahora + timedelta(seconds=ConfiguracionVigencia.vigencia_confirmacion_segundos()),
     )
     tipo_display = dict(CalculoOperacion.TIPO_CHOICES)[tipo]
-    etiqueta_importe = 'a pagar' if tipo == CalculoOperacion.TIPO_COMPRA else 'a recibir'
     messages.success(
         request,
-        f'{tipo_display} de {divisa.codigo} registrada. Estado: Pendiente de confirmación. '
-        f'Importe {etiqueta_importe}: {monto_final} PYG.',
+        f'{tipo_display} de {divisa.codigo} registrada. Revisá el resumen para confirmarla.',
     )
-    return redirect('divisas:operar', tipo=tipo.lower())
+    return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
 
 
 class AdminDivisasMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -809,6 +983,33 @@ class AdminDivisasMixin(LoginRequiredMixin, UserPassesTestMixin):
         """Comprueba que el rol de administrador esté en la sesión."""
         roles = self.request.session.get('keycloak_roles', [])
         return 'admin' in roles
+
+
+class ConfiguracionVigenciaUpdateView(AdminDivisasMixin, UpdateView):
+    """Permite al administrador configurar los tiempos de espera de las operaciones.
+
+    Edita el único registro de ``ConfiguracionVigencia`` (lo crea la primera
+    vez, con los valores por defecto de ``settings``, si todavía no existe).
+    """
+
+    model = ConfiguracionVigencia
+    form_class = ConfiguracionVigenciaForm
+    template_name = 'divisas/configuracion_vigencia_form.html'
+    success_url = reverse_lazy('divisas:configuracion_vigencia')
+
+    def get_object(self, queryset=None):
+        """Recupera la configuración existente o construye una con los valores por defecto."""
+        return ConfiguracionVigencia.objects.first() or ConfiguracionVigencia(
+            calculo_vigencia_segundos=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS,
+            confirmacion_vigencia_segundos=settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS,
+        )
+
+    def form_valid(self, form):
+        """Registra quién actualizó la configuración y confirma el guardado."""
+        form.instance.actualizado_por = self.request.user
+        super().form_valid(form)
+        messages.success(self.request, 'Los tiempos de espera se actualizaron correctamente.')
+        return redirect('divisas:configuracion_vigencia')
 
 
 class DivisaListView(AdminDivisasMixin, ListView):

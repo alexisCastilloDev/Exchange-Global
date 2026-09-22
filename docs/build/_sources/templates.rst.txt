@@ -116,7 +116,15 @@ Divisas
    :language: html
    :lines: 1-7
 
+.. literalinclude:: ../../templates/divisas/confirmar_transaccion.html
+   :language: html
+   :lines: 1-7
+
 .. literalinclude:: ../../templates/divisas/triangulacion.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/divisas/confirmar_transaccion_cambio.html
    :language: html
    :lines: 1-7
 
@@ -129,6 +137,10 @@ Divisas
    :lines: 1-7
 
 .. literalinclude:: ../../templates/divisas/comision_form.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/divisas/configuracion_vigencia_form.html
    :language: html
    :lines: 1-7
 

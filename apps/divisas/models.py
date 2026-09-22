@@ -78,12 +78,23 @@ class Cotizacion(models.Model):
 
 
 class CalculoOperacion(models.Model):
-    """Representa una transacción de compra o venta ya confirmada por el cliente.
+    """Representa una transacción de compra o venta iniciada por el cliente.
 
     El cálculo previo (Paso 1: "Calcular importe") es solo una previsualización
-    y no se persiste; el registro se crea recién cuando el cliente confirma
+    y no se persiste; el registro se crea cuando el cliente confirma el importe
     (Paso 2: "Confirmar importe", ver ``confirmar_calculo_operacion_view``),
-    siempre en estado "Pendiente de confirmación".
+    siempre en estado "Pendiente de confirmación" y con ``vence_en`` fijado a
+    ``settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS`` más adelante. Desde
+    ahí, en la pantalla de confirmación (ver
+    ``ConfirmarTransaccionOperacionView``), el cliente revisa el resumen
+    completo y decide si la confirma (si la tasa vigente no cambió, pasa a
+    "Confirmada" y se registra ``confirmado_en``) o la cancela manualmente
+    (pasa a "Cancelada" y no se procesa más). Si el cliente nunca vuelve a
+    esa pantalla (por ejemplo, cierra la pestaña) y se cumple ``vence_en``
+    sin que la transacción se haya confirmado ni cancelado, se considera
+    "Vencida": ``estado_efectivo`` refleja esto de inmediato para quien la
+    consulte, aunque el campo ``estado`` recién se actualice en la base de
+    datos la próxima vez que alguien con permiso visite esa transacción.
     """
 
     TIPO_COMPRA = 'COMPRA'
@@ -94,8 +105,14 @@ class CalculoOperacion(models.Model):
     ]
 
     ESTADO_PENDIENTE = 'PENDIENTE_CONFIRMACION'
+    ESTADO_CONFIRMADA = 'CONFIRMADA'
+    ESTADO_CANCELADA = 'CANCELADA'
+    ESTADO_VENCIDA = 'VENCIDA'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
+        (ESTADO_CONFIRMADA, 'Confirmada'),
+        (ESTADO_CANCELADA, 'Cancelada'),
+        (ESTADO_VENCIDA, 'Vencida'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -139,6 +156,58 @@ class CalculoOperacion(models.Model):
     def esta_vencido(self):
         """Indica si el cálculo ya superó su tiempo de vigencia."""
         return timezone.now() >= self.vence_en
+
+    @property
+    def estado_efectivo(self):
+        """Devuelve el estado real, aunque el vencimiento todavía no se haya guardado.
+
+        Una transacción "Pendiente de confirmación" cuyo ``vence_en`` ya pasó
+        está, en la práctica, vencida (el cliente no la confirmó ni canceló a
+        tiempo, por ejemplo porque cerró la pestaña), aunque nadie haya vuelto
+        a visitarla todavía para que ``marcar_vencida_si_corresponde`` lo
+        persista. Se usa para mostrar el estado correcto en el historial de
+        transacciones sin depender de que alguien haya "tocado" el registro.
+        """
+        if self.estado == self.ESTADO_PENDIENTE and self.esta_vencido:
+            return self.ESTADO_VENCIDA
+        return self.estado
+
+    def get_estado_efectivo_display(self):
+        """Etiqueta legible de ``estado_efectivo`` (equivalente a ``get_estado_display``)."""
+        return dict(self.ESTADO_CHOICES).get(self.estado_efectivo, self.estado_efectivo)
+
+    def marcar_vencida_si_corresponde(self):
+        """Persiste el paso a "Vencida" si la transacción pendiente ya venció.
+
+        Se llama al acceder a la pantalla de confirmación (GET o POST): es el
+        único punto de escritura de este vencimiento, siguiendo el mismo
+        patrón perezoso que ya usa ``esta_vencido`` en el resto del sistema
+        (nada expira en segundo plano; se resuelve la próxima vez que alguien
+        interactúa con el registro).
+
+        Returns:
+            bool: ``True`` si la transacción quedó "Vencida" recién ahora.
+        """
+        if self.estado == self.ESTADO_PENDIENTE and self.esta_vencido:
+            self.estado = self.ESTADO_VENCIDA
+            self.save(update_fields=['estado'])
+            return True
+        return False
+
+    @property
+    def tasa_vigente_cambio(self):
+        """Indica si la tasa vigente de la divisa ya no coincide con la aplicada.
+
+        Se usa al confirmar una transacción pendiente: si la divisa no tiene
+        cotización vigente, o la tasa que correspondería aplicar ahora (venta
+        para una compra, compra para una venta) es distinta de la que se
+        guardó al calcular, la tasa "cambió" y no debe confirmarse.
+        """
+        cotizacion = self.divisa.ultima_cotizacion if self.divisa else None
+        if cotizacion is None:
+            return True
+        tasa_actual = cotizacion.tasa_venta if self.tipo == self.TIPO_COMPRA else cotizacion.tasa_compra
+        return tasa_actual != self.tasa_aplicada
 
 
 class ConfiguracionComision(models.Model):
@@ -190,23 +259,102 @@ class ConfiguracionComision(models.Model):
         return Decimal(str(settings.COMISION_OPERACION_PORCENTAJE))
 
 
+class ConfiguracionVigencia(models.Model):
+    """Configura, en segundos, los tiempos de espera de una operación cambiaria.
+
+    Es un registro único (patrón singleton): si el administrador no configuró
+    ninguno todavía, se usan los valores por defecto de ``settings``. Controla
+    dos tiempos distintos, correspondientes a los pasos 1→2 y 2→3 del flujo de
+    compra/venta/cambio (ver ``apps.divisas.views.CalculoOperacionView`` y
+    ``ConfirmarTransaccionOperacionView``):
+
+    - ``calculo_vigencia_segundos``: cuánto tiene el cliente, tras calcular el
+      importe (Paso 1), para confirmarlo (Paso 2) antes de que la cotización
+      usada se considere vencida y deba recalcular.
+    - ``confirmacion_vigencia_segundos``: cuánto tiene, ya con la transacción
+      creada en "Pendiente de confirmación" (Paso 2), para confirmarla o
+      cancelarla (Paso 3) antes de que se considere "Vencida".
+    """
+
+    calculo_vigencia_segundos = models.IntegerField(
+        verbose_name='Tiempo de espera para confirmar el importe (segundos)',
+        help_text='Tiempo entre calcular el importe y confirmarlo, antes de que la cotización venza.',
+    )
+    confirmacion_vigencia_segundos = models.IntegerField(
+        verbose_name='Tiempo de espera para confirmar la operación (segundos)',
+        help_text=(
+            'Tiempo entre confirmar el importe y confirmar o cancelar la'
+            ' operación, antes de que la transacción venza.'
+        ),
+    )
+    actualizado_en = models.DateTimeField(auto_now=True)
+    actualizado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vigencias_actualizadas',
+    )
+
+    class Meta:
+        """Define las etiquetas administrativas de la configuración de vigencia."""
+        verbose_name = 'Configuración de vigencia'
+        verbose_name_plural = 'Configuración de vigencia'
+
+    def __str__(self):
+        """Resume ambos tiempos configurados."""
+        return (
+            f'Importe: {self.calculo_vigencia_segundos}s ·'
+            f' Operación: {self.confirmacion_vigencia_segundos}s'
+        )
+
+    @classmethod
+    def vigencia_calculo_segundos(cls):
+        """Segundos vigentes para confirmar el importe tras calcularlo (Paso 1 → 2)."""
+        configuracion = cls.objects.first()
+        if configuracion:
+            return configuracion.calculo_vigencia_segundos
+        return settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS
+
+    @classmethod
+    def vigencia_confirmacion_segundos(cls):
+        """Segundos vigentes para confirmar o cancelar la operación (Paso 2 → 3)."""
+        configuracion = cls.objects.first()
+        if configuracion:
+            return configuracion.confirmacion_vigencia_segundos
+        return settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS
+
+
 class CalculoTriangulacion(models.Model):
-    """Representa un cambio entre dos divisas extranjeras vía PYG ya confirmado.
+    """Representa un cambio entre dos divisas extranjeras vía PYG.
 
     Igual que en ``CalculoOperacion``, el cálculo previo es solo una
     previsualización y no se persiste: el registro se crea cuando el cliente
     confirma el importe (ver ``confirmar_triangulacion_view``), siempre en
-    estado "Pendiente de confirmación" y a nombre del cliente activo. Así el
-    cambio aparece en el historial de transacciones junto con las compras y
-    ventas. ``TIPO_DISPLAY`` es el nombre del tipo de operación que muestra
-    el historial.
+    estado "Pendiente de confirmación", a nombre del cliente activo y con
+    ``vence_en`` fijado a ``settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS``
+    más adelante. Desde ahí, en la pantalla de confirmación (ver
+    ``ConfirmarTransaccionCambioView``), el cliente revisa el resumen completo
+    y decide si lo confirma (si las tasas vigentes no cambiaron, pasa a
+    "Confirmada" y se registra ``confirmado_en``) o lo cancela manualmente
+    (pasa a "Cancelada"). Si el cliente nunca vuelve a esa pantalla y se
+    cumple ``vence_en`` sin resolución, se considera "Vencida" (ver
+    ``estado_efectivo``). Así aparece en el historial de transacciones junto
+    con las compras y ventas. ``TIPO_DISPLAY`` es el nombre del tipo de
+    operación que muestra el historial.
     """
 
     TIPO_DISPLAY = 'Cambio'
 
     ESTADO_PENDIENTE = 'PENDIENTE_CONFIRMACION'
+    ESTADO_CONFIRMADA = 'CONFIRMADA'
+    ESTADO_CANCELADA = 'CANCELADA'
+    ESTADO_VENCIDA = 'VENCIDA'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
+        (ESTADO_CONFIRMADA, 'Confirmada'),
+        (ESTADO_CANCELADA, 'Cancelada'),
+        (ESTADO_VENCIDA, 'Vencida'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -256,3 +404,51 @@ class CalculoTriangulacion(models.Model):
     def esta_vencido(self):
         """Indica si el cálculo ya superó su tiempo de vigencia."""
         return timezone.now() >= self.vence_en
+
+    @property
+    def estado_efectivo(self):
+        """Devuelve el estado real, aunque el vencimiento todavía no se haya guardado.
+
+        Ver ``CalculoOperacion.estado_efectivo``: mismo criterio, aplicado al
+        cambio entre divisas.
+        """
+        if self.estado == self.ESTADO_PENDIENTE and self.esta_vencido:
+            return self.ESTADO_VENCIDA
+        return self.estado
+
+    def get_estado_efectivo_display(self):
+        """Etiqueta legible de ``estado_efectivo`` (equivalente a ``get_estado_display``)."""
+        return dict(self.ESTADO_CHOICES).get(self.estado_efectivo, self.estado_efectivo)
+
+    def marcar_vencida_si_corresponde(self):
+        """Persiste el paso a "Vencida" si el cambio pendiente ya venció.
+
+        Ver ``CalculoOperacion.marcar_vencida_si_corresponde``: mismo patrón
+        perezoso, aplicado al cambio entre divisas.
+
+        Returns:
+            bool: ``True`` si el cambio quedó "Vencida" recién ahora.
+        """
+        if self.estado == self.ESTADO_PENDIENTE and self.esta_vencido:
+            self.estado = self.ESTADO_VENCIDA
+            self.save(update_fields=['estado'])
+            return True
+        return False
+
+    @property
+    def tasas_vigentes_cambiaron(self):
+        """Indica si alguna cotización usada al calcular ya no está vigente.
+
+        Se usa al confirmar el cambio: si cualquiera de las dos divisas
+        (origen o destino) se quedó sin cotización, o la tasa que
+        correspondería aplicar ahora es distinta de la que se guardó al
+        calcular, las tasas "cambiaron" y no debe confirmarse.
+        """
+        cotizacion_origen = self.divisa_origen.ultima_cotizacion
+        cotizacion_destino = self.divisa_destino.ultima_cotizacion
+        if cotizacion_origen is None or cotizacion_destino is None:
+            return True
+        return (
+            cotizacion_origen.tasa_compra != self.tasa_compra_aplicada
+            or cotizacion_destino.tasa_venta != self.tasa_venta_aplicada
+        )

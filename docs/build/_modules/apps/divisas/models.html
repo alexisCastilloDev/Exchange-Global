@@ -49,6 +49,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -225,12 +226,23 @@
 <div class="viewcode-block" id="CalculoOperacion">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CalculoOperacion</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Representa una transacción de compra o venta ya confirmada por el cliente.</span>
+<span class="w">    </span><span class="sd">"""Representa una transacción de compra o venta iniciada por el cliente.</span>
 
 <span class="sd">    El cálculo previo (Paso 1: "Calcular importe") es solo una previsualización</span>
-<span class="sd">    y no se persiste; el registro se crea recién cuando el cliente confirma</span>
+<span class="sd">    y no se persiste; el registro se crea cuando el cliente confirma el importe</span>
 <span class="sd">    (Paso 2: "Confirmar importe", ver ``confirmar_calculo_operacion_view``),</span>
-<span class="sd">    siempre en estado "Pendiente de confirmación".</span>
+<span class="sd">    siempre en estado "Pendiente de confirmación" y con ``vence_en`` fijado a</span>
+<span class="sd">    ``settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS`` más adelante. Desde</span>
+<span class="sd">    ahí, en la pantalla de confirmación (ver</span>
+<span class="sd">    ``ConfirmarTransaccionOperacionView``), el cliente revisa el resumen</span>
+<span class="sd">    completo y decide si la confirma (si la tasa vigente no cambió, pasa a</span>
+<span class="sd">    "Confirmada" y se registra ``confirmado_en``) o la cancela manualmente</span>
+<span class="sd">    (pasa a "Cancelada" y no se procesa más). Si el cliente nunca vuelve a</span>
+<span class="sd">    esa pantalla (por ejemplo, cierra la pestaña) y se cumple ``vence_en``</span>
+<span class="sd">    sin que la transacción se haya confirmado ni cancelado, se considera</span>
+<span class="sd">    "Vencida": ``estado_efectivo`` refleja esto de inmediato para quien la</span>
+<span class="sd">    consulte, aunque el campo ``estado`` recién se actualice en la base de</span>
+<span class="sd">    datos la próxima vez que alguien con permiso visite esa transacción.</span>
 <span class="sd">    """</span>
 
     <span class="n">TIPO_COMPRA</span> <span class="o">=</span> <span class="s1">'COMPRA'</span>
@@ -241,8 +253,14 @@
     <span class="p">]</span>
 
     <span class="n">ESTADO_PENDIENTE</span> <span class="o">=</span> <span class="s1">'PENDIENTE_CONFIRMACION'</span>
+    <span class="n">ESTADO_CONFIRMADA</span> <span class="o">=</span> <span class="s1">'CONFIRMADA'</span>
+    <span class="n">ESTADO_CANCELADA</span> <span class="o">=</span> <span class="s1">'CANCELADA'</span>
+    <span class="n">ESTADO_VENCIDA</span> <span class="o">=</span> <span class="s1">'VENCIDA'</span>
     <span class="n">ESTADO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span> <span class="s1">'Pendiente de confirmación'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">,</span> <span class="s1">'Confirmada'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CANCELADA</span><span class="p">,</span> <span class="s1">'Cancelada'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_VENCIDA</span><span class="p">,</span> <span class="s1">'Vencida'</span><span class="p">),</span>
     <span class="p">]</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -285,7 +303,65 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">esta_vencido</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Indica si el cálculo ya superó su tiempo de vigencia."""</span>
-        <span class="k">return</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vence_en</span></div>
+        <span class="k">return</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vence_en</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estado_efectivo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve el estado real, aunque el vencimiento todavía no se haya guardado.</span>
+
+<span class="sd">        Una transacción "Pendiente de confirmación" cuyo ``vence_en`` ya pasó</span>
+<span class="sd">        está, en la práctica, vencida (el cliente no la confirmó ni canceló a</span>
+<span class="sd">        tiempo, por ejemplo porque cerró la pestaña), aunque nadie haya vuelto</span>
+<span class="sd">        a visitarla todavía para que ``marcar_vencida_si_corresponde`` lo</span>
+<span class="sd">        persista. Se usa para mostrar el estado correcto en el historial de</span>
+<span class="sd">        transacciones sin depender de que alguien haya "tocado" el registro.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">esta_vencido</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_VENCIDA</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span>
+
+<div class="viewcode-block" id="CalculoOperacion.get_estado_efectivo_display">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_estado_efectivo_display">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_estado_efectivo_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Etiqueta legible de ``estado_efectivo`` (equivalente a ``get_estado_display``)."""</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_CHOICES</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CalculoOperacion.marcar_vencida_si_corresponde">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.marcar_vencida_si_corresponde">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marcar_vencida_si_corresponde</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Persiste el paso a "Vencida" si la transacción pendiente ya venció.</span>
+
+<span class="sd">        Se llama al acceder a la pantalla de confirmación (GET o POST): es el</span>
+<span class="sd">        único punto de escritura de este vencimiento, siguiendo el mismo</span>
+<span class="sd">        patrón perezoso que ya usa ``esta_vencido`` en el resto del sistema</span>
+<span class="sd">        (nada expira en segundo plano; se resuelve la próxima vez que alguien</span>
+<span class="sd">        interactúa con el registro).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: ``True`` si la transacción quedó "Vencida" recién ahora.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">esta_vencido</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_VENCIDA</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tasa_vigente_cambio</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Indica si la tasa vigente de la divisa ya no coincide con la aplicada.</span>
+
+<span class="sd">        Se usa al confirmar una transacción pendiente: si la divisa no tiene</span>
+<span class="sd">        cotización vigente, o la tasa que correspondería aplicar ahora (venta</span>
+<span class="sd">        para una compra, compra para una venta) es distinta de la que se</span>
+<span class="sd">        guardó al calcular, la tasa "cambió" y no debe confirmarse.</span>
+<span class="sd">        """</span>
+        <span class="n">cotizacion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">ultima_cotizacion</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">cotizacion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="n">tasa_actual</span> <span class="o">=</span> <span class="n">cotizacion</span><span class="o">.</span><span class="n">tasa_venta</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tipo</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">TIPO_COMPRA</span> <span class="k">else</span> <span class="n">cotizacion</span><span class="o">.</span><span class="n">tasa_compra</span>
+        <span class="k">return</span> <span class="n">tasa_actual</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_aplicada</span></div>
 
 
 
@@ -344,25 +420,104 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfiguracionVigencia</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Configura, en segundos, los tiempos de espera de una operación cambiaria.</span>
+
+<span class="sd">    Es un registro único (patrón singleton): si el administrador no configuró</span>
+<span class="sd">    ninguno todavía, se usan los valores por defecto de ``settings``. Controla</span>
+<span class="sd">    dos tiempos distintos, correspondientes a los pasos 1→2 y 2→3 del flujo de</span>
+<span class="sd">    compra/venta/cambio (ver ``apps.divisas.views.CalculoOperacionView`` y</span>
+<span class="sd">    ``ConfirmarTransaccionOperacionView``):</span>
+
+<span class="sd">    - ``calculo_vigencia_segundos``: cuánto tiene el cliente, tras calcular el</span>
+<span class="sd">      importe (Paso 1), para confirmarlo (Paso 2) antes de que la cotización</span>
+<span class="sd">      usada se considere vencida y deba recalcular.</span>
+<span class="sd">    - ``confirmacion_vigencia_segundos``: cuánto tiene, ya con la transacción</span>
+<span class="sd">      creada en "Pendiente de confirmación" (Paso 2), para confirmarla o</span>
+<span class="sd">      cancelarla (Paso 3) antes de que se considere "Vencida".</span>
+<span class="sd">    """</span>
+
+    <span class="n">calculo_vigencia_segundos</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tiempo de espera para confirmar el importe (segundos)'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'Tiempo entre calcular el importe y confirmarlo, antes de que la cotización venza.'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">confirmacion_vigencia_segundos</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tiempo de espera para confirmar la operación (segundos)'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'Tiempo entre confirmar el importe y confirmar o cancelar la'</span>
+            <span class="s1">' operación, antes de que la transacción venza.'</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">actualizado_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">actualizado_por</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'vigencias_actualizadas'</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define las etiquetas administrativas de la configuración de vigencia."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Configuración de vigencia'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Configuración de vigencia'</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resume ambos tiempos configurados."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Importe: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_vigencia_segundos</span><span class="si">}</span><span class="s1">s ·'</span>
+            <span class="sa">f</span><span class="s1">' Operación: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">confirmacion_vigencia_segundos</span><span class="si">}</span><span class="s1">s'</span>
+        <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vigencia_calculo_segundos</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Segundos vigentes para confirmar el importe tras calcularlo (Paso 1 → 2)."""</span>
+        <span class="n">configuracion</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">configuracion</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">configuracion</span><span class="o">.</span><span class="n">calculo_vigencia_segundos</span>
+        <span class="k">return</span> <span class="n">settings</span><span class="o">.</span><span class="n">CALCULO_OPERACION_VIGENCIA_SEGUNDOS</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vigencia_confirmacion_segundos</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Segundos vigentes para confirmar o cancelar la operación (Paso 2 → 3)."""</span>
+        <span class="n">configuracion</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">configuracion</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">configuracion</span><span class="o">.</span><span class="n">confirmacion_vigencia_segundos</span>
+        <span class="k">return</span> <span class="n">settings</span><span class="o">.</span><span class="n">CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS</span>
+
+
 <div class="viewcode-block" id="CalculoTriangulacion">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CalculoTriangulacion</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Representa un cambio entre dos divisas extranjeras vía PYG ya confirmado.</span>
+<span class="w">    </span><span class="sd">"""Representa un cambio entre dos divisas extranjeras vía PYG.</span>
 
 <span class="sd">    Igual que en ``CalculoOperacion``, el cálculo previo es solo una</span>
 <span class="sd">    previsualización y no se persiste: el registro se crea cuando el cliente</span>
 <span class="sd">    confirma el importe (ver ``confirmar_triangulacion_view``), siempre en</span>
-<span class="sd">    estado "Pendiente de confirmación" y a nombre del cliente activo. Así el</span>
-<span class="sd">    cambio aparece en el historial de transacciones junto con las compras y</span>
-<span class="sd">    ventas. ``TIPO_DISPLAY`` es el nombre del tipo de operación que muestra</span>
-<span class="sd">    el historial.</span>
+<span class="sd">    estado "Pendiente de confirmación", a nombre del cliente activo y con</span>
+<span class="sd">    ``vence_en`` fijado a ``settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS``</span>
+<span class="sd">    más adelante. Desde ahí, en la pantalla de confirmación (ver</span>
+<span class="sd">    ``ConfirmarTransaccionCambioView``), el cliente revisa el resumen completo</span>
+<span class="sd">    y decide si lo confirma (si las tasas vigentes no cambiaron, pasa a</span>
+<span class="sd">    "Confirmada" y se registra ``confirmado_en``) o lo cancela manualmente</span>
+<span class="sd">    (pasa a "Cancelada"). Si el cliente nunca vuelve a esa pantalla y se</span>
+<span class="sd">    cumple ``vence_en`` sin resolución, se considera "Vencida" (ver</span>
+<span class="sd">    ``estado_efectivo``). Así aparece en el historial de transacciones junto</span>
+<span class="sd">    con las compras y ventas. ``TIPO_DISPLAY`` es el nombre del tipo de</span>
+<span class="sd">    operación que muestra el historial.</span>
 <span class="sd">    """</span>
 
     <span class="n">TIPO_DISPLAY</span> <span class="o">=</span> <span class="s1">'Cambio'</span>
 
     <span class="n">ESTADO_PENDIENTE</span> <span class="o">=</span> <span class="s1">'PENDIENTE_CONFIRMACION'</span>
+    <span class="n">ESTADO_CONFIRMADA</span> <span class="o">=</span> <span class="s1">'CONFIRMADA'</span>
+    <span class="n">ESTADO_CANCELADA</span> <span class="o">=</span> <span class="s1">'CANCELADA'</span>
+    <span class="n">ESTADO_VENCIDA</span> <span class="o">=</span> <span class="s1">'VENCIDA'</span>
     <span class="n">ESTADO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span> <span class="s1">'Pendiente de confirmación'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">,</span> <span class="s1">'Confirmada'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CANCELADA</span><span class="p">,</span> <span class="s1">'Cancelada'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_VENCIDA</span><span class="p">,</span> <span class="s1">'Vencida'</span><span class="p">),</span>
     <span class="p">]</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -411,7 +566,61 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">esta_vencido</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Indica si el cálculo ya superó su tiempo de vigencia."""</span>
-        <span class="k">return</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vence_en</span></div>
+        <span class="k">return</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vence_en</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estado_efectivo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve el estado real, aunque el vencimiento todavía no se haya guardado.</span>
+
+<span class="sd">        Ver ``CalculoOperacion.estado_efectivo``: mismo criterio, aplicado al</span>
+<span class="sd">        cambio entre divisas.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">esta_vencido</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_VENCIDA</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span>
+
+<div class="viewcode-block" id="CalculoTriangulacion.get_estado_efectivo_display">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.get_estado_efectivo_display">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_estado_efectivo_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Etiqueta legible de ``estado_efectivo`` (equivalente a ``get_estado_display``)."""</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_CHOICES</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CalculoTriangulacion.marcar_vencida_si_corresponde">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.marcar_vencida_si_corresponde">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marcar_vencida_si_corresponde</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Persiste el paso a "Vencida" si el cambio pendiente ya venció.</span>
+
+<span class="sd">        Ver ``CalculoOperacion.marcar_vencida_si_corresponde``: mismo patrón</span>
+<span class="sd">        perezoso, aplicado al cambio entre divisas.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: ``True`` si el cambio quedó "Vencida" recién ahora.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">esta_vencido</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_VENCIDA</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tasas_vigentes_cambiaron</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Indica si alguna cotización usada al calcular ya no está vigente.</span>
+
+<span class="sd">        Se usa al confirmar el cambio: si cualquiera de las dos divisas</span>
+<span class="sd">        (origen o destino) se quedó sin cotización, o la tasa que</span>
+<span class="sd">        correspondería aplicar ahora es distinta de la que se guardó al</span>
+<span class="sd">        calcular, las tasas "cambiaron" y no debe confirmarse.</span>
+<span class="sd">        """</span>
+        <span class="n">cotizacion_origen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa_origen</span><span class="o">.</span><span class="n">ultima_cotizacion</span>
+        <span class="n">cotizacion_destino</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa_destino</span><span class="o">.</span><span class="n">ultima_cotizacion</span>
+        <span class="k">if</span> <span class="n">cotizacion_origen</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">cotizacion_destino</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_compra_aplicada</span>
+            <span class="ow">or</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_venta_aplicada</span>
+        <span class="p">)</span></div>
 
 </pre></div>
 
