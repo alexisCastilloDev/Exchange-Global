@@ -1139,8 +1139,8 @@ class ConfirmacionOperacionCambiariaTest(TestCase):
         self.assertContains(response, 'La operación fue confirmada')
         self.assertContains(response, 'Confirmada')
 
-    def test_confirmar_rechaza_si_la_tasa_vigente_cambio(self):
-        """Si la tasa vigente cambió desde el cálculo inicial, no se confirma."""
+    def test_confirmar_cancela_automaticamente_si_la_tasa_vigente_cambio(self):
+        """Criterio 1 (GE-76): si la tasa vigente cambió, la transacción se cancela por cotización."""
         Cotizacion.objects.create(
             divisa=self.usd,
             tasa_compra=Decimal('7350.00'),
@@ -1151,9 +1151,64 @@ class ConfirmacionOperacionCambiariaTest(TestCase):
 
         self.transaccion.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PENDIENTE)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA_COTIZACION)
         self.assertIsNone(self.transaccion.confirmado_en)
         self.assertContains(response, 'La tasa vigente cambió')
+
+    def test_confirmar_por_cambio_de_cotizacion_notifica_y_ofrece_recalcular(self):
+        """Criterio 2: al cancelarse por cambio de cotización, se explica el motivo y se ofrece recalcular."""
+        Cotizacion.objects.create(
+            divisa=self.usd,
+            tasa_compra=Decimal('7350.00'),
+            tasa_venta=Decimal('7450.00'),
+        )
+
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.assertContains(response, 'fue cancelad')
+        self.assertContains(response, 'Recalcular')
+
+    def test_cancelada_por_cotizacion_es_distinguible_de_la_cancelacion_manual_en_el_historial(self):
+        """Criterio 4: en el historial, la cancelación por cotización se ve distinta de la manual."""
+        Cotizacion.objects.create(
+            divisa=self.usd,
+            tasa_compra=Decimal('7350.00'),
+            tasa_venta=Decimal('7450.00'),
+        )
+        self.client.post(self.url, {'accion': 'confirmar'})
+        User.objects.create_user(username='admin-cancelada-cotizacion', password='password123')
+        self.client.logout()
+        self.client.login(username='admin-cancelada-cotizacion', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+        response = self.client.get(reverse('divisas:historial_transacciones'))
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA_COTIZACION)
+        self.assertContains(response, 'Cancelada por cambio de cotización')
+
+    def test_recalcular_tras_cancelacion_por_cotizacion_usa_la_tasa_vigente(self):
+        """Criterio 3: al recalcular tras la cancelación, se genera un cálculo nuevo con la tasa vigente."""
+        Cotizacion.objects.create(
+            divisa=self.usd,
+            tasa_compra=Decimal('7350.00'),
+            tasa_venta=Decimal('7450.00'),
+        )
+        self.client.post(self.url, {'accion': 'confirmar'})
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA_COTIZACION)
+
+        response = self.client.post(
+            reverse('divisas:operar', kwargs={'tipo': 'compra'}),
+            {'tipo': CalculoOperacion.TIPO_COMPRA, 'divisa': str(self.usd.pk), 'monto': '100.00'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        resultado = response.context['resultado']
+        self.assertEqual(resultado['tasa_aplicada'], Decimal('7450.00'))
+        self.assertNotEqual(resultado['tasa_aplicada'], self.transaccion.tasa_aplicada)
 
     def test_cancelar_manualmente_marca_cancelada_y_no_se_procesa(self):
         """Criterio 3: al cancelar manualmente, la transacción pasa a 'Cancelada'."""
@@ -1358,17 +1413,64 @@ class ConfirmacionCambioDivisasTest(TestCase):
         self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CONFIRMADA)
         self.assertContains(response, 'El cambio fue confirmado')
 
-    def test_confirmar_rechaza_si_alguna_tasa_vigente_cambio(self):
-        """Si cambió la cotización de cualquiera de las dos divisas, no se confirma."""
+    def test_confirmar_cancela_automaticamente_si_alguna_tasa_vigente_cambio(self):
+        """Criterio 1 (GE-76): si cambió la cotización de alguna divisa, el cambio se cancela por cotización."""
         Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7950.00'), tasa_venta=Decimal('8150.00'))
 
         response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
 
         self.transaccion.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PENDIENTE)
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CANCELADA_COTIZACION)
         self.assertIsNone(self.transaccion.confirmado_en)
         self.assertContains(response, 'Las tasas vigentes cambiaron')
+
+    def test_confirmar_por_cambio_de_cotizacion_notifica_y_ofrece_recalcular(self):
+        """Criterio 2: al cancelarse por cambio de cotización, se explica el motivo y se ofrece recalcular."""
+        Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7950.00'), tasa_venta=Decimal('8150.00'))
+
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.assertContains(response, 'fue cancelad')
+        self.assertContains(response, 'Recalcular')
+
+    def test_cancelada_por_cotizacion_es_distinguible_de_la_cancelacion_manual_en_el_historial(self):
+        """Criterio 4: en el historial, la cancelación por cotización se ve distinta de la manual."""
+        Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7950.00'), tasa_venta=Decimal('8150.00'))
+        self.client.post(self.url, {'accion': 'confirmar'})
+        User.objects.create_user(username='admin-cancelada-cotizacion-cambio', password='password123')
+        self.client.logout()
+        self.client.login(username='admin-cancelada-cotizacion-cambio', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+        response = self.client.get(reverse('divisas:historial_transacciones'))
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CANCELADA_COTIZACION)
+        self.assertContains(response, 'Cancelada por cambio de cotización')
+
+    def test_recalcular_tras_cancelacion_por_cotizacion_usa_las_tasas_vigentes(self):
+        """Criterio 3: al recalcular tras la cancelación, se genera un cálculo nuevo con las tasas vigentes."""
+        Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7950.00'), tasa_venta=Decimal('8150.00'))
+        self.client.post(self.url, {'accion': 'confirmar'})
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CANCELADA_COTIZACION)
+
+        response = self.client.post(
+            reverse('divisas:triangulacion'),
+            {
+                'divisa_origen': str(self.usd.pk),
+                'divisa_destino': str(self.eur.pk),
+                'monto': '100.00',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        resultado = response.context['resultado']
+        self.assertEqual(resultado['tasa_venta_aplicada'], Decimal('8150.00'))
+        self.assertNotEqual(resultado['tasa_venta_aplicada'], self.transaccion.tasa_venta_aplicada)
 
     def test_cancelar_manualmente_marca_cancelada(self):
         """Criterio 3: al cancelar manualmente, el cambio pasa a 'Cancelada' y no se procesa."""

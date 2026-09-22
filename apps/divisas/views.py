@@ -634,7 +634,10 @@ class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, Vi
     Implementa la HU "Confirmación de operación cambiaria" para los cambios
     entre divisas: el cliente ve el resumen completo de una transacción en
     estado "Pendiente de confirmación" y decide si la confirma (si las tasas
-    vigentes no cambiaron desde el cálculo inicial) o la cancela.
+    vigentes no cambiaron desde el cálculo inicial) o la cancela. Si al
+    confirmar alguna tasa vigente ya cambió, el cambio se cancela
+    automáticamente como "Cancelada por cambio de cotización" (ver
+    ``CalculoTriangulacion.tasas_vigentes_cambiaron``) en vez de confirmarse.
     """
 
     def test_func(self):
@@ -666,7 +669,10 @@ class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, Vi
 
         Antes de procesar la acción, revisa si el tiempo para confirmar ya
         venció (ya sea recién ahora o desde una visita anterior) y, de ser
-        así, bloquea la acción en vez de procesarla.
+        así, bloquea la acción en vez de procesarla. Al confirmar, si alguna
+        tasa vigente ya no coincide con la usada al calcular, el cambio se
+        cancela automáticamente como "Cancelada por cambio de cotización" en
+        vez de confirmarse.
 
         Args:
             request (HttpRequest): Solicitud POST con el campo ``accion``
@@ -696,9 +702,12 @@ class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, Vi
 
         if accion == 'confirmar':
             if transaccion.tasas_vigentes_cambiaron:
+                transaccion.estado = CalculoTriangulacion.ESTADO_CANCELADA_COTIZACION
+                transaccion.save(update_fields=['estado'])
                 messages.error(
                     request,
-                    'Las tasas vigentes cambiaron desde el cálculo inicial. Debe recalcular el cambio.',
+                    'Las tasas vigentes cambiaron desde el cálculo inicial. El cambio fue cancelado;'
+                    ' puede recalcularlo con las tasas nuevas.',
                 )
                 return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
             transaccion.estado = CalculoTriangulacion.ESTADO_CONFIRMADA
@@ -810,7 +819,9 @@ class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin,
     confirmación" y decide si la confirma (si la tasa vigente no cambió desde
     el cálculo inicial, pasa a "Confirmada" y se registra la fecha y hora de
     confirmación) o la cancela manualmente (pasa a "Cancelada" y no se
-    procesa más).
+    procesa más). Si al confirmar la tasa vigente ya cambió, la transacción
+    se cancela automáticamente como "Cancelada por cambio de cotización" (ver
+    ``CalculoOperacion.tasa_vigente_cambio``) en vez de confirmarse.
     """
 
     def test_func(self):
@@ -842,7 +853,10 @@ class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin,
 
         Antes de procesar la acción, revisa si el tiempo para confirmar ya
         venció (ya sea recién ahora o desde una visita anterior) y, de ser
-        así, bloquea la acción en vez de procesarla.
+        así, bloquea la acción en vez de procesarla. Al confirmar, si la tasa
+        vigente ya no coincide con la usada al calcular, la transacción se
+        cancela automáticamente como "Cancelada por cambio de cotización" en
+        vez de confirmarse.
 
         Args:
             request (HttpRequest): Solicitud POST con el campo ``accion``
@@ -872,9 +886,12 @@ class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin,
 
         if accion == 'confirmar':
             if transaccion.tasa_vigente_cambio:
+                transaccion.estado = CalculoOperacion.ESTADO_CANCELADA_COTIZACION
+                transaccion.save(update_fields=['estado'])
                 messages.error(
                     request,
-                    'La tasa vigente cambió desde el cálculo inicial. Debe recalcular la operación.',
+                    'La tasa vigente cambió desde el cálculo inicial. La operación fue cancelada;'
+                    ' puede recalcularla con la tasa nueva.',
                 )
                 return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
             transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA

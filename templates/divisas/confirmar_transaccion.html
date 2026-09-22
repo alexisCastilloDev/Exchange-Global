@@ -50,6 +50,9 @@ Contexto esperado: transaccion.
                 <div class="operation-expiry mt-3"><i class="bi bi-check2-circle me-1"></i> Confirmada el {{ transaccion.confirmado_en|date:'d/m/Y H:i:s' }}.</div>
             {% elif transaccion.estado == 'CANCELADA' %}
                 <div class="operation-expiry mt-3"><i class="bi bi-x-circle me-1"></i> Esta operación fue cancelada.</div>
+            {% elif transaccion.estado == 'CANCELADA_COTIZACION' %}
+                <div class="operation-expiry mt-3"><i class="bi bi-exclamation-triangle me-1"></i> La cotización cambió antes de que confirmaras el pago, así que la operación fue cancelada automáticamente. Podés recalcularla con la tasa vigente.</div>
+                <a href="{% url 'divisas:operar' transaccion.tipo|lower %}" class="btn btn-primary mt-3"><i class="bi bi-arrow-repeat me-1"></i> Recalcular</a>
             {% elif transaccion.estado == 'VENCIDA' %}
                 <div class="operation-expiry mt-3"><i class="bi bi-hourglass-split me-1"></i> El tiempo para confirmar esta operación venció sin que se haya confirmado ni cancelado.</div>
                 <a href="{% url 'divisas:operar' transaccion.tipo|lower %}" class="btn btn-primary mt-3"><i class="bi bi-arrow-repeat me-1"></i> Recalcular</a>
