@@ -126,3 +126,8 @@ LOGOUT_REDIRECT_URL = '/'
 # Parámetros del cálculo previo de operaciones cambiarias.
 COMISION_OPERACION_PORCENTAJE = Decimal('1.00')
 CALCULO_OPERACION_VIGENCIA_SEGUNDOS = 300
+
+# Tiempo que una transacción recién creada (estado "Pendiente de
+# confirmación") espera a que el cliente la confirme o cancele en la
+# pantalla de confirmación, antes de considerarse "Vencida".
+CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS = 300

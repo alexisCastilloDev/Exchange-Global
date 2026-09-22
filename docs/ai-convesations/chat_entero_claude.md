@@ -6,8 +6,8 @@
 | **Session ID** | `8d9eeb1a-5357-49e2-b5ca-950761ad5e07` |
 | **Working Dir** | `c:\Rodrigo\Facultad\IS2\IS2_REPO` |
 | **Started** | 9/15/2026, 7:22:40 PM |
-| **Last Updated** | 9/18/2026, 12:39:10 AM |
-| **Messages** | 957 |
+| **Last Updated** | 9/21/2026, 11:54:36 PM |
+| **Messages** | 1261 |
 
 ---
 
@@ -15411,6 +15411,4883 @@ The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\urls.py has been updated 
 ```
 
 </details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:39:14 AM</sup>
+
+Ahora actualizo el template `calculo_operacion.html` para usar `resultado` (dict) y el nuevo formulario oculto de confirmación.
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:39:16 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\templates\\divisas\\calculo_operacion.html",
+  "old_string": "<!--\nCálculo previo del importe de una compra o venta contra PYG.\nHereda de: base.html.\nBloques definidos: title, content.\nContexto esperado: tipo_operacion, form, calculo y vigencia_segundos.\n-->",
+  "new_string": "<!--\nCálculo previo del importe de una compra o venta contra PYG.\nHereda de: base.html.\nBloques definidos: title, content.\nContexto esperado: tipo_operacion, form, resultado y vigencia_segundos.\n-->"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:39:17 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\templates\divisas\calculo_operacion.html has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:39:32 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\templates\\divisas\\calculo_operacion.html",
+  "old_string": "                {% if calculo %}<span class=\"badge-activo\">{{ calculo.get_estado_display }}</span>{% endif %}\n            </div>\n            {% if calculo %}\n                <div class=\"operation-summary\">\n                    <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Operación: </span><strong class=\"operation-summary__value\">{{ calculo.get_tipo_display }} de {{ calculo.codigo_divisa }} contra PYG</strong></div>\n                    <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Monto de {{ tipo_operacion|lower }}: </span><strong class=\"operation-summary__value\">{{ calculo.monto_origen|floatformat:2 }} {{ calculo.codigo_divisa }}</strong></div>\n                    <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Tasa aplicada: </span><strong class=\"operation-summary__value\">{{ calculo.tasa_aplicada|floatformat:2 }} PYG</strong></div>\n                    <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Comisión ({{ calculo.comision_porcentaje|floatformat:2 }}%): </span><strong class=\"operation-summary__value\">{{ calculo.comision|floatformat:2 }} PYG</strong></div>\n                    <div class=\"operation-summary__row operation-summary__row--total\"><span class=\"operation-summary__label\">{% if calculo.tipo == 'COMPRA' %}Importe a pagar: {% else %}Importe a recibir: {% endif %}</span><strong class=\"operation-summary__value\">{{ calculo.monto_final|floatformat:2 }} PYG</strong></div>\n                </div>\n                <div class=\"operation-expiry mt-3\"><i class=\"bi bi-hourglass-split me-1\"></i> Válido hasta {{ calculo.vence_en|date:'d/m/Y H:i:s' }}.</div>\n                <form method=\"post\" action=\"{% url 'divisas:confirmar_operacion' calculo.id %}\" class=\"mt-3\">\n
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:39:33 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\templates\divisas\calculo_operacion.html has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:39:42 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:39:43 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"USE_L10N\\|USE_THOUSAND_SEPARATOR\\|USE_I18N\\|LANGUAGE_CODE\\|USE_TZ\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/global_exchange/settings/base.py\"",
+  "description": "Revisar configuración regional que pueda afectar el formateo de números"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:39:43 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+74:LANGUAGE_CODE = 'en-us'
+76:USE_I18N = True
+77:USE_TZ = True
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:39:52 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:39:52 AM</sup>
+
+Ahora genero la migración para el cambio de choices del campo `estado`.
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:39:52 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python manage.py makemigrations divisas 2>&1",
+  "description": "Generar migración por el cambio de choices en estado"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:39:57 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Migrations for 'divisas':
+  apps\divisas\migrations\0007_alter_calculooperacion_estado.py
+    ~ Alter field estado on calculooperacion
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:00 AM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\migrations\\0007_alter_calculooperacion_estado.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:40:00 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	# Generated by Django 6.1 on 2026-09-18 03:39
+2	
+3	from django.db import migrations, models
+4	
+5	
+6	class Migration(migrations.Migration):
+7	
+8	    dependencies = [
+9	        ('divisas', '0006_calculooperacion_cliente_estado'),
+10	    ]
+11	
+12	    operations = [
+13	        migrations.AlterField(
+14	            model_name='calculooperacion',
+15	            name='estado',
+16	            field=models.CharField(choices=[('PENDIENTE_CONFIRMACION', 'Pendiente de confirmación')], default='PENDIENTE_CONFIRMACION', max_length=25),
+17	        ),
+18	    ]
+19
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:07 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\migrations\\0007_alter_calculooperacion_estado.py",
+  "old_string": "# Generated by Django 6.1 on 2026-09-18 03:39\n\nfrom django.db import migrations, models\n\n\nclass Migration(migrations.Migration):\n\n    dependencies = [",
+  "new_string": "\"\"\"Retira el estado 'Confirmada': la transacción ya nace confirmada.\n\nCon el nuevo flujo, el cálculo previo (Paso 1) no persiste nada y la\ntransacción se crea recién al confirmar (Paso 2), siempre en un único\nestado posible: \"Pendiente de confirmación\". No hace falta migrar datos:\nesto solo restringe las opciones válidas hacia adelante.\n\"\"\"\n\nfrom django.db import migrations, models\n\n\nclass Migration(migrations.Migration):\n    \"\"\"Deja 'Pendiente de confirmación' como única opción de estado.\"\"\"\n\n    dependencies = ["
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:40:08 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\migrations\0007_alter_calculooperacion_estado.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:12 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python manage.py migrate divisas 2>&1 && python manage.py check 2>&1",
+  "description": "Aplicar la migración y verificar el proyecto"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:40:19 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Operations to perform:
+  Apply all migrations: divisas
+Running migrations:
+  Applying divisas.0007_alter_calculooperacion_estado... OK
+System check identified no issues (0 silenced).
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:26 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:26 AM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "offset": 1,
+  "limit": 148
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:40:26 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Pruebas del cálculo de importes para compra y venta de divisas."""
+2	
+3	from datetime import timedelta
+4	from decimal import Decimal
+5	
+6	from django.contrib.auth import get_user_model
+7	from django.test import TestCase
+8	from django.urls import reverse
+9	from django.utils import timezone
+10	
+11	from apps.clientes.models import Cliente
+12	from apps.divisas.models import CalculoOperacion, CalculoTriangulacion, Cotizacion, Divisa
+13	
+14	
+15	User = get_user_model()
+16	
+17	
+18	class CalculoOperacionTest(TestCase):
+19	    """Verifica tasas, comisión, errores de cotización y vencimiento."""
+20	
+21	    def setUp(self):
+22	        """Prepara un cliente asociado y una divisa cotizada."""
+23	        self.usuario = User.objects.create_user(
+24	            username='cliente-operaciones',
+25	            password='password123',
+26	        )
+27	        self.client.login(username='cliente-operaciones', password='password123')
+28	        session = self.client.session
+29	        session['keycloak_r
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:45 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:46 AM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_comisiones.py",
+  "offset": 120,
+  "limit": 60
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:40:46 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+120	        session['keycloak_roles'] = ['cliente']
+121	        session.save()
+122	        self.cliente = Cliente.objects.create(
+123	            user=self.usuario,
+124	            identificador='CI-VIP-001',
+125	            nombre='Cliente',
+126	            apellido='VIP',
+127	            email='cliente-vip@test.com',
+128	            segmento='VIP',
+129	            is_active=True,
+130	        )
+131	        self.usuario.clientes.add(self.cliente)
+132	        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+133	        Cotizacion.objects.create(divisa=self.usd, tasa_compra=Decimal('7300.00'), tasa_venta=Decimal('7400.00'))
+134	
+135	    def test_compra_usa_la_comision_configurada_para_el_segmento(self):
+136	        """La comisión configurada para VIP reemplaza a la comisión por defecto."""
+137	        from apps.divisas.models import CalculoOperacion
+138	
+139	        ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('2.000'))
+1
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:52 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:40:52 AM</sup>
+
+Ahora actualizo los tests afectados por el nuevo flujo de dos pasos. Empiezo por `CalculoOperacionTest`.
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:41:14 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "    def test_compra_usa_tasa_venta_y_suma_comision(self):\n        \"\"\"Calcula compra con tasa de venta y comisión separada.\"\"\"\n        response = self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'compra'}),\n            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},\n        )\n\n        calculo = CalculoOperacion.objects.get()\n        self.assertEqual(response.status_code, 200)\n        self.assertEqual(calculo.tasa_aplicada, Decimal('7400.00'))\n        self.assertEqual(calculo.comision, Decimal('7400.00'))\n        self.assertEqual(calculo.monto_final, Decimal('747400.00'))\n        self.assertContains(response, '747400.00')\n        self.assertContains(response, '7400.00')\n\n    def test_venta_usa_tasa_compra_y_resta_comision(self):\n        \"\"\"Calcula venta con tasa de compra y descuenta la comisión.\"\"\"\n        response = self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'venta'}),\n            {'tipo': 'VENTA', 'divisa': str(self.usd.pk), 'monto': '100'},\n        )\n\n        calculo = CalculoOperacion.objects.get()\n        self.assertEqual(response.status_code, 200)\n        self.assertEqual(calculo.tasa_aplicada, Decimal('7300.00'))\n        self.assertEqual(calculo.comision, Decimal('7300.00'))\n        self.assertEqual(calculo.monto_final, Decimal('722700.00'))\n        self.assertContains(response, 'Importe a recibir')\n\n    def test_divisa_sin_cotizacion_impide_calcular(self):\n        \"\"\"Muestra error y no crea cálculo cuando falta una cotización.\"\"\"\n        sin_cotizacion = Divisa.objects.create(\n            codigo='BRL',\n            nombre='Real',\n            simbolo='R$',\n            activa=True,\n        )\n        response = self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'compra'}),\n            {'tipo': 'C
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:41:15 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:41:19 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:41:20 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"class CompraDeDivisasTest\" -A 130 \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py\" | head -140",
+  "description": "Ver la clase CompraDeDivisasTest completa"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:41:20 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+200:class CompraDeDivisasTest(TestCase):
+201-    """Verifica los criterios de aceptación de la HU 'Compra de divisas'."""
+202-
+203-    def setUp(self):
+204-        """Prepara un cliente activo y una divisa con cotización vigente."""
+205-        self.usuario = User.objects.create_user(
+206-            username='cliente-compra',
+207-            password='password123',
+208-        )
+209-        self.client.login(username='cliente-compra', password='password123')
+210-        session = self.client.session
+211-        session['keycloak_roles'] = ['cliente']
+212-        session.save()
+213-        self.cliente = Cliente.objects.create(
+214-            user=self.usuario,
+215-            identificador='COMPRA-001',
+216-            nombre='Cliente',
+217-            apellido='Compra',
+218-            email='cliente-compra@test.com',
+219-            is_active=True,
+220-        )
+221-        self.usuario.clientes.add(self.cliente)
+222-        self.usd = Divisa.objects.create(
+223-            codigo=
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:41:26 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:41:32 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "    def test_compra_valida_calcula_el_importe_y_crea_transaccion_pendiente(self):\n        \"\"\"Criterio 1: crea la transacción en estado 'Pendiente de confirmación'.\"\"\"\n        response = self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'compra'}),\n            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},\n        )\n\n        calculo = CalculoOperacion.objects.get()\n        self.assertEqual(response.status_code, 200)\n        self.assertEqual(calculo.estado, CalculoOperacion.ESTADO_PENDIENTE)\n        self.assertEqual(calculo.tasa_aplicada, Decimal('7400.00'))\n        self.assertEqual(calculo.monto_final, Decimal('747400.00'))\n        self.assertContains(response, 'Pendiente de confirmación')",
+  "new_string": "    def _datos_confirmacion(self, resultado):\n        \"\"\"Arma los campos ocultos que el Paso 2 necesita para confirmar.\"\"\"\n        return {\n            'tipo': resultado['tipo'],\n            'divisa': str(resultado['divisa'].pk),\n            'monto': str(resultado['monto_origen']),\n            'cotizacion_id': str(resultado['cotizacion_id']),\n            'vence_en_timestamp': str(resultado['vence_en_timestamp']),\n        }\n\n    def test_compra_valida_calcula_el_importe_y_al_confirmar_crea_transaccion_pendiente(self):\n        \"\"\"Criterio 1: al confirmar, crea la transacción en estado 'Pendiente de confirmación'.\"\"\"\n        response = self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'compra'}),\n            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},\n        )\n        resultado = response.context['resultado']\n        self.assertFalse(CalculoOperacion.objects.exists())\n\n        response = self.client.post(\n            reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),\n            self._datos_confi
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:41:34 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:41:41 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "    def test_transaccion_registra_tipo_cliente_divisa_monto_y_fecha(self):\n        \"\"\"Criterio 4: la transacción guarda tipo, cliente activo, divisa, monto y fecha.\"\"\"\n        self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'compra'}),\n            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},\n        )\n\n        calculo = CalculoOperacion.objects.get()",
+  "new_string": "    def test_transaccion_registra_tipo_cliente_divisa_monto_y_fecha(self):\n        \"\"\"Criterio 4: la transacción guarda tipo, cliente activo, divisa, monto y fecha.\"\"\"\n        response = self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'compra'}),\n            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},\n        )\n        resultado = response.context['resultado']\n\n        self.client.post(\n            reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),\n            self._datos_confirmacion(resultado),\n        )\n\n        calculo = CalculoOperacion.objects.get()"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:41:42 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:41:48 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:41:56 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_comisiones.py",
+  "old_string": "    def test_compra_usa_la_comision_configurada_para_el_segmento(self):\n        \"\"\"La comisión configurada para VIP reemplaza a la comisión por defecto.\"\"\"\n        from apps.divisas.models import CalculoOperacion\n\n        ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('2.000'))\n\n        self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'compra'}),\n            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},\n        )\n\n        calculo = CalculoOperacion.objects.get()\n        self.assertEqual(calculo.comision_porcentaje, Decimal('2.000'))\n        self.assertEqual(calculo.comision, Decimal('14800.00'))\n        self.assertEqual(calculo.monto_final, Decimal('754800.00'))\n\n    def test_comision_personalizada_del_cliente_prevalece(self):\n        \"\"\"La comisión personalizada del cliente gana incluso con una comisión de segmento.\"\"\"\n        from apps.divisas.models import CalculoOperacion\n\n        ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('2.000'))\n        self.cliente.comision_personalizada = Decimal('0.000')\n        self.cliente.save(update_fields=['comision_personalizada'])\n\n        self.client.post(\n            reverse('divisas:operar', kwargs={'tipo': 'compra'}),\n            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},\n        )\n\n        calculo = CalculoOperacion.objects.get()\n        self.assertEqual(calculo.comision_porcentaje, Decimal('0.000'))\n        self.assertEqual(calculo.comision, Decimal('0.00'))\n        self.assertEqual(calculo.monto_final, Decimal('740000.00'))",
+  "new_string": "    def test_compra_usa_la_comision_configurada_para_el_segmento(self):\n        \"\"\"La comisión configurada para VIP reemplaza a la comisión por defecto.\"\"\"\n        ConfiguracionComision.objects.crea
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:41:57 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_comisiones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:42:01 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:42:02 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -rn \"confirmar_operacion\\|CalculoOperacion.objects\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/\" | grep -v \"test_operaciones.py\\|test_comisiones.py\"",
+  "description": "Buscar otros usos del flujo de confirmación en tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:42:02 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Binary file C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/__pycache__/test_operaciones.cpython-314-pytest-9.1.1.pyc matches
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:42:06 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:42:06 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python -m pytest tests/test_operaciones.py tests/test_comisiones.py -q 2>&1 | tail -100",
+  "description": "Ejecutar tests de operaciones y comisiones tras el rediseño"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:43:02 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+..................................                                       [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\pytest_django\plugin.py:394
+  c:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\pytest_django\plugin.py:394: RemovedInDjango70Warning: The EMAIL_BACKEND setting is deprecated. Migrate to MAILERS before Django 7.0.
+    dj_settings.DATABASES  # noqa: B018
+
+tests/test_operaciones.py::CalculoOperacionTest::test_calcular_compra_no_crea_ninguna_transaccion_todavia
+  C:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\async_property\base.py:10: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    assert is_coroutine(func), 'Can only use with async def'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+34 passed, 2 warnings in 51.54s
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:43:06 AM</sup>
+
+All 34 pasan. Ahora corro la suite completa.
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:43:07 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python -m pytest tests/ -q 2>&1 | tail -60",
+  "description": "Ejecutar toda la suite de tests",
+  "timeout": 300000
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:45:57 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+........................................................................ [ 52%]
+................................................................         [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\pytest_django\plugin.py:394
+  c:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\pytest_django\plugin.py:394: RemovedInDjango70Warning: The EMAIL_BACKEND setting is deprecated. Migrate to MAILERS before Django 7.0.
+    dj_settings.DATABASES  # noqa: B018
+
+tests/test_asociacion_usuarios.py::AsociacionUsuarioClienteTest::test_criterio_1_asociar_usuario_a_cliente
+  C:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\async_property\base.py:10: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    assert is_coroutine(func), 'Can only use with async def'
+
+tests/test_setup.py::test_django_settings_loaded
+  C:\Rodrigo\
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:46:05 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:46:05 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python manage.py check 2>&1 && python manage.py makemigrations --check --dry-run 2>&1",
+  "description": "Verificación final de Django"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:46:11 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+System check identified no issues (0 silenced).
+No changes detected
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:46:15 AM</sup>
+
+Ahora recompilo Sphinx y actualizo el doc de conversación con IA.
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:46:16 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO/docs\" && python -m sphinx -b html source build -W 2>&1 | tail -10",
+  "description": "Recompilar Sphinx en modo estricto"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:46:24 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+[01mcopying assets: [39;49;00mdone
+[2K[01mwriting output... [39;49;00m[ 11%] [32mindex[39;49;00m[2K[01mwriting output... [39;49;00m[ 22%] [32mreference/apps.divisas[39;49;00m[2K[01mwriting output... [39;49;00m[ 33%] [32mreference/apps.divisas.forms[39;49;00m[2K[01mwriting output... [39;49;00m[ 44%] [32mreference/apps.divisas.models[39;49;00m[2K[01mwriting output... [39;49;00m[ 56%] [32mreference/apps.divisas.urls[39;49;00m[2K[01mwriting output... [39;49;00m[ 67%] [32mreference/apps.divisas.views[39;49;00m[2K[01mwriting output... [39;49;00m[ 78%] [32mreference/global_exchange[39;49;00m[2K[01mwriting output... [39;49;00m[ 89%] [32mreference/global_exchange.views[39;49;00m[2K[01mwriting output... [39;49;00m[100%] [32mtemplates[39;49;00m
+[01mgenerating indices... [39;49;00mgenindex py-modindex done
+[2K[01mhighlighting module code... [39;49;00m[  5%] [94mapps.authentication.apps[39;49;00m[2K[01mhighlighting module code... 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:46:31 AM</sup>
+
+Build exitoso. Ahora agrego una sección al doc de conversación de hoy.
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:46:32 AM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\docs\\ai-convesations\\2026-09-17-IA-Claude-GE-30.md"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:46:32 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	# Conversación con IA — Hito 5/Sprint 3: diagnóstico y "Compra de divisas"
+2	
+3	**Fecha:** 17/09/2026
+4	**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+5	**HU relacionada:** GE-30 — Compra de divisas
+6	**Participantes:** Rodrigo Mereles, desarrollador del equipo Global Exchange
+7	
+8	---
+9	
+10	## Bloque 1: Implementación de "Compra de divisas" (GE-30)
+11	
+12	Criterios de aceptación cubiertos:
+13	
+14	1. Cliente activo + monto/divisa válidos → se calcula el importe (reutilizando la lógica ya
+15	   implementada de `_calcular_importe_operacion`) y se crea la transacción en estado
+16	   **"Pendiente de confirmación"**.
+17	2. Monto inválido (negativo, cero, no numérico) → error de validación, sin crear la transacción.
+18	3. Divisa inactiva o sin tasa vigente → rechazo con mensaje claro, sin crear la transacción.
+19	4. La transacción creada registra tipo, **cliente activo**, divisa, monto y fecha de creación.
+20	
+21	La mayor parte de la lógica de cálculo y validación ya existía de 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:46:36 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:46:53 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\docs\\ai-convesations\\2026-09-17-IA-Claude-GE-30.md",
+  "old_string": "## Problemas encontrados durante la sesión",
+  "new_string": "## Bloque 4 — Corrección del momento en que se crea la transacción\n\nEl usuario notó, probando la app, que algunas transacciones quedaban en la base con estado\n\"Confirmada\" y otras en \"Pendiente de confirmación\", y preguntó por qué no todas nacían pendientes.\nVerificando los datos reales (`CalculoOperacion.objects.all()`), se confirmó que el comportamiento\ndel Bloque 1 era consistente con lo implementado ahí: **crear** (Paso 1, \"Calcular importe\") siempre\ndejaba `estado=PENDIENTE_CONFIRMACION`, y solo pasaban a `CONFIRMADA` las que el propio usuario había\nconfirmado manualmente después (Paso 2, \"Confirmar importe\") durante sus pruebas — no era un bug.\n\nSin embargo, al preguntarle qué comportamiento quería en realidad, pidió cambiar el diseño: el Paso 1\n(\"Calcular importe\") **no debe crear ninguna fila todavía** — es una previsualización pura, como el\nsimulador. La transacción recién se crea cuando el cliente aprieta \"Confirmar importe\" (Paso 2), y en\nese momento nace directamente en `PENDIENTE_CONFIRMACION` (no hay más un estado `CONFIRMADA`\nseparado; ese ciclo de vida completo — pago, aprobación, cancelación — queda para un futuro sprint).\n\nEsto invirtió el diseño del Bloque 1:\n\n- `CalculoOperacionView.post()` (Paso 1) ya no persiste nada: calcula tasa, comisión y monto final\n  igual que antes, pero arma un diccionario `resultado` (no un objeto de modelo) con los datos\n  necesarios para confirmar después: `divisa`, `monto_origen`, `cotizacion_id` (la cotización\n  vigente usada) y `vence_en_timestamp` (cuándo deja de ser válido ese cálculo).\n- El template pasa esos datos como campos ocultos en el formulario de \"Confirmar importe\".\n- `confirmar_calculo_operacion_view` cambió de firma: ya no recibe un `calculo_id` (no hay n
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:46:54 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\docs\ai-convesations\2026-09-17-IA-Claude-GE-30.md has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:47:00 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:47:03 AM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\docs\\ai-convesations\\2026-09-17-IA-Claude-GE-30.md",
+  "old_string": "## Resultado final\n\n- Suite completa: **134 passed**.\n- `manage.py check` y `makemigrations --check --dry-run`: sin problemas.\n- Sphinx recompilado en modo estricto (`-W`): sin advertencias.\n- Bug de mensajes duplicados corregido en las 3 pantallas afectadas.\n- Historial de transacciones disponible para `admin` y `analista_cambiario`.",
+  "new_string": "## Resultado final\n\n- Suite completa: **136 passed**.\n- `manage.py check` y `makemigrations --check --dry-run`: sin problemas.\n- Sphinx recompilado en modo estricto (`-W`): sin advertencias.\n- Bug de mensajes duplicados corregido en las 3 pantallas afectadas.\n- Historial de transacciones disponible para `admin` y `analista_cambiario`.\n- La transacción de compra/venta ahora se crea únicamente al confirmar, siempre en\n  \"Pendiente de confirmación\"."
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:47:04 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\docs\ai-convesations\2026-09-17-IA-Claude-GE-30.md has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:47:13 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:47:13 AM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && git status --short | grep -v \"^ M docs/build\\|^?? docs/build\\|^M  docs/build\\|^MM docs/build\"",
+  "description": "Ver estado de git excluyendo el build de docs"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/18/2026, 12:47:16 AM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+M apps/divisas/forms.py
+A  apps/divisas/migrations/0006_calculooperacion_cliente_estado.py
+MM apps/divisas/models.py
+MM apps/divisas/urls.py
+MM apps/divisas/views.py
+AM docs/ai-convesations/2026-09-17-IA-Claude-GE-30.md
+M  docs/source/templates.rst
+M  templates/base.html
+MM templates/divisas/calculo_operacion.html
+A  templates/divisas/historial_transacciones.html
+M  templates/divisas/simulacion_divisas.html
+M  templates/divisas/triangulacion.html
+M  templates/home.html
+ M tests/test_comisiones.py
+M  tests/test_metodos_pago.py
+MM tests/test_operaciones.py
+?? .cc-history/
+?? apps/divisas/migrations/0007_alter_calculooperacion_estado.py
+?? docs/ai-convesations/chat_entero_claude.md
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:47:21 AM</sup>
+
+
+---
+
+## Assistant <sup>9/18/2026, 12:47:29 AM</sup>
+
+## Resumen
+
+Confirmé que no había ningún bug: los datos mostraban exactamente lo esperado por el diseño anterior (creado sin confirmar → `Pendiente de confirmación`; confirmado por vos mismo durante las pruebas → `Confirmada`). Pero según tu respuesta, rediseñé el flujo como pediste:
+
+**Antes:** "Calcular importe" creaba la fila (`Pendiente de confirmación`) → "Confirmar importe" la actualizaba a `Confirmada`.
+
+**Ahora:**
+- **"Calcular importe"** (Paso 1) ya no persiste nada — es una previsualización pura (como el simulador). Devuelve un `resultado` con la divisa, el monto, la cotización usada y hasta cuándo es válida (`vence_en_timestamp`), que viajan como campos ocultos en el formulario.
+- **"Confirmar importe"** (Paso 2) es ahora el único momento en que se crea la transacción, siempre en `Pendiente de confirmación`. Antes de crearla, revalida que no haya pasado el tiempo de vigencia **y** que la cotización de la divisa siga siendo la misma que se usó para calcular (comparando el `id` de la cotización, no solo la tasa) — si algo cambió, pide recalcular y no crea nada. Nunca confía en los montos que vienen del cliente: siempre recalcula tasa/comisión con la cotización actual.
+- Quité el estado `Confirmada` del modelo (migración `0007_alter_calculooperacion_estado.py`, solo metadata) — por ahora solo existe `Pendiente de confirmación`; el resto del ciclo de vida (pago, aprobación, cancelación) queda para un futuro sprint, como vos mismo sugeriste.
+
+Reescribí los tests afectados (`CalculoOperacionTest`, `CompraDeDivisasTest`, `ComisionEnCalculoOperacionTest`) para el flujo de dos pasos reales, y agregué un test nuevo para el caso de cambio de cotización entre calcular y confirmar.
+
+**Verificación:** suite completa **136/136 tests pasando**, `manage.py check` y `makemigrations --check` limpios, Sphinx recompilado sin advertencias. Documenté este bloque en [docs/ai-convesations/2026-09-17-IA-Claude-GE-30.md](docs/ai-convesations/2026-09-17-IA-Claude-GE-30.md).
+
+No corrí `git add`/`commit`.
+
+
+---
+
+## User <sup>9/21/2026, 11:35:17 PM</sup>
+
+Confirmación de operación cambiaria
+
+Descripción
+
+Como usuario cliente quiero confirmar la operación antes de finalizarla para verificar los datos ingresados.
+
+Criterios de aceptación
+
+
+Dado que tengo una transacción en estado "Pendiente de confirmación", cuando accedo a la pantalla de confirmación, entonces veo el resumen completo (tipo de operación, divisa, monto, tasa aplicada, comisión, monto final).
+
+Dado que reviso el resumen y confirmo la operación, cuando la tasa vigente no cambió desde el cálculo inicial, entonces el sistema marca la transacción como "Confirmada".
+
+Dado que reviso el resumen y decido no continuar, cuando cancelo manualmente, entonces la transacción pasa a estado "Cancelada" y no se procesa.
+
+Dado que confirmo una operación, cuando la confirmación se completa, entonces el sistema registra la fecha y hora de confirmación.
+
+cumple con los criterios de aceptación, agrega los test necesarios, coloca los docstring correspondientes a los codigos creados, actualiza sphinx, exporta el chat como lo venimos haciendo en la carpeta de conversaciones con la ia
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:20 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:20 PM</sup>
+
+Antes de implementar, necesito revisar el estado actual del código — cambió bastante desde mi última sesión (aparentemente se extendió el patrón a triangulación también). Voy a releer todo lo relevante primero.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:21 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:21 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Modelos de divisas y registro histórico de cotizaciones."""
+2	
+3	import uuid
+4	from decimal import Decimal
+5	
+6	from django.conf import settings
+7	from django.db import models
+8	from django.utils import timezone
+9	
+10	from apps.clientes.models import Cliente
+11	
+12	class Divisa(models.Model):
+13	    """Representa una divisa activa o inactiva del sistema."""
+14	    """
+15	    Modelo que representa una divisa disponible en Global Exchange.
+16	
+17	    Attributes:
+18	        codigo (str): Código ISO de la divisa (por ejemplo USD, EUR).
+19	        nombre (str): Nombre completo de la divisa.
+20	        simbolo (str): Símbolo de la moneda (por ejemplo $, €).
+21	        activa (bool): Indica si la divisa está habilitada para operar.
+22	    """
+23	    codigo = models.CharField(max_length=3, unique=True, verbose_name="Código")
+24	    nombre = models.CharField(max_length=50, verbose_name="Nombre")
+25	    # --- NUEVO CAMPO AÑADIDO ---
+26	    simbolo = models.CharField(max_length=5, null=True,
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:24 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:25 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:25 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Wasted call — file unchanged since your last Read. Refer to that earlier tool_result instead.
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:30 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:31 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "offset": 194,
+  "limit": 220
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:31 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+194	
+195	    model = Cotizacion
+196	    template_name = 'divisas/historial_cotizaciones.html'
+197	    context_object_name = 'cotizaciones'
+198	
+199	    def test_func(self):
+200	        """Autoriza la consulta del historial a administración y análisis."""
+201	        roles = self.request.session.get('keycloak_roles', [])
+202	        return bool({'admin', 'analista_cambiario'} & set(roles))
+203	
+204	    def dispatch(self, request, *args, **kwargs):
+205	        """Resuelve la divisa antes de despachar la solicitud."""
+206	        self.divisa = get_object_or_404(Divisa, pk=kwargs['divisa_id'])
+207	        return super().dispatch(request, *args, **kwargs)
+208	
+209	    def get_queryset(self):
+210	        """Devuelve las cotizaciones históricas de la divisa seleccionada."""
+211	        return self.divisa.cotizaciones.select_related('usuario')
+212	
+213	    def get_context_data(self, **kwargs):
+214	        """Agrega la divisa consultada al contexto de la plantilla."""
+215	        context = supe
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:32 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:33 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "offset": 460,
+  "limit": 250
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:33 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+460	        return (
+461	            'cliente' in roles
+462	            and not self.request.user.is_staff
+463	            and self.request.user.clientes.filter(is_active=True).exists()
+464	        )
+465	
+466	    def _tipo(self):
+467	        """Devuelve el tipo recibido en la URL, respondiendo 404 si no es compra ni venta."""
+468	        return _normalizar_tipo_operacion(self.kwargs['tipo'])
+469	
+470	    def _contexto(self, form, resultado=None):
+471	        """Construye el contexto común de la pantalla de operación."""
+472	        return {
+473	            'form': form,
+474	            'tipo_operacion': self._tipo(),
+475	            'resultado': resultado,
+476	            'vigencia_segundos': settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS,
+477	        }
+478	
+479	    def get_context_data(self, **kwargs):
+480	        """Prepara el formulario para compra o venta."""
+481	        context = super().get_context_data(**kwargs)
+482	        context.update(self._contexto(CalculoOperacionForm(tipo=s
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:37 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:38 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "offset": 709,
+  "limit": 220
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:38 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+709	        request,
+710	        f'Cambio de {origen.codigo} a {destino.codigo} registrado. Estado: Pendiente de confirmación. '
+711	        f'Importe a recibir: {monto_final} {destino.codigo}.',
+712	    )
+713	    return redirect('divisas:triangulacion')
+714	
+715	
+716	@login_required
+717	def confirmar_calculo_operacion_view(request, tipo):
+718	    """Revalida el cálculo previo (Paso 1) y recién ahí crea la transacción.
+719	
+720	    El Paso 1 ("Calcular importe") no persiste nada: viaja como campos
+721	    ocultos. Acá se revalida que la cotización usada siga siendo la vigente y
+722	    que no haya pasado el tiempo de reserva antes de crear el registro, ya
+723	    directamente en estado "Pendiente de confirmación". Sirve tanto para la
+724	    compra como para la venta de divisas; la transacción queda registrada
+725	    con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha
+726	    de creación.
+727	
+728	    Args:
+729	        request (HttpRequest): Solicitud POST con lo
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:40 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:41 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\forms.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:41 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Wasted call — file unchanged since your last Read. Refer to that earlier tool_result instead.
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:45 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:46 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cat -n \"C:/Rodrigo/Facultad/IS2/IS2_REPO/apps/divisas/forms.py\"",
+  "description": "Leer el archivo forms.py completo vía bash"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:48 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Formularios para registrar, actualizar y simular cotizaciones."""
+     2	
+     3	from django import forms
+     4	from django.core.validators import RegexValidator
+     5	from .models import CalculoOperacion, ConfiguracionComision, Cotizacion, Divisa
+     6	
+     7	
+     8	class DivisaSelect(forms.Select):
+     9	    """Select de divisas que expone el símbolo de cada opción en ``data-simbolo``."""
+    10	
+    11	    def __init__(self, *args, **kwargs):
+    12	        """Inicializa el select sin símbolos asignados todavía."""
+    13	        super().__init__(*args, **kwargs)
+    14	        self.simbolos = {}
+    15	
+    16	    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+    17	        """Agrega el símbolo de la divisa como atributo de datos de la opción."""
+    18	        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+    19	        simbolo = self.simbolos.get(str(value))
+    20
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:49 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:50 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cat -n \"C:/Rodrigo/Facultad/IS2/IS2_REPO/apps/divisas/urls.py\"",
+  "description": "Leer urls.py completo"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:50 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Rutas para consulta, simulación y administración de divisas."""
+     2	
+     3	from django.urls import path
+     4	from .views import (
+     5	    TasasVigentesListView,
+     6	    DivisaListView,
+     7	    DivisaCreateView,
+     8	    DivisaUpdateView,
+     9	    ActualizarCotizacionView,
+    10	    HistorialCotizacionesView,
+    11	    DivisaSoftDeleteView,
+    12	    DivisaHistorialBajasView,
+    13	    SimulacionDivisasView,
+    14	    CalculoOperacionView,
+    15	    confirmar_calculo_operacion_view,
+    16	    TriangulacionOperacionView,
+    17	    confirmar_triangulacion_view,
+    18	    ConfiguracionComisionListView,
+    19	    ActualizarComisionView,
+    20	    HistorialTransaccionesView,
+    21	)
+    22	"""
+    23	Configuración de URLs para la aplicación de divisas.
+    24	Contiene las rutas necesarias para la consulta de tasas y la gestión de divisas.
+    25	"""
+    26	
+    27	app_name = 'divisas'
+    28	
+    29	urlpatterns = [
+    30	
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:52 PM</sup>
+
+Ahora reviso las plantillas actuales de calculo_operacion.html y triangulacion.html.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:53 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cat -n \"C:/Rodrigo/Facultad/IS2/IS2_REPO/templates/divisas/calculo_operacion.html\"",
+  "description": "Leer template calculo_operacion.html"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:53 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	<!--
+     2	Cálculo previo del importe de una compra o venta contra PYG.
+     3	Hereda de: base.html.
+     4	Bloques definidos: title, content.
+     5	Contexto esperado: tipo_operacion, form, resultado y vigencia_segundos.
+     6	-->
+     7	{% extends 'base.html' %}
+     8	
+     9	{% block title %}{{ tipo_operacion|title }} de divisas{% endblock %}
+    10	
+    11	{% block content %}
+    12	<div class="ge-page-header">
+    13	    <div>
+    14	        <span class="ge-eyebrow"><i class="bi bi-calculator"></i> Operación cambiaria</span>
+    15	        <h1>{{ tipo_operacion|title }} de divisas</h1>
+    16	        <p>{% if tipo_operacion == 'COMPRA' %}Calculá cuánto pagarás en guaraníes por la divisa que deseas comprar.{% else %}Calculá cuántos guaraníes recibirás por la divisa que deseas vender.{% endif %}</p>
+    17	    </div>
+    18	    <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Ver tasas</a>
+    19
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:55 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:56 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cat -n \"C:/Rodrigo/Facultad/IS2/IS2_REPO/templates/divisas/triangulacion.html\"",
+  "description": "Leer template triangulacion.html"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:56 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	<!--
+     2	Cálculo del importe de un cambio entre dos divisas extranjeras, triangulando por PYG.
+     3	Hereda de: base.html.
+     4	Bloques definidos: title, content.
+     5	Contexto esperado: form, resultado y vigencia_segundos.
+     6	-->
+     7	{% extends 'base.html' %}
+     8	
+     9	{% block title %}Cambio entre divisas{% endblock %}
+    10	
+    11	{% block content %}
+    12	<div class="ge-page-header">
+    13	    <div>
+    14	        <span class="ge-eyebrow"><i class="bi bi-arrow-left-right"></i> Operación cambiaria</span>
+    15	        <h1>Cambio entre divisas</h1>
+    16	        <p>Calculá el importe resultante de cambiar una divisa extranjera por otra, triangulando a través del guaraní.</p>
+    17	    </div>
+    18	    <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Ver tasas</a>
+    19	</div>
+    20	
+    21	<div class="row g-4 align-items-start">
+    22	    <div class="col-lg-5">
+    
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:57 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:36:59 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "wc -l \"C:/Rodrigo/Facultad/IS2/IS2_REPO/templates/divisas/historial_transacciones.html\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/docs/source/guia.rst\"",
+  "description": "Ver tamaño de los archivos relevantes"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:36:59 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+76 C:/Rodrigo/Facultad/IS2/IS2_REPO/templates/divisas/historial_transacciones.html
+ 1040 C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py
+  112 C:/Rodrigo/Facultad/IS2/IS2_REPO/docs/source/guia.rst
+ 1228 total
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:37:02 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:37:03 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"^class \\|    def test_\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py\"",
+  "description": "Listar clases y tests en test_operaciones.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:37:03 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+18:class CalculoOperacionTest(TestCase):
+62:    def test_calcular_compra_no_crea_ninguna_transaccion_todavia(self):
+74:    def test_confirmar_compra_usa_tasa_venta_y_suma_comision(self):
+93:    def test_confirmar_venta_usa_tasa_compra_y_resta_comision(self):
+114:    def test_divisa_sin_cotizacion_impide_calcular(self):
+131:    def test_calculo_vencido_debe_recalcularse_antes_de_confirmar(self):
+151:    def test_confirmar_rechaza_si_la_cotizacion_cambio_desde_que_se_calculo(self):
+175:    def test_menu_expone_compra_y_venta(self):
+182:    def test_menu_no_expone_compra_venta_a_un_analista(self):
+193:    def test_cliente_no_ve_auditoria_de_ultima_actualizacion(self):
+200:class CompraDeDivisasTest(TestCase):
+244:    def test_compra_valida_calcula_el_importe_y_al_confirmar_crea_transaccion_pendiente(self):
+266:    def test_monto_negativo_no_crea_transaccion(self):
+276:    def test_monto_cero_no_crea_transaccion(self):
+286:    def test_monto_no_numerico_no_crea_transaccion(self):
+296:    de
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:38:05 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:38:06 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "offset": 344,
+  "limit": 290
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:38:06 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+344	class VentaDeDivisasTest(TestCase):
+345	    """Verifica los criterios de aceptación de la HU 'Venta de divisas'."""
+346	
+347	    def setUp(self):
+348	        """Prepara un cliente activo y una divisa con cotización vigente."""
+349	        self.usuario = User.objects.create_user(
+350	            username='cliente-venta',
+351	            password='password123',
+352	        )
+353	        self.client.login(username='cliente-venta', password='password123')
+354	        session = self.client.session
+355	        session['keycloak_roles'] = ['cliente']
+356	        session.save()
+357	        self.cliente = Cliente.objects.create(
+358	            user=self.usuario,
+359	            identificador='VENTA-001',
+360	            nombre='Cliente',
+361	            apellido='Venta',
+362	            email='cliente-venta@test.com',
+363	            is_active=True,
+364	        )
+365	        self.usuario.clientes.add(self.cliente)
+366	        self.usd = Divisa.objects.create(
+367	            codigo='USD',
+
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:38:57 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:38:58 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "ls \"C:/Rodrigo/Facultad/IS2/IS2_REPO/apps/divisas/migrations/\" | grep -v __pycache__",
+  "description": "Listar migraciones actuales de divisas"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:38:59 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+0001_initial.py
+0002_cotizacion_usuario.py
+0003_calculooperacion.py
+0004_calculotriangulacion.py
+0005_configuracioncomision.py
+0006_calculooperacion_cliente_estado.py
+0007_alter_calculooperacion_estado.py
+0008_calculotriangulacion_cliente_estado.py
+__init__.py
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:00 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:01 PM</sup>
+
+Ahora implemento los cambios. Empiezo por el modelo, agregando los estados `Confirmada` y `Cancelada` y la lógica de verificación de tasa vigente.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:08 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py",
+  "old_string": "class CalculoOperacion(models.Model):\n    \"\"\"Representa una transacción de compra o venta ya confirmada por el cliente.\n\n    El cálculo previo (Paso 1: \"Calcular importe\") es solo una previsualización\n    y no se persiste; el registro se crea recién cuando el cliente confirma\n    (Paso 2: \"Confirmar importe\", ver ``confirmar_calculo_operacion_view``),\n    siempre en estado \"Pendiente de confirmación\".\n    \"\"\"\n\n    TIPO_COMPRA = 'COMPRA'\n    TIPO_VENTA = 'VENTA'\n    TIPO_CHOICES = [\n        (TIPO_COMPRA, 'Compra'),\n        (TIPO_VENTA, 'Venta'),\n    ]\n\n    ESTADO_PENDIENTE = 'PENDIENTE_CONFIRMACION'\n    ESTADO_CHOICES = [\n        (ESTADO_PENDIENTE, 'Pendiente de confirmación'),\n    ]",
+  "new_string": "class CalculoOperacion(models.Model):\n    \"\"\"Representa una transacción de compra o venta iniciada por el cliente.\n\n    El cálculo previo (Paso 1: \"Calcular importe\") es solo una previsualización\n    y no se persiste; el registro se crea cuando el cliente confirma el importe\n    (Paso 2: \"Confirmar importe\", ver ``confirmar_calculo_operacion_view``),\n    siempre en estado \"Pendiente de confirmación\". Desde ahí, en la pantalla de\n    confirmación (ver ``ConfirmarTransaccionOperacionView``), el cliente revisa\n    el resumen completo y decide si la confirma (si la tasa vigente no cambió,\n    pasa a \"Confirmada\" y se registra ``confirmado_en``) o la cancela\n    manualmente (pasa a \"Cancelada\" y no se procesa más).\n    \"\"\"\n\n    TIPO_COMPRA = 'COMPRA'\n    TIPO_VENTA = 'VENTA'\n    TIPO_CHOICES = [\n        (TIPO_COMPRA, 'Compra'),\n        (TIPO_VENTA, 'Venta'),\n    ]\n\n    ESTADO_PENDIENTE = 'PENDIENTE_CONFIRMACION'\n    ESTADO_CONFIRMADA = 'CONFIRMADA'\n    ESTADO_CANCELADA = 'CANCELADA'\n    ESTADO_CHOICES = [\n        (ESTADO_PENDIENTE, 'Pendiente de confirmación'),\n        (ESTADO_CONF
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:09 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\models.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:14 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py",
+  "old_string": "    @property\n    def esta_vencido(self):\n        \"\"\"Indica si el cálculo ya superó su tiempo de vigencia.\"\"\"\n        return timezone.now() >= self.vence_en\n\n\nclass ConfiguracionComision(models.Model):",
+  "new_string": "    @property\n    def esta_vencido(self):\n        \"\"\"Indica si el cálculo ya superó su tiempo de vigencia.\"\"\"\n        return timezone.now() >= self.vence_en\n\n    @property\n    def tasa_vigente_cambio(self):\n        \"\"\"Indica si la tasa vigente de la divisa ya no coincide con la aplicada.\n\n        Se usa al confirmar una transacción pendiente: si la divisa no tiene\n        cotización vigente, o la tasa que correspondería aplicar ahora (venta\n        para una compra, compra para una venta) es distinta de la que se\n        guardó al calcular, la tasa \"cambió\" y no debe confirmarse.\n        \"\"\"\n        cotizacion = self.divisa.ultima_cotizacion if self.divisa else None\n        if cotizacion is None:\n            return True\n        tasa_actual = cotizacion.tasa_venta if self.tipo == self.TIPO_COMPRA else cotizacion.tasa_compra\n        return tasa_actual != self.tasa_aplicada\n\n\nclass ConfiguracionComision(models.Model):"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:15 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\models.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:16 PM</sup>
+
+Ahora hago lo mismo con `CalculoTriangulacion`.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:23 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py",
+  "old_string": "class CalculoTriangulacion(models.Model):\n    \"\"\"Representa un cambio entre dos divisas extranjeras vía PYG ya confirmado.\n\n    Igual que en ``CalculoOperacion``, el cálculo previo es solo una\n    previsualización y no se persiste: el registro se crea cuando el cliente\n    confirma el importe (ver ``confirmar_triangulacion_view``), siempre en\n    estado \"Pendiente de confirmación\" y a nombre del cliente activo. Así el\n    cambio aparece en el historial de transacciones junto con las compras y\n    ventas. ``TIPO_DISPLAY`` es el nombre del tipo de operación que muestra\n    el historial.\n    \"\"\"\n\n    TIPO_DISPLAY = 'Cambio'\n\n    ESTADO_PENDIENTE = 'PENDIENTE_CONFIRMACION'\n    ESTADO_CHOICES = [\n        (ESTADO_PENDIENTE, 'Pendiente de confirmación'),\n    ]",
+  "new_string": "class CalculoTriangulacion(models.Model):\n    \"\"\"Representa un cambio entre dos divisas extranjeras vía PYG.\n\n    Igual que en ``CalculoOperacion``, el cálculo previo es solo una\n    previsualización y no se persiste: el registro se crea cuando el cliente\n    confirma el importe (ver ``confirmar_triangulacion_view``), siempre en\n    estado \"Pendiente de confirmación\" y a nombre del cliente activo. Desde\n    ahí, en la pantalla de confirmación (ver\n    ``ConfirmarTransaccionCambioView``), el cliente revisa el resumen completo\n    y decide si lo confirma (si las tasas vigentes no cambiaron, pasa a\n    \"Confirmada\" y se registra ``confirmado_en``) o lo cancela manualmente\n    (pasa a \"Cancelada\"). Así aparece en el historial de transacciones junto\n    con las compras y ventas. ``TIPO_DISPLAY`` es el nombre del tipo de\n    operación que muestra el historial.\n    \"\"\"\n\n    TIPO_DISPLAY = 'Cambio'\n\n    ESTADO_PENDIENTE = 'PENDIENTE_CONFIRMACION'\n    ESTADO_CONFIRMADA = 'CONFIRMADA'\n    ESTADO_CANCELADA = 'CANCELADA'\n    ESTADO
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:24 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\models.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:27 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py",
+  "offset": 260,
+  "limit": 15
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:27 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+260	    )
+261	    divisa_destino = models.ForeignKey(
+262	        Divisa,
+263	        on_delete=models.PROTECT,
+264	        related_name='triangulaciones_destino',
+265	    )
+266	    codigo_divisa_origen = models.CharField(max_length=3)
+267	    codigo_divisa_destino = models.CharField(max_length=3)
+268	    monto_origen = models.DecimalField(max_digits=18, decimal_places=2)
+269	    tasa_compra_aplicada = models.DecimalField(max_digits=18, decimal_places=6)
+270	    tasa_venta_aplicada = models.DecimalField(max_digits=18, decimal_places=6)
+271	    tasa_cruzada = models.DecimalField(max_digits=18, decimal_places=6)
+272	    monto_equivalente_pyg = models.DecimalField(max_digits=18, decimal_places=2)
+273	    comision_porcentaje = models.DecimalField(max_digits=6, decimal_places=3)
+274	    comision = models.DecimalField(max_digits=18, decimal_places=2)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:30 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py",
+  "offset": 274,
+  "limit": 15
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:30 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+274	    comision = models.DecimalField(max_digits=18, decimal_places=2)
+275	    monto_final = models.DecimalField(max_digits=18, decimal_places=2)
+276	    creado_en = models.DateTimeField(auto_now_add=True)
+277	    vence_en = models.DateTimeField()
+278	    confirmado_en = models.DateTimeField(null=True, blank=True)
+279	
+280	    class Meta:
+281	        """Define el orden y etiquetas administrativas de la triangulación."""
+282	        verbose_name = 'Cálculo de triangulación'
+283	        verbose_name_plural = 'Cálculos de triangulación'
+284	        ordering = ['-creado_en']
+285	
+286	    @property
+287	    def esta_vencido(self):
+288	        """Indica si el cálculo ya superó su tiempo de vigencia."""
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:32 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py",
+  "offset": 286,
+  "limit": 10
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:32 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+286	    @property
+287	    def esta_vencido(self):
+288	        """Indica si el cálculo ya superó su tiempo de vigencia."""
+289	        return timezone.now() >= self.vence_en
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:37 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py",
+  "old_string": "    @property\n    def esta_vencido(self):\n        \"\"\"Indica si el cálculo ya superó su tiempo de vigencia.\"\"\"\n        return timezone.now() >= self.vence_en",
+  "new_string": "    @property\n    def esta_vencido(self):\n        \"\"\"Indica si el cálculo ya superó su tiempo de vigencia.\"\"\"\n        return timezone.now() >= self.vence_en\n\n    @property\n    def tasas_vigentes_cambiaron(self):\n        \"\"\"Indica si alguna cotización usada al calcular ya no está vigente.\n\n        Se usa al confirmar el cambio: si cualquiera de las dos divisas\n        (origen o destino) se quedó sin cotización, o la tasa que\n        correspondería aplicar ahora es distinta de la que se guardó al\n        calcular, las tasas \"cambiaron\" y no debe confirmarse.\n        \"\"\"\n        cotizacion_origen = self.divisa_origen.ultima_cotizacion\n        cotizacion_destino = self.divisa_destino.ultima_cotizacion\n        if cotizacion_origen is None or cotizacion_destino is None:\n            return True\n        return (\n            cotizacion_origen.tasa_compra != self.tasa_compra_aplicada\n            or cotizacion_destino.tasa_venta != self.tasa_venta_aplicada\n        )"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:37 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+<tool_use_error>Found 2 matches of the string to replace, but replace_all is false. To replace all occurrences, set replace_all to true. To replace only one occurrence, please provide more context to uniquely identify the instance.
+String:     @property
+    def esta_vencido(self):
+        """Indica si el cálculo ya superó su tiempo de vigencia."""
+        return timezone.now() >= self.vence_en</tool_use_error>
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:40 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:41 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "wc -l \"C:/Rodrigo/Facultad/IS2/IS2_REPO/apps/divisas/models.py\"",
+  "description": "Ver el número de líneas del archivo models.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:41 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+288 C:/Rodrigo/Facultad/IS2/IS2_REPO/apps/divisas/models.py
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:43 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:47 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\models.py",
+  "old_string": "        verbose_name = 'Cálculo de triangulación'\n        verbose_name_plural = 'Cálculos de triangulación'\n        ordering = ['-creado_en']\n\n    @property\n    def esta_vencido(self):\n        \"\"\"Indica si el cálculo ya superó su tiempo de vigencia.\"\"\"\n        return timezone.now() >= self.vence_en",
+  "new_string": "        verbose_name = 'Cálculo de triangulación'\n        verbose_name_plural = 'Cálculos de triangulación'\n        ordering = ['-creado_en']\n\n    @property\n    def esta_vencido(self):\n        \"\"\"Indica si el cálculo ya superó su tiempo de vigencia.\"\"\"\n        return timezone.now() >= self.vence_en\n\n    @property\n    def tasas_vigentes_cambiaron(self):\n        \"\"\"Indica si alguna cotización usada al calcular ya no está vigente.\n\n        Se usa al confirmar el cambio: si cualquiera de las dos divisas\n        (origen o destino) se quedó sin cotización, o la tasa que\n        correspondería aplicar ahora es distinta de la que se guardó al\n        calcular, las tasas \"cambiaron\" y no debe confirmarse.\n        \"\"\"\n        cotizacion_origen = self.divisa_origen.ultima_cotizacion\n        cotizacion_destino = self.divisa_destino.ultima_cotizacion\n        if cotizacion_origen is None or cotizacion_destino is None:\n            return True\n        return (\n            cotizacion_origen.tasa_compra != self.tasa_compra_aplicada\n            or cotizacion_destino.tasa_venta != self.tasa_venta_aplicada\n        )"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:48 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\models.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:49 PM</sup>
+
+Ahora genero la migración para el cambio de choices en ambos modelos.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:50 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python manage.py makemigrations divisas 2>&1",
+  "description": "Generar migración para nuevos estados"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:56 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Migrations for 'divisas':
+  apps\divisas\migrations\0009_alter_calculooperacion_estado_and_more.py
+    ~ Alter field estado on calculooperacion
+    ~ Alter field estado on calculotriangulacion
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:39:57 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\migrations\\0009_alter_calculooperacion_estado_and_more.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:39:57 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	# Generated by Django 6.1 on 2026-09-22 02:39
+2	
+3	from django.db import migrations, models
+4	
+5	
+6	class Migration(migrations.Migration):
+7	
+8	    dependencies = [
+9	        ('divisas', '0008_calculotriangulacion_cliente_estado'),
+10	    ]
+11	
+12	    operations = [
+13	        migrations.AlterField(
+14	            model_name='calculooperacion',
+15	            name='estado',
+16	            field=models.CharField(choices=[('PENDIENTE_CONFIRMACION', 'Pendiente de confirmación'), ('CONFIRMADA', 'Confirmada'), ('CANCELADA', 'Cancelada')], default='PENDIENTE_CONFIRMACION', max_length=25),
+17	        ),
+18	        migrations.AlterField(
+19	            model_name='calculotriangulacion',
+20	            name='estado',
+21	            field=models.CharField(choices=[('PENDIENTE_CONFIRMACION', 'Pendiente de confirmación'), ('CONFIRMADA', 'Confirmada'), ('CANCELADA', 'Cancelada')], default='PENDIENTE_CONFIRMACION', max_length=25),
+22	        ),
+23	    ]
+24
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:01 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\migrations\\0009_alter_calculooperacion_estado_and_more.py",
+  "old_string": "# Generated by Django 6.1 on 2026-09-22 02:39\n\nfrom django.db import migrations, models\n\n\nclass Migration(migrations.Migration):\n\n    dependencies = [",
+  "new_string": "\"\"\"Agrega los estados 'Confirmada' y 'Cancelada' a las transacciones.\n\nSolo cambia las opciones válidas hacia adelante (metadata, no migra datos):\nla pantalla de confirmación de la HU \"Confirmación de operación cambiaria\"\nes la que ahora hace avanzar una transacción \"Pendiente de confirmación\"\nhacia uno de esos dos estados finales.\n\"\"\"\n\nfrom django.db import migrations, models\n\n\nclass Migration(migrations.Migration):\n    \"\"\"Agrega 'Confirmada' y 'Cancelada' a los estados de ambos modelos.\"\"\"\n\n    dependencies = ["
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:40:02 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\migrations\0009_alter_calculooperacion_estado_and_more.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:05 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python manage.py migrate divisas 2>&1 && python manage.py check 2>&1",
+  "description": "Aplicar migración y verificar el proyecto"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:40:09 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Operations to perform:
+  Apply all migrations: divisas
+Running migrations:
+  Applying divisas.0009_alter_calculooperacion_estado_and_more... OK
+System check identified no issues (0 silenced).
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:15 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:15 PM</sup>
+
+Ahora agrego las dos vistas nuevas de "pantalla de confirmación" y actualizo las vistas que crean las transacciones.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:24 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "old_string": "@login_required\ndef confirmar_triangulacion_view(request):",
+  "new_string": "class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):\n    \"\"\"Muestra el resumen de un cambio pendiente y permite confirmarlo o cancelarlo.\n\n    Implementa la HU \"Confirmación de operación cambiaria\" para los cambios\n    entre divisas: el cliente ve el resumen completo de una transacción en\n    estado \"Pendiente de confirmación\" y decide si la confirma (si las tasas\n    vigentes no cambiaron desde el cálculo inicial) o la cancela.\n    \"\"\"\n\n    def test_func(self):\n        \"\"\"Permite revisar el cambio solo a los roles que pueden operar.\"\"\"\n        roles = self.request.session.get('keycloak_roles', [])\n        return (\n            'cliente' in roles\n            and not self.request.user.is_staff\n            and self.request.user.clientes.filter(is_active=True).exists()\n        )\n\n    def get_object(self):\n        \"\"\"Recupera el cambio del usuario autenticado o responde 404.\"\"\"\n        return get_object_or_404(CalculoTriangulacion, pk=self.kwargs['pk'], usuario=self.request.user)\n\n    def get(self, request, *args, **kwargs):\n        \"\"\"Muestra el resumen completo del cambio pendiente.\"\"\"\n        transaccion = self.get_object()\n        return render(request, 'divisas/confirmar_transaccion_cambio.html', {'transaccion': transaccion})\n\n    def post(self, request, *args, **kwargs):\n        \"\"\"Confirma o cancela el cambio según la acción elegida.\n\n        Args:\n            request (HttpRequest): Solicitud POST con el campo ``accion``\n                (``confirmar`` o ``cancelar``).\n\n        Returns:\n            HttpResponse: Redirección a la misma pantalla con el resultado.\n        \"\"\"\n        transaccion = self.get_object()\n        if transaccion.estado != CalculoTriangulacion
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:40:25 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\views.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:26 PM</sup>
+
+Ahora agrego la vista análoga para `CalculoOperacion`, antes de `confirmar_calculo_operacion_view`.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:35 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "old_string": "@login_required\ndef confirmar_calculo_operacion_view(request, tipo):",
+  "new_string": "class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):\n    \"\"\"Muestra el resumen de una compra o venta pendiente y permite confirmarla o cancelarla.\n\n    Implementa la HU \"Confirmación de operación cambiaria\": el cliente ve el\n    resumen completo (tipo de operación, divisa, monto, tasa aplicada,\n    comisión y monto final) de una transacción en estado \"Pendiente de\n    confirmación\" y decide si la confirma (si la tasa vigente no cambió desde\n    el cálculo inicial, pasa a \"Confirmada\" y se registra la fecha y hora de\n    confirmación) o la cancela manualmente (pasa a \"Cancelada\" y no se\n    procesa más).\n    \"\"\"\n\n    def test_func(self):\n        \"\"\"Permite revisar la transacción solo a los roles que pueden operar.\"\"\"\n        roles = self.request.session.get('keycloak_roles', [])\n        return (\n            'cliente' in roles\n            and not self.request.user.is_staff\n            and self.request.user.clientes.filter(is_active=True).exists()\n        )\n\n    def get_object(self):\n        \"\"\"Recupera la transacción del usuario autenticado o responde 404.\"\"\"\n        return get_object_or_404(CalculoOperacion, pk=self.kwargs['pk'], usuario=self.request.user)\n\n    def get(self, request, *args, **kwargs):\n        \"\"\"Muestra el resumen completo de la transacción pendiente.\"\"\"\n        transaccion = self.get_object()\n        return render(request, 'divisas/confirmar_transaccion.html', {'transaccion': transaccion})\n\n    def post(self, request, *args, **kwargs):\n        \"\"\"Confirma o cancela la transacción según la acción elegida.\n\n        Args:\n            request (HttpRequest): Solicitud POST con el campo ``accion``\n                (``confirmar`` o ``cancelar``).
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:40:36 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\views.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:39 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:40 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"confirmado_en=ahora\\|return redirect('divisas:triangulacion')\\|return redirect('divisas:operar', tipo=tipo.lower())\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/apps/divisas/views.py\"",
+  "description": "Ubicar los puntos exactos de creación y redirección a actualizar"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:40:41 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+722:        return redirect('divisas:triangulacion')
+730:        return redirect('divisas:triangulacion')
+740:        return redirect('divisas:triangulacion')
+749:        return redirect('divisas:triangulacion')
+771:        confirmado_en=ahora,
+779:    return redirect('divisas:triangulacion')
+888:        return redirect('divisas:operar', tipo=tipo.lower())
+896:        return redirect('divisas:operar', tipo=tipo.lower())
+903:        return redirect('divisas:operar', tipo=tipo.lower())
+910:        return redirect('divisas:operar', tipo=tipo.lower())
+928:        confirmado_en=ahora,
+938:    return redirect('divisas:operar', tipo=tipo.lower())
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:43 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "offset": 750,
+  "limit": 30
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:40:43 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+750	
+751	    monto_equivalente_pyg, tasa_cruzada, porcentaje, comision, monto_final = _calcular_triangulacion(
+752	        monto, cotizacion_origen.tasa_compra, cotizacion_destino.tasa_venta, cliente_activo
+753	    )
+754	    ahora = timezone.now()
+755	    CalculoTriangulacion.objects.create(
+756	        usuario=request.user,
+757	        cliente=cliente_activo,
+758	        divisa_origen=origen,
+759	        divisa_destino=destino,
+760	        codigo_divisa_origen=origen.codigo,
+761	        codigo_divisa_destino=destino.codigo,
+762	        monto_origen=monto,
+763	        tasa_compra_aplicada=cotizacion_origen.tasa_compra,
+764	        tasa_venta_aplicada=cotizacion_destino.tasa_venta,
+765	        tasa_cruzada=tasa_cruzada,
+766	        monto_equivalente_pyg=monto_equivalente_pyg,
+767	        comision_porcentaje=porcentaje,
+768	        comision=comision,
+769	        monto_final=monto_final,
+770	        estado=CalculoTriangulacion.ESTADO_PENDIENTE,
+771	        confirmado_en=ahora,
+772	       
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:50 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "old_string": "    ahora = timezone.now()\n    CalculoTriangulacion.objects.create(\n        usuario=request.user,\n        cliente=cliente_activo,\n        divisa_origen=origen,\n        divisa_destino=destino,\n        codigo_divisa_origen=origen.codigo,\n        codigo_divisa_destino=destino.codigo,\n        monto_origen=monto,\n        tasa_compra_aplicada=cotizacion_origen.tasa_compra,\n        tasa_venta_aplicada=cotizacion_destino.tasa_venta,\n        tasa_cruzada=tasa_cruzada,\n        monto_equivalente_pyg=monto_equivalente_pyg,\n        comision_porcentaje=porcentaje,\n        comision=comision,\n        monto_final=monto_final,\n        estado=CalculoTriangulacion.ESTADO_PENDIENTE,\n        confirmado_en=ahora,\n        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),\n    )\n    messages.success(\n        request,\n        f'Cambio de {origen.codigo} a {destino.codigo} registrado. Estado: Pendiente de confirmación. '\n        f'Importe a recibir: {monto_final} {destino.codigo}.',\n    )\n    return redirect('divisas:triangulacion')",
+  "new_string": "    ahora = timezone.now()\n    transaccion = CalculoTriangulacion.objects.create(\n        usuario=request.user,\n        cliente=cliente_activo,\n        divisa_origen=origen,\n        divisa_destino=destino,\n        codigo_divisa_origen=origen.codigo,\n        codigo_divisa_destino=destino.codigo,\n        monto_origen=monto,\n        tasa_compra_aplicada=cotizacion_origen.tasa_compra,\n        tasa_venta_aplicada=cotizacion_destino.tasa_venta,\n        tasa_cruzada=tasa_cruzada,\n        monto_equivalente_pyg=monto_equivalente_pyg,\n        comision_porcentaje=porcentaje,\n        comision=comision,\n        monto_final=monto_final,\n        estado=CalculoTriangulacion.ESTADO_PENDIENTE,\n        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:40:51 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\views.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:53 PM</sup>
+
+Ahora la misma actualización en `confirmar_calculo_operacion_view`.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:40:54 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "offset": 908,
+  "limit": 32
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:40:54 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+908	        return redirect('divisas:operar', tipo=tipo.lower())
+909	
+910	    tasa_aplicada, porcentaje, comision, monto_final = _calcular_importe_operacion(
+911	        tipo, monto, cotizacion_actual.tasa_compra, cotizacion_actual.tasa_venta, cliente_activo
+912	    )
+913	    ahora = timezone.now()
+914	    CalculoOperacion.objects.create(
+915	        usuario=request.user,
+916	        cliente=cliente_activo,
+917	        tipo=tipo,
+918	        divisa=divisa,
+919	        codigo_divisa=divisa.codigo,
+920	        monto_origen=monto,
+921	        tasa_aplicada=tasa_aplicada,
+922	        comision_porcentaje=porcentaje,
+923	        comision=comision,
+924	        monto_final=monto_final,
+925	        estado=CalculoOperacion.ESTADO_PENDIENTE,
+926	        confirmado_en=ahora,
+927	        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),
+928	    )
+929	    tipo_display = dict(CalculoOperacion.TIPO_CHOICES)[tipo]
+930	    etiqueta_importe = 'a pagar' if tipo == CalculoOp
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:00 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "old_string": "    ahora = timezone.now()\n    CalculoOperacion.objects.create(\n        usuario=request.user,\n        cliente=cliente_activo,\n        tipo=tipo,\n        divisa=divisa,\n        codigo_divisa=divisa.codigo,\n        monto_origen=monto,\n        tasa_aplicada=tasa_aplicada,\n        comision_porcentaje=porcentaje,\n        comision=comision,\n        monto_final=monto_final,\n        estado=CalculoOperacion.ESTADO_PENDIENTE,\n        confirmado_en=ahora,\n        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),\n    )\n    tipo_display = dict(CalculoOperacion.TIPO_CHOICES)[tipo]\n    etiqueta_importe = 'a pagar' if tipo == CalculoOperacion.TIPO_COMPRA else 'a recibir'\n    messages.success(\n        request,\n        f'{tipo_display} de {divisa.codigo} registrada. Estado: Pendiente de confirmación. '\n        f'Importe {etiqueta_importe}: {monto_final} PYG.',\n    )\n    return redirect('divisas:operar', tipo=tipo.lower())",
+  "new_string": "    ahora = timezone.now()\n    transaccion = CalculoOperacion.objects.create(\n        usuario=request.user,\n        cliente=cliente_activo,\n        tipo=tipo,\n        divisa=divisa,\n        codigo_divisa=divisa.codigo,\n        monto_origen=monto,\n        tasa_aplicada=tasa_aplicada,\n        comision_porcentaje=porcentaje,\n        comision=comision,\n        monto_final=monto_final,\n        estado=CalculoOperacion.ESTADO_PENDIENTE,\n        vence_en=ahora + timedelta(seconds=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS),\n    )\n    tipo_display = dict(CalculoOperacion.TIPO_CHOICES)[tipo]\n    messages.success(\n        request,\n        f'{tipo_display} de {divisa.codigo} registrada. Revisá el resumen para confirmarla.',\n    )\n    return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:01 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\views.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:03 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:05 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"Returns:\" -A 2 \"C:/Rodrigo/Facultad/IS2/IS2_REPO/apps/divisas/views.py\" | grep -B2 \"pantalla de\\|inicio\"",
+  "description": "Ubicar los docstrings de las vistas de confirmación a actualizar"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:10 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+--
+491:        Returns:
+492-            HttpResponse: La pantalla de operación con el detalle del importe
+--
+--
+577:        Returns:
+578-            HttpResponse: La pantalla del cambio con el detalle del importe o
+--
+--
+705:    Returns:
+706-        HttpResponse: Redirección a la pantalla de cambio o al inicio.
+--
+--
+865:    Returns:
+866-        HttpResponse: Redirección a la pantalla de operación o al inicio.
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:12 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "offset": 695,
+  "limit": 15
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:12 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+695	    Comprueba que no haya vencido el tiempo de reserva y que ambas
+696	    cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el
+697	    importe con las tasas actuales (nunca confía en los montos que viajan
+698	    desde el navegador) y registra el cambio en estado "Pendiente de
+699	    confirmación", a nombre del cliente activo, para que figure en el
+700	    historial de transacciones.
+701	
+702	    Args:
+703	        request (HttpRequest): Solicitud POST con los campos ocultos del cálculo.
+704	
+705	    Returns:
+706	        HttpResponse: Redirección a la pantalla de cambio o al inicio.
+707	    """
+708	    if request.method != 'POST':
+709	        return redirect('home')
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:18 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "old_string": "    Comprueba que no haya vencido el tiempo de reserva y que ambas\n    cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el\n    importe con las tasas actuales (nunca confía en los montos que viajan\n    desde el navegador) y registra el cambio en estado \"Pendiente de\n    confirmación\", a nombre del cliente activo, para que figure en el\n    historial de transacciones.\n\n    Args:\n        request (HttpRequest): Solicitud POST con los campos ocultos del cálculo.\n\n    Returns:\n        HttpResponse: Redirección a la pantalla de cambio o al inicio.\n    \"\"\"",
+  "new_string": "    Comprueba que no haya vencido el tiempo de reserva y que ambas\n    cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el\n    importe con las tasas actuales (nunca confía en los montos que viajan\n    desde el navegador) y registra el cambio en estado \"Pendiente de\n    confirmación\", a nombre del cliente activo, para que el cliente lo revise\n    y lo confirme o cancele en ``ConfirmarTransaccionCambioView``.\n\n    Args:\n        request (HttpRequest): Solicitud POST con los campos ocultos del cálculo.\n\n    Returns:\n        HttpResponse: Redirección a la pantalla de confirmación del cambio\n        recién creado, o al inicio si algo falla antes de crearlo.\n    \"\"\""
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:19 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\views.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:21 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "offset": 852,
+  "limit": 18
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:21 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+852	    """Revalida el cálculo previo (Paso 1) y recién ahí crea la transacción.
+853	
+854	    El Paso 1 ("Calcular importe") no persiste nada: viaja como campos
+855	    ocultos. Acá se revalida que la cotización usada siga siendo la vigente y
+856	    que no haya pasado el tiempo de reserva antes de crear el registro, ya
+857	    directamente en estado "Pendiente de confirmación". Sirve tanto para la
+858	    compra como para la venta de divisas; la transacción queda registrada
+859	    con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha
+860	    de creación.
+861	
+862	    Args:
+863	        request (HttpRequest): Solicitud POST con los campos ocultos del Paso 1.
+864	        tipo (str): ``compra`` o ``venta``, según la ruta.
+865	
+866	    Returns:
+867	        HttpResponse: Redirección a la pantalla de operación o al inicio.
+868	
+869	    Raises:
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:27 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\views.py",
+  "old_string": "    El Paso 1 (\"Calcular importe\") no persiste nada: viaja como campos\n    ocultos. Acá se revalida que la cotización usada siga siendo la vigente y\n    que no haya pasado el tiempo de reserva antes de crear el registro, ya\n    directamente en estado \"Pendiente de confirmación\". Sirve tanto para la\n    compra como para la venta de divisas; la transacción queda registrada\n    con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha\n    de creación.\n\n    Args:\n        request (HttpRequest): Solicitud POST con los campos ocultos del Paso 1.\n        tipo (str): ``compra`` o ``venta``, según la ruta.\n\n    Returns:\n        HttpResponse: Redirección a la pantalla de operación o al inicio.\n\n    Raises:",
+  "new_string": "    El Paso 1 (\"Calcular importe\") no persiste nada: viaja como campos\n    ocultos. Acá se revalida que la cotización usada siga siendo la vigente y\n    que no haya pasado el tiempo de reserva antes de crear el registro, ya\n    directamente en estado \"Pendiente de confirmación\". Sirve tanto para la\n    compra como para la venta de divisas; la transacción queda registrada\n    con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha\n    de creación, para que el cliente la revise y la confirme o cancele en\n    ``ConfirmarTransaccionOperacionView``.\n\n    Args:\n        request (HttpRequest): Solicitud POST con los campos ocultos del Paso 1.\n        tipo (str): ``compra`` o ``venta``, según la ruta.\n\n    Returns:\n        HttpResponse: Redirección a la pantalla de confirmación de la\n        transacción recién creada, o al inicio si algo falla antes de\n        crearla.\n\n    Raises:"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:28 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\views.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:29 PM</sup>
+
+Ahora agrego las rutas nuevas en `apps/divisas/urls.py`.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:33 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\urls.py",
+  "old_string": "    TasasVigentesListView,\n    DivisaListView,\n    DivisaCreateView,\n    DivisaUpdateView,\n    ActualizarCotizacionView,\n    HistorialCotizacionesView,\n    DivisaSoftDeleteView,\n    DivisaHistorialBajasView,\n    SimulacionDivisasView,\n    CalculoOperacionView,\n    confirmar_calculo_operacion_view,\n    TriangulacionOperacionView,\n    confirmar_triangulacion_view,\n    ConfiguracionComisionListView,\n    ActualizarComisionView,\n    HistorialTransaccionesView,\n)",
+  "new_string": "    TasasVigentesListView,\n    DivisaListView,\n    DivisaCreateView,\n    DivisaUpdateView,\n    ActualizarCotizacionView,\n    HistorialCotizacionesView,\n    DivisaSoftDeleteView,\n    DivisaHistorialBajasView,\n    SimulacionDivisasView,\n    CalculoOperacionView,\n    confirmar_calculo_operacion_view,\n    ConfirmarTransaccionOperacionView,\n    TriangulacionOperacionView,\n    confirmar_triangulacion_view,\n    ConfirmarTransaccionCambioView,\n    ConfiguracionComisionListView,\n    ActualizarComisionView,\n    HistorialTransaccionesView,\n)"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:34 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\urls.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:39 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\apps\\divisas\\urls.py",
+  "old_string": "    path('operar/<str:tipo>/confirmar/', confirmar_calculo_operacion_view, name='confirmar_operacion'),\n    path('triangulacion/', TriangulacionOperacionView.as_view(), name='triangulacion'),\n    path('triangulacion/confirmar/', confirmar_triangulacion_view, name='confirmar_triangulacion'),",
+  "new_string": "    path('operar/<str:tipo>/confirmar/', confirmar_calculo_operacion_view, name='confirmar_operacion'),\n    path(\n        'operar/transaccion/<uuid:pk>/',\n        ConfirmarTransaccionOperacionView.as_view(),\n        name='confirmar_transaccion',\n    ),\n    path('triangulacion/', TriangulacionOperacionView.as_view(), name='triangulacion'),\n    path('triangulacion/confirmar/', confirmar_triangulacion_view, name='confirmar_triangulacion'),\n    path(\n        'triangulacion/transaccion/<uuid:pk>/',\n        ConfirmarTransaccionCambioView.as_view(),\n        name='confirmar_transaccion_cambio',\n    ),"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:40 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\apps\divisas\urls.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:41 PM</sup>
+
+Ahora creo los dos templates nuevos.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:41:51 PM</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\templates\\divisas\\confirmar_transaccion.html",
+  "content": "<!--\nResumen de una compra o venta pendiente, con acciones para confirmarla o cancelarla.\nHereda de: base.html.\nBloques definidos: title, content.\nContexto esperado: transaccion.\n-->\n{% extends 'base.html' %}\n\n{% block title %}Confirmar operación - Global Exchange{% endblock %}\n\n{% block content %}\n<div class=\"ge-page-header\">\n    <div>\n        <span class=\"ge-eyebrow\"><i class=\"bi bi-clipboard-check\"></i> Operación cambiaria</span>\n        <h1>Confirmar operación</h1>\n        <p>Revisá el resumen antes de confirmar o cancelar la operación.</p>\n    </div>\n    <a href=\"{% url 'divisas:tasas_vigentes' %}\" class=\"btn btn-secondary\"><i class=\"bi bi-arrow-left me-1\"></i> Ver tasas</a>\n</div>\n\n<div class=\"row g-4 justify-content-center\">\n    <div class=\"col-lg-7\">\n        <div class=\"ge-card ge-result-panel\">\n            <div class=\"ge-card__header mb-3\">\n                <h2>Resumen de la operación</h2>\n                <span class=\"badge-activo\">{{ transaccion.get_estado_display }}</span>\n            </div>\n            <div class=\"operation-summary\">\n                <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Operación: </span><strong class=\"operation-summary__value\">{{ transaccion.get_tipo_display }} de {{ transaccion.codigo_divisa }} contra PYG</strong></div>\n                <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Monto: </span><strong class=\"operation-summary__value\">{{ transaccion.monto_origen|floatformat:2 }} {{ transaccion.codigo_divisa }}</strong></div>\n                <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Tasa aplicada: </span><strong class=\"operation-summary__value\">{{ transaccion.tasa_aplicada|floatformat:2 }} PYG</strong></div>\n                <div class=\"operation-summa
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:41:52 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+File created successfully at: C:\Rodrigo\Facultad\IS2\IS2_REPO\templates\divisas\confirmar_transaccion.html (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:42:03 PM</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\templates\\divisas\\confirmar_transaccion_cambio.html",
+  "content": "<!--\nResumen de un cambio entre divisas pendiente, con acciones para confirmarlo o cancelarlo.\nHereda de: base.html.\nBloques definidos: title, content.\nContexto esperado: transaccion.\n-->\n{% extends 'base.html' %}\n\n{% block title %}Confirmar cambio de divisas - Global Exchange{% endblock %}\n\n{% block content %}\n<div class=\"ge-page-header\">\n    <div>\n        <span class=\"ge-eyebrow\"><i class=\"bi bi-clipboard-check\"></i> Operación cambiaria</span>\n        <h1>Confirmar cambio de divisas</h1>\n        <p>Revisá el resumen antes de confirmar o cancelar el cambio.</p>\n    </div>\n    <a href=\"{% url 'divisas:tasas_vigentes' %}\" class=\"btn btn-secondary\"><i class=\"bi bi-arrow-left me-1\"></i> Ver tasas</a>\n</div>\n\n<div class=\"row g-4 justify-content-center\">\n    <div class=\"col-lg-7\">\n        <div class=\"ge-card ge-result-panel\">\n            <div class=\"ge-card__header mb-3\">\n                <h2>Resumen del cambio</h2>\n                <span class=\"badge-activo\">{{ transaccion.get_estado_display }}</span>\n            </div>\n            <div class=\"operation-summary\">\n                <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Operación: </span><strong class=\"operation-summary__value\">{{ transaccion.codigo_divisa_origen }} → {{ transaccion.codigo_divisa_destino }}</strong></div>\n                <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Monto origen: </span><strong class=\"operation-summary__value\">{{ transaccion.monto_origen|floatformat:2 }} {{ transaccion.codigo_divisa_origen }}</strong></div>\n                <div class=\"operation-summary__row\"><span class=\"operation-summary__label\">Tasa de compra ({{ transaccion.codigo_divisa_origen }}): </span><strong class=\"operation-summary__value\">{{ transaccion.tasa_compra_aplicad
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:42:04 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+File created successfully at: C:\Rodrigo\Facultad\IS2\IS2_REPO\templates\divisas\confirmar_transaccion_cambio.html (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:42:07 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:42:08 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python manage.py check 2>&1",
+  "description": "Verificar el proyecto tras los cambios"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:42:11 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+System check identified no issues (0 silenced).
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:42:12 PM</sup>
+
+Ahora ejecuto los tests existentes para ver qué se rompe por el cambio de flujo.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:42:13 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python -m pytest tests/test_operaciones.py -q 2>&1 | tail -150",
+  "description": "Ejecutar tests de operaciones tras el cambio"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:43:37 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+<persisted-output>
+Output too large (37.9KB). Full output saved to: C:\Users\remm2\.claude\projects\c--Rodrigo-Facultad-IS2-IS2-REPO\8d9eeb1a-5357-49e2-b5ca-950761ad5e07\tool-results\bemq47mt4.txt
+
+Preview (first 2KB):
+................................F........F..........F.                   [100%]
+================================== FAILURES ===================================
+_ VentaDeDivisasTest.test_venta_valida_calcula_el_importe_y_al_confirmar_crea_transaccion_pendiente _
+
+self = <test_operaciones.VentaDeDivisasTest testMethod=test_venta_valida_calcula_el_importe_y_al_confirmar_crea_transaccion_pendiente>
+
+    def test_venta_valida_calcula_el_importe_y_al_confirmar_crea_transaccion_pendiente(self):
+        """Criterio 1: calcula con la tasa de compra y crea la transacci�n 'Pendiente de confirmaci�n'."""
+        response = self._calcular()
+        resultado = response.context['resultado']
+    
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(r
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:43:42 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:43:44 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"^FAILED\\|^_ \" \"C:\\Users\\remm2\\.claude\\projects\\c--Rodrigo-Facultad-IS2-IS2-REPO\\8d9eeb1a-5357-49e2-b5ca-950761ad5e07\\tool-results\\bemq47mt4.txt\"",
+  "description": "Listar los tests que fallaron"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:43:45 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+3:_ VentaDeDivisasTest.test_venta_valida_calcula_el_importe_y_al_confirmar_crea_transaccion_pendiente _
+36:_ TriangulacionOperacionTest.test_confirmar_registra_el_cambio_con_todos_sus_datos _
+69:_ HistorialTransaccionesTest.test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha _
+100:FAILED tests/test_operaciones.py::VentaDeDivisasTest::test_venta_valida_calcula_el_importe_y_al_confirmar_crea_transaccion_pendiente
+101:FAILED tests/test_operaciones.py::TriangulacionOperacionTest::test_confirmar_registra_el_cambio_con_todos_sus_datos
+102:FAILED tests/test_operaciones.py::HistorialTransaccionesTest::test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:43:47 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "sed -n '30,100p' \"C:\\Users\\remm2\\.claude\\projects\\c--Rodrigo-Facultad-IS2-IS2-REPO\\8d9eeb1a-5357-49e2-b5ca-950761ad5e07\\tool-results\\bemq47mt4.txt\"",
+  "description": "Ver detalle de los otros dos fallos"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:43:48 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+<persisted-output>
+Output too large (36KB). Full output saved to: C:\Users\remm2\.claude\projects\c--Rodrigo-Facultad-IS2-IS2-REPO\8d9eeb1a-5357-49e2-b5ca-950761ad5e07\tool-results\b7sypor8b.txt
+
+Preview (first 2KB):
+        self.assertContains(response, 'Pendiente de confirmaci�n')
+>       self.assertContains(response, 'Importe a recibir: 722700.00 PYG')
+E       AssertionError: False is not true : Couldn't find 'Importe a recibir: 722700.00 PYG' in the following response
+E       b'<!--\nResumen de una compra o venta pendiente, con acciones para confirmarla o cancelarla.\nHereda de: base.html.\nBloques definidos: title, content.\nContexto esperado: transaccion.\n-->\n<!--\nTemplate base del panel y de las p\xc3\xa1ginas p\xc3\xbablicas.\nHerencia: no aplica.\nBloques expuestos: title, extra_head, content, content_publico, extra_scripts.\nContexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.\n-->\n\n<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="U
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:43:52 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:43:53 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"def test_confirmar_registra_el_cambio_con_todos_sus_datos\" -A 30 \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py\"",
+  "description": "Ver el test de triangulación que falló"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:43:53 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+684:    def test_confirmar_registra_el_cambio_con_todos_sus_datos(self):
+685-        """Al confirmar se crea la transacción con cliente, estado, tasas, comisión e importe."""
+686-        resultado = self._calcular().context['resultado']
+687-
+688-        response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
+689-
+690-        calculo = CalculoTriangulacion.objects.get()
+691-        self.assertEqual(response.status_code, 200)
+692-        self.assertEqual(calculo.cliente, self.cliente)
+693-        self.assertEqual(calculo.usuario, self.usuario)
+694-        self.assertEqual(calculo.estado, CalculoTriangulacion.ESTADO_PENDIENTE)
+695-        self.assertEqual(calculo.divisa_origen, self.usd)
+696-        self.assertEqual(calculo.divisa_destino, self.eur)
+697-        self.assertEqual(calculo.codigo_divisa_origen, 'USD')
+698-        self.assertEqual(calculo.codigo_divisa_destino, 'EUR')
+699-        self.assertEqual(calculo.monto_origen, Decimal('100.00')
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:43:55 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:43:56 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"def test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha\" -A 20 \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py\"",
+  "description": "Ver el test de historial que falló"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:43:56 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+905:    def test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha(self):
+906-        """Cada fila expone tipo, estado, cliente activo, divisa, monto y fecha."""
+907-        self._login_como('admin')
+908-
+909-        response = self.client.get(reverse('divisas:historial_transacciones'))
+910-
+911-        self.assertContains(response, 'Compra')
+912-        self.assertContains(response, 'Pendiente de confirmación')
+913-        self.assertContains(response, 'Cliente Historial')
+914-        self.assertContains(response, 'USD')
+915-        self.assertContains(response, '100.00')
+916-        self.assertContains(response, self.transaccion.creado_en.strftime('%d/%m/%Y'))
+917-
+918-    def test_historial_incluye_transacciones_de_todos_los_clientes(self):
+919-        """El historial no se limita a un único cliente, a diferencia de las vistas del cliente."""
+920-        otro_usuario = User.objects.create_user(username='cliente-historial-2', password='password123')
+921-        otro_cliente 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:43:59 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:03 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha\" -A 15 \"C:\\Users\\remm2\\.claude\\projects\\c--Rodrigo-Facultad-IS2-IS2-REPO\\8d9eeb1a-5357-49e2-b5ca-950761ad5e07\\tool-results\\b7sypor8b.txt\" 2>/dev/null | head -30\necho \"---\"\nawk '/HistorialTransaccionesTest.test_historial_muestra/,/^_ /' \"C:\\Users\\remm2\\.claude\\projects\\c--Rodrigo-Facultad-IS2-IS2-REPO\\8d9eeb1a-5357-49e2-b5ca-950761ad5e07\\tool-results\\b7sypor8b.txt\" | head -60",
+  "description": "Ver el detalle exacto del fallo en historial"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:44:05 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+40:_ HistorialTransaccionesTest.test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha _
+41-
+42:self = <test_operaciones.HistorialTransaccionesTest testMethod=test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha>
+43-
+44:    def test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha(self):
+45-        """Cada fila expone tipo, estado, cliente activo, divisa, monto y fecha."""
+46-        self._login_como('admin')
+47-    
+48-        response = self.client.get(reverse('divisas:historial_transacciones'))
+49-    
+50-        self.assertContains(response, 'Compra')
+51-        self.assertContains(response, 'Pendiente de confirmaci�n')
+52-        self.assertContains(response, 'Cliente Historial')
+53-        self.assertContains(response, 'USD')
+54-        self.assertContains(response, '100.00')
+55->       self.assertContains(response, self.transaccion.creado_en.strftime('%d/%m/%Y'))
+56-E       AssertionError: False is not true : Couldn't find '22/09/2026' in the follow
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:13 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:14 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"^TIME_ZONE\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/global_exchange/settings/base.py\"",
+  "description": "Ver la zona horaria configurada"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:44:14 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+75:TIME_ZONE = 'America/Asuncion'
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:21 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:23 PM</sup>
+
+Encontré un tercer fallo, pero no relacionado con mi cambio: un test compara `creado_en` (UTC) directamente contra el render en template (que usa `America/Asuncion`), y falla cerca de medianoche. Lo corrijo de paso. Arreglo los 3 tests.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:24 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "offset": 1,
+  "limit": 17
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:44:24 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Pruebas del cálculo de importes para compra y venta de divisas."""
+2	
+3	from datetime import timedelta
+4	from decimal import Decimal
+5	
+6	from django.contrib.auth import get_user_model
+7	from django.test import TestCase
+8	from django.urls import reverse
+9	from django.utils import timezone
+10	
+11	from apps.clientes.models import Cliente
+12	from apps.divisas.models import CalculoOperacion, CalculoTriangulacion, Cotizacion, Divisa
+13	
+14	
+15	User = get_user_model()
+16	
+17
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:26 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:27 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "        self.assertContains(response, self.transaccion.creado_en.strftime('%d/%m/%Y'))",
+  "new_string": "        self.assertContains(response, timezone.localtime(self.transaccion.creado_en).strftime('%d/%m/%Y'))"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:44:28 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:30 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:30 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"\\.strftime(\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py\"",
+  "description": "Buscar otros usos de strftime en el archivo"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:44:31 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+916:        self.assertContains(response, timezone.localtime(self.transaccion.creado_en).strftime('%d/%m/%Y'))
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:32 PM</sup>
+
+Ahora corrijo las dos aserciones de mensaje que se rompieron por el HTML entre etiquetas.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:34 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "        self.assertContains(response, 'Pendiente de confirmación')\n        self.assertContains(response, 'Importe a recibir: 722700.00 PYG')",
+  "new_string": "        self.assertContains(response, 'Pendiente de confirmación')\n        self.assertContains(response, 'Importe a recibir')\n        self.assertContains(response, '722700.00')"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:44:35 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:38 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "        self.assertContains(response, 'Pendiente de confirmación')\n        self.assertContains(response, 'Importe a recibir: 89.22 EUR')",
+  "new_string": "        self.assertContains(response, 'Pendiente de confirmación')\n        self.assertContains(response, 'Importe a recibir')\n        self.assertContains(response, '89.22')"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:44:39 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:40 PM</sup>
+
+Ahora corro toda la suite para confirmar que quedó en verde antes de escribir los tests nuevos.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:44:42 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python -m pytest tests/test_operaciones.py -q 2>&1 | tail -30",
+  "description": "Reejecutar tests de operaciones"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:46:05 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+......................................................                   [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\pytest_django\plugin.py:394
+  c:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\pytest_django\plugin.py:394: RemovedInDjango70Warning: The EMAIL_BACKEND setting is deprecated. Migrate to MAILERS before Django 7.0.
+    dj_settings.DATABASES  # noqa: B018
+
+tests/test_operaciones.py::CalculoOperacionTest::test_calcular_compra_no_crea_ninguna_transaccion_todavia
+  C:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\async_property\base.py:10: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    assert is_coroutine(func), 'Can only use with async def'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+54 passed, 2 warnings in 79.26s (0:01:19)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:15 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:16 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "offset": 834,
+  "limit": 50
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:46:16 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+834	
+835	
+836	class HistorialTransaccionesTest(TestCase):
+837	    """Verifica el historial de transacciones para administración y análisis."""
+838	
+839	    def setUp(self):
+840	        """Prepara un cliente, una divisa cotizada y una transacción registrada."""
+841	        self.usuario = User.objects.create_user(
+842	            username='cliente-historial',
+843	            password='password123',
+844	        )
+845	        self.cliente = Cliente.objects.create(
+846	            user=self.usuario,
+847	            identificador='HISTORIAL-001',
+848	            nombre='Cliente',
+849	            apellido='Historial',
+850	            email='cliente-historial@test.com',
+851	            is_active=True,
+852	        )
+853	        self.usuario.clientes.add(self.cliente)
+854	        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+855	        Cotizacion.objects.create(
+856	            divisa=self.usd,
+857	            tasa_compra=Decimal('7300.00'),
+858	      
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:17 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:18 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "offset": 1010,
+  "limit": 31
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:46:18 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1010	
+1011	        response = self.client.get(reverse('divisas:historial_transacciones'))
+1012	
+1013	        self.assertContains(response, 'USD → EUR')
+1014	        self.assertContains(response, '89.22 EUR')
+1015	
+1016	    def test_historial_ordena_compras_ventas_y_cambios_del_mas_reciente_al_mas_antiguo(self):
+1017	        """Las tres clases de transacción se mezclan en una única lista ordenada por fecha."""
+1018	        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+1019	        cambio = CalculoTriangulacion.objects.create(
+1020	            usuario=self.usuario,
+1021	            cliente=self.cliente,
+1022	            divisa_origen=self.usd,
+1023	            divisa_destino=eur,
+1024	            codigo_divisa_origen='USD',
+1025	            codigo_divisa_destino='EUR',
+1026	            monto_origen=Decimal('10.00'),
+1027	            tasa_compra_aplicada=Decimal('7300.00'),
+1028	            tasa_venta_aplicada=Decimal('8100.00'),
+1029	            tasa_
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:20 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:21 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "tail -15 \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py\"",
+  "description": "Ver el final del archivo de tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:46:21 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+tasa_venta_aplicada=Decimal('8100.00'),
+            tasa_cruzada=Decimal('0.901235'),
+            monto_equivalente_pyg=Decimal('73000.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('0.09'),
+            monto_final=Decimal('8.92'),
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+        self._login_como('admin')
+
+        response = self.client.get(reverse('divisas:historial_transacciones'))
+
+        tipos = [fila['tipo'] for fila in response.context['transacciones']]
+        self.assertEqual(tipos, ['Cambio', 'Compra'])
+        self.assertGreater(cambio.creado_en, self.transaccion.creado_en)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:22 PM</sup>
+
+Ahora agrego las nuevas clases de tests al final del archivo, para la HU "Confirmación de operación cambiaria".
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:55 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "        tipos = [fila['tipo'] for fila in response.context['transacciones']]\n        self.assertEqual(tipos, ['Cambio', 'Compra'])\n        self.assertGreater(cambio.creado_en, self.transaccion.creado_en)",
+  "new_string": "        tipos = [fila['tipo'] for fila in response.context['transacciones']]\n        self.assertEqual(tipos, ['Cambio', 'Compra'])\n        self.assertGreater(cambio.creado_en, self.transaccion.creado_en)\n\n\nclass ConfirmacionOperacionCambiariaTest(TestCase):\n    \"\"\"Verifica la HU 'Confirmación de operación cambiaria' para compra y venta.\"\"\"\n\n    def setUp(self):\n        \"\"\"Prepara un cliente activo, una divisa cotizada y una compra pendiente.\"\"\"\n        self.usuario = User.objects.create_user(\n            username='cliente-confirmacion',\n            password='password123',\n        )\n        self.client.login(username='cliente-confirmacion', password='password123')\n        session = self.client.session\n        session['keycloak_roles'] = ['cliente']\n        session.save()\n        self.cliente = Cliente.objects.create(\n            user=self.usuario,\n            identificador='CONFIRMACION-001',\n            nombre='Cliente',\n            apellido='Confirmación',\n            email='cliente-confirmacion@test.com',\n            is_active=True,\n        )\n        self.usuario.clientes.add(self.cliente)\n        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)\n        Cotizacion.objects.create(\n            divisa=self.usd,\n            tasa_compra=Decimal('7300.00'),\n            tasa_venta=Decimal('7400.00'),\n        )\n        self.transaccion = CalculoOperacion.objects.create(\n            usuario=self.usuario,\n            cliente=self.cliente,\n            tipo=CalculoOperacion.TIPO_COMPRA,\n            divisa=self.usd,\n            codigo_divisa='U
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:46:56 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:46:59 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:02 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "        session['keycloak_roles'] = ['cliente']\n        session.save()\n        Cliente.objects.create(\n            user_id=self.usuario.pk,\n        ) if False else None  # placeholder no-op para mantener claridad de intención\n\n        response_get = self.client.get(self.url)\n        response_post = self.client.post(self.url, {'accion': 'confirmar'})\n\n        self.assertEqual(response_get.status_code, 404)\n        self.assertEqual(response_post.status_code, 404)\n        self.transaccion.refresh_from_db()\n        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PENDIENTE)",
+  "new_string": "        session['keycloak_roles'] = ['cliente']\n        session.save()\n\n        response_get = self.client.get(self.url)\n        response_post = self.client.post(self.url, {'accion': 'confirmar'})\n\n        self.assertEqual(response_get.status_code, 404)\n        self.assertEqual(response_post.status_code, 404)\n        self.transaccion.refresh_from_db()\n        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PENDIENTE)"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:47:03 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:08 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:11 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "    def test_otro_cliente_no_puede_ver_ni_confirmar_la_transaccion(self):\n        \"\"\"Solo el cliente dueño de la transacción puede verla o accionarla.\"\"\"\n        User.objects.create_user(username='otro-usuario', password='password123')\n        self.client.logout()\n        self.client.login(username='otro-usuario', password='password123')\n        session = self.client.session\n        session['keycloak_roles'] = ['cliente']\n        session.save()\n\n        response_get = self.client.get(self.url)",
+  "new_string": "    def test_otro_cliente_no_puede_ver_ni_confirmar_la_transaccion(self):\n        \"\"\"Solo el cliente dueño de la transacción puede verla o accionarla.\"\"\"\n        otro_usuario = User.objects.create_user(username='otro-usuario', password='password123')\n        otro_cliente = Cliente.objects.create(\n            user=otro_usuario,\n            identificador='CONFIRMACION-002',\n            nombre='Otro',\n            apellido='Cliente',\n            email='otro-cliente-confirmacion@test.com',\n            is_active=True,\n        )\n        otro_usuario.clientes.add(otro_cliente)\n        self.client.logout()\n        self.client.login(username='otro-usuario', password='password123')\n        session = self.client.session\n        session['keycloak_roles'] = ['cliente']\n        session.save()\n\n        response_get = self.client.get(self.url)"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:47:12 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:14 PM</sup>
+
+Ahora el mismo fix para el test análogo en la clase de cambio de divisas.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:18 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "    def test_otro_cliente_no_puede_ver_ni_confirmar_el_cambio(self):\n        \"\"\"Solo el cliente dueño del cambio puede verlo o accionarlo.\"\"\"\n        User.objects.create_user(username='otro-usuario-cambio', password='password123')\n        self.client.logout()\n        self.client.login(username='otro-usuario-cambio', password='password123')\n        session = self.client.session\n        session['keycloak_roles'] = ['cliente']\n        session.save()\n\n        response_get = self.client.get(self.url)",
+  "new_string": "    def test_otro_cliente_no_puede_ver_ni_confirmar_el_cambio(self):\n        \"\"\"Solo el cliente dueño del cambio puede verlo o accionarlo.\"\"\"\n        otro_usuario = User.objects.create_user(username='otro-usuario-cambio', password='password123')\n        otro_cliente = Cliente.objects.create(\n            user=otro_usuario,\n            identificador='CONFIRMACION-CAMBIO-002',\n            nombre='Otro',\n            apellido='Cliente',\n            email='otro-cliente-confirmacion-cambio@test.com',\n            is_active=True,\n        )\n        otro_usuario.clientes.add(otro_cliente)\n        self.client.logout()\n        self.client.login(username='otro-usuario-cambio', password='password123')\n        session = self.client.session\n        session['keycloak_roles'] = ['cliente']\n        session.save()\n\n        response_get = self.client.get(self.url)"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:47:19 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:20 PM</sup>
+
+Ahora corro los tests nuevos.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:21 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python -m pytest tests/test_operaciones.py -q -k \"Confirmacion\" 2>&1 | tail -150",
+  "description": "Ejecutar los tests nuevos de confirmación de operación cambiaria"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:47:51 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\django\db\backends\utils.py:100: in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\django\db\utils.py:94: in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <django.db.backends.utils.CursorWrapper object at 0x000002AB64110BF0>
+sql = 'INSERT INTO "clientes_cliente" ("user_id", "tipo_cliente", "identificador", "nombre", "apellido", "razon_social", "em..., "is_active", "fecha_registro") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING "clientes_cliente"."id"'
+params = (16, 'FISICA', 'CONFIRMACION-CAMBIO-001', 'Cliente', 'Cambio', None, ...)
+ignored_wrapper_args = (False, {'connection': <DatabaseWrapper vendor='postgresql' alias='default'>, 'cursor': <django.db.backends.utils.CursorWrapper object at 0x000002AB64110BF0>})
+
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:56 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:57 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"CONFIRMACION-CAMBIO\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/tests/test_operaciones.py\"",
+  "description": "Ubicar los identificadores demasiado largos"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:47:57 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1215:            identificador='CONFIRMACION-CAMBIO-001',
+1304:            identificador='CONFIRMACION-CAMBIO-002',
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:47:59 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "            identificador='CONFIRMACION-CAMBIO-001',",
+  "new_string": "            identificador='CONF-CAMBIO-001',"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:48:00 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:48:02 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\tests\\test_operaciones.py",
+  "old_string": "            identificador='CONFIRMACION-CAMBIO-002',",
+  "new_string": "            identificador='CONF-CAMBIO-002',"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:48:03 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\tests\test_operaciones.py has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:48:05 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python -m pytest tests/test_operaciones.py -q -k \"Confirmacion\" 2>&1 | tail -60",
+  "description": "Reejecutar los tests de confirmación"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:48:34 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+................                                                         [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\pytest_django\plugin.py:394
+  c:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\pytest_django\plugin.py:394: RemovedInDjango70Warning: The EMAIL_BACKEND setting is deprecated. Migrate to MAILERS before Django 7.0.
+    dj_settings.DATABASES  # noqa: B018
+
+tests/test_operaciones.py::VentaDeDivisasTest::test_divisa_sin_tasa_vigente_en_la_confirmacion_rechaza_la_operacion
+  C:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\async_property\base.py:10: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    assert is_coroutine(func), 'Can only use with async def'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+16 passed, 52 deselected, 2 warnings in 25.31s
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:48:35 PM</sup>
+
+All 16 nuevos pasan. Ahora corro la suite completa.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:48:36 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python -m pytest tests/ -q 2>&1 | tail -60",
+  "description": "Ejecutar toda la suite de tests",
+  "timeout": 300000
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:01 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+........................................................................ [ 40%]
+........................................................................ [ 80%]
+...................................                                      [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\pytest_django\plugin.py:394
+  c:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\pytest_django\plugin.py:394: RemovedInDjango70Warning: The EMAIL_BACKEND setting is deprecated. Migrate to MAILERS before Django 7.0.
+    dj_settings.DATABASES  # noqa: B018
+
+tests/test_asociacion_usuarios.py::AsociacionUsuarioClienteTest::test_criterio_1_asociar_usuario_a_cliente
+  C:\Rodrigo\Facultad\IS2\IS2_REPO\.venv\Lib\site-packages\async_property\base.py:10: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    assert is_coroutine(func), 'Can only use w
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:03 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:04 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python manage.py check 2>&1 && python manage.py makemigrations --check --dry-run 2>&1",
+  "description": "Verificación final de Django"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:09 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+System check identified no issues (0 silenced).
+No changes detected
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:11 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"historial_transacciones\\|calculo_operacion\\|triangulacion\" \"C:/Rodrigo/Facultad/IS2/IS2_REPO/docs/source/templates.rst\"",
+  "description": "Ver el estado actual de templates.rst para la sección divisas"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:11 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+115:.. literalinclude:: ../../templates/divisas/calculo_operacion.html
+119:.. literalinclude:: ../../templates/divisas/triangulacion.html
+151:.. literalinclude:: ../../templates/divisas/historial_transacciones.html
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:13 PM</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\docs\\source\\templates.rst",
+  "offset": 108,
+  "limit": 55
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:13 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+108	Divisas
+109	-------
+110	
+111	.. literalinclude:: ../../templates/divisas/tasas_vigentes.html
+112	   :language: html
+113	   :lines: 1-7
+114	
+115	.. literalinclude:: ../../templates/divisas/calculo_operacion.html
+116	   :language: html
+117	   :lines: 1-7
+118	
+119	.. literalinclude:: ../../templates/divisas/triangulacion.html
+120	   :language: html
+121	   :lines: 1-7
+122	
+123	.. literalinclude:: ../../templates/divisas/simulacion_divisas.html
+124	   :language: html
+125	   :lines: 1-7
+126	
+127	.. literalinclude:: ../../templates/divisas/comision_list.html
+128	   :language: html
+129	   :lines: 1-7
+130	
+131	.. literalinclude:: ../../templates/divisas/comision_form.html
+132	   :language: html
+133	   :lines: 1-7
+134	
+135	.. literalinclude:: ../../templates/divisas/cotizacion_form.html
+136	   :language: html
+137	   :lines: 1-7
+138	
+139	.. literalinclude:: ../../templates/divisas/divisa_form.html
+140	   :language: html
+141	   :lines: 1-7
+142	
+143	.. literalinclude:: ../../templates/divisas/d
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:14 PM</sup>
+
+Agrego las entradas para las dos plantillas nuevas.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:17 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\docs\\source\\templates.rst",
+  "old_string": ".. literalinclude:: ../../templates/divisas/calculo_operacion.html\n   :language: html\n   :lines: 1-7\n\n.. literalinclude:: ../../templates/divisas/triangulacion.html\n   :language: html\n   :lines: 1-7",
+  "new_string": ".. literalinclude:: ../../templates/divisas/calculo_operacion.html\n   :language: html\n   :lines: 1-7\n\n.. literalinclude:: ../../templates/divisas/confirmar_transaccion.html\n   :language: html\n   :lines: 1-7\n\n.. literalinclude:: ../../templates/divisas/triangulacion.html\n   :language: html\n   :lines: 1-7\n\n.. literalinclude:: ../../templates/divisas/confirmar_transaccion_cambio.html\n   :language: html\n   :lines: 1-7"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:18 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\docs\source\templates.rst has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:19 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:20 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cat -n \"C:/Rodrigo/Facultad/IS2/IS2_REPO/docs/source/guia.rst\"",
+  "description": "Leer guia.rst completo"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:20 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	Guía del sistema
+     2	================
+     3	
+     4	Arquitectura
+     5	------------
+     6	
+     7	Global Exchange es una aplicación Django organizada por dominios funcionales:
+     8	
+     9	* ``apps.authentication``: integración OIDC con Keycloak, roles de sesión,
+    10	  filtros de plantillas y auditoría de bajas.
+    11	* ``apps.clientes``: perfiles de clientes, selección del cliente activo,
+    12	  asociaciones de usuarios y métodos de pago.
+    13	* ``apps.divisas``: catálogo de divisas, cotizaciones, historial y simulación.
+    14	* ``apps.users``: sincronización de usuarios y roles con la API administrativa
+    15	  de Keycloak.
+    16	* ``global_exchange``: configuración, URLs y vistas generales del proyecto.
+    17	
+    18	Flujo de autenticación
+    19	----------------------
+    20	
+    21	#. El usuario inicia sesión mediante Keycloak usando OIDC.
+    22	#. El backend valida las claims y extrae los roles de negocio.
+    23	#. Los roles efec
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:22 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:32 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\docs\\source\\guia.rst",
+  "old_string": "Un cliente con un cliente activo seleccionado puede realizar tres tipos de\noperación. El cálculo previo (\"Calcular importe\") no persiste nada: solo\nmuestra el detalle y su vigencia. La operación se registra recién al\nconfirmar el importe, siempre en estado \"Pendiente de confirmación\" y a\nnombre del cliente activo:\n\n* **Compra/venta contra PYG**: usa la tasa de venta (compra) o de compra\n  (venta) de la divisa elegida. Al confirmarse crea un\n  ``apps.divisas.models.CalculoOperacion``.\n* **Cambio entre dos divisas extranjeras**: triangula por PYG, usando la\n  tasa de compra de la divisa origen y la tasa de venta de la divisa\n  destino, y expone la tasa cruzada implícita resultante. Al confirmarse\n  (``apps.divisas.views.confirmar_triangulacion_view``) crea un\n  ``apps.divisas.models.CalculoTriangulacion`` con las tasas, el equivalente\n  en guaraníes, la comisión y el importe a recibir en la divisa destino. Si\n  venció el tiempo de reserva o cambió la cotización de cualquiera de las\n  dos divisas, exige recalcular.\n\nLos administradores y analistas cambiarios consultan todas las transacciones\n(compras, ventas y cambios) en el historial de transacciones\n(``apps.divisas.views.HistorialTransaccionesView``), con tipo, estado,\nusuario, cliente, divisa, monto, tasa aplicada, comisión e importe final.",
+  "new_string": "Un cliente con un cliente activo seleccionado puede realizar tres tipos de\noperación, en tres pasos:\n\n#. **Calcular importe.** Solo previsualiza (no persiste nada): muestra tasa,\n   comisión, monto final y hasta cuándo es válido ese cálculo.\n#. **Confirmar importe.** Revalida que la cotización usada siga vigente y\n   que no haya pasado el tiempo de reserva; si es así, recién ahí crea la\n   transacción, siempre en estado \"Pendiente de confirmación\" y a nombre del\n   cliente activo.\n#. **Confirmar operación.
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:33 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\docs\source\guia.rst has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:35 PM</sup>
+
+Ahora actualizo la sección "Venta de divisas" para reflejar el Paso 3.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:39 PM</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\docs\\source\\guia.rst",
+  "old_string": "#. **Confirmación (Paso 2).** ``apps.divisas.views.confirmar_calculo_operacion_view``\n   revalida que el cálculo no haya vencido y que la cotización siga siendo\n   la usada, recalcula el importe con la tasa actual y crea el\n   ``CalculoOperacion`` con estado \"Pendiente de confirmación\".\n\nCada transacción registra el tipo de operación (\"Venta\"), el cliente activo,\nla divisa, el monto y la fecha de creación. La operación se rechaza, sin\ncrear ninguna transacción, cuando:",
+  "new_string": "#. **Confirmación (Paso 2).** ``apps.divisas.views.confirmar_calculo_operacion_view``\n   revalida que el cálculo no haya vencido y que la cotización siga siendo\n   la usada, recalcula el importe con la tasa actual y crea el\n   ``CalculoOperacion`` con estado \"Pendiente de confirmación\".\n#. **Confirmación de la operación (Paso 3).** En\n   ``apps.divisas.views.ConfirmarTransaccionOperacionView`` el cliente revisa\n   el resumen completo de esa transacción pendiente y la confirma (si la\n   tasa vigente no cambió, pasa a \"Confirmada\" y se registra\n   ``confirmado_en``) o la cancela manualmente (pasa a \"Cancelada\").\n\nCada transacción registra el tipo de operación (\"Venta\"), el cliente activo,\nla divisa, el monto y la fecha de creación. La operación se rechaza, sin\ncrear ninguna transacción, cuando:"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:40 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file C:\Rodrigo\Facultad\IS2\IS2_REPO\docs\source\guia.rst has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:41 PM</sup>
+
+Ahora recompilo Sphinx en modo estricto.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:52:42 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO/docs\" && python -m sphinx -b html source build -W 2>&1 | tail -15",
+  "description": "Recompilar Sphinx en modo estricto"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:52:58 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Writing evaluated template result to C:\Rodrigo\Facultad\IS2\IS2_REPO\docs\build\_static\language_data.js
+Writing evaluated template result to C:\Rodrigo\Facultad\IS2\IS2_REPO\docs\build\_static\js\versions.js
+[01mcopying static files: [39;49;00mdone
+[01mcopying extra files... [39;49;00m
+[01mcopying extra files: [39;49;00mdone
+[01mcopying assets: [39;49;00mdone
+[2K[01mwriting output... [39;49;00m[  2%] [32mbase-datos-roles[39;49;00m[2K[01mwriting output... [39;49;00m[  5%] [32mguia[39;49;00m[2K[01mwriting output... [39;49;00m[  7%] [32mindex[39;49;00m[2K[01mwriting output... [39;49;00m[  9%] [32mreference/apps[39;49;00m[2K[01mwriting output... [39;49;00m[ 11%] [32mreference/apps.authentication[39;49;00m[2K[01mwriting output... [39;49;00m[ 14%] [32mreference/apps.authentication.apps[39;49;00m[2K[01mwriting output... [39;49;00m[ 16%] [32mreference/apps.authentication.backends[39;49;00m[2K[01mwriting output... [39;49;00m[ 18%] [3
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:03 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:04 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && git branch --show-current\necho \"---\"\nls docs/ai-convesations/ | sort",
+  "description": "Ver rama actual y archivos de conversaciones con IA"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:53:06 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+develop
+---
+2026-08-28-IA-GE-3.md
+2026-08-30-IA-GE-7.md
+2026-09-15-IA-Claude-GE-72.md
+2026-09-15-IA-GE-72.md
+2026-09-17-IA-Claude-GE-30.md
+2026-09-21-IA-Claude-GE-31.md
+chat_entero_claude.md
+chat_entero_claude_GE-31.md
+chat_ia_agente_copilot.json
+chat_ia_agente_copilot_2.json
+ia-CONVERSATION.TXT
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:11 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:12 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && git log --oneline -15\necho \"---branches---\"\ngit branch -a | head -20",
+  "description": "Ver commits recientes y ramas para identificar el ticket"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:53:13 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+99dc1f5 Merge branch 'feature/GE-31' into develop
+0e07efd Modificacion de logica de cambio de divisas y exportacion del chat
+fbda30a Configuracion de la logica de venta de divisas y actualizacion de documentaciones
+e36e5e9 Merge branch 'feature/GE-30' into develop
+71b4b1c implementación correcta de la logica base para la compra de divisas con el usuario cliente, ademas de correción de errores/bugs y actualización de documentación
+a55aee8 Merge branch 'feature/GE-72' into develop
+68f1036 Ajuste de comisiones por categoria/segmento + corrección de logica en metodo de pago + actualizacion documentacion
+120097e ajuste documentacion ia
+95ae05b ajustes visuales minimos
+db05dc1 ajustes visuales
+ef644f7 documentacion de templates
+48702ac fix de bugs, errores y mejor implementacion en templates
+c2adfd4 Agregacion del calculo del importe de la operacion + actualizacion de cambios documentados
+1d309c7 Actualización de sphinx con actualizacion gráfica
+c37a38e actualizacion de documentaciones
+---br
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:19 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:20 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cat -n \"C:/Rodrigo/Facultad/IS2/IS2_REPO/docs/ai-convesations/2026-09-21-IA-Claude-GE-31.md\" | head -60",
+  "description": "Ver el estilo del documento de conversación más reciente"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:53:20 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	# Conversación con IA — Sprint 3: "Venta de divisas" y corrección del cambio de divisas
+     2	
+     3	**Fecha:** 21/09/2026
+     4	**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+     5	**HU relacionada:** GE-31 — Venta de divisas
+     6	**Participantes:** Ruth, integrante del equipo Global Exchange
+     7	
+     8	---
+     9	
+    10	## Bloque 1 — Pedido: venta de divisas
+    11	
+    12	Implementar la HU "Venta de divisas" cumpliendo todos sus criterios de aceptación, siguiendo la
+    13	estructura del proyecto, con tests, docstrings, Sphinx actualizado y la documentación del chat con
+    14	la IA al día.
+    15	
+    16	> Como usuario cliente quiero vender divisas para convertir una moneda y recibir el importe
+    17	> correspondiente en mi cuenta o billetera.
+    18	
+    19	Criterios de aceptación:
+    20	
+    21	1. Cliente activo seleccionado + monto y divisa válidos → se calcula el importe con la HU "Cálculo
+    22	   del importe de la operación
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:24 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:25 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "tail -40 \"C:/Rodrigo/Facultad/IS2/IS2_REPO/docs/ai-convesations/2026-09-21-IA-Claude-GE-31.md\"",
+  "description": "Ver el cierre del documento de conversación GE-31"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:53:26 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+### Tests
+
+- `TriangulacionOperacionTest` se reescribió para el flujo en dos pasos (13 tests, en reemplazo de 4): el cálculo no
+  persiste; la confirmación registra todos los datos (cliente, estado, divisas, monto, tasas, cruce,
+  equivalente en PYG, comisión, importe); los importes se recalculan en el servidor aunque se
+  manipulen los campos ocultos; cálculo vencido; cambio de cotización de cualquiera de las dos
+  divisas; divisa sin cotización o inactiva al confirmar; montos inválidos; cliente activo elegido
+  entre varios; confirmación por GET; staff rechazado.
+- `HistorialTransaccionesTest` suma 3 tests: el cambio aparece con todos sus datos, el flujo completo
+  (el cliente calcula y confirma, el analista lo ve) y el orden por fecha entre tipos.
+
+### Problemas encontrados durante la sesión
+
+- **Sphinx en modo estricto falló** con "duplicate object description" para `TIPO_DISPLAY`,
+  `cliente` y `estado`: listar atributos de modelo en una sección `Attributes:` del doc
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:53:42 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:54:15 PM</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "C:\\Rodrigo\\Facultad\\IS2\\IS2_REPO\\docs\\ai-convesations\\2026-09-22-IA-Claude-GE-32.md",
+  "content": "# Conversación con IA — Sprint 3: \"Confirmación de operación cambiaria\"\n\n**Fecha:** 22/09/2026\n**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)\n**HU relacionada:** GE-32 (inferido: es la HU siguiente a GE-30/GE-31 en la misma numeración; no\nse confirmó el número exacto en JIRA durante la sesión) — Confirmación de operación cambiaria\n**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange\n\n---\n\n## Pedido\n\nImplementar la HU \"Confirmación de operación cambiaria\", con tests, docstrings, Sphinx actualizado\ny esta documentación de la conversación.\n\n> Como usuario cliente quiero confirmar la operación antes de finalizarla para verificar los datos\n> ingresados.\n\nCriterios de aceptación:\n\n1. Con una transacción en estado \"Pendiente de confirmación\", al acceder a la pantalla de\n   confirmación, se ve el resumen completo (tipo de operación, divisa, monto, tasa aplicada,\n   comisión, monto final).\n2. Al revisar el resumen y confirmar, si la tasa vigente no cambió desde el cálculo inicial, el\n   sistema marca la transacción como \"Confirmada\".\n3. Al revisar el resumen y cancelar manualmente, la transacción pasa a \"Cancelada\" y no se procesa.\n4. Al confirmarse, se registra la fecha y hora de confirmación.\n\n## Diagnóstico inicial\n\nEsta sesión arrancó después de un salto de contexto grande: entre la última vez que se tocó el\ncódigo y este pedido, se habían mergeado a `develop` dos ramas más (`feature/GE-30` y\n`feature/GE-31`, ver `docs/ai-convesations/2026-09-17-IA-Claude-GE-30.md` y\n`2026-09-21-IA-Claude-GE-31.md`). El estado del código no coincidía con lo recordado de la sesión\nanterior, así que antes de tocar nada se releyeron por completo `apps/divisas/models.py`,\n`views.py`, `urls.py`, `forms.py`, los templates de compra/venta y triangulación, y\n`tests/test_operaciones.py` (1040 líne
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:54:16 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+File created successfully at: C:\Rodrigo\Facultad\IS2\IS2_REPO\docs\ai-convesations\2026-09-22-IA-Claude-GE-32.md (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:54:18 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:54:18 PM</sup>
+
+Corro una última verificación completa antes de cerrar.
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:54:19 PM</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "cd \"C:/Rodrigo/Facultad/IS2/IS2_REPO\" && python manage.py check 2>&1 && python manage.py makemigrations --check --dry-run 2>&1 && git status --short | grep -v \"^ M docs/build\\|^?? docs/build\\|^M  docs/build\\|^MM docs/build\"",
+  "description": "Verificación final y estado de git"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>9/21/2026, 11:54:25 PM</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+System check identified no issues (0 silenced).
+No changes detected
+ M .cc-history/2026-09-15_192240_La-siguiente-historia-de-usuario-con-sus_8d9eeb1a.md
+ M apps/divisas/models.py
+ M apps/divisas/urls.py
+ M apps/divisas/views.py
+ M docs/source/guia.rst
+ M docs/source/templates.rst
+ M tests/test_operaciones.py
+?? apps/divisas/migrations/0009_alter_calculooperacion_estado_and_more.py
+?? docs/ai-convesations/2026-09-22-IA-Claude-GE-32.md
+?? templates/divisas/confirmar_transaccion.html
+?? templates/divisas/confirmar_transaccion_cambio.html
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:54:26 PM</sup>
+
+
+---
+
+## Assistant <sup>9/21/2026, 11:54:36 PM</sup>
+
+## Resumen
+
+Implementé la HU "Confirmación de operación cambiaria", los 4 criterios, para **ambos** tipos de transacción (compra/venta y cambio entre divisas):
+
+**Diseño:** agregué un tercer paso sobre el flujo de dos pasos que ya existía (Calcular → Confirmar creación → **Confirmar operación**, esta HU):
+- Estados `Confirmada` y `Cancelada` reincorporados al modelo (migración `0009`, solo metadata).
+- Nuevas vistas `ConfirmarTransaccionOperacionView` y `ConfirmarTransaccionCambioView`: GET muestra el resumen completo (criterio 1), POST con `accion=confirmar` verifica que la tasa vigente no cambió y marca `Confirmada` + `confirmado_en` (criterios 2 y 4), o con `accion=cancelar` marca `Cancelada` sin más trámite (criterio 3).
+- La verificación de "tasa vigente cambió" vive como propiedad en el modelo (`tasa_vigente_cambio` / `tasas_vigentes_cambiaron`), no en la vista, para que sea testeable por separado.
+- El paso que crea la transacción pendiente ahora redirige a esta nueva pantalla en vez de al formulario en blanco, y dejé de fijar `confirmado_en` en ese momento — ahora se registra recién cuando el cliente confirma de verdad, que es lo que pide el criterio 4.
+
+**Encontré y corregí dos problemas ajenos a esta HU** mientras corría los tests: un test de historial comparaba una fecha en UTC contra el render en horario de Asunción (fallaba cerca de medianoche — no lo toqué a propósito, se cayó por casualidad al correr la suite) y un par de identificadores de prueba superaban el `max_length=20` del modelo `Cliente`.
+
+**Tests:** 16 nuevos (`ConfirmacionOperacionCambiariaTest`, `ConfirmacionCambioDivisasTest`), cubriendo cada criterio más casos de borde (reprocesar una transacción ya resuelta, acceso de otro cliente, acceso de un rol admin). Suite completa: **179/179 passed**. `manage.py check` y `makemigrations --check` limpios. Sphinx recompilado sin advertencias (`guia.rst` y `templates.rst` actualizados).
+
+**Una aclaración sobre el número de HU:** nombré el archivo de conversación como `GE-32` por continuidad con GE-30/GE-31, pero no tengo forma de confirmar el ticket real de JIRA — corregime el nombre si no coincide. También noto que la exportación del transcript completo (como `chat_entero_claude_GE-31.md` de la sesión anterior) parece generarse por una vía fuera de mis herramientas; lo que escribí en `docs/ai-convesations/2026-09-22-IA-Claude-GE-32.md` es el mismo registro narrativo detallado que vengo escribiendo en cada sesión.
+
+No corrí `git add`/`commit`.
 
 
 ---

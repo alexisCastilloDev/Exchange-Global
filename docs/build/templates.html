@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -362,10 +363,28 @@ Sphinx.</p>
 </pre></div>
 </div>
 <div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Resumen de una compra o venta pendiente, con acciones para confirmarla o cancelarla.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: transaccion.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
 <span class="cm">Cálculo del importe de un cambio entre dos divisas extranjeras, triangulando por PYG.</span>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
 <span class="cm">Contexto esperado: form, resultado y vigencia_segundos.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Resumen de un cambio entre divisas pendiente, con acciones para confirmarlo o cancelarlo.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: transaccion.</span>
 <span class="cm">--&gt;</span>
 {% extends 'base.html' %}
 </pre></div>
@@ -393,6 +412,15 @@ Sphinx.</p>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
 <span class="cm">Contexto esperado: form y segmento_nombre.</span>
+<span class="cm">--&gt;</span>
+{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario para configurar los tiempos de espera de las operaciones cambiarias.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: form.</span>
 <span class="cm">--&gt;</span>
 {% extends 'base.html' %}
 </pre></div>

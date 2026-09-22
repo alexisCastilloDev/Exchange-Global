@@ -60,6 +60,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                             <i class="bi bi-person-plus"></i> Registrar cliente
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'divisas:configuracion_vigencia' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'configuracion_vigencia' %}is-active{% endif %}">
+                            <i class="bi bi-stopwatch"></i> Tiempos de espera
+                        </a>
+                    </li>
                 </ul>
             </div>
             {% endif %}

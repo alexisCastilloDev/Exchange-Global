@@ -49,6 +49,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -781,8 +782,6 @@
 </li>
       <li><a href="reference/apps.authentication.backends.html#apps.authentication.backends.es_rol_tecnico">es_rol_tecnico() (en el módulo apps.authentication.backends)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.esta_vencido">esta_vencido (CalculoOperacion propiedad)</a>
 
       <ul>
@@ -795,16 +794,42 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.estado">(atributo de CalculoTriangulacion)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA">ESTADO_CANCELADA (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.ESTADO_CHOICES">ESTADO_CHOICES (atributo de CalculoOperacion)</a>
 
       <ul>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.ESTADO_CHOICES">(atributo de CalculoTriangulacion)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.ESTADO_CONFIRMADA">ESTADO_CONFIRMADA (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.ESTADO_CONFIRMADA">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.estado_efectivo">estado_efectivo (CalculoOperacion propiedad)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.estado_efectivo">(CalculoTriangulacion propiedad)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.ESTADO_PENDIENTE">ESTADO_PENDIENTE (atributo de CalculoOperacion)</a>
 
       <ul>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.ESTADO_PENDIENTE">(atributo de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.ESTADO_VENCIDA">ESTADO_VENCIDA (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.ESTADO_VENCIDA">(atributo de CalculoTriangulacion)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -901,6 +926,12 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.get_estado_display">(método de CalculoTriangulacion)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_estado_efectivo_display">get_estado_efectivo_display() (método de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.get_estado_efectivo_display">(método de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.get_item">get_item() (en el módulo apps.authentication.templatetags.ge_extras)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.get_next_by_actualizado_en">get_next_by_actualizado_en() (método de ConfiguracionComision)</a>
@@ -951,10 +982,10 @@
       </ul></li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_previous_by_fecha">get_previous_by_fecha() (método de HistorialBaja)</a>
 </li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.get_previous_by_fecha_actualizacion">get_previous_by_fecha_actualizacion() (método de Cotizacion)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.get_previous_by_fecha_actualizacion">get_previous_by_fecha_actualizacion() (método de Cotizacion)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.get_previous_by_fecha_registro">get_previous_by_fecha_registro() (método de Cliente)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.get_previous_by_vence_en">get_previous_by_vence_en() (método de CalculoOperacion)</a>
@@ -1158,6 +1189,12 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.marcar_vencida_si_corresponde">marcar_vencida_si_corresponde() (método de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.marcar_vencida_si_corresponde">(método de CalculoTriangulacion)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.media">media (AsociarUsuarioClienteForm propiedad)</a>
 
       <ul>
@@ -1528,6 +1565,10 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.tasa_venta">tasa_venta (atributo de Cotizacion)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.tasa_venta_aplicada">tasa_venta_aplicada (atributo de CalculoTriangulacion)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.tasa_vigente_cambio">tasa_vigente_cambio (CalculoOperacion propiedad)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.tasas_vigentes_cambiaron">tasas_vigentes_cambiaron (CalculoTriangulacion propiedad)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView">TasasVigentesListView (clase en apps.divisas.views)</a>
 </li>
