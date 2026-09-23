@@ -35,11 +35,19 @@ apps.divisas.views module
 
 .. autofunction:: apps.divisas.views.confirmar_calculo_operacion_view
 
+.. autoclass:: apps.divisas.views.ConfirmarTransaccionOperacionView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.TriangulacionOperacionView
    :members:
    :show-inheritance:
 
 .. autofunction:: apps.divisas.views.confirmar_triangulacion_view
+
+.. autoclass:: apps.divisas.views.ConfirmarTransaccionCambioView
+   :members:
+   :show-inheritance:
 
 .. autoclass:: apps.divisas.views.AdminDivisasMixin
    :members:

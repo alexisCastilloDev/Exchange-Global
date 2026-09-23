@@ -1189,8 +1189,23 @@ class ConfirmacionOperacionCambiariaTest(TestCase):
         self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA_COTIZACION)
         self.assertContains(response, 'Cancelada por cambio de cotización')
 
+    def test_el_boton_recalcular_lleva_los_mismos_datos_de_la_transaccion_cancelada(self):
+        """Criterio 3: el botón "Recalcular" no es un formulario vacío, ya trae la divisa y el monto."""
+        Cotizacion.objects.create(
+            divisa=self.usd,
+            tasa_compra=Decimal('7350.00'),
+            tasa_venta=Decimal('7450.00'),
+        )
+        self.client.post(self.url, {'accion': 'confirmar'})
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, reverse('divisas:operar', kwargs={'tipo': 'compra'}))
+        self.assertContains(response, f'name="divisa" value="{self.usd.pk}"')
+        self.assertContains(response, 'name="monto" value="100.00"')
+
     def test_recalcular_tras_cancelacion_por_cotizacion_usa_la_tasa_vigente(self):
-        """Criterio 3: al recalcular tras la cancelación, se genera un cálculo nuevo con la tasa vigente."""
+        """Criterio 3: al enviar el formulario de "Recalcular", se genera un cálculo nuevo con la tasa vigente."""
         Cotizacion.objects.create(
             divisa=self.usd,
             tasa_compra=Decimal('7350.00'),
@@ -1202,7 +1217,11 @@ class ConfirmacionOperacionCambiariaTest(TestCase):
 
         response = self.client.post(
             reverse('divisas:operar', kwargs={'tipo': 'compra'}),
-            {'tipo': CalculoOperacion.TIPO_COMPRA, 'divisa': str(self.usd.pk), 'monto': '100.00'},
+            {
+                'tipo': self.transaccion.tipo,
+                'divisa': str(self.transaccion.divisa_id),
+                'monto': str(self.transaccion.monto_origen),
+            },
         )
 
         self.assertEqual(response.status_code, 200)
@@ -1451,8 +1470,20 @@ class ConfirmacionCambioDivisasTest(TestCase):
         self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CANCELADA_COTIZACION)
         self.assertContains(response, 'Cancelada por cambio de cotización')
 
+    def test_el_boton_recalcular_lleva_los_mismos_datos_del_cambio_cancelado(self):
+        """Criterio 3: el botón "Recalcular" no es un formulario vacío, ya trae ambas divisas y el monto."""
+        Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7950.00'), tasa_venta=Decimal('8150.00'))
+        self.client.post(self.url, {'accion': 'confirmar'})
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, reverse('divisas:triangulacion'))
+        self.assertContains(response, f'name="divisa_origen" value="{self.usd.pk}"')
+        self.assertContains(response, f'name="divisa_destino" value="{self.eur.pk}"')
+        self.assertContains(response, 'name="monto" value="100.00"')
+
     def test_recalcular_tras_cancelacion_por_cotizacion_usa_las_tasas_vigentes(self):
-        """Criterio 3: al recalcular tras la cancelación, se genera un cálculo nuevo con las tasas vigentes."""
+        """Criterio 3: al enviar el formulario de "Recalcular", se genera un cálculo nuevo con las tasas vigentes."""
         Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7950.00'), tasa_venta=Decimal('8150.00'))
         self.client.post(self.url, {'accion': 'confirmar'})
         self.transaccion.refresh_from_db()
@@ -1461,9 +1492,9 @@ class ConfirmacionCambioDivisasTest(TestCase):
         response = self.client.post(
             reverse('divisas:triangulacion'),
             {
-                'divisa_origen': str(self.usd.pk),
-                'divisa_destino': str(self.eur.pk),
-                'monto': '100.00',
+                'divisa_origen': str(self.transaccion.divisa_origen_id),
+                'divisa_destino': str(self.transaccion.divisa_destino_id),
+                'monto': str(self.transaccion.monto_origen),
             },
         )
 
