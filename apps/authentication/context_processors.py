@@ -19,6 +19,7 @@ def permisos_ui_context(request):
             'es_admin': False,
             'puede_ver_usuarios': False,
             'puede_ver_roles': False,
+            'puede_ver_historial_propio': False,
         }
 
     roles = request.session.get('keycloak_roles', [])
@@ -45,6 +46,7 @@ def permisos_ui_context(request):
         'puede_administrar_divisas': es_admin,
         'puede_gestionar_metodos_pago': 'cliente' in roles and tiene_clientes_asociados,
         'puede_operar_divisas': puede_operar_divisas,
+        'puede_ver_historial_propio': puede_operar_divisas,
         'puede_actualizar_tasas': puede_actualizar_tasas,
         'puede_ver_tasas': puede_ver_tasas,
         'puede_configurar_comisiones': puede_configurar_comisiones,

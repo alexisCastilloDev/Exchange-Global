@@ -1,0 +1,42 @@
+<!--
+Detalle completo, de solo lectura, de una compra o venta del cliente activo.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: transaccion.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Detalle de transacción - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-receipt"></i> Mi historial de transacciones</span>
+        <h1>Detalle de la transacción</h1>
+        <p>Consulta de solo lectura: esta pantalla no permite confirmar, cancelar ni reprocesar la operación.</p>
+    </div>
+    <a href="{% url 'divisas:mis_transacciones' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver al historial</a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+        <div class="ge-card ge-result-panel">
+            <div class="ge-card__header mb-3">
+                <h2>Resumen de la operación</h2>
+                <span class="badge-activo">{{ transaccion.get_estado_efectivo_display }}</span>
+            </div>
+            <div class="operation-summary">
+                <div class="operation-summary__row"><span class="operation-summary__label">Operación: </span><strong class="operation-summary__value">{{ transaccion.get_tipo_display }} de {{ transaccion.codigo_divisa }} contra PYG</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Monto: </span><strong class="operation-summary__value">{{ transaccion.monto_origen|floatformat:2 }} {{ transaccion.codigo_divisa }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Tasa aplicada: </span><strong class="operation-summary__value">{{ transaccion.tasa_aplicada|floatformat:2 }} PYG</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Comisión ({{ transaccion.comision_porcentaje|floatformat:2 }}%): </span><strong class="operation-summary__value">{{ transaccion.comision|floatformat:2 }} PYG</strong></div>
+                <div class="operation-summary__row operation-summary__row--total"><span class="operation-summary__label">{% if transaccion.tipo == 'COMPRA' %}Importe pagado: {% else %}Importe recibido: {% endif %}</span><strong class="operation-summary__value">{{ transaccion.monto_final|floatformat:2 }} PYG</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Fecha de creación: </span><strong class="operation-summary__value">{{ transaccion.creado_en|date:"d/m/Y H:i" }}</strong></div>
+                {% if transaccion.confirmado_en %}
+                <div class="operation-summary__row"><span class="operation-summary__label">Fecha de confirmación: </span><strong class="operation-summary__value">{{ transaccion.confirmado_en|date:"d/m/Y H:i" }}</strong></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

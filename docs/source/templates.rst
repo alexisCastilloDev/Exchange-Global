@@ -164,6 +164,18 @@ Divisas
    :language: html
    :lines: 1-7
 
+.. literalinclude:: ../../templates/divisas/mis_transacciones.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/divisas/detalle_transaccion_operacion.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/divisas/detalle_transaccion_cambio.html
+   :language: html
+   :lines: 1-7
+
 Parciales
 ---------
 

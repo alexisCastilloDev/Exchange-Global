@@ -80,6 +80,23 @@ transacciones (``apps.divisas.views.HistorialTransaccionesView``), con tipo,
 estado, usuario, cliente, divisa, monto, tasa aplicada, comisión e importe
 final.
 
+Un cliente, en cambio, consulta únicamente las transacciones registradas a
+nombre de su propio cliente activo (``apps.divisas.views.MiHistorialTransaccionesView``,
+en ``/divisas/transacciones/mias/``), con la misma información por fila
+(tipo, divisa, monto, tasa aplicada, estado y fecha, además de comisión e
+importe final) y paginado de a 20. Admite filtrar el listado por rango de
+fechas de creación (``fecha_desde``/``fecha_hasta``) y por estado, comparando
+siempre contra el estado *efectivo* de cada transacción (ver
+``CalculoOperacion.estado_efectivo``), no solo el persistido; sin
+transacciones que mostrar, indica un mensaje en vez de dejar la tabla vacía
+sin explicación. Desde cada fila se accede al detalle completo de esa
+transacción (``apps.divisas.views.DetalleTransaccionOperacionView`` para
+compra/venta, ``apps.divisas.views.DetalleTransaccionCambioView`` para un
+cambio entre divisas): a diferencia de las pantallas de confirmación
+(``ConfirmarTransaccionOperacionView``/``ConfirmarTransaccionCambioView``),
+el detalle del historial es de solo consulta y no ofrece ninguna acción para
+confirmar, cancelar ni reprocesar la transacción, sin importar su estado.
+
 El simulador de conversión ofrece los mismos tres modos (compra, venta,
 cambio) sin persistir el resultado ni exigir confirmación.
 

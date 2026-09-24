@@ -21,6 +21,9 @@ from .views import (
     ActualizarComisionView,
     ConfiguracionVigenciaUpdateView,
     HistorialTransaccionesView,
+    MiHistorialTransaccionesView,
+    DetalleTransaccionOperacionView,
+    DetalleTransaccionCambioView,
 )
 """
 Configuración de URLs para la aplicación de divisas.
@@ -49,6 +52,17 @@ urlpatterns = [
     path('cotizaciones/<int:divisa_id>/actualizar/', ActualizarCotizacionView.as_view(), name='actualizar_cotizacion'),
     path('cotizaciones/<int:divisa_id>/historial/', HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),
     path('transacciones/', HistorialTransaccionesView.as_view(), name='historial_transacciones'),
+    path('transacciones/mias/', MiHistorialTransaccionesView.as_view(), name='mis_transacciones'),
+    path(
+        'transacciones/mias/operacion/<uuid:pk>/',
+        DetalleTransaccionOperacionView.as_view(),
+        name='detalle_transaccion_operacion',
+    ),
+    path(
+        'transacciones/mias/cambio/<uuid:pk>/',
+        DetalleTransaccionCambioView.as_view(),
+        name='detalle_transaccion_cambio',
+    ),
     path('comisiones/', ConfiguracionComisionListView.as_view(), name='comisiones'),
     path('comisiones/<str:segmento>/editar/', ActualizarComisionView.as_view(), name='actualizar_comision'),
     path('configuracion/vigencia/', ConfiguracionVigenciaUpdateView.as_view(), name='configuracion_vigencia'),

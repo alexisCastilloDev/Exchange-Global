@@ -1072,6 +1072,277 @@ class HistorialTransaccionesTest(TestCase):
         self.assertGreater(cambio.creado_en, self.transaccion.creado_en)
 
 
+class MiHistorialTransaccionesTest(TestCase):
+    """Verifica la HU 'Consultar el historial de transacciones' para el cliente activo."""
+
+    def setUp(self):
+        """Prepara un cliente activo, una divisa cotizada y dos transacciones propias."""
+        self.usuario = User.objects.create_user(
+            username='cliente-mi-historial',
+            password='password123',
+        )
+        self.cliente = Cliente.objects.create(
+            user=self.usuario,
+            identificador='MIHIST-001',
+            nombre='Cliente',
+            apellido='Propio',
+            email='cliente-mi-historial@test.com',
+            is_active=True,
+        )
+        self.usuario.clientes.add(self.cliente)
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        Cotizacion.objects.create(
+            divisa=self.usd,
+            tasa_compra=Decimal('7300.00'),
+            tasa_venta=Decimal('7400.00'),
+        )
+        self.client.login(username='cliente-mi-historial', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+        self.compra = CalculoOperacion.objects.create(
+            usuario=self.usuario,
+            cliente=self.cliente,
+            tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd,
+            codigo_divisa='USD',
+            monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7400.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('7400.00'),
+            monto_final=Decimal('747400.00'),
+            estado=CalculoOperacion.ESTADO_CONFIRMADA,
+            confirmado_en=timezone.now(),
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+        self.venta = CalculoOperacion.objects.create(
+            usuario=self.usuario,
+            cliente=self.cliente,
+            tipo=CalculoOperacion.TIPO_VENTA,
+            divisa=self.usd,
+            codigo_divisa='USD',
+            monto_origen=Decimal('50.00'),
+            tasa_aplicada=Decimal('7300.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('365.00'),
+            monto_final=Decimal('364635.00'),
+            estado=CalculoOperacion.ESTADO_CANCELADA,
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+
+    def test_ve_listado_paginado_de_sus_transacciones(self):
+        """Criterio 1: el cliente activo ve un listado paginado de sus transacciones."""
+        response = self.client.get(reverse('divisas:mis_transacciones'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('page_obj', response.context)
+        self.assertEqual(len(response.context['transacciones']), 2)
+
+    def test_historial_pagina_de_a_veinte_transacciones(self):
+        """Criterio 1: con más de 20 transacciones propias, el listado pagina de a 20."""
+        for _ in range(25):
+            CalculoOperacion.objects.create(
+                usuario=self.usuario,
+                cliente=self.cliente,
+                tipo=CalculoOperacion.TIPO_COMPRA,
+                divisa=self.usd,
+                codigo_divisa='USD',
+                monto_origen=Decimal('5.00'),
+                tasa_aplicada=Decimal('7400.00'),
+                comision_porcentaje=Decimal('1.000'),
+                comision=Decimal('37.00'),
+                monto_final=Decimal('37037.00'),
+                vence_en=timezone.now() + timedelta(seconds=300),
+            )
+
+        response = self.client.get(reverse('divisas:mis_transacciones'))
+
+        self.assertTrue(response.context['is_paginated'])
+        self.assertEqual(len(response.context['transacciones']), 20)
+
+        response_pagina_2 = self.client.get(reverse('divisas:mis_transacciones'), {'page': 2})
+        self.assertEqual(response_pagina_2.status_code, 200)
+
+    def test_no_incluye_transacciones_de_otro_cliente(self):
+        """Criterio 1: solo se listan las transacciones del cliente activo, no las de otros."""
+        otro_usuario = User.objects.create_user(username='otro-cliente-mi-historial', password='password123')
+        otro_cliente = Cliente.objects.create(
+            user=otro_usuario,
+            identificador='MIHIST-002',
+            nombre='Otro',
+            apellido='Cliente',
+            email='otro-cliente-mi-historial@test.com',
+            is_active=True,
+        )
+        CalculoOperacion.objects.create(
+            usuario=otro_usuario,
+            cliente=otro_cliente,
+            tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd,
+            codigo_divisa='USD',
+            monto_origen=Decimal('10.00'),
+            tasa_aplicada=Decimal('7400.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('74.00'),
+            monto_final=Decimal('74074.00'),
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+
+        response = self.client.get(reverse('divisas:mis_transacciones'))
+
+        self.assertEqual(len(response.context['transacciones']), 2)
+        self.assertNotContains(response, 'Otro Cliente')
+
+    def test_cada_fila_muestra_tipo_divisa_monto_tasa_estado_y_fecha(self):
+        """Criterio 2: cada fila incluye tipo, divisa, monto, tasa aplicada, estado y fecha."""
+        response = self.client.get(reverse('divisas:mis_transacciones'))
+
+        self.assertContains(response, 'Compra')
+        self.assertContains(response, 'Confirmada')
+        self.assertContains(response, 'USD')
+        self.assertContains(response, '100.00')
+        self.assertContains(response, '7400.00')
+        self.assertContains(response, timezone.localtime(self.compra.creado_en).strftime('%d/%m/%Y'))
+
+    def test_filtro_por_estado_actualiza_el_listado(self):
+        """Criterio 3: filtrar por estado deja solo las transacciones que coinciden."""
+        response = self.client.get(
+            reverse('divisas:mis_transacciones'), {'estado': CalculoOperacion.ESTADO_CANCELADA}
+        )
+
+        transacciones = response.context['transacciones']
+        self.assertEqual(len(transacciones), 1)
+        self.assertEqual(transacciones[0]['id'], self.venta.pk)
+
+    def test_filtro_por_rango_de_fechas_actualiza_el_listado(self):
+        """Criterio 3: filtrar por rango de fechas deja solo las transacciones que coinciden."""
+        antigua = CalculoOperacion.objects.create(
+            usuario=self.usuario,
+            cliente=self.cliente,
+            tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd,
+            codigo_divisa='USD',
+            monto_origen=Decimal('20.00'),
+            tasa_aplicada=Decimal('7400.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('148.00'),
+            monto_final=Decimal('148148.00'),
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+        antigua.creado_en = timezone.now() - timedelta(days=30)
+        antigua.save(update_fields=['creado_en'])
+        hoy = timezone.localdate().isoformat()
+
+        response = self.client.get(reverse('divisas:mis_transacciones'), {'fecha_desde': hoy})
+
+        ids = [fila['id'] for fila in response.context['transacciones']]
+        self.assertNotIn(antigua.pk, ids)
+        self.assertIn(self.compra.pk, ids)
+
+    def test_click_en_una_transaccion_lleva_al_detalle_completo(self):
+        """Criterio 4: cada fila enlaza al detalle completo de esa transacción."""
+        response = self.client.get(reverse('divisas:mis_transacciones'))
+        url_detalle = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.compra.pk})
+
+        self.assertContains(response, url_detalle)
+
+        detalle = self.client.get(url_detalle)
+
+        self.assertEqual(detalle.status_code, 200)
+        self.assertContains(detalle, 'Compra')
+        self.assertContains(detalle, '100.00')
+        self.assertContains(detalle, 'Confirmada')
+
+    def test_detalle_de_cambio_entre_divisas_muestra_sus_datos(self):
+        """Criterio 4: el detalle de un cambio entre divisas también es accesible y completo."""
+        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+        Cotizacion.objects.create(divisa=eur, tasa_compra=Decimal('7900.00'), tasa_venta=Decimal('8100.00'))
+        cambio = CalculoTriangulacion.objects.create(
+            usuario=self.usuario,
+            cliente=self.cliente,
+            divisa_origen=self.usd,
+            divisa_destino=eur,
+            codigo_divisa_origen='USD',
+            codigo_divisa_destino='EUR',
+            monto_origen=Decimal('250.00'),
+            tasa_compra_aplicada=Decimal('7300.00'),
+            tasa_venta_aplicada=Decimal('8100.00'),
+            tasa_cruzada=Decimal('0.901235'),
+            monto_equivalente_pyg=Decimal('1825000.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('2.25'),
+            monto_final=Decimal('223.06'),
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+
+        response = self.client.get(reverse('divisas:detalle_transaccion_cambio', kwargs={'pk': cambio.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'USD')
+        self.assertContains(response, 'EUR')
+        self.assertContains(response, '250.00')
+        self.assertContains(response, '223.06')
+
+    def test_otro_cliente_no_puede_ver_el_detalle_de_una_transaccion_ajena(self):
+        """El detalle de una transacción solo es visible para su dueño (404 en caso contrario)."""
+        otro_usuario = User.objects.create_user(username='otro-detalle-mi-historial', password='password123')
+        otro_cliente = Cliente.objects.create(
+            user=otro_usuario,
+            identificador='MIHIST-003',
+            nombre='Otro',
+            apellido='Detalle',
+            email='otro-detalle-mi-historial@test.com',
+            is_active=True,
+        )
+        otro_usuario.clientes.add(otro_cliente)
+        self.client.logout()
+        self.client.login(username='otro-detalle-mi-historial', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        response = self.client.get(
+            reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.compra.pk})
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_cliente_sin_transacciones_ve_mensaje_sin_error(self):
+        """Criterio 5: sin transacciones registradas, se muestra un mensaje, no un error."""
+        self.compra.delete()
+        self.venta.delete()
+
+        response = self.client.get(reverse('divisas:mis_transacciones'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Todavía no tenés transacciones registradas.')
+
+    def test_no_ofrece_acciones_de_edicion_cancelacion_ni_reproceso(self):
+        """La HU es de solo consulta: no hay formularios para confirmar, cancelar ni reprocesar."""
+        response_listado = self.client.get(reverse('divisas:mis_transacciones'))
+        response_detalle = self.client.get(
+            reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.compra.pk})
+        )
+
+        self.assertNotContains(response_listado, 'name="accion"')
+        self.assertNotContains(response_detalle, 'name="accion"')
+        self.assertNotContains(response_detalle, 'Confirmar')
+        self.assertNotContains(response_detalle, 'Cancelar')
+
+    def test_admin_no_puede_ver_el_historial_propio_de_un_cliente(self):
+        """El rol admin, sin cliente propio, no puede acceder a esta pantalla (403)."""
+        User.objects.create_user(username='admin-mi-historial', password='password123', is_staff=True)
+        self.client.logout()
+        self.client.login(username='admin-mi-historial', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+        response = self.client.get(reverse('divisas:mis_transacciones'))
+
+        self.assertEqual(response.status_code, 403)
+
+
 class ConfirmacionOperacionCambiariaTest(TestCase):
     """Verifica la HU 'Confirmación de operación cambiaria' para compra y venta."""
 

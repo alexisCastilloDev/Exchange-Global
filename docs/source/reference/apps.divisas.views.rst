@@ -17,6 +17,18 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.MiHistorialTransaccionesView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DetalleTransaccionOperacionView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DetalleTransaccionCambioView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.ConfiguracionComisionListView
    :members:
    :show-inheritance:

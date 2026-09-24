@@ -123,6 +123,13 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                         </a>
                     </li>
                     {% endif %}
+                    {% if puede_ver_historial_propio %}
+                    <li>
+                        <a href="{% url 'divisas:mis_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'mis_transacciones,detalle_transaccion_operacion,detalle_transaccion_cambio' %}is-active{% endif %}">
+                            <i class="bi bi-clock-history"></i> Mi historial de transacciones
+                        </a>
+                    </li>
+                    {% endif %}
                     <li>
                         <a href="{% url 'divisas:simulacion_divisas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'simulacion_divisas' %}is-active{% endif %}">
                             <i class="bi bi-calculator"></i> Simulador de conversión
