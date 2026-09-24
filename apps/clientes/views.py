@@ -1,6 +1,8 @@
 """
 Módulo de vistas para la aplicación de clientes.
 """
+from urllib.parse import urlparse
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -9,7 +11,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.response import TemplateResponse
-from django.urls import reverse, reverse_lazy
+from django.urls import Resolver404, resolve, reverse, reverse_lazy
 from django.views import View
 from django.views.decorators.http import require_POST  # Agregado para Metodos de Pago
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
@@ -52,6 +54,48 @@ def seleccionar_cliente_view(request):
     )
 
 
+# Pantallas de detalle de un registro ligado al cliente activo (por ejemplo,
+# el detalle de una transacción del historial de un cliente): si el usuario
+# cambia de cliente activo estando en una de estas pantallas, el registro de
+# la URL (identificado por su pk) pertenece al cliente anterior y puede no
+# existir para el nuevo, lo que rompería el "volver al referer" con un 404.
+# En su lugar, cambiar de cliente desde ahí redirige al listado indicado.
+DESTINO_AL_CAMBIAR_CLIENTE_DESDE_DETALLE = {
+    'divisas:detalle_transaccion_operacion': 'divisas:mis_transacciones',
+    'divisas:detalle_transaccion_cambio': 'divisas:mis_transacciones',
+}
+
+
+def _redireccion_tras_cambiar_cliente(referer):
+    """Resuelve a dónde volver después de cambiar de cliente activo.
+
+    Por defecto vuelve al ``referer`` tal cual. Si el ``referer`` es una
+    pantalla de detalle de un registro del cliente anterior (ver
+    ``DESTINO_AL_CAMBIAR_CLIENTE_DESDE_DETALLE``), vuelve al listado
+    correspondiente en su lugar, porque ese registro puede no pertenecer al
+    cliente nuevo.
+
+    Args:
+        referer (str): Valor de la cabecera ``HTTP_REFERER``, o ``None``.
+
+    Returns:
+        str: La URL a la que redirigir.
+    """
+    if not referer:
+        return reverse('home')
+    try:
+        coincidencia = resolve(urlparse(referer).path)
+    except Resolver404:
+        return referer
+    nombre_vista = (
+        f'{coincidencia.namespace}:{coincidencia.url_name}'
+        if coincidencia.namespace
+        else coincidencia.url_name
+    )
+    destino = DESTINO_AL_CAMBIAR_CLIENTE_DESDE_DETALLE.get(nombre_vista)
+    return reverse(destino) if destino else referer
+
+
 @login_required
 def cambiar_cliente_view(request, cliente_id):
     """Permite cambiar de cliente activo en cualquier momento sin cerrar sesión."""
@@ -66,12 +110,8 @@ def cambiar_cliente_view(request, cliente_id):
 
     messages.info(request, f'Cambiaste al cliente: {cliente}')
 
-    # Si hay referer se envía allí, de lo contrario se usa la vista 'home'
     referer = request.META.get('HTTP_REFERER')
-    if referer:
-        return redirect(referer)
-
-    return redirect('home')
+    return redirect(_redireccion_tras_cambiar_cliente(referer))
 
 
 class PanelAdminView(LoginRequiredMixin, UserPassesTestMixin, ListView):

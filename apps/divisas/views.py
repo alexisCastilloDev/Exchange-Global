@@ -1,6 +1,6 @@
 """Vistas para consultar, administrar y simular cotizaciones de divisas."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
@@ -288,6 +288,211 @@ class HistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListVi
             for cambio in CalculoTriangulacion.objects.select_related('usuario', 'cliente')
         )
         return sorted(filas, key=lambda fila: fila['creado_en'], reverse=True)
+
+
+class MiHistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista, paginadas y filtrables, las transacciones del cliente activo.
+
+    Implementa la HU "Consultar el historial de transacciones": a diferencia
+    de ``HistorialTransaccionesView`` (administración y análisis, todos los
+    clientes), esta vista muestra únicamente las compras, ventas y cambios
+    (``CalculoOperacion``/``CalculoTriangulacion``) registrados a nombre del
+    ``cliente_activo`` de la sesión, con los mismos datos por fila (tipo,
+    divisa, monto, tasa aplicada, estado y fecha) más comisión e importe
+    final. Admite filtrar por rango de fechas de creación y por estado
+    efectivo (ver ``CalculoOperacion.estado_efectivo``) mediante los
+    parámetros ``fecha_desde``, ``fecha_hasta`` y ``estado`` en la URL; sin
+    filtros, muestra todo el historial del cliente. Es una pantalla de solo
+    consulta: no ofrece ninguna acción para confirmar, cancelar, reprocesar
+    ni eliminar transacciones (ver ``DetalleTransaccionOperacionView`` y
+    ``DetalleTransaccionCambioView`` para el detalle de cada una).
+    """
+
+    template_name = 'divisas/mis_transacciones.html'
+    context_object_name = 'transacciones'
+    paginate_by = 20
+
+    def test_func(self):
+        """Permite consultar el historial propio a los roles que pueden operar."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Exige un cliente activo seleccionado antes de listar su historial."""
+        cliente_activo = getattr(request, 'cliente_activo', None)
+        if cliente_activo is None:
+            messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
+            return redirect('home')
+        self.cliente_activo = cliente_activo
+        return super().get(request, *args, **kwargs)
+
+    @staticmethod
+    def _fila_operacion(operacion):
+        """Normaliza una compra o venta propia para mostrarla en el historial."""
+        return {
+            'id': operacion.pk,
+            'tipo_modelo': 'operacion',
+            'creado_en': operacion.creado_en,
+            'tipo': operacion.get_tipo_display(),
+            'estado': operacion.get_estado_efectivo_display(),
+            'estado_codigo': operacion.estado_efectivo,
+            'divisa': operacion.codigo_divisa,
+            'monto_origen': operacion.monto_origen,
+            'tasa': operacion.tasa_aplicada,
+            'decimales_tasa': 2,
+            'comision': operacion.comision,
+            'monto_final': operacion.monto_final,
+            'moneda_final': 'PYG',
+        }
+
+    @staticmethod
+    def _fila_cambio(cambio):
+        """Normaliza un cambio entre divisas propio para mostrarlo en el historial."""
+        return {
+            'id': cambio.pk,
+            'tipo_modelo': 'cambio',
+            'creado_en': cambio.creado_en,
+            'tipo': CalculoTriangulacion.TIPO_DISPLAY,
+            'estado': cambio.get_estado_efectivo_display(),
+            'estado_codigo': cambio.estado_efectivo,
+            'divisa': f'{cambio.codigo_divisa_origen} → {cambio.codigo_divisa_destino}',
+            'monto_origen': cambio.monto_origen,
+            'tasa': cambio.tasa_cruzada,
+            'decimales_tasa': 6,
+            'comision': cambio.comision,
+            'monto_final': cambio.monto_final,
+            'moneda_final': cambio.codigo_divisa_destino,
+        }
+
+    @staticmethod
+    def _parsear_fecha(valor):
+        """Convierte ``'YYYY-MM-DD'`` a ``date``, o ``None`` si falta o no es válido."""
+        if not valor:
+            return None
+        try:
+            return datetime.strptime(valor, '%Y-%m-%d').date()
+        except ValueError:
+            return None
+
+    def _filtrar(self, filas):
+        """Aplica sobre las filas normalizadas los filtros de fecha y estado de la URL.
+
+        Se filtra en Python, sobre las filas ya normalizadas, en lugar de con
+        ``queryset.filter(...)``, para poder comparar contra el estado
+        *efectivo* (que puede ser "Vencida" aunque el campo ``estado`` en la
+        base de datos todavía no lo refleje) y contra la fecha ya convertida
+        a la zona horaria local, igual que se muestran en la tabla.
+        """
+        estado = self.request.GET.get('estado', '').strip()
+        if estado:
+            filas = [fila for fila in filas if fila['estado_codigo'] == estado]
+
+        desde = self._parsear_fecha(self.request.GET.get('fecha_desde'))
+        if desde:
+            filas = [fila for fila in filas if timezone.localtime(fila['creado_en']).date() >= desde]
+
+        hasta = self._parsear_fecha(self.request.GET.get('fecha_hasta'))
+        if hasta:
+            filas = [fila for fila in filas if timezone.localtime(fila['creado_en']).date() <= hasta]
+
+        return filas
+
+    def get_queryset(self):
+        """Devuelve las transacciones propias, filtradas, del más reciente al más antiguo."""
+        filas = [
+            self._fila_operacion(operacion)
+            for operacion in CalculoOperacion.objects.filter(
+                cliente=self.cliente_activo
+            ).select_related('usuario')
+        ]
+        filas.extend(
+            self._fila_cambio(cambio)
+            for cambio in CalculoTriangulacion.objects.filter(
+                cliente=self.cliente_activo
+            ).select_related('usuario')
+        )
+        filas = self._filtrar(filas)
+        return sorted(filas, key=lambda fila: fila['creado_en'], reverse=True)
+
+    def get_context_data(self, **kwargs):
+        """Agrega el estado de los filtros y si el cliente tiene transacciones sin filtrar."""
+        context = super().get_context_data(**kwargs)
+        context['tiene_transacciones'] = (
+            CalculoOperacion.objects.filter(cliente=self.cliente_activo).exists()
+            or CalculoTriangulacion.objects.filter(cliente=self.cliente_activo).exists()
+        )
+        context['estados_disponibles'] = CalculoOperacion.ESTADO_CHOICES
+        context['estado_actual'] = self.request.GET.get('estado', '')
+        context['fecha_desde_actual'] = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta_actual'] = self.request.GET.get('fecha_hasta', '')
+        querystring = self.request.GET.copy()
+        querystring.pop('page', None)
+        context['querystring'] = querystring.urlencode()
+        return context
+
+
+class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Muestra el detalle completo, de solo lectura, de una compra o venta propia.
+
+    Es la pantalla de detalle a la que se accede desde
+    ``MiHistorialTransaccionesView`` al hacer clic en una fila. A diferencia
+    de ``ConfirmarTransaccionOperacionView``, no ofrece ningún botón para
+    confirmar, cancelar ni recalcular: solo expone tipo de operación, divisa,
+    monto, tasa aplicada, comisión, importe final, estado y fecha, sin
+    importar en qué estado se encuentre la transacción.
+    """
+
+    def test_func(self):
+        """Permite consultar el detalle solo a los roles que pueden operar."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Recupera la transacción del cliente activo o responde 404, y la muestra."""
+        cliente_activo = getattr(request, 'cliente_activo', None)
+        if cliente_activo is None:
+            messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
+            return redirect('home')
+        transaccion = get_object_or_404(CalculoOperacion, pk=kwargs['pk'], cliente=cliente_activo)
+        return render(request, 'divisas/detalle_transaccion_operacion.html', {'transaccion': transaccion})
+
+
+class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Muestra el detalle completo, de solo lectura, de un cambio entre divisas propio.
+
+    Es la pantalla de detalle a la que se accede desde
+    ``MiHistorialTransaccionesView`` al hacer clic en una fila de tipo
+    "Cambio". A diferencia de ``ConfirmarTransaccionCambioView``, no ofrece
+    ningún botón para confirmar, cancelar ni recalcular: solo expone las
+    divisas, el monto, las tasas aplicadas, la comisión, el importe final, el
+    estado y la fecha, sin importar en qué estado se encuentre el cambio.
+    """
+
+    def test_func(self):
+        """Permite consultar el detalle solo a los roles que pueden operar."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Recupera el cambio del cliente activo o responde 404, y lo muestra."""
+        cliente_activo = getattr(request, 'cliente_activo', None)
+        if cliente_activo is None:
+            messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
+            return redirect('home')
+        transaccion = get_object_or_404(CalculoTriangulacion, pk=kwargs['pk'], cliente=cliente_activo)
+        return render(request, 'divisas/detalle_transaccion_cambio.html', {'transaccion': transaccion})
 
 
 class ConfiguracionComisionListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
