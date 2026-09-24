@@ -89,12 +89,18 @@ class CalculoOperacion(models.Model):
     ``ConfirmarTransaccionOperacionView``), el cliente revisa el resumen
     completo y decide si la confirma (si la tasa vigente no cambió, pasa a
     "Confirmada" y se registra ``confirmado_en``) o la cancela manualmente
-    (pasa a "Cancelada" y no se procesa más). Si el cliente nunca vuelve a
-    esa pantalla (por ejemplo, cierra la pestaña) y se cumple ``vence_en``
-    sin que la transacción se haya confirmado ni cancelado, se considera
-    "Vencida": ``estado_efectivo`` refleja esto de inmediato para quien la
-    consulte, aunque el campo ``estado`` recién se actualice en la base de
-    datos la próxima vez que alguien con permiso visite esa transacción.
+    (pasa a "Cancelada" y no se procesa más). Si al intentar confirmarla la
+    tasa vigente ya cambió respecto de ``tasa_aplicada`` (ver
+    ``tasa_vigente_cambio``), la confirmación se rechaza y la transacción se
+    cancela automáticamente como "Cancelada por cambio de cotización", un
+    estado distinto de la cancelación manual para que el historial pueda
+    diferenciarlas; el cliente puede recalcular con la tasa nueva desde esa
+    misma pantalla. Si el cliente nunca vuelve a esa pantalla (por ejemplo,
+    cierra la pestaña) y se cumple ``vence_en`` sin que la transacción se
+    haya confirmado ni cancelado, se considera "Vencida": ``estado_efectivo``
+    refleja esto de inmediato para quien la consulte, aunque el campo
+    ``estado`` recién se actualice en la base de datos la próxima vez que
+    alguien con permiso visite esa transacción.
     """
 
     TIPO_COMPRA = 'COMPRA'
@@ -108,11 +114,13 @@ class CalculoOperacion(models.Model):
     ESTADO_CONFIRMADA = 'CONFIRMADA'
     ESTADO_CANCELADA = 'CANCELADA'
     ESTADO_VENCIDA = 'VENCIDA'
+    ESTADO_CANCELADA_COTIZACION = 'CANCELADA_COTIZACION'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
         (ESTADO_CANCELADA, 'Cancelada'),
         (ESTADO_VENCIDA, 'Vencida'),
+        (ESTADO_CANCELADA_COTIZACION, 'Cancelada por cambio de cotización'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -337,8 +345,13 @@ class CalculoTriangulacion(models.Model):
     ``ConfirmarTransaccionCambioView``), el cliente revisa el resumen completo
     y decide si lo confirma (si las tasas vigentes no cambiaron, pasa a
     "Confirmada" y se registra ``confirmado_en``) o lo cancela manualmente
-    (pasa a "Cancelada"). Si el cliente nunca vuelve a esa pantalla y se
-    cumple ``vence_en`` sin resolución, se considera "Vencida" (ver
+    (pasa a "Cancelada"). Si al intentar confirmarlo alguna de las tasas
+    vigentes ya cambió (ver ``tasas_vigentes_cambiaron``), la confirmación se
+    rechaza y el cambio se cancela automáticamente como "Cancelada por
+    cambio de cotización", distinguible de la cancelación manual en el
+    historial; el cliente puede recalcular con las tasas nuevas desde esa
+    misma pantalla. Si el cliente nunca vuelve a esa pantalla y se cumple
+    ``vence_en`` sin resolución, se considera "Vencida" (ver
     ``estado_efectivo``). Así aparece en el historial de transacciones junto
     con las compras y ventas. ``TIPO_DISPLAY`` es el nombre del tipo de
     operación que muestra el historial.
@@ -350,11 +363,13 @@ class CalculoTriangulacion(models.Model):
     ESTADO_CONFIRMADA = 'CONFIRMADA'
     ESTADO_CANCELADA = 'CANCELADA'
     ESTADO_VENCIDA = 'VENCIDA'
+    ESTADO_CANCELADA_COTIZACION = 'CANCELADA_COTIZACION'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
         (ESTADO_CANCELADA, 'Cancelada'),
         (ESTADO_VENCIDA, 'Vencida'),
+        (ESTADO_CANCELADA_COTIZACION, 'Cancelada por cambio de cotización'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
