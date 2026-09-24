@@ -1,10 +1,15 @@
 """Pruebas del cliente activo y su persistencia en la sesión."""
 
+from datetime import timedelta
+from decimal import Decimal
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.clientes.models import Cliente
+from apps.divisas.models import CalculoOperacion, Cotizacion, Divisa
 
 
 User = get_user_model()
@@ -130,3 +135,74 @@ class TestSeleccionClienteActivo:
 
         assert response.status_code == 302
         assert response.url == reverse('seleccionar_cliente')
+
+    def test_cambiar_cliente_desde_el_detalle_de_una_transaccion_vuelve_al_historial(self, client):
+        """Cambiar de cliente desde el detalle de una transacción no repite esa URL (404)."""
+        usuario = User.objects.create_user(username='operador-detalle-transaccion')
+        cliente_uno = crear_cliente('Cliente Uno', '6001')
+        cliente_dos = crear_cliente('Cliente Dos', '6002')
+        usuario.clientes.add(cliente_uno, cliente_dos)
+        client.force_login(usuario)
+        client.post(reverse('seleccionar_cliente'), {'cliente_id': cliente_uno.pk})
+
+        usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        Cotizacion.objects.create(divisa=usd, tasa_compra=Decimal('7300.00'), tasa_venta=Decimal('7400.00'))
+        transaccion = CalculoOperacion.objects.create(
+            usuario=usuario,
+            cliente=cliente_uno,
+            tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=usd,
+            codigo_divisa='USD',
+            monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7400.00'),
+            comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('7400.00'),
+            monto_final=Decimal('747400.00'),
+            vence_en=timezone.now() + timedelta(seconds=300),
+        )
+        referer = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': transaccion.pk})
+
+        response = client.get(
+            reverse('cambiar_cliente', kwargs={'cliente_id': cliente_dos.pk}),
+            HTTP_REFERER=referer,
+        )
+
+        assert response.status_code == 302
+        assert response.url == reverse('divisas:mis_transacciones')
+        assert client.session['cliente_activo_id'] == cliente_dos.pk
+
+    def test_cambiar_cliente_desde_una_pantalla_sin_registro_propio_vuelve_ahi(self, client):
+        """Cambiar de cliente desde una pantalla que no depende del cliente anterior vuelve ahí."""
+        usuario = User.objects.create_user(username='operador-cambio-generico')
+        cliente_uno = crear_cliente('Cliente Uno', '6003')
+        cliente_dos = crear_cliente('Cliente Dos', '6004')
+        usuario.clientes.add(cliente_uno, cliente_dos)
+        client.force_login(usuario)
+        client.post(reverse('seleccionar_cliente'), {'cliente_id': cliente_uno.pk})
+
+        response = client.get(
+            reverse('cambiar_cliente', kwargs={'cliente_id': cliente_dos.pk}),
+            HTTP_REFERER=reverse('divisas:mis_transacciones'),
+        )
+
+        assert response.status_code == 302
+        assert response.url == reverse('divisas:mis_transacciones')
+
+    def test_dropdown_de_cambio_de_cliente_muestra_la_razon_social_sin_none(self, client):
+        """El selector de cambio de cliente muestra la razón social de un cliente jurídico, sin 'None'."""
+        usuario = User.objects.create_user(username='operador-juridico')
+        cliente_fisico = crear_cliente('Cliente Fisico', '7001')
+        cliente_juridico = Cliente.objects.create(
+            tipo_cliente=Cliente.TIPO_JURIDICA,
+            razon_social='Comercial Sur S.A.',
+            identificador='7002',
+        )
+        usuario.clientes.add(cliente_fisico, cliente_juridico)
+        client.force_login(usuario)
+        client.post(reverse('seleccionar_cliente'), {'cliente_id': cliente_fisico.pk})
+
+        response = client.get(reverse('perfil'))
+
+        contenido = response.content.decode()
+        assert 'Comercial Sur S.A.' in contenido
+        assert 'None Comercial Sur S.A.' not in contenido

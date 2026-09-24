@@ -205,7 +205,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                             {% for c in mis_clientes %}
                             <li>
                                 <a class="dropdown-item {% if c.pk == cliente_activo.pk %}active{% endif %}" href="{% url 'cambiar_cliente' c.pk %}">
-                                    {{ c.nombre }} {{ c.apellido|default:c.razon_social }}
+                                    {% if c.tipo_cliente == 'JURIDICA' %}
+                                        {{ c.razon_social }}
+                                    {% else %}
+                                        {{ c.nombre }} {{ c.apellido }}
+                                    {% endif %}
                                 </a>
                             </li>
                             {% endfor %}
