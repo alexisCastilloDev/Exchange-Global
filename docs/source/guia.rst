@@ -166,6 +166,17 @@ de la comisión, acá no participa ``analista_cambiario``). Se resuelven así:
 Ver ``apps.divisas.models.ConfiguracionVigencia.vigencia_calculo_segundos`` y
 ``vigencia_confirmacion_segundos``.
 
+Acceso a esta documentación desde el sistema
+----------------------------------------------
+
+Esta documentación (una vez compilada en ``docs/build/``) también se sirve dentro
+de la propia aplicación en ``/docs/`` (``global_exchange.views.documentacion``),
+con un enlace "Documentación" en el sidebar, dentro de la sección
+"Administración". El acceso es exclusivo de administración (rol ``admin`` en
+sesión, o ``is_staff``/``is_superuser``) para no exponer detalles internos de
+implementación a clientes ni a roles operativos; cualquier otro usuario
+autenticado recibe 403, y uno sin sesión es redirigido al login.
+
 Cómo leer la referencia
 -----------------------
 

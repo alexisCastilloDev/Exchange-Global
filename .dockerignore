@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.pytest_cache/
+.cc-history/
+docs/build/
+docs/ai-conversations/
+staticfiles/
+*.sqlite3
+.env
+.env.*
+!.env.example
