@@ -1,3 +1,5 @@
+"""Pruebas de tasas, administración, historial y simulación de divisas."""
+
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -12,6 +14,7 @@ from apps.divisas.models import Cotizacion, Divisa
 
 @pytest.mark.django_db
 class TasasVigentesTest(TestCase):
+    """Verifica permisos y contenido de las tasas vigentes."""
     """
     Suite de pruebas para la Historia de Usuario: "Consulta de tasas vigentes".
     Verifica:
@@ -23,6 +26,7 @@ class TasasVigentesTest(TestCase):
     """
 
     def setUp(self):
+        """Prepara usuarios, divisas y cotizaciones de consulta."""
         self.analista = User.objects.create_user(username='analista01', password='password123')
         self.usuario_sin_rol = User.objects.create_user(username='invitado', password='password123')
 
@@ -39,18 +43,21 @@ class TasasVigentesTest(TestCase):
         self.url = reverse('divisas:tasas_vigentes')
 
     def _login_analista_con_sesion(self):
+        """Inicia sesión de prueba con el rol de analista cambiario."""
         self.client.login(username='analista01', password='password123')
         session = self.client.session
         session['keycloak_roles'] = ['analista_cambiario']
         session.save()
 
     def test_acceso_denegado_usuarios_no_autenticados(self):
+        """Redirige al login a usuarios sin autenticación."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
         ruta_login = resolve_url(settings.LOGIN_URL)
         self.assertTrue(ruta_login in response.url)
 
     def test_acceso_denegado_usuarios_sin_rol(self):
+        """Deniega tasas a usuarios sin rol operativo."""
         self.client.login(username='invitado', password='password123')
         session = self.client.session
         session['keycloak_roles'] = []
@@ -60,6 +67,7 @@ class TasasVigentesTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_analista_ve_solo_el_acceso_a_actualizar_tasas_en_inicio(self):
+        """Muestra al analista el acceso operativo correspondiente."""
         self._login_analista_con_sesion()
         response = self.client.get(reverse('home'))
 
@@ -69,6 +77,7 @@ class TasasVigentesTest(TestCase):
         self.assertContains(response, self.url)
 
     def test_ca4_divisas_inactivas_no_se_muestran(self):
+        """Oculta divisas inactivas de las tasas vigentes."""
         self._login_analista_con_sesion()
         response = self.client.get(self.url)
 
@@ -79,6 +88,7 @@ class TasasVigentesTest(TestCase):
         self.assertNotIn(self.ars, divisas_en_contexto, 'La divisa inactiva ARS no debería estar en el contexto.')
 
     def test_ca1_y_ca3_muestra_tasas_y_fecha(self):
+        """Muestra tasas actuales y fecha de actualización."""
         self._login_analista_con_sesion()
         response = self.client.get(self.url)
 
@@ -93,6 +103,7 @@ class TasasVigentesTest(TestCase):
         )
 
     def test_ca2_divisa_sin_cotizacion_muestra_mensaje(self):
+        """Informa cuando una divisa aún no tiene cotización."""
         self._login_analista_con_sesion()
         response = self.client.get(self.url)
 
@@ -100,6 +111,7 @@ class TasasVigentesTest(TestCase):
         self.assertContains(response, 'sin cotización')
 
     def test_admin_ve_el_boton_nueva_divisa_en_tasas_vigentes(self):
+        """Muestra la acción de alta únicamente al administrador."""
         self.client.logout()
         User.objects.create_user(username='admin-tasas', password='password123')
         self.client.login(username='admin-tasas', password='password123')
@@ -115,7 +127,9 @@ class TasasVigentesTest(TestCase):
 
 @pytest.mark.django_db
 class AdministracionDivisasTest(TestCase):
+    """Verifica altas, ediciones, bajas y listado administrativo."""
     def setUp(self):
+        """Prepara un administrador y una divisa editable."""
         self.admin = User.objects.create_user(
             username='admin-divisas', password='password123'
         )
@@ -125,6 +139,7 @@ class AdministracionDivisasTest(TestCase):
         session.save()
 
     def test_admin_registra_divisa_activa_con_datos_obligatorios(self):
+        """Registra una divisa activa con datos válidos."""
         response = self.client.post(
             reverse('divisas:crear_divisa'),
             {'codigo': 'PYG', 'nombre': 'Guaraní', 'simbolo': '₲'},
@@ -137,6 +152,7 @@ class AdministracionDivisasTest(TestCase):
         self.assertTrue(divisa.activa)
 
     def test_registro_rechaza_codigo_iso_duplicado(self):
+        """Rechaza códigos ISO ya existentes."""
         Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$')
 
         response = self.client.post(
@@ -152,6 +168,7 @@ class AdministracionDivisasTest(TestCase):
         )
 
     def test_registro_rechaza_campos_vacios_y_codigo_invalido(self):
+        """Rechaza datos obligatorios vacíos o códigos inválidos."""
         response = self.client.post(
             reverse('divisas:crear_divisa'),
             {'codigo': 'us', 'nombre': '', 'simbolo': ''},
@@ -164,6 +181,7 @@ class AdministracionDivisasTest(TestCase):
         self.assertIn('simbolo', form.errors)
 
     def test_admin_edita_datos_de_una_divisa(self):
+        """Permite actualizar los datos de una divisa."""
         divisa = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
 
         response = self.client.post(
@@ -181,6 +199,7 @@ class AdministracionDivisasTest(TestCase):
         self.assertEqual(divisa.nombre, 'Euro actualizado')
 
     def test_inactivar_conserva_historial_y_no_aparece_en_tasas(self):
+        """Conserva historial al inactivar una divisa y la oculta de tasas."""
         divisa = Divisa.objects.create(codigo='BRL', nombre='Real', simbolo='R$', activa=True)
         cotizacion = Cotizacion.objects.create(divisa=divisa, tasa_compra=100, tasa_venta=110)
 
@@ -210,6 +229,7 @@ class AdministracionDivisasTest(TestCase):
         self.assertNotIn(divisa, tasas.context['divisas'])
 
     def test_listado_admin_muestra_codigo_nombre_simbolo_y_estado(self):
+        """Muestra los datos principales y estado en el catálogo."""
         activa = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
         inactiva = Divisa.objects.create(codigo='ARS', nombre='Peso Argentino', simbolo='$', activa=False)
 
@@ -227,7 +247,9 @@ class AdministracionDivisasTest(TestCase):
 
 @pytest.mark.django_db
 class ActualizacionCotizacionesTest(TestCase):
+    """Verifica actualización y trazabilidad de cotizaciones."""
     def setUp(self):
+        """Prepara una divisa y usuarios con roles operativos."""
         self.analista = User.objects.create_user(username='analista-cambiario', password='password123')
         self.divisa = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
         self.url = reverse('divisas:actualizar_cotizacion', kwargs={'divisa_id': self.divisa.pk})
@@ -237,16 +259,19 @@ class ActualizacionCotizacionesTest(TestCase):
         session.save()
 
     def test_analista_ve_el_menu_de_actualizar_tasas(self):
+        """Muestra actualización de tasas al analista autorizado."""
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Actualizar tasas')
         self.assertContains(response, reverse('divisas:tasas_vigentes'))
 
-    def test_analista_y_agente_comparten_el_acceso_operativo(self):
+    def test_analista_tiene_acceso_operativo(self):
+        """Verifica el acceso operativo exclusivo del analista cambiario."""
         response = self.client.get(reverse('divisas:tasas_vigentes'))
         self.assertEqual(response.status_code, 200)
 
     def test_analista_actualiza_compra_y_venta(self):
+        """Guarda tasas de compra y venta válidas."""
         response = self.client.post(self.url, {'tasa_compra': '7300.50', 'tasa_venta': '7400.00'})
         self.assertEqual(response.status_code, 302)
         cotizacion = Cotizacion.objects.get(divisa=self.divisa)
@@ -254,6 +279,7 @@ class ActualizacionCotizacionesTest(TestCase):
         self.assertEqual(cotizacion.tasa_venta, 7400.00)
 
     def test_actualizacion_registra_usuario_y_fecha(self):
+        """Registra el usuario y momento de cada cotización."""
         response = self.client.post(self.url, {'tasa_compra': '7300', 'tasa_venta': '7400'})
         self.assertEqual(response.status_code, 302)
         cotizacion = Cotizacion.objects.get(divisa=self.divisa)
@@ -261,6 +287,7 @@ class ActualizacionCotizacionesTest(TestCase):
         self.assertIsNotNone(cotizacion.fecha_actualizacion)
 
     def test_rechaza_compra_mayor_y_valores_no_validos(self):
+        """Rechaza tasas negativas o una compra mayor que la venta."""
         for datos in [
             {'tasa_compra': '7500', 'tasa_venta': '7400'},
             {'tasa_compra': '-1', 'tasa_venta': '7400'},
@@ -272,6 +299,7 @@ class ActualizacionCotizacionesTest(TestCase):
         self.assertEqual(Cotizacion.objects.filter(divisa=self.divisa).count(), 0)
 
     def test_nueva_actualizacion_conserva_la_anterior_en_historial(self):
+        """Conserva la cotización anterior al registrar otra."""
         anterior = Cotizacion.objects.create(
             divisa=self.divisa,
             tasa_compra=7000,
@@ -287,6 +315,7 @@ class ActualizacionCotizacionesTest(TestCase):
         self.assertEqual(anterior.tasa_venta, 7100)
 
     def test_historial_muestra_todas_las_actualizaciones_de_la_divisa(self):
+        """Lista todas las cotizaciones históricas de la divisa."""
         primera = Cotizacion.objects.create(
             divisa=self.divisa,
             tasa_compra=7000,
@@ -310,6 +339,7 @@ class ActualizacionCotizacionesTest(TestCase):
         self.assertContains(response, '7000.00')
 
     def test_usuario_sin_rol_no_puede_actualizar(self):
+        """Deniega actualización a usuarios sin rol autorizado."""
         session = self.client.session
         session['keycloak_roles'] = []
         session.save()
@@ -320,7 +350,9 @@ class ActualizacionCotizacionesTest(TestCase):
 
 @pytest.mark.django_db
 class ConsultaTasasClienteTest(TestCase):
+    """Verifica la consulta de tasas por un cliente."""
     def test_cliente_visualiza_tasas_actuales_sin_acciones_de_actualizacion(self):
+        """Permite consultar tasas al cliente sin acciones administrativas."""
         cliente = User.objects.create_user(username='cliente-tasas', password='password123')
         divisa = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
         Cotizacion.objects.create(divisa=divisa, tasa_compra=7800, tasa_venta=8000)
@@ -341,64 +373,98 @@ class ConsultaTasasClienteTest(TestCase):
 
 @pytest.mark.django_db
 class SimuladorDivisasTest(TestCase):
+    """Verifica la simulación de compra, venta y cambio entre divisas."""
     def setUp(self):
-        self.agente = User.objects.create_user(username='agente-sim', password='password123')
-        self.client.login(username='agente-sim', password='password123')
+        """Prepara divisas y tasas para las conversiones."""
+        self.analista = User.objects.create_user(username='analista-sim', password='password123')
+        self.client.login(username='analista-sim', password='password123')
         session = self.client.session
-        session['keycloak_roles'] = ['agente']
+        session['keycloak_roles'] = ['analista_cambiario']
         session.save()
 
         self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
         self.eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
-        self.pyg = Divisa.objects.create(codigo='PYG', nombre='Guaraní', simbolo='₲', activa=True)
 
         Cotizacion.objects.create(divisa=self.usd, tasa_compra=7300.00, tasa_venta=7400.00)
         Cotizacion.objects.create(divisa=self.eur, tasa_compra=7900.00, tasa_venta=8100.00)
-        Cotizacion.objects.create(divisa=self.pyg, tasa_compra=1.00, tasa_venta=1.00)
 
-    def test_simulacion_calcula_monto_resultante_con_tasa_vigente(self):
+    def test_simulacion_compra_usa_tasa_venta_y_suma_comision(self):
+        """Simula una compra aplicando la tasa de venta y sumando la comisión."""
         response = self.client.post(
             reverse('divisas:simulacion_divisas'),
-            {'monto': '100', 'divisa_origen': str(self.usd.pk), 'divisa_destino': str(self.eur.pk)},
+            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Monto origen')
-        self.assertContains(response, 'Tasa aplicada')
         self.assertContains(response, 'Monto final')
-        self.assertContains(response, '93.67')
+        self.assertContains(response, '747400.00')
 
-    def test_simulacion_incluye_guarani_implicitamente_en_las_opciones(self):
+    def test_simulacion_venta_usa_tasa_compra_y_resta_comision(self):
+        """Simula una venta aplicando la tasa de compra y descontando la comisión."""
+        response = self.client.post(
+            reverse('divisas:simulacion_divisas'),
+            {'tipo': 'VENTA', 'divisa': str(self.usd.pk), 'monto': '100'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '722700.00')
+
+    def test_simulacion_cambio_triangula_por_pyg_con_comision(self):
+        """Simula un cambio entre divisas triangulando por PYG."""
+        response = self.client.post(
+            reverse('divisas:simulacion_divisas'),
+            {
+                'tipo': 'CAMBIO',
+                'divisa_origen': str(self.usd.pk),
+                'divisa_destino': str(self.eur.pk),
+                'monto': '100',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tasa cruzada implícita')
+        self.assertContains(response, '89.22')
+
+    def test_simulacion_incluye_placeholder_para_no_repetir_divisa(self):
+        """Incluye la opción 'Seleccionar divisa' para no preseleccionar ninguna."""
         response = self.client.get(reverse('divisas:simulacion_divisas'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Guaraní (PYG)')
+        self.assertContains(response, 'Seleccionar divisa')
 
-    def test_simulacion_calcula_conversion_con_guarani_implicitamente(self):
-        response = self.client.post(
-            reverse('divisas:simulacion_divisas'),
-            {'monto': '100', 'divisa_origen': str(self.usd.pk), 'divisa_destino': 'PYG'},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '740000.00')
-
-    def test_simulacion_rechaza_divisa_sin_tasa_vigente(self):
+    def test_simulacion_rechaza_divisa_sin_cotizacion(self):
+        """Informa cuando una divisa no tiene una cotización vigente."""
         divisa_sin_tasa = Divisa.objects.create(codigo='BRL', nombre='Real', simbolo='R$', activa=True)
 
         response = self.client.post(
             reverse('divisas:simulacion_divisas'),
-            {'monto': '100', 'divisa_origen': str(self.usd.pk), 'divisa_destino': str(divisa_sin_tasa.pk)},
+            {'tipo': 'COMPRA', 'divisa': str(divisa_sin_tasa.pk), 'monto': '100'},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'no tiene tasa disponible')
+        self.assertContains(response, 'no tiene cotización disponible')
 
     def test_simulacion_rechaza_monto_invalido(self):
+        """Rechaza montos nulos o negativos en la simulación."""
         response = self.client.post(
             reverse('divisas:simulacion_divisas'),
-            {'monto': '0', 'divisa_origen': str(self.usd.pk), 'divisa_destino': str(self.eur.pk)},
+            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '0'},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'El monto debe ser mayor que cero')
+        self.assertContains(response, 'greater than or equal to 0.01')
+
+    def test_simulacion_cambio_rechaza_misma_divisa(self):
+        """No permite cambiar una divisa contra sí misma."""
+        response = self.client.post(
+            reverse('divisas:simulacion_divisas'),
+            {
+                'tipo': 'CAMBIO',
+                'divisa_origen': str(self.usd.pk),
+                'divisa_destino': str(self.usd.pk),
+                'monto': '100',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Debe seleccionar dos divisas distintas')

@@ -7,6 +7,7 @@ from django.db import migrations
 
 
 def eliminar_permisos_generados(apps, schema_editor):
+    """Elimina permisos históricos asociados al modelo retirado."""
     ContentType = apps.get_model('contenttypes', 'ContentType')
     Permission = apps.get_model('auth', 'Permission')
     RecursoProtegido = apps.get_model('authentication', 'RecursoProtegido')
@@ -19,10 +20,12 @@ def eliminar_permisos_generados(apps, schema_editor):
 
 
 def noop(apps, schema_editor):
+    """No realiza acciones al revertir la eliminación de permisos."""
     pass
 
 
 class Migration(migrations.Migration):
+    """Migra la autorización desde permisos locales hacia Keycloak."""
 
     dependencies = [
         ('authentication', '0003_agregar_recurso_usuarios'),

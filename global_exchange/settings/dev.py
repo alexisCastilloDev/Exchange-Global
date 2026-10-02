@@ -1,3 +1,5 @@
+"""Configuración de desarrollo con base de datos PostgreSQL."""
+
 from .base import *
 
 DEBUG = True

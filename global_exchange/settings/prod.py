@@ -1,3 +1,5 @@
+"""Configuración específica del entorno de producción."""
+
 from .base import *
 
 DEBUG = False

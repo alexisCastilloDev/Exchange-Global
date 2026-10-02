@@ -1,6 +1,8 @@
+"""Enrutamiento principal del proyecto Global Exchange."""
+
 from django.contrib import admin
 from django.urls import path, include
-from global_exchange.views import home, panel_protegido, perfil
+from global_exchange.views import documentacion, home, panel_protegido, perfil
 from apps.authentication.views import CustomOIDCLogoutView, CustomOIDCCallbackView
 from apps.clientes import views as clientes_views
 from apps.clientes.views import (
@@ -18,6 +20,8 @@ urlpatterns = [
     path('', home, name='home'),
     path('panel/', panel_protegido, name='panel_protegido'),
     path('perfil/', perfil, name='perfil'),
+    path('docs/', documentacion, name='documentacion'),
+    path('docs/<path:path>', documentacion, name='documentacion_archivo'),
     # Enrutado directo a la vista real (antes apuntaba a un stub vacío
     # en global_exchange.views mientras PanelAdminView, con la lógica
     # de filtros de GE-8/GE-63, no estaba registrada en ningún lado).

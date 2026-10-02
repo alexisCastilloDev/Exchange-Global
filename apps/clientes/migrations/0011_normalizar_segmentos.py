@@ -1,13 +1,16 @@
+"""Normaliza los nombres históricos de segmentos de clientes."""
 from django.db import migrations, models
 
 
 def normalizar_segmentos(apps, schema_editor):
+    """Convierte nombres antiguos de segmentos a los valores vigentes."""
     Cliente = apps.get_model('clientes', 'Cliente')
     Cliente.objects.filter(segmento='ESTANDAR').update(segmento='MINORISTA')
     Cliente.objects.filter(segmento='PREMIUM').update(segmento='VIP')
 
 
 class Migration(migrations.Migration):
+    """Normaliza segmentos y actualiza sus opciones permitidas."""
     dependencies = [
         ('clientes', '0010_cliente_user'),
     ]

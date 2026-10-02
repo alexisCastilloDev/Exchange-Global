@@ -1,0 +1,44 @@
+<!--
+Formulario para configurar los tiempos de espera de las operaciones cambiarias.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: form.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Tiempos de espera - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Tiempos de espera</h1>
+        <p>Configurá cuánto tiempo tiene el cliente para confirmar el importe y la operación.</p>
+    </div>
+    <span class="badge-activo"><i class="bi bi-stopwatch me-1"></i>Configuración del sistema</span>
+</div>
+
+<div class="ge-card" style="max-width: 560px;">
+    <form method="post" novalidate class="ge-plain-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="ge-form-field">
+            <label class="form-label" for="{{ form.calculo_vigencia_segundos.id_for_label }}">{{ form.calculo_vigencia_segundos.label }}</label>
+            {{ form.calculo_vigencia_segundos }}
+            <p class="text-muted small mt-1 mb-0">Tiempo entre calcular el importe (Paso 1) y confirmarlo (Paso 2), antes de que la cotización se considere vencida.</p>
+            {% if form.calculo_vigencia_segundos.errors %}<div class="text-danger small mt-1">{{ form.calculo_vigencia_segundos.errors }}</div>{% endif %}
+        </div>
+        <div class="ge-form-field mt-3">
+            <label class="form-label" for="{{ form.confirmacion_vigencia_segundos.id_for_label }}">{{ form.confirmacion_vigencia_segundos.label }}</label>
+            {{ form.confirmacion_vigencia_segundos }}
+            <p class="text-muted small mt-1 mb-0">Tiempo entre confirmar el importe (Paso 2) y confirmar o cancelar la operación (Paso 3), antes de que la transacción se considere vencida.</p>
+            {% if form.confirmacion_vigencia_segundos.errors %}<div class="text-danger small mt-1">{{ form.confirmacion_vigencia_segundos.errors }}</div>{% endif %}
+        </div>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Guardar</button>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

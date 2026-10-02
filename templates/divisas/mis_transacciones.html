@@ -1,0 +1,118 @@
+<!--
+Historial de transacciones (compras, ventas y cambios) del cliente activo, de solo consulta.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: transacciones, page_obj, is_paginated, tiene_transacciones,
+estados_disponibles, estado_actual, fecha_desde_actual, fecha_hasta_actual, querystring.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Mi historial de transacciones - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-clock-history"></i> Cliente activo</span>
+        <h1>Mi historial de transacciones</h1>
+        <p>Consultá las compras, ventas y cambios de divisas realizados en nombre de tu cliente activo.</p>
+    </div>
+</div>
+
+<div class="contenedor-filtro">
+    <form method="GET" action="" class="d-flex align-items-end gap-3 flex-wrap mb-0">
+        <div>
+            <label for="fecha_desde" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Desde</label>
+            <input type="date" name="fecha_desde" id="fecha_desde" value="{{ fecha_desde_actual }}" class="form-control">
+        </div>
+        <div>
+            <label for="fecha_hasta" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Hasta</label>
+            <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ fecha_hasta_actual }}" class="form-control">
+        </div>
+        <div>
+            <label for="estado" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Estado</label>
+            <select name="estado" id="estado" class="select-segmento">
+                <option value="">Todos los estados</option>
+                {% for valor, etiqueta in estados_disponibles %}
+                    <option value="{{ valor }}" {% if estado_actual == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+        </button>
+        {% if estado_actual or fecha_desde_actual or fecha_hasta_actual %}
+            <a href="{% url 'divisas:mis_transacciones' %}" style="font-size: 13px; color: var(--ge-brick);">Limpiar filtros</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha de creación</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Divisa</th>
+                    <th>Monto</th>
+                    <th>Tasa aplicada</th>
+                    <th>Comisión</th>
+                    <th>Importe final</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaccion in transacciones %}
+                <tr>
+                    <td>{{ transaccion.creado_en|date:"d/m/Y H:i" }}</td>
+                    <td>{{ transaccion.tipo }}</td>
+                    <td>{{ transaccion.estado }}</td>
+                    <td>{{ transaccion.divisa }}</td>
+                    <td class="ge-num">{{ transaccion.monto_origen|floatformat:2 }}</td>
+                    <td class="ge-num">{{ transaccion.tasa|floatformat:transaccion.decimales_tasa }}</td>
+                    <td class="ge-num">{{ transaccion.comision|floatformat:2 }} {{ transaccion.moneda_final }}</td>
+                    <td class="ge-num">{{ transaccion.monto_final|floatformat:2 }} {{ transaccion.moneda_final }}</td>
+                    <td>
+                        {% if transaccion.tipo_modelo == 'operacion' %}
+                            <a href="{% url 'divisas:detalle_transaccion_operacion' pk=transaccion.id %}" class="btn btn-sm btn-outline-primary">Ver detalle</a>
+                        {% else %}
+                            <a href="{% url 'divisas:detalle_transaccion_cambio' pk=transaccion.id %}" class="btn btn-sm btn-outline-primary">Ver detalle</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">
+                        {% if tiene_transacciones %}
+                            No se encontraron transacciones para el filtro seleccionado.
+                        {% else %}
+                            Todavía no tenés transacciones registradas.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación de mi historial de transacciones">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Anterior</a>
+                    </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

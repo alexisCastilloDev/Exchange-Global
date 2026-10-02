@@ -1,3 +1,5 @@
+"""Backend OIDC legado para sincronizar permisos de autenticación."""
+
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 class CustomOIDCBackend(OIDCAuthenticationBackend):

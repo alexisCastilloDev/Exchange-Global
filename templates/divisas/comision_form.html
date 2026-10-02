@@ -1,0 +1,36 @@
+<!--
+Formulario para configurar la comisión de un segmento de cliente.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: form y segmento_nombre.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Configurar comisión - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Configurar comisión</h1>
+        <p>Segmento: {{ segmento_nombre }}.</p>
+    </div>
+    <span class="badge-activo"><i class="bi bi-percent me-1"></i>Comisión por categoría</span>
+</div>
+
+<div class="ge-card" style="max-width: 480px;">
+    <form method="post" novalidate class="ge-plain-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <label class="form-label" for="{{ form.porcentaje.id_for_label }}">{{ form.porcentaje.label }}</label>
+        {{ form.porcentaje }}
+        {% if form.porcentaje.errors %}<div class="text-danger small mt-1">{{ form.porcentaje.errors }}</div>{% endif %}
+        <p class="text-muted small mt-3 mb-0">Se aplica a todos los clientes de este segmento que no tengan una comisión personalizada.</p>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Guardar comisión</button>
+            <a href="{% url 'divisas:comisiones' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

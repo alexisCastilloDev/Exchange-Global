@@ -1,3 +1,4 @@
+"""Rutas de administración de usuarios y roles."""
 from django.urls import path
 from .views import (
     baja_usuario_view,

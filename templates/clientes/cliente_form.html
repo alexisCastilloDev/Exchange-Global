@@ -1,3 +1,9 @@
+<!--
+Formulario de alta o edición de un cliente.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: form y, opcionalmente, object.
+-->
 {% extends 'base.html' %}
 
 {% block title %}{% if object %}Editar{% else %}Registrar{% endif %} cliente - Global Exchange{% endblock %}

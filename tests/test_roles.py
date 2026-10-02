@@ -20,6 +20,7 @@ User = get_user_model()
 
 @pytest.fixture
 def usuario_admin(db):
+    """Crea un usuario administrativo para los escenarios de autorización."""
     return User.objects.create_user(username='admin1', email='admin1@test.com', is_staff=True)
 
 
@@ -64,12 +65,14 @@ def _login_con_roles(client, user, roles):
 
 @pytest.mark.django_db
 def test_usuario_no_autenticado_es_redirigido_al_login(client):
+    """Redirige al login a quien intenta consultar usuarios sin sesión."""
     response = client.get(reverse('lista_usuarios'))
     assert response.status_code == 302
 
 
 @pytest.mark.django_db
 def test_usuario_sin_rol_usuarios_es_denegado(client, usuario_cliente):
+    """Deniega el acceso cuando falta el rol de usuarios."""
     _login_con_roles(client, usuario_cliente, roles=['cliente'])
     response = client.get(reverse('lista_usuarios'), follow=True)
     assert response.status_code == 200  # terminó en 'home' tras el redirect
@@ -79,6 +82,7 @@ def test_usuario_sin_rol_usuarios_es_denegado(client, usuario_cliente):
 
 @pytest.mark.django_db
 def test_usuario_con_rol_usuarios_accede_a_la_lista(client, usuario_con_permiso_usuarios):
+    """Permite listar usuarios al rol autorizado."""
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
     response = client.get(reverse('lista_usuarios'))
     assert response.status_code == 200
@@ -95,6 +99,7 @@ def test_admin_accede_a_la_lista_sin_tener_el_rol_especifico(client, usuario_adm
 @pytest.mark.django_db
 @patch('apps.users.views.sincronizar_usuarios_desde_keycloak')
 def test_busqueda_filtra_por_nombre_apellido_o_email(mock_sync, client, usuario_con_permiso_usuarios, usuario_objetivo):
+    """Filtra el listado por datos personales o correo."""
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
     response = client.get(reverse('lista_usuarios'), {'q': 'Ana'})
     assert response.status_code == 200
@@ -103,6 +108,7 @@ def test_busqueda_filtra_por_nombre_apellido_o_email(mock_sync, client, usuario_
 
 @pytest.mark.django_db
 def test_editar_usuario_actualiza_datos_locales_y_en_keycloak(client, usuario_con_permiso_usuarios, usuario_objetivo):
+    """Sincroniza la edición local con la API de Keycloak."""
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
 
     with patch('apps.users.views.actualizar_usuario_en_keycloak') as mock_actualizar:
@@ -124,6 +130,7 @@ def test_editar_usuario_actualiza_datos_locales_y_en_keycloak(client, usuario_co
 
 @pytest.mark.django_db
 def test_editar_usuario_muestra_error_si_keycloak_falla(client, usuario_con_permiso_usuarios, usuario_objetivo):
+    """Muestra un error y conserva datos locales si Keycloak falla."""
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
 
     with patch('apps.users.views.actualizar_usuario_en_keycloak', side_effect=Exception('timeout')):
@@ -154,6 +161,7 @@ def test_usuario_con_rol_usuarios_no_puede_gestionar_roles(client, usuario_con_p
 
 @pytest.mark.django_db
 def test_usuario_con_rol_gestion_roles_ve_el_formulario(client, usuario_gestor_roles, usuario_objetivo):
+    """Muestra el formulario a quien posee el rol de gestión de roles."""
     _login_con_roles(client, usuario_gestor_roles, roles=['gestion_roles'])
 
     with patch('apps.users.views.obtener_roles_disponibles', return_value=['admin', 'cajero', 'usuarios']), \
@@ -167,6 +175,7 @@ def test_usuario_con_rol_gestion_roles_ve_el_formulario(client, usuario_gestor_r
 
 @pytest.mark.django_db
 def test_admin_asigna_roles_y_se_notifica_relogin_requerido(client, usuario_admin, usuario_objetivo):
+    """Actualiza roles y advierte que el objetivo debe iniciar sesión otra vez."""
     _login_con_roles(client, usuario_admin, roles=['admin'])
 
     with patch('apps.users.views.obtener_roles_disponibles', return_value=['admin', 'cajero']), \
@@ -185,6 +194,7 @@ def test_admin_asigna_roles_y_se_notifica_relogin_requerido(client, usuario_admi
 
 @pytest.mark.django_db
 def test_editar_roles_muestra_error_si_keycloak_falla_al_consultar(client, usuario_admin, usuario_objetivo):
+    """Informa errores al consultar roles en Keycloak."""
     _login_con_roles(client, usuario_admin, roles=['admin'])
 
     with patch('apps.users.views.obtener_roles_disponibles', side_effect=Exception('conexión rechazada')):

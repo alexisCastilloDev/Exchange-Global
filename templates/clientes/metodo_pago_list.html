@@ -1,3 +1,9 @@
+<!--
+Listado de métodos de pago del cliente activo.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context processor).
+-->
 {% extends 'base.html' %}
 
 {% block title %}Métodos de pago - Global Exchange{% endblock %}
@@ -59,7 +65,26 @@
             </div>
             <div><span>Tipo de cuenta</span><strong>{{ metodo.get_tipo_cuenta_display }}</strong></div>
           {% elif metodo.tipo_medio == 'TARJETA' %}
-            <div><span>Tarjeta</span><strong>**** {{ metodo.ultimos_4_digitos }}</strong></div>
+            <div>
+              <span>Tarjeta</span>
+              <strong>
+                {% if metodo.pk in metodos_revelados %}
+                  {{ metodo.numero_tarjeta }}
+                {% elif metodo.numero_tarjeta %}
+                  {% with total=metodo.numero_tarjeta|length %}
+                    {% if total > 4 %}
+                      {% with ocultos=total|add:"-4" %}
+                        {% for _ in "x"|rjust:ocultos %}•{% endfor %} {{ metodo.numero_tarjeta|slice:'-4:' }}
+                      {% endwith %}
+                    {% else %}
+                      {{ metodo.numero_tarjeta }}
+                    {% endif %}
+                  {% endwith %}
+                {% else %}
+                  No especificada
+                {% endif %}
+              </strong>
+            </div>
           {% else %}
             <div><span>Medio</span><strong>Billetera digital</strong></div>
           {% endif %}
@@ -67,7 +92,7 @@
 
         <div class="ge-payment-card__actions">
           <div class="d-flex gap-2">
-            {% if metodo.cliente_id == request.user.id %}
+            {% if metodo.cliente_id == cliente_activo.id %}
             <form action="{% url 'clientes:metodo_pago_reveal' metodo.pk %}" method="post" class="d-inline">
               {% csrf_token %}
               {% if metodo.pk in metodos_revelados %}

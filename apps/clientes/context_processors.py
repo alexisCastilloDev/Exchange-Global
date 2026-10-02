@@ -1,3 +1,5 @@
+"""Contexto común con el cliente activo y sus asociaciones."""
+
 def cliente_activo_context(request):
     """Hace disponible el cliente_activo y la lista de clientes en todos los templates."""
     if request.user.is_authenticated and hasattr(request, 'cliente_activo'):

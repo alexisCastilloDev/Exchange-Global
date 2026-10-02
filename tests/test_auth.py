@@ -1,3 +1,5 @@
+"""Pruebas del flujo OIDC y del backend de autenticación."""
+
 from unittest.mock import patch
 import pytest
 from django.urls import reverse
@@ -14,6 +16,7 @@ User = get_user_model()
 # 1. TESTS DE RUTAS Y VISTAS DE AUTENTICACIÓN
 # ============================================================================
 
+@pytest.mark.django_db
 def test_home_page_unauthenticated(client):
     """CA1 / CA5: El usuario no autenticado ve la opción de login."""
     response = client.get(reverse('home'))
@@ -43,11 +46,62 @@ def test_protected_route_redirects_unauthenticated_user(client):
 
 
 # ============================================================================
+# 3. ACCESO A LA DOCUMENTACIÓN TÉCNICA (SPHINX)
+# ============================================================================
+
+@pytest.mark.django_db
+def test_documentacion_requiere_sesion(client):
+    """Sin sesión iniciada, redirige al login en vez de servir la documentación."""
+    response = client.get(reverse('documentacion'))
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_documentacion_rechaza_usuario_sin_rol_admin(client):
+    """Un usuario autenticado sin rol admin ni is_staff no puede ver la documentación."""
+    user = User.objects.create_user(username='cliente1', email='cliente1@test.com')
+    client.force_login(user)
+    session = client.session
+    session['keycloak_roles'] = ['cliente']
+    session.save()
+
+    response = client.get(reverse('documentacion'))
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_documentacion_sirve_el_index_a_un_administrador(client):
+    """Un usuario con rol admin en sesión obtiene la portada de la documentación compilada."""
+    user = User.objects.create_user(username='admin1', email='admin1@test.com')
+    client.force_login(user)
+    session = client.session
+    session['keycloak_roles'] = ['admin']
+    session.save()
+
+    response = client.get(reverse('documentacion'))
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_documentacion_sirve_archivos_internos_a_staff(client):
+    """``is_staff`` también habilita el acceso, sin depender del rol de sesión."""
+    user = User.objects.create_user(username='staff1', email='staff1@test.com', is_staff=True)
+    client.force_login(user)
+
+    response = client.get(reverse('documentacion_archivo', args=['guia.html']))
+
+    assert response.status_code == 200
+
+
+# ============================================================================
 # 2. TESTS DEL BACKEND (VERIFICACIÓN DE EMAIL Y ROLES)
 # ============================================================================
 
 @pytest.fixture
 def backend():
+    """Construye el backend OIDC bajo prueba."""
     return KeycloakOIDCAuthenticationBackend()
 
 

@@ -1,0 +1,76 @@
+<!--
+Historial de transacciones de compra, venta y cambio para administración y análisis.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: transacciones, page_obj, is_paginated.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Historial de transacciones - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Historial de transacciones</h1>
+        <p>Consultá las operaciones de compra, venta y cambio de divisas realizadas por los clientes.</p>
+    </div>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha de creación</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Usuario</th>
+                    <th>Cliente</th>
+                    <th>Divisa</th>
+                    <th>Monto</th>
+                    <th>Tasa aplicada</th>
+                    <th>Comisión</th>
+                    <th>Importe final</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaccion in transacciones %}
+                <tr>
+                    <td>{{ transaccion.creado_en|date:"d/m/Y H:i" }}</td>
+                    <td>{{ transaccion.tipo }}</td>
+                    <td>{{ transaccion.estado }}</td>
+                    <td>{{ transaccion.usuario.get_full_name|default:transaccion.usuario.username }}</td>
+                    <td>{{ transaccion.cliente }}</td>
+                    <td>{{ transaccion.divisa }}</td>
+                    <td class="ge-num">{{ transaccion.monto_origen|floatformat:2 }}</td>
+                    <td class="ge-num">{{ transaccion.tasa|floatformat:transaccion.decimales_tasa }}</td>
+                    <td class="ge-num">{{ transaccion.comision|floatformat:2 }} {{ transaccion.moneda_final }}</td>
+                    <td class="ge-num">{{ transaccion.monto_final|floatformat:2 }} {{ transaccion.moneda_final }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" class="text-center py-4 text-muted">Todavía no hay transacciones registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación de transacciones">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

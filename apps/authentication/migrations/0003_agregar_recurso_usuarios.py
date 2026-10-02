@@ -7,6 +7,7 @@ from django.db import migrations
 
 
 def cargar_recurso_usuarios(apps, schema_editor):
+    """Crea el recurso y permiso para la gestión de usuarios."""
     RecursoProtegido = apps.get_model('authentication', 'RecursoProtegido')
     Group = apps.get_model('auth', 'Group')
     Permission = apps.get_model('auth', 'Permission')
@@ -27,11 +28,13 @@ def cargar_recurso_usuarios(apps, schema_editor):
 
 
 def revertir(apps, schema_editor):
+    """Elimina el recurso de usuarios durante una reversión."""
     RecursoProtegido = apps.get_model('authentication', 'RecursoProtegido')
     RecursoProtegido.objects.filter(codigo='usuarios').delete()
 
 
 class Migration(migrations.Migration):
+    """Añade el recurso protegido de gestión de usuarios."""
 
     dependencies = [
         ('authentication', '0002_cargar_recursos_iniciales'),

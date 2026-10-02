@@ -1,3 +1,9 @@
+<!--
+Template base del panel y de las páginas públicas.
+Herencia: no aplica.
+Bloques expuestos: title, extra_head, content, content_publico, extra_scripts.
+Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
+-->
 {% load static ge_extras %}
 <!DOCTYPE html>
 <html lang="es">
@@ -54,6 +60,16 @@
                             <i class="bi bi-person-plus"></i> Registrar cliente
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'divisas:configuracion_vigencia' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'configuracion_vigencia' %}is-active{% endif %}">
+                            <i class="bi bi-stopwatch"></i> Tiempos de espera
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'documentacion' %}" class="ge-sidebar__link" target="_blank" rel="noopener">
+                            <i class="bi bi-book"></i> Documentación
+                        </a>
+                    </li>
                 </ul>
             </div>
             {% endif %}
@@ -90,8 +106,32 @@
                     </li>
                     {% elif puede_ver_tasas %}
                     <li>
-                        <a href="{% url 'divisas:tasas_vigentes' %}" class="ge-sidebar__link {% if request.resolver_match.namespace == 'divisas' %}is-active{% endif %}">
+                        <a href="{% url 'divisas:tasas_vigentes' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'tasas_vigentes' %}is-active{% endif %}">
                             <i class="bi bi-graph-up-arrow"></i> Tasas actuales
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if puede_operar_divisas %}
+                    <li>
+                        <a href="{% url 'divisas:operar' 'compra' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'operar' and request.resolver_match.kwargs.tipo == 'compra' %}is-active{% endif %}">
+                            <i class="bi bi-cart-plus"></i> Comprar divisas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:operar' 'venta' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'operar' and request.resolver_match.kwargs.tipo == 'venta' %}is-active{% endif %}">
+                            <i class="bi bi-cash-coin"></i> Vender divisas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:triangulacion' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'triangulacion' %}is-active{% endif %}">
+                            <i class="bi bi-shuffle"></i> Cambiar entre divisas
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if puede_ver_historial_propio %}
+                    <li>
+                        <a href="{% url 'divisas:mis_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'mis_transacciones,detalle_transaccion_operacion,detalle_transaccion_cambio' %}is-active{% endif %}">
+                            <i class="bi bi-clock-history"></i> Mi historial de transacciones
                         </a>
                     </li>
                     {% endif %}
@@ -100,6 +140,18 @@
                             <i class="bi bi-calculator"></i> Simulador de conversión
                         </a>
                     </li>
+                    {% if puede_configurar_comisiones %}
+                    <li>
+                        <a href="{% url 'divisas:comisiones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'comisiones,actualizar_comision' %}is-active{% endif %}">
+                            <i class="bi bi-percent"></i> Comisiones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:historial_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'historial_transacciones' %}is-active{% endif %}">
+                            <i class="bi bi-clock-history"></i> Historial de transacciones
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}
@@ -158,7 +210,11 @@
                             {% for c in mis_clientes %}
                             <li>
                                 <a class="dropdown-item {% if c.pk == cliente_activo.pk %}active{% endif %}" href="{% url 'cambiar_cliente' c.pk %}">
-                                    {{ c.nombre }} {{ c.apellido|default:c.razon_social }}
+                                    {% if c.tipo_cliente == 'JURIDICA' %}
+                                        {{ c.razon_social }}
+                                    {% else %}
+                                        {{ c.nombre }} {{ c.apellido }}
+                                    {% endif %}
                                 </a>
                             </li>
                             {% endfor %}

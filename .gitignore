@@ -8,3 +8,4 @@ __pycache__/
 staticfiles/
 docs/_build/
 scripts/
+.cc-history/
