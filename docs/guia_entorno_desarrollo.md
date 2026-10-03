@@ -397,6 +397,14 @@ El servidor externo que maneja usuarios, login y roles — Django no tiene su pr
 
 **Qué es config de entorno y qué es HU real:** levantar el servidor y crear Realm/Client/roles/usuario de prueba es preparación de infraestructura (como instalar Postgres) — no se testea con pytest ni se mergea como código, es evidencia/entregable del alcance del sprint. Conectar Django con esto (`mozilla-django-oidc`, vistas de login/callback/registro) sí es desarrollo real de las HU del Epic 1, con sus tests correspondientes.
 
+**Tema de login propio (`keycloak/themes/global-exchange`):** las pantallas de login, registro, "¿Olvidaste tu contraseña?", nueva contraseña y verificación de email usan el mismo diseño que el sistema (colores, tipografía Inter y estilo de `static/css/style.css`). Las demás páginas de Keycloak (OTP, errores) heredan el mismo layout.
+
+- **Local:** `scripts/keycloak-start.ps1` copia el tema a la instalación de Keycloak antes de arrancar. Para copiarlo y además activarlo en el realm (tema, registro, recuperación de contraseña e idioma español): `.\keycloak\instalar-tema.ps1` (pide el usuario admin de `master`). En `start-dev` los temas no se cachean: si editás el tema en el repo, alcanza con volver a correr `.\keycloak\instalar-tema.ps1 -SoloCopiar` y recargar la página.
+- **Producción (AWS):** `deploy/aws/docker-compose.yml` monta el tema en el contenedor; el comando para activarlo en el realm está comentado ahí mismo.
+- "¿Olvidaste tu contraseña?" y la verificación de email solo envían el correo si el realm tiene SMTP configurado (*Realm settings → Email*).
+- **Idioma:** el tema se ve siempre en español, aunque el realm no tenga activada la internacionalización (en ese caso Keycloak pide los textos "en inglés" y el tema los entrega en español). Los correos usan el tema `global-exchange` de tipo *email*, también en español. Los textos propios se editan en `login/messages/messages_es.properties`; después hay que correr `python keycloak/generar-mensajes.py` (también después de actualizar Keycloak), que regenera los `messages_en.properties`.
+- Si se cambian los colores en `static/css/style.css`, actualizar también los tokens `--ge-*` de `keycloak/themes/global-exchange/login/resources/css/global-exchange.css`.
+
 ## 2.7 — `.env` y `django-environ`
 
 `.env` guarda datos sensibles o específicos de cada máquina, nunca se sube a Git. `.env.example` es la plantilla sin valores reales, que sí se sube. `django-environ` es la librería que lee el `.env` y lo convierte en variables usables por Django (`env('SECRET_KEY')`); sin ella, Django no sabe que el `.env` existe. (El proyecto usó brevemente `python-decouple` también, pero se unificó todo a `django-environ` — ver 2.4.)
