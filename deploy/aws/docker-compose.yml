@@ -39,6 +39,17 @@ services:
       KC_DB_PASSWORD: ${DB_PASSWORD}
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    # Tema de login propio (keycloak/themes/global-exchange). Para activarlo
+    # en el realm, una sola vez después del primer `up`:
+    #   docker compose exec keycloak /opt/keycloak/bin/kcadm.sh config credentials \
+    #     --server http://localhost:8080/auth --realm master \
+    #     --user "$KEYCLOAK_ADMIN_USER" --password "$KEYCLOAK_ADMIN_PASSWORD"
+    #   docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update realms/global-exchange \
+    #     -s loginTheme=global-exchange -s emailTheme=global-exchange -s registrationAllowed=true \
+    #     -s resetPasswordAllowed=true -s rememberMe=false \
+    #     -s internationalizationEnabled=true -s 'supportedLocales=["es"]' -s defaultLocale=es
+    volumes:
+      - ../../keycloak/themes/global-exchange:/opt/keycloak/themes/global-exchange:ro
     expose:
       - "8080"
 

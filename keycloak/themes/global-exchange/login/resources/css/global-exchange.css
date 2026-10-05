@@ -1,0 +1,924 @@
+/* =====================================================================
+   Global Exchange — tema de login de Keycloak
+   ---------------------------------------------------------------------
+   Mismo sistema de diseño que el back-office (static/css/style.css):
+   enfoque "libro mayor" (bordes en vez de sombras), tipografía Inter,
+   bronce reservado para la acción primaria y teal para foco / estado
+   activo. Los tokens --ge-* son copia de los del sistema: si cambian
+   allá, actualizarlos también acá.
+   ===================================================================== */
+
+:root {
+    --ge-ink: #101826;
+    --ge-ink-soft: #1c2740;
+    --ge-paper: #EEF1F4;
+    --ge-surface: #FFFFFF;
+    --ge-border: #DDE2E8;
+    --ge-text: #1A2333;
+    --ge-text-muted: #5B6478;
+    --ge-teal: #0E7C7B;
+    --ge-teal-soft: #E4F2F1;
+    --ge-brass: #B3812E;
+    --ge-brass-dark: #8F6623;
+    --ge-brass-soft: #F5ECDA;
+    --ge-brick: #A8442C;
+    --ge-brick-soft: #F7E4DF;
+    --ge-radius: 8px;
+    --ge-radius-sm: 5px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html.ge-kc, html.ge-kc body {
+    height: 100%;
+    margin: 0;
+}
+
+body.ge-kc__body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background-color: var(--ge-paper);
+    color: var(--ge-text);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--ge-ink);
+}
+
+a {
+    color: var(--ge-teal);
+    font-weight: 600;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.ge-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---------------------------------------------------------------
+   Estructura: panel de marca (tinta) + columna del formulario
+   --------------------------------------------------------------- */
+.ge-auth {
+    display: flex;
+    min-height: 100vh;
+}
+
+.ge-auth__brand {
+    width: 440px;
+    flex-shrink: 0;
+    background: var(--ge-ink);
+    color: #C9D2E3;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 36px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.ge-auth__brand-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.ge-brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ge-radius-sm);
+    background: var(--ge-brass);
+    color: var(--ge-ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.ge-brand-text {
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.2;
+}
+.ge-brand-text small {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    color: #8894AC;
+}
+
+.ge-auth__brand-body {
+    margin: auto 0;
+    padding: 40px 0;
+}
+
+.ge-auth__brand-body h2 {
+    color: #fff;
+    font-size: 30px;
+    line-height: 1.2;
+    margin: 0 0 14px;
+    max-width: 14ch;
+}
+
+.ge-auth__brand-body > p {
+    color: #8894AC;
+    font-size: 15px;
+    margin: 0 0 30px;
+    max-width: 34ch;
+}
+
+/* Lista estilo libro mayor, igual a .ge-ticker de la landing */
+.ge-ledger {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+    border-top: 2px solid rgba(255,255,255,0.14);
+}
+.ge-ledger li {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.ge-ledger li:last-child {
+    border-bottom: none;
+}
+.ge-ledger i {
+    color: #6FD6D4;
+    font-size: 17px;
+    line-height: 1.3;
+    width: 18px;
+    text-align: center;
+}
+.ge-ledger span {
+    font-size: 13px;
+    color: #8894AC;
+    line-height: 1.45;
+}
+.ge-ledger strong {
+    display: block;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 650;
+    margin-bottom: 2px;
+}
+
+.ge-auth__brand-foot {
+    font-size: 12px;
+    color: #6E7A93;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.ge-auth__brand-foot i {
+    color: var(--ge-brass);
+    margin-right: 4px;
+}
+
+.ge-auth__main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ge-auth__topbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 18px 28px;
+    min-height: 68px;
+}
+
+.ge-auth__mobile-brand {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: var(--ge-ink);
+    margin-right: auto;
+}
+
+.ge-auth__center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px 40px;
+}
+
+.ge-auth__footnote {
+    margin: 18px 0 0;
+    font-size: 12px;
+    color: var(--ge-text-muted);
+}
+
+/* ---------------------------------------------------------------
+   Tarjeta del formulario — bordes, no sombras
+   --------------------------------------------------------------- */
+.ge-auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--ge-surface);
+    border: 1px solid var(--ge-border);
+    border-top: 3px solid var(--ge-brass);
+    border-radius: var(--ge-radius);
+    padding: 32px 32px 26px;
+}
+
+body[data-page-id="login-register"] .ge-auth-card {
+    max-width: 560px;
+}
+
+.ge-auth-card__header h1 {
+    font-size: 22px;
+    margin: 0 0 6px;
+}
+
+.ge-auth-card__subtitle {
+    color: var(--ge-text-muted);
+    font-size: 14px;
+    margin: 0 0 22px;
+}
+
+.ge-auth-card__required {
+    font-size: 12.5px;
+    color: var(--ge-text-muted);
+    margin: 0 0 14px;
+}
+
+.required {
+    color: var(--ge-brick);
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+/* Contexto: usuario ya ingresado en pasos posteriores (OTP, contraseña) */
+.ge-attempted-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px 6px 6px;
+    margin: 0 0 18px;
+    background: var(--ge-teal-soft);
+    border: 1px solid #BFE0DF;
+    border-radius: 999px;
+    color: var(--ge-teal);
+    font-size: 13.5px;
+    font-weight: 600;
+}
+.ge-attempted-user label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ge-attempted-user a {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--ge-teal);
+}
+.ge-attempted-user a:hover {
+    background: #D2E9E8;
+    text-decoration: none;
+}
+
+.ge-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--ge-ink);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.ge-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--ge-brass-soft);
+    color: var(--ge-brass-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+}
+.ge-icon-badge--teal {
+    background: var(--ge-teal-soft);
+    color: var(--ge-teal);
+}
+
+.ge-note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    background: var(--ge-paper);
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius-sm);
+    color: var(--ge-text-muted);
+    font-size: 13px;
+}
+.ge-note i {
+    color: var(--ge-teal);
+    font-size: 15px;
+    line-height: 1.3;
+}
+
+/* ---------------------------------------------------------------
+   Alertas (mensajes que envía Keycloak)
+   --------------------------------------------------------------- */
+.ge-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 14px;
+    margin-bottom: 18px;
+    border: 1px solid var(--ge-border);
+    border-left-width: 3px;
+    border-radius: var(--ge-radius-sm);
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+.ge-alert i {
+    font-size: 15px;
+    line-height: 1.35;
+    flex-shrink: 0;
+}
+.ge-alert--error {
+    background: var(--ge-brick-soft);
+    border-color: #EBC3B9;
+    border-left-color: var(--ge-brick);
+    color: #7E3220;
+}
+.ge-alert--error i { color: var(--ge-brick); }
+.ge-alert--success {
+    background: var(--ge-teal-soft);
+    border-color: #BFE0DF;
+    border-left-color: var(--ge-teal);
+    color: #0A5A59;
+}
+.ge-alert--success i { color: var(--ge-teal); }
+.ge-alert--warning {
+    background: var(--ge-brass-soft);
+    border-color: rgba(179, 129, 46, 0.35);
+    border-left-color: var(--ge-brass);
+    color: var(--ge-brass-dark);
+}
+.ge-alert--info {
+    background: var(--ge-paper);
+    border-left-color: var(--ge-ink);
+    color: var(--ge-text);
+}
+
+/* ---------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------- */
+.ge-form {
+    margin: 0;
+}
+
+.ge-field,
+.form-group {
+    margin-bottom: 16px;
+}
+
+.ge-label-row {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    margin-bottom: 6px;
+}
+.ge-label-row--split {
+    justify-content: space-between;
+    gap: 12px;
+}
+.ge-label-row .ge-label {
+    margin-bottom: 0;
+}
+
+.ge-label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ge-text);
+    margin-bottom: 6px;
+}
+
+.ge-input {
+    display: block;
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--ge-text);
+    background: var(--ge-surface);
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius-sm);
+    transition: border-color .12s ease, box-shadow .12s ease;
+}
+.ge-input::placeholder {
+    color: #9AA3B5;
+}
+.ge-input:hover {
+    border-color: #C6CDD7;
+}
+.ge-input:focus {
+    outline: none;
+    border-color: var(--ge-teal);
+    box-shadow: 0 0 0 3px var(--ge-teal-soft);
+}
+.ge-input[aria-invalid="true"] {
+    border-color: var(--ge-brick);
+}
+.ge-input[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px var(--ge-brick-soft);
+}
+.ge-input:disabled {
+    background: var(--ge-paper);
+    color: var(--ge-text-muted);
+    cursor: not-allowed;
+}
+select.ge-input {
+    appearance: auto;
+}
+textarea.ge-input {
+    min-height: 90px;
+    resize: vertical;
+}
+
+/* Input con ícono a la izquierda */
+.ge-input-icon {
+    position: relative;
+}
+.ge-input-icon > i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ge-text-muted);
+    font-size: 15px;
+    pointer-events: none;
+    z-index: 1;
+}
+.ge-input-icon > .ge-input {
+    padding-left: 38px;
+}
+
+/* Input de contraseña con botón mostrar/ocultar */
+.ge-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.ge-input-group > .ge-input {
+    padding-right: 44px;
+}
+.ge-input-group__toggle {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    border-radius: var(--ge-radius-sm);
+    color: var(--ge-text-muted);
+    font-size: 16px;
+    cursor: pointer;
+}
+.ge-input-group__toggle:hover {
+    background: var(--ge-paper);
+    color: var(--ge-ink);
+}
+.ge-input-group__toggle:focus-visible {
+    outline: 2px solid var(--ge-teal);
+    outline-offset: 1px;
+}
+
+.ge-field-error {
+    display: block;
+    margin-top: 6px;
+    color: var(--ge-brick);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.ge-help {
+    margin: 6px 0 0;
+    color: var(--ge-text-muted);
+    font-size: 12.5px;
+}
+
+.ge-link-muted {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Checkboxes y radios */
+.ge-check,
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 18px;
+    font-size: 13.5px;
+    color: var(--ge-text);
+}
+.checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ge-check__input,
+.checkbox input,
+input[type="checkbox"],
+input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--ge-teal);
+    flex-shrink: 0;
+}
+.ge-check__label {
+    cursor: pointer;
+}
+.ge-check__label.is-disabled {
+    color: var(--ge-text-muted);
+}
+
+.ge-form-options {
+    margin-bottom: 12px;
+    font-size: 13.5px;
+}
+.ge-form-buttons {
+    margin-top: 6px;
+}
+
+/* Registro: nombre y apellido lado a lado en pantallas anchas */
+.ge-form--register {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+}
+.ge-form--register > * {
+    grid-column: 1 / -1;
+}
+.ge-form--register > .ge-field:has(#firstName),
+.ge-form--register > .ge-field:has(#lastName) {
+    grid-column: auto;
+}
+.ge-form--register .ge-field--full {
+    grid-column: 1 / -1;
+}
+
+/* Términos y condiciones (register-commons.ftl) */
+#kc-registration-terms-text {
+    max-height: 160px;
+    overflow-y: auto;
+    margin-top: 8px;
+    padding: 12px 14px;
+    background: var(--ge-paper);
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius-sm);
+    font-size: 13px;
+    color: var(--ge-text-muted);
+}
+
+/* ---------------------------------------------------------------
+   Botones — bronce solo para la acción primaria
+   --------------------------------------------------------------- */
+.ge-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 18px;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    border: 1px solid transparent;
+    border-radius: var(--ge-radius-sm);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.ge-btn:hover {
+    text-decoration: none;
+}
+.ge-btn:focus-visible {
+    outline: 2px solid var(--ge-teal);
+    outline-offset: 2px;
+}
+.ge-btn:disabled,
+.ge-btn.is-disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.ge-btn--primary {
+    background: var(--ge-brass);
+    border-color: var(--ge-brass);
+    color: #fff;
+}
+.ge-btn--primary:hover,
+.ge-btn--primary:active {
+    background: var(--ge-brass-dark);
+    border-color: var(--ge-brass-dark);
+    color: #fff;
+}
+
+.ge-btn--secondary {
+    background: transparent;
+    border-color: var(--ge-border);
+    color: var(--ge-ink);
+}
+.ge-btn--secondary:hover {
+    background: var(--ge-paper);
+    color: var(--ge-ink);
+}
+
+.ge-btn--lg {
+    min-height: 46px;
+    font-size: 15px;
+    padding: 10px 22px;
+}
+
+.ge-btn--block {
+    width: 100%;
+}
+
+.ge-btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.ge-btn-row > .ge-btn {
+    flex: 1;
+}
+
+/* ---------------------------------------------------------------
+   Pie de la tarjeta (registrarse / volver)
+   --------------------------------------------------------------- */
+.ge-signup {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--ge-border);
+    text-align: center;
+    font-size: 14px;
+    color: var(--ge-text-muted);
+}
+.ge-signup #kc-registration {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+.ge-signup a i {
+    font-size: 13px;
+}
+
+.ge-try-another {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 13.5px;
+}
+
+/* ---------------------------------------------------------------
+   Proveedores de identidad externos
+   --------------------------------------------------------------- */
+.ge-social {
+    margin-top: 20px;
+}
+.ge-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    color: var(--ge-text-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+.ge-divider::before,
+.ge-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--ge-border);
+}
+.ge-social__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+.ge-social__list--grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* ---------------------------------------------------------------
+   Selector de idioma
+   --------------------------------------------------------------- */
+.ge-locale {
+    position: relative;
+}
+.ge-locale__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--ge-surface);
+    border: 1px solid var(--ge-border);
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ge-ink);
+    cursor: pointer;
+}
+.ge-locale__button:hover {
+    background: var(--ge-paper);
+}
+.ge-locale__menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 30;
+    min-width: 160px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    background: var(--ge-surface);
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius);
+}
+.ge-locale__item {
+    display: block;
+    padding: 7px 10px;
+    border-radius: var(--ge-radius-sm);
+    color: var(--ge-text);
+    font-size: 13.5px;
+    font-weight: 500;
+}
+.ge-locale__item:hover,
+.ge-locale__item:focus {
+    background: var(--ge-paper);
+    text-decoration: none;
+}
+
+/* ---------------------------------------------------------------
+   Páginas heredadas del tema base (OTP, selección de método, info)
+   --------------------------------------------------------------- */
+.instruction {
+    color: var(--ge-text-muted);
+    font-size: 14px;
+}
+
+.ge-select-auth {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.ge-select-auth__item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px;
+    background: var(--ge-surface);
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius-sm);
+    color: var(--ge-text);
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+.ge-select-auth__item:hover {
+    border-color: var(--ge-teal);
+    background: var(--ge-teal-soft);
+}
+.ge-select-auth__icon {
+    color: var(--ge-brass);
+    font-size: 20px;
+}
+.ge-select-auth__body {
+    flex: 1;
+}
+.ge-select-auth__title {
+    font-weight: 650;
+    font-size: 14.5px;
+}
+.ge-select-auth__desc {
+    color: var(--ge-text-muted);
+    font-size: 13px;
+}
+.ge-select-auth__arrow {
+    color: var(--ge-text-muted);
+}
+
+.ge-otp-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border: 1px solid var(--ge-border);
+    border-radius: var(--ge-radius-sm);
+    cursor: pointer;
+}
+.ge-otp-tile__input:checked + .ge-otp-tile,
+.ge-otp-tile:has(.ge-otp-tile__input:checked) {
+    border-color: var(--ge-teal);
+    background: var(--ge-teal-soft);
+}
+.ge-otp-tile__icon {
+    color: var(--ge-brass);
+    font-size: 18px;
+}
+.ge-otp-tile__title {
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------
+   Responsive
+   --------------------------------------------------------------- */
+@media (max-width: 992px) {
+    .ge-auth__brand {
+        display: none;
+    }
+    .ge-auth__mobile-brand {
+        display: inline-flex;
+    }
+    .ge-auth__topbar {
+        padding: 16px;
+        background: var(--ge-surface);
+        border-bottom: 1px solid var(--ge-border);
+    }
+    .ge-auth__center {
+        justify-content: flex-start;
+        padding: 24px 16px 32px;
+    }
+}
+
+@media (max-width: 520px) {
+    .ge-auth-card {
+        padding: 24px 18px 20px;
+    }
+    .ge-form--register > .ge-field:has(#firstName),
+    .ge-form--register > .ge-field:has(#lastName) {
+        grid-column: 1 / -1;
+    }
+    .ge-social__list--grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}

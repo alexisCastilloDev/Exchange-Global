@@ -2,9 +2,25 @@
 
 from urllib.parse import urlencode
 from django.conf import settings
+from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
 from mozilla_django_oidc.views import OIDCLogoutView, OIDCAuthenticationCallbackView
+
+
+def url_logout_keycloak(request, id_token, destino):
+    """Arma la URL de cierre de sesión de Keycloak que vuelve a ``destino``.
+
+    El ``id_token_hint`` hace que Keycloak cierre su sesión sin pedir
+    confirmación (requiere ``OIDC_STORE_ID_TOKEN``).
+    """
+    params = {
+        'client_id': settings.OIDC_RP_CLIENT_ID,
+        'post_logout_redirect_uri': request.build_absolute_uri(destino),
+    }
+    if id_token:
+        params['id_token_hint'] = id_token
+    return f"{settings.OIDC_OP_LOGOUT_ENDPOINT}?{urlencode(params)}"
 
 
 class CustomOIDCLogoutView(OIDCLogoutView):
@@ -15,17 +31,17 @@ class CustomOIDCLogoutView(OIDCLogoutView):
         return self.post(request)
 
     def post(self, request):
-        """Invalida la sesión y construye la URL de salida del proveedor OIDC."""
+        """Invalida la sesión y construye la URL de salida del proveedor OIDC.
+
+        Al terminar, Keycloak devuelve al usuario a ``oidc_authentication_init``,
+        que lo manda directo a la pantalla de inicio de sesión. El
+        ``id_token_hint`` hace que Keycloak cierre también su propia sesión;
+        sin él la sesión SSO seguía viva y el usuario volvía a entrar sin
+        loguearse.
+        """
         id_token = request.session.get('oidc_id_token')
         super().post(request)
-        keycloak_logout_url = f"{settings.OIDC_OP_AUTHORIZATION_ENDPOINT.replace('/auth', '/logout')}"
-        params = {
-            'client_id': settings.OIDC_RP_CLIENT_ID,
-            'post_logout_redirect_uri': 'http://localhost:8000/',
-        }
-        if id_token:
-            params['id_token_hint'] = id_token
-        return redirect(f"{keycloak_logout_url}?{urlencode(params)}")
+        return redirect(url_logout_keycloak(request, id_token, reverse('oidc_authentication_init')))
 
 
 class CustomOIDCCallbackView(OIDCAuthenticationCallbackView):
@@ -41,3 +57,20 @@ class CustomOIDCCallbackView(OIDCAuthenticationCallbackView):
         if 'analista_cambiario' in roles:
             return redirect(reverse('divisas:tasas_vigentes'))
         return redirect(reverse('home'))
+
+    def login_failure(self):
+        """Si Django rechaza el login, cierra también la sesión de Keycloak.
+
+        Sin esto, la sesión de Keycloak quedaba abierta: cada "Iniciar sesión"
+        volvía a entrar automáticamente con la misma cuenta, Django la volvía
+        a rechazar y el usuario quedaba atrapado en la pantalla de bienvenida.
+        """
+        id_token = self.request.session.pop('oidc_id_token', None)
+        if not id_token:
+            return super().login_failure()
+        messages.error(
+            self.request,
+            'No se pudo iniciar sesión con esa cuenta. Probá de nuevo y, si el '
+            'problema sigue, contactá al administrador.',
+        )
+        return redirect(url_logout_keycloak(self.request, id_token, reverse('home')))

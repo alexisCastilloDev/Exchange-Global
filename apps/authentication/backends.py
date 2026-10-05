@@ -125,8 +125,16 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
             user.is_superuser = False
             changed = True
 
+        # Si Keycloak emitió el token, el usuario está habilitado allá (una
+        # baja lo deshabilita primero en Keycloak). Un registro local inactivo
+        # es un resto viejo, por ejemplo de un usuario borrado y vuelto a
+        # registrar con el mismo email: sin esto el login fallaba en silencio.
+        if not user.is_active:
+            user.is_active = True
+            changed = True
+
         if changed:
-            user.save(update_fields=['first_name', 'last_name', 'is_staff', 'is_superuser'])
+            user.save(update_fields=['first_name', 'last_name', 'is_staff', 'is_superuser', 'is_active'])
 
         # Única fuente de autorización: la sesión, no auth.Group.
         # Usa el request explícito si lo pasan (tests); si no, el de la
