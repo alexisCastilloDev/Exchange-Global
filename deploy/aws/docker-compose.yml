@@ -46,7 +46,7 @@ services:
     #     --user "$KEYCLOAK_ADMIN_USER" --password "$KEYCLOAK_ADMIN_PASSWORD"
     #   docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update realms/global-exchange \
     #     -s loginTheme=global-exchange -s emailTheme=global-exchange -s registrationAllowed=true \
-    #     -s resetPasswordAllowed=true -s rememberMe=true \
+    #     -s resetPasswordAllowed=true -s rememberMe=false \
     #     -s internationalizationEnabled=true -s 'supportedLocales=["es"]' -s defaultLocale=es
     volumes:
       - ../../keycloak/themes/global-exchange:/opt/keycloak/themes/global-exchange:ro

@@ -5,8 +5,9 @@ standalone, sin Docker) y lo deja activo en el realm.
   1. Copia keycloak/themes/global-exchange a <Keycloak>/themes/global-exchange
      (si ya existía una versión que no salió de este repo, la respalda antes).
   2. Si se pasan credenciales de admin (o se piden), configura el realm:
-     loginTheme/emailTheme=global-exchange, registro de usuarios, "olvidé mi contraseña"
-     e idioma español por defecto.
+     loginTheme/emailTheme=global-exchange, registro de usuarios con
+     contraseña y verificación de email, "olvidé mi contraseña", sin la opción
+     "Mantener la sesión iniciada", e idioma español.
 
 Uso:
   .\keycloak\instalar-tema.ps1                       # copia + configura el realm (pide credenciales)
@@ -22,6 +23,8 @@ param(
     [string]$Realm = "global-exchange",
     [string]$AdminUser,
     [string]$AdminPassword,
+    # Archivo de configuración de kcadm (por defecto el del usuario, ~/.keycloak).
+    [string]$KcadmConfig,
     [switch]$SoloCopiar
 )
 
@@ -74,22 +77,65 @@ if ([string]::IsNullOrWhiteSpace($AdminPassword)) {
     )
 }
 
+$kcConfig = @()
+if ($KcadmConfig) { $kcConfig = @("--config", $KcadmConfig) }
+
 Write-Host "Autenticando contra $Server..." -ForegroundColor Cyan
-& $kcadm config credentials --server $Server --realm master --user $AdminUser --password $AdminPassword
+& $kcadm config credentials --server $Server --realm master --user $AdminUser --password $AdminPassword @kcConfig
 if ($LASTEXITCODE -ne 0) { throw "No se pudo autenticar contra Keycloak (¿está levantado?)." }
 
-Write-Host "Activando el tema en el realm $Realm..." -ForegroundColor Cyan
-& $kcadm update "realms/$Realm" `
+Write-Host "Configurando el realm $Realm..." -ForegroundColor Cyan
+& $kcadm update "realms/$Realm" @kcConfig `
     -s "loginTheme=$temaNombre" `
     -s "emailTheme=$temaNombre" `
     -s "registrationAllowed=true" `
     -s "resetPasswordAllowed=true" `
-    -s "rememberMe=true" `
+    -s "rememberMe=false" `
+    -s "verifyEmail=true" `
     -s "internationalizationEnabled=true" `
     -s "supportedLocales[0]=es" `
     -s "defaultLocale=es"
 if ($LASTEXITCODE -ne 0) { throw "No se pudo actualizar el realm $Realm." }
 
+# El registro pide contraseña solo si el paso "Password Validation" del flujo
+# de registro está en REQUIRED (si está deshabilitado, el formulario no la muestra).
+$flujo = ((& $kcadm get "realms/$Realm" --fields registrationFlow @kcConfig) | Out-String | ConvertFrom-Json).registrationFlow
+$ejecuciones = (& $kcadm get "authentication/flows/$([uri]::EscapeDataString($flujo))/executions" -r $Realm @kcConfig) | Out-String | ConvertFrom-Json
+$paso = $ejecuciones | Where-Object { $_.providerId -eq "registration-password-action" } | Select-Object -First 1
+if (-not $paso) {
+    Write-Host "Atención: el flujo '$flujo' no tiene el paso 'Password Validation'; agregalo desde Authentication." -ForegroundColor Yellow
+} elseif ($paso.requirement -ne "REQUIRED") {
+    $json = Join-Path $env:TEMP "kc-paso-password.json"
+    # Se manda el paso completo: con solo {id, requirement} Keycloak pone la
+    # prioridad en 0 y el paso queda antes de crear el usuario (y falla).
+    $paso.requirement = "REQUIRED"
+    $paso | ConvertTo-Json | Set-Content -Path $json -Encoding ascii
+    & $kcadm update "authentication/flows/$([uri]::EscapeDataString($flujo))/executions" -r $Realm -f $json @kcConfig
+    if ($LASTEXITCODE -ne 0) { throw "No se pudo activar la contraseña en el flujo de registro." }
+    Remove-Item $json
+    Write-Host "Contraseña activada en el formulario de registro." -ForegroundColor Green
+}
+
+# Con "verifyEmail" activado, Keycloak 26 deja de pedir la contraseña en el
+# registro y la pide recién después de verificar el email. La opción
+# "Always set password on register form" del paso la vuelve a poner en el
+# formulario, así el usuario se registra con contraseña y solo tiene que
+# verificar el correo para poder entrar.
+if ($paso) {
+    $cfgJson = Join-Path $env:TEMP "kc-config-password.json"
+    $opciones = @{ always_set_password_on_register_form = "true" }
+    if ($paso.authenticationConfig) {
+        @{ id = $paso.authenticationConfig; alias = "ge-password-en-registro"; config = $opciones } | ConvertTo-Json | Set-Content -Path $cfgJson -Encoding ascii
+        & $kcadm update "authentication/config/$($paso.authenticationConfig)" -r $Realm -f $cfgJson @kcConfig
+    } else {
+        @{ alias = "ge-password-en-registro"; config = $opciones } | ConvertTo-Json | Set-Content -Path $cfgJson -Encoding ascii
+        & $kcadm create "authentication/executions/$($paso.id)/config" -r $Realm -f $cfgJson @kcConfig
+    }
+    if ($LASTEXITCODE -ne 0) { throw "No se pudo configurar la contraseña en el formulario de registro." }
+    Remove-Item $cfgJson
+    Write-Host "El registro pide la contraseña aunque el email esté sin verificar." -ForegroundColor Green
+}
+
 Write-Host ""
 Write-Host "Listo. Probalo en: $Server/realms/$Realm/account" -ForegroundColor Green
-Write-Host "Nota: 'Olvidé mi contraseña' necesita SMTP configurado en Realm settings > Email." -ForegroundColor Yellow
+Write-Host "Nota: la verificación de email y 'Olvidé mi contraseña' necesitan SMTP configurado en Realm settings > Email." -ForegroundColor Yellow

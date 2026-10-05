@@ -115,9 +115,16 @@ OIDC_OP_AUTHORIZATION_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect
 OIDC_OP_TOKEN_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/token'
 OIDC_OP_USER_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/userinfo'
 OIDC_OP_JWKS_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/certs'
+OIDC_OP_LOGOUT_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/logout'
 
 OIDC_RP_SIGN_ALGO = 'RS256'
 OIDC_RP_SCOPES = 'openid email profile roles'
+# Guarda el id_token en la sesión para mandarlo como id_token_hint al
+# cerrar sesión: así Keycloak termina también su sesión SSO.
+OIDC_STORE_ID_TOKEN = True
+# Sin la opción "Mantener la sesión iniciada", la sesión de Django termina al
+# cerrar el navegador, igual que la de Keycloak.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # A dónde redirige después de login/logout exitoso
 LOGIN_REDIRECT_URL = '/'

@@ -53,13 +53,6 @@
                     </#if>
                 </div>
 
-                <#if realm.rememberMe && !usernameHidden??>
-                    <div class="${properties.kcCheckClass!}">
-                        <input tabindex="5" id="rememberMe" name="rememberMe" type="checkbox" class="${properties.kcCheckInputClass!}" <#if login.rememberMe??>checked</#if>>
-                        <label for="rememberMe" class="${properties.kcCheckLabelClass!}">${msg("rememberMe")}</label>
-                    </div>
-                </#if>
-
                 <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
                     <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
                     <button tabindex="7" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit">

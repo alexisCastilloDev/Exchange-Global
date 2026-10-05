@@ -1,4 +1,10 @@
 <#import "template.ftl" as layout>
+<#--
+Verificación de email pendiente. Aparece después de registrarse y cada vez
+que alguien con el email sin verificar intenta iniciar sesión (con
+"verifyEmail" activado en el realm). Volver a pedir esta página
+(url.loginAction) reenvía el correo.
+-->
 <@layout.registrationLayout displayInfo=true; section>
     <#if section = "header">
         ${msg("emailVerifyTitle")}
@@ -29,13 +35,15 @@
                     <button class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}" type="submit" name="cancel-aia" value="true" formnovalidate>${msg("doCancel")}</button>
                 </div>
             </form>
+        <#else>
+            <a id="kc-resend-email" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" href="${url.loginAction}">
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> ${msg("emailVerifyResend")}
+            </a>
         </#if>
     <#elseif section = "info">
         <#if !isAppInitiatedAction??>
             <div id="kc-registration">
-                <span>${msg("emailVerifyInstruction2")}</span>
-                <a href="${url.loginAction}">${msg("doClickHere")}</a>
-                <span>${msg("emailVerifyInstruction3")}</span>
+                <a href="${url.loginRestartFlowUrl}"><i class="bi bi-arrow-left" aria-hidden="true"></i> ${msg("geBackToLoginOtherAccount")}</a>
             </div>
         </#if>
     </#if>
