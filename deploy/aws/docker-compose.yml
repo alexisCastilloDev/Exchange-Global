@@ -18,40 +18,31 @@ services:
     expose:
       - "8000"
 
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    restart: unless-stopped
-    # start-dev: suficiente para una entrega académica (no requiere
-    # pre-construir el tema ni cachear el realm). Para un Keycloak
-    # realmente productivo habría que migrar a `start` con un build
-    # optimizado aparte.
-    command: start-dev --http-relative-path /auth
-    environment:
-      KC_HOSTNAME: "https://${DOMINIO}/auth"
-      KC_HOSTNAME_STRICT: "false"
-      KC_PROXY_HEADERS: "xforwarded"
-      KC_HTTP_ENABLED: "true"
-      KC_DB: postgres
-      KC_DB_URL_HOST: ${DB_HOST}
-      KC_DB_URL_PORT: ${DB_PORT}
-      KC_DB_URL_DATABASE: ${KEYCLOAK_DB_NAME}
-      KC_DB_USERNAME: ${DB_USER}
-      KC_DB_PASSWORD: ${DB_PASSWORD}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-    # Tema de login propio (keycloak/themes/global-exchange). Para activarlo
-    # en el realm, una sola vez después del primer `up`:
-    #   docker compose exec keycloak /opt/keycloak/bin/kcadm.sh config credentials \
-    #     --server http://localhost:8080/auth --realm master \
-    #     --user "$KEYCLOAK_ADMIN_USER" --password "$KEYCLOAK_ADMIN_PASSWORD"
-    #   docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update realms/global-exchange \
-    #     -s loginTheme=global-exchange -s emailTheme=global-exchange -s registrationAllowed=true \
-    #     -s resetPasswordAllowed=true -s rememberMe=false \
-    #     -s internationalizationEnabled=true -s 'supportedLocales=["es"]' -s defaultLocale=es
-    volumes:
-      - ../../keycloak/themes/global-exchange:/opt/keycloak/themes/global-exchange:ro
-    expose:
-      - "8080"
+    keycloak:
+      image: quay.io/keycloak/keycloak:26.8.0
+      restart: unless-stopped
+      # start-dev: suficiente para una entrega académica. --import-realm carga
+      # el realm desde /opt/keycloak/data/import solo si todavía no existe.
+      command: start-dev --http-relative-path /auth --import-realm
+      environment:
+        KC_HOSTNAME: "https://${DOMINIO}/auth"
+        KC_HOSTNAME_STRICT: "false"
+        KC_PROXY_HEADERS: "xforwarded"
+        KC_HTTP_ENABLED: "true"
+        KC_DB: postgres
+        KC_DB_URL_HOST: ${DB_HOST}
+        KC_DB_URL_PORT: ${DB_PORT}
+        KC_DB_URL_DATABASE: ${KEYCLOAK_DB_NAME}
+        KC_DB_USERNAME: ${DB_USER}
+        KC_DB_PASSWORD: ${DB_PASSWORD}
+        KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
+        KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      volumes:
+        - ../../keycloak/themes/global-exchange:/opt/keycloak/themes/global-exchange:ro
+        # Realm exportado desde desarrollo. Vive fuera del repo, solo en el servidor.
+        - /home/ubuntu/keycloak-import:/opt/keycloak/data/import:ro
+      expose:
+        - "8080"
 
   nginx:
     image: nginx:alpine
