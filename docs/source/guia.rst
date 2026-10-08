@@ -15,6 +15,27 @@ Global Exchange es una aplicación Django organizada por dominios funcionales:
   de Keycloak.
 * ``global_exchange``: configuración, URLs y vistas generales del proyecto.
 
+Formato numérico
+----------------
+
+Todos los montos, tasas y comisiones que se muestran en pantalla usan "."
+como separador de miles y "," como separador decimal (por ejemplo
+``747.400,00``), la convención paraguaya/argentina. Se logra con
+``USE_THOUSAND_SEPARATOR = True`` más un módulo de formato propio
+(``global_exchange/formats/en_US/formats.py``, referenciado desde
+``FORMAT_MODULE_PATH``) que sobreescribe, solo para los separadores
+numéricos, lo que Django trae por defecto para ``LANGUAGE_CODE = 'en-us'``
+— sin cambiar ese ``LANGUAGE_CODE`` ni, por lo tanto, los mensajes de
+validación en inglés que el resto del proyecto ya reemplaza a mano por
+mensajes en español.
+
+Los campos ocultos que viajan entre pasos (por ejemplo ``monto``,
+``cotizacion_id`` o ``vence_en_timestamp`` en los formularios de "Calcular
+importe" y "Confirmar operación") se renderizan con el filtro
+``|unlocalize`` (``{% load l10n %}``) para que sigan llegando sin
+separadores: esos valores no se muestran, se vuelven a parsear en el
+servidor, y un separador de miles los rompería.
+
 Flujo de autenticación
 ----------------------
 
@@ -99,6 +120,64 @@ confirmar, cancelar ni reprocesar la transacción, sin importar su estado.
 
 El simulador de conversión ofrece los mismos tres modos (compra, venta,
 cambio) sin persistir el resultado ni exigir confirmación.
+
+Las pantallas de "Confirmar operación" (Paso 3), "Pagar" y el detalle de una
+transacción propia dependen de que esta pertenezca al **cliente activo**
+del momento. Si el cliente activo cambia (por ejemplo, en otra pestaña)
+mientras una de esas pantallas quedó abierta con una transacción del
+cliente *anterior*, ``apps.divisas.views._resolver_transaccion_propia``
+distingue dos casos: si la transacción no tiene ninguna relación con el
+usuario autenticado, sigue respondiendo 404 (acceso a una transacción
+realmente ajena); si es de otro cliente propio del mismo usuario, en vez de
+un error de Django informa con un mensaje ("Esta transacción no corresponde
+al cliente activo...") y redirige, ya que no hay nada que ocultarle al
+propio usuario sobre su otra transacción.
+
+Pago de una transacción confirmada
+-----------------------------------
+
+Una vez que una transacción (compra/venta o cambio) está "Confirmada", el
+cliente puede pagarla desde ``apps.divisas.views.PagarTransaccionOperacionView``
+o ``PagarTransaccionCambioView``, eligiendo uno de sus métodos de pago ya
+guardados (``apps.clientes.models.MetodoPago``, de la HU "Métodos de pago").
+El monto a pagar es siempre el ``monto_final`` ya calculado por el sistema;
+el cliente no puede modificarlo.
+
+El registro del pago pasa siempre por ``apps.divisas.models.Pago.registrar_pago``,
+pensado como punto de entrada único e idempotente:
+
+* Asocia el pago a una única transacción (``calculo_operacion`` o
+  ``calculo_triangulacion``, nunca ambas), con el medio de pago, el
+  proveedor, un identificador externo, el monto y la fecha.
+* Si la transacción no está "Confirmada" (está pendiente, vencida,
+  cancelada o ya "Pagada"), rechaza el pago con
+  ``apps.divisas.models.PagoRechazadoError`` en vez de crear nada.
+* Si ya tiene un pago exitoso, rechaza cualquier otro intento —
+  ``calculo_operacion``/``calculo_triangulacion`` son ``OneToOneField``, así
+  que la base de datos lo garantiza sin importar el medio del segundo
+  intento.
+* Si llega más de una vez la misma confirmación (mismo ``proveedor`` e
+  ``identificador_externo``, la clave de idempotencia, con una restricción
+  ``UniqueConstraint`` en la base), devuelve el pago ya existente sin crear
+  un segundo registro ni volver a tocar la transacción.
+* Al registrarse un pago exitoso, la transacción pasa a "Pagada".
+
+Esta HU ("Asociación de pagos a transacciones") es, a propósito, la base de
+dos HU futuras que todavía no están implementadas: pago con tarjeta vía
+Stripe y pago por transferencia vía SIPAP. Ambas se integrarán como
+webhooks de su proveedor (con su propia verificación de firma, que no es
+responsabilidad de ``Pago``) que arman los mismos datos genéricos
+(medio, proveedor, identificador externo, monto) a partir de su propio
+payload y llaman a ``registrar_pago``, en vez de duplicar esta lógica. El
+flujo manual de esta HU usa ``Pago.PROVEEDOR_MANUAL`` como proveedor y el
+``pk`` de la transacción como identificador externo, lo que de paso lo hace
+naturalmente idempotente ante un doble clic en "Pagar".
+
+Tanto el detalle de una compra/venta como el de un cambio entre divisas
+(``DetalleTransaccionOperacionView``/``DetalleTransaccionCambioView``)
+muestran el pago asociado (medio, monto, fecha e identificador) o,
+si todavía no se registró ninguno, un mensaje indicándolo en vez de dejar
+la sección vacía sin explicación.
 
 Venta de divisas
 ----------------

@@ -6,6 +6,7 @@ __pycache__/
 *.sqlite3
 .venv/
 staticfiles/
-docs/_build/
+docs/build/doctrees/
+docs/build/.doctrees/
 scripts/
 .cc-history/

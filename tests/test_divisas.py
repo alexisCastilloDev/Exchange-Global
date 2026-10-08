@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from apps.authentication.models import HistorialBaja
 from apps.divisas.models import Cotizacion, Divisa
+from tests.utils_formato import formato
 
 
 @pytest.mark.django_db
@@ -92,8 +93,8 @@ class TasasVigentesTest(TestCase):
         self._login_analista_con_sesion()
         response = self.client.get(self.url)
 
-        self.assertContains(response, '7300.50')
-        self.assertContains(response, '7400.00')
+        self.assertContains(response, formato(7300.50))
+        self.assertContains(response, formato(7400.00))
         self.assertContains(response, 'USD')
         self.assertContains(
             response,
@@ -335,8 +336,8 @@ class ActualizacionCotizacionesTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context['cotizaciones']), [segunda, primera])
-        self.assertContains(response, '7300.00')
-        self.assertContains(response, '7000.00')
+        self.assertContains(response, formato(7300))
+        self.assertContains(response, formato(7000))
 
     def test_usuario_sin_rol_no_puede_actualizar(self):
         """Deniega actualización a usuarios sin rol autorizado."""
@@ -364,7 +365,7 @@ class ConsultaTasasClienteTest(TestCase):
         response = self.client.get(reverse('divisas:tasas_vigentes'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Tasas actuales')
-        self.assertContains(response, '7800.00')
+        self.assertContains(response, formato(7800))
         self.assertNotContains(
             response,
             reverse('divisas:actualizar_cotizacion', kwargs={'divisa_id': divisa.pk}),
@@ -397,7 +398,7 @@ class SimuladorDivisasTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Monto final')
-        self.assertContains(response, '747400.00')
+        self.assertContains(response, formato(747400.00))
 
     def test_simulacion_venta_usa_tasa_compra_y_resta_comision(self):
         """Simula una venta aplicando la tasa de compra y descontando la comisión."""
@@ -407,7 +408,7 @@ class SimuladorDivisasTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '722700.00')
+        self.assertContains(response, formato(722700.00))
 
     def test_simulacion_cambio_triangula_por_pyg_con_comision(self):
         """Simula un cambio entre divisas triangulando por PYG."""
@@ -423,7 +424,7 @@ class SimuladorDivisasTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Tasa cruzada implícita')
-        self.assertContains(response, '89.22')
+        self.assertContains(response, formato(89.22))
 
     def test_simulacion_incluye_placeholder_para_no_repetir_divisa(self):
         """Incluye la opción 'Seleccionar divisa' para no preseleccionar ninguna."""

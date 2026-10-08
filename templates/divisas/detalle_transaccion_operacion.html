@@ -36,6 +36,23 @@ Contexto esperado: transaccion.
                 <div class="operation-summary__row"><span class="operation-summary__label">Fecha de confirmación: </span><strong class="operation-summary__value">{{ transaccion.confirmado_en|date:"d/m/Y H:i" }}</strong></div>
                 {% endif %}
             </div>
+
+            <div class="ge-card__header mb-3 mt-4">
+                <h2>Pago</h2>
+            </div>
+            {% if transaccion.pago %}
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Medio: </span><strong class="operation-summary__value">{{ transaccion.pago.get_medio_pago_display }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Monto: </span><strong class="operation-summary__value">{{ transaccion.pago.monto|floatformat:2 }} PYG</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Fecha: </span><strong class="operation-summary__value">{{ transaccion.pago.creado_en|date:"d/m/Y H:i" }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Identificador: </span><strong class="operation-summary__value">{{ transaccion.pago.identificador_externo }}</strong></div>
+                </div>
+            {% else %}
+                <p class="text-muted">Todavía no tiene un pago registrado.</p>
+                {% if transaccion.estado_efectivo == 'CONFIRMADA' %}
+                    <a href="{% url 'divisas:pagar_transaccion' transaccion.pk %}" class="btn btn-primary"><i class="bi bi-credit-card me-1"></i> Pagar ahora</a>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 </div>

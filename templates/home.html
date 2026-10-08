@@ -30,7 +30,7 @@ Contexto esperado: user, cliente_activo y permisos de UI.
                 {% endif %}
 
                 <a href="{% url 'oidc_authentication_init' %}" class="btn btn-primary btn-lg px-4">
-                    <i class="bi bi-shield-lock me-2"></i>Iniciar Sesión con Keycloak SSO
+                    <i class="bi bi-shield-lock me-2"></i>Iniciar Sesión
                 </a>
             </div>
 
@@ -103,6 +103,15 @@ Contexto esperado: user, cliente_activo y permisos de UI.
             </div>
         </a>
     </div>
+    <div class="col-md-4">
+        <a href="{% url 'documentacion' %}" class="text-decoration-none" target="_blank" rel="noopener">
+            <div class="ge-card h-100">
+                <i class="bi bi-book" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Documentación</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá la documentación técnica del sistema.</p>
+            </div>
+        </a>
+    </div>
     {% endif %}
     {% if puede_ver_usuarios %}
     <div class="col-md-4">
@@ -162,6 +171,17 @@ Contexto esperado: user, cliente_activo y permisos de UI.
                 <i class="bi bi-shuffle" style="font-size: 22px; color: var(--ge-brass);"></i>
                 <h2 style="font-size:16px; margin: 10px 0 4px;">Cambiar entre divisas</h2>
                 <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Cambiá una divisa extranjera por otra.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_ver_historial_propio %}
+    <div class="col-md-4">
+        <a href="{% url 'divisas:mis_transacciones' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-clock-history" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Mi historial de transacciones</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá tus propias compras, ventas y cambios de divisas.</p>
             </div>
         </a>
     </div>

@@ -4,10 +4,10 @@ import uuid
 from decimal import Decimal
 
 from django.conf import settings
-from django.db import models
+from django.db import IntegrityError, models, transaction as db_transaction
 from django.utils import timezone
 
-from apps.clientes.models import Cliente
+from apps.clientes.models import Cliente, MetodoPago
 
 class Divisa(models.Model):
     """Representa una divisa activa o inactiva del sistema."""
@@ -115,12 +115,14 @@ class CalculoOperacion(models.Model):
     ESTADO_CANCELADA = 'CANCELADA'
     ESTADO_VENCIDA = 'VENCIDA'
     ESTADO_CANCELADA_COTIZACION = 'CANCELADA_COTIZACION'
+    ESTADO_PAGADA = 'PAGADA'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
         (ESTADO_CANCELADA, 'Cancelada'),
         (ESTADO_VENCIDA, 'Vencida'),
         (ESTADO_CANCELADA_COTIZACION, 'Cancelada por cambio de cotización'),
+        (ESTADO_PAGADA, 'Pagada'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -364,12 +366,14 @@ class CalculoTriangulacion(models.Model):
     ESTADO_CANCELADA = 'CANCELADA'
     ESTADO_VENCIDA = 'VENCIDA'
     ESTADO_CANCELADA_COTIZACION = 'CANCELADA_COTIZACION'
+    ESTADO_PAGADA = 'PAGADA'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
         (ESTADO_CANCELADA, 'Cancelada'),
         (ESTADO_VENCIDA, 'Vencida'),
         (ESTADO_CANCELADA_COTIZACION, 'Cancelada por cambio de cotización'),
+        (ESTADO_PAGADA, 'Pagada'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -467,3 +471,180 @@ class CalculoTriangulacion(models.Model):
             cotizacion_origen.tasa_compra != self.tasa_compra_aplicada
             or cotizacion_destino.tasa_venta != self.tasa_venta_aplicada
         )
+
+
+class PagoRechazadoError(Exception):
+    """Señala que un pago no puede registrarse para una transacción dada.
+
+    La cubren, por ejemplo, una transacción que no está "Confirmada", una
+    que ya tiene un pago exitoso, o la ausencia de una transacción válida
+    (ver ``Pago.registrar_pago``). Las vistas la capturan para mostrar el
+    mensaje al usuario en vez de dejarla propagarse como error 500.
+    """
+
+
+class Pago(models.Model):
+    """Registra el pago exitoso de una única transacción ya "Confirmada".
+
+    Implementa la HU "Asociación de pagos a transacciones" (GE-25), pensada
+    explícitamente como base de dos HU futuras que todavía no existen en
+    este código: pago con tarjeta vía Stripe y pago por transferencia vía
+    SIPAP. Por eso ``medio_pago``, ``proveedor`` e ``identificador_externo``
+    son genéricos en vez de modelar un único medio: cuando esas HU se
+    implementen, sus webhooks (verificación de firma incluida, que no es
+    responsabilidad de este modelo) solo necesitan armar esos mismos datos
+    a partir de su propio payload y llamar a ``registrar_pago``, el único
+    punto de entrada para marcar una transacción como pagada.
+
+    Puede asociarse tanto a una compra/venta (``calculo_operacion``) como a
+    un cambio entre divisas (``calculo_triangulacion``): exactamente una de
+    las dos, nunca ambas ni ninguna (ver ``clean``). Cada una es un
+    ``OneToOneField``, así que la base de datos garantiza por sí sola que
+    una transacción no puede tener más de un pago, sin importar el medio
+    con el que se intente el segundo.
+    """
+
+    PROVEEDOR_MANUAL = 'MANUAL'
+
+    calculo_operacion = models.OneToOneField(
+        CalculoOperacion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='pago',
+        verbose_name='Compra o venta pagada',
+    )
+    calculo_triangulacion = models.OneToOneField(
+        CalculoTriangulacion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='pago',
+        verbose_name='Cambio de divisas pagado',
+    )
+    metodo_pago = models.ForeignKey(
+        MetodoPago,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pagos',
+        verbose_name='Método de pago guardado utilizado',
+    )
+    medio_pago = models.CharField(max_length=20, choices=MetodoPago.TIPO_MEDIO_CHOICES)
+    proveedor = models.CharField(
+        max_length=30,
+        help_text='Quién confirmó el pago: MANUAL (esta HU), o un proveedor real como STRIPE/SIPAP.',
+    )
+    identificador_externo = models.CharField(
+        max_length=100,
+        help_text='Identificador del pago para ese proveedor (p. ej. el id de un PaymentIntent de Stripe).',
+    )
+    monto = models.DecimalField(max_digits=18, decimal_places=2)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Define etiquetas administrativas y la invariante de idempotencia."""
+        verbose_name = 'Pago'
+        verbose_name_plural = 'Pagos'
+        ordering = ['-creado_en']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['proveedor', 'identificador_externo'],
+                name='pago_unico_por_proveedor_e_identificador',
+            ),
+        ]
+
+    def __str__(self):
+        """Identifica el pago por su proveedor e identificador externo."""
+        return f'Pago {self.proveedor}:{self.identificador_externo} ({self.monto})'
+
+    def clean(self):
+        """Valida que el pago pertenezca a exactamente una transacción."""
+        from django.core.exceptions import ValidationError
+        if bool(self.calculo_operacion_id) == bool(self.calculo_triangulacion_id):
+            raise ValidationError('Un pago debe pertenecer a exactamente una transacción.')
+
+    @property
+    def transaccion(self):
+        """Devuelve la compra/venta o el cambio al que pertenece este pago."""
+        return self.calculo_operacion or self.calculo_triangulacion
+
+    @classmethod
+    def registrar_pago(cls, transaccion, medio_pago, proveedor, identificador_externo, monto, metodo_pago=None):
+        """Registra, de forma idempotente, el pago exitoso de una transacción.
+
+        Es el único punto de entrada para marcar una transacción como
+        "Pagada": tanto el flujo manual de esta HU como, más adelante, los
+        webhooks de Stripe y SIPAP deben construir sus propios datos
+        (medio, proveedor, identificador externo, monto) y llamar acá, en
+        vez de tocar ``transaccion.estado`` directamente.
+
+        Args:
+            transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``
+                ya existente.
+            medio_pago (str): Uno de ``MetodoPago.TIPO_MEDIO_CHOICES``.
+            proveedor (str): Quién confirma el pago (``PROVEEDOR_MANUAL`` o
+                un proveedor real).
+            identificador_externo (str): Identificador del pago para ese
+                proveedor. Junto con ``proveedor``, es la clave de
+                idempotencia: una segunda llamada con el mismo par no crea
+                un segundo pago ni vuelve a tocar la transacción.
+            monto (Decimal): Monto efectivamente pagado.
+            metodo_pago: El ``MetodoPago`` guardado del cliente que se usó,
+                si corresponde.
+
+        Returns:
+            tuple[Pago, bool]: El pago (nuevo o preexistente) y si se creó
+            recién en esta llamada.
+
+        Raises:
+            PagoRechazadoError: Si no hay una transacción válida, si no
+                está en estado "Confirmada" (por ejemplo porque está
+                pendiente, vencida, cancelada, o ya "Pagada"), siempre que
+                no se trate de una repetición idempotente del mismo pago
+                ya registrado.
+        """
+        if transaccion is None:
+            raise PagoRechazadoError('No hay una transacción válida para registrar el pago.')
+
+        pago_existente = cls.objects.filter(
+            proveedor=proveedor, identificador_externo=identificador_externo,
+        ).first()
+        if pago_existente is not None:
+            return pago_existente, False
+
+        if transaccion.estado_efectivo == transaccion.ESTADO_PAGADA:
+            raise PagoRechazadoError('La transacción ya fue pagada.')
+        if transaccion.estado_efectivo != transaccion.ESTADO_CONFIRMADA:
+            raise PagoRechazadoError(
+                'La transacción debe estar "Confirmada" para poder registrar un pago.'
+            )
+
+        campo_transaccion = (
+            'calculo_operacion' if isinstance(transaccion, CalculoOperacion) else 'calculo_triangulacion'
+        )
+        try:
+            with db_transaction.atomic():
+                pago = cls.objects.create(
+                    medio_pago=medio_pago,
+                    proveedor=proveedor,
+                    identificador_externo=identificador_externo,
+                    monto=monto,
+                    metodo_pago=metodo_pago,
+                    **{campo_transaccion: transaccion},
+                )
+                transaccion.estado = transaccion.ESTADO_PAGADA
+                transaccion.save(update_fields=['estado'])
+        except IntegrityError:
+            # Carrera entre dos llamadas simultáneas: o bien la otra ya
+            # registró este mismo pago (mismo proveedor+identificador, caso
+            # idempotente), o bien ya le ganó de mano con un pago distinto a
+            # la misma transacción (el OneToOneField es lo que lo impide "por
+            # cualquier medio", sin importar si el identificador difiere).
+            pago_existente = cls.objects.filter(
+                proveedor=proveedor, identificador_externo=identificador_externo,
+            ).first()
+            if pago_existente is not None:
+                return pago_existente, False
+            raise PagoRechazadoError('La transacción ya fue pagada.') from None
+        return pago, True
