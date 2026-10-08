@@ -1,0 +1,1060 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.views module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.users package" href="apps.users.html" />
+    <link rel="prev" title="apps.divisas.urls module" href="apps.divisas.urls.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.divisas.html">apps.divisas package</a></li>
+      <li class="breadcrumb-item active">apps.divisas.views module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apps-divisas-views-module">
+<h1>apps.divisas.views module<a class="headerlink" href="#apps-divisas-views-module" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.TasasVigentesListView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">TasasVigentesListView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#TasasVigentesListView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TasasVigentesListView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Lista las tasas de las divisas activas para roles operativos.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.TasasVigentesListView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas'</span></span><a class="headerlink" href="#apps.divisas.views.TasasVigentesListView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.TasasVigentesListView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TasasVigentesListView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TasasVigentesListView.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Criterio de Aceptación 4: Las divisas inactivas no se muestran.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.TasasVigentesListView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.TasasVigentesListView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa" title="apps.divisas.models.Divisa"><code class="xref py py-class docutils literal notranslate"><span class="pre">Divisa</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.TasasVigentesListView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/tasas_vigentes.html'</span></span><a class="headerlink" href="#apps.divisas.views.TasasVigentesListView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.TasasVigentesListView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TasasVigentesListView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TasasVigentesListView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Autorización contra Keycloak: acceso para administración, analista cambiario,
+cliente.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ActualizarCotizacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateView</span></code></p>
+<p>Permite a roles autorizados registrar una nueva cotización.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cotizacion'</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.form_class">
+<span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.form_class" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.CotizacionForm" title="apps.divisas.forms.CotizacionForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">CotizacionForm</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.form_valid">
+<span class="sig-name descname"><span class="pre">form_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView.form_valid"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.form_valid" title="Link to this definition"></a></dt>
+<dd><p>Asigna divisa y usuario, guarda la tasa y muestra confirmación.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega la divisa asociada al contexto del formulario.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.get_object">
+<span class="sig-name descname"><span class="pre">get_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView.get_object"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.get_object" title="Link to this definition"></a></dt>
+<dd><p>Construye una cotización nueva para la divisa solicitada.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion" title="apps.divisas.models.Cotizacion"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cotizacion</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.success_url">
+<span class="sig-name descname"><span class="pre">success_url</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/divisas/tasas-vigentes/'</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.success_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/cotizacion_form.html'</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el usuario sea administrador o analista cambiario.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">HistorialCotizacionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Muestra cada cambio registrado para las tasas de una divisa.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cotizaciones'</span></span><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.dispatch">
+<span class="sig-name descname"><span class="pre">dispatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView.dispatch"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.dispatch" title="Link to this definition"></a></dt>
+<dd><p>Resuelve la divisa antes de despachar la solicitud.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega la divisa consultada al contexto de la plantilla.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Devuelve las cotizaciones históricas de la divisa seleccionada.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion" title="apps.divisas.models.Cotizacion"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cotizacion</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/historial_cotizaciones.html'</span></span><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Autoriza la consulta del historial a administración y análisis.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">HistorialTransaccionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialTransaccionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Lista las transacciones de compra, venta y cambio realizadas por los clientes.</p>
+<p>Reúne en una misma lista ordenada por fecha las compras y ventas
+(<code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>) y los cambios entre divisas (<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>),
+con tipo, estado, usuario, cliente activo, divisa, monto, tasa, comisión e
+importe final de cada una. El estado que se muestra es el «efectivo»
+(<code class="docutils literal notranslate"><span class="pre">get_estado_efectivo_display</span></code>): si una transacción sigue «Pendiente de
+confirmación» en la base de datos pero ya venció el tiempo para
+confirmarla, se ve como «Vencida» aunque todavía nadie haya vuelto a
+abrir su pantalla de confirmación para que eso quede guardado.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'transacciones'</span></span><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialTransaccionesView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Devuelve compras, ventas y cambios de todos los clientes, del más reciente al más antiguo.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.paginate_by">
+<span class="sig-name descname"><span class="pre">paginate_by</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.paginate_by" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/historial_transacciones.html'</span></span><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialTransaccionesView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialTransaccionesView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialTransaccionesView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Autoriza la consulta a administración y análisis cambiario.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.MiHistorialTransaccionesView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MiHistorialTransaccionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#MiHistorialTransaccionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MiHistorialTransaccionesView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Lista, paginadas y filtrables, las transacciones del cliente activo.</p>
+<p>Implementa la HU «Consultar el historial de transacciones»: a diferencia
+de <code class="docutils literal notranslate"><span class="pre">HistorialTransaccionesView</span></code> (administración y análisis, todos los
+clientes), esta vista muestra únicamente las compras, ventas y cambios
+(<code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>/<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>) registrados a nombre del
+<code class="docutils literal notranslate"><span class="pre">cliente_activo</span></code> de la sesión, con los mismos datos por fila (tipo,
+divisa, monto, tasa aplicada, estado y fecha) más comisión e importe
+final. Admite filtrar por rango de fechas de creación y por estado
+efectivo (ver <code class="docutils literal notranslate"><span class="pre">CalculoOperacion.estado_efectivo</span></code>) mediante los
+parámetros <code class="docutils literal notranslate"><span class="pre">fecha_desde</span></code>, <code class="docutils literal notranslate"><span class="pre">fecha_hasta</span></code> y <code class="docutils literal notranslate"><span class="pre">estado</span></code> en la URL; sin
+filtros, muestra todo el historial del cliente. Es una pantalla de solo
+consulta: no ofrece ninguna acción para confirmar, cancelar, reprocesar
+ni eliminar transacciones (ver <code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code> y
+<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionCambioView</span></code> para el detalle de cada una).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MiHistorialTransaccionesView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'transacciones'</span></span><a class="headerlink" href="#apps.divisas.views.MiHistorialTransaccionesView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MiHistorialTransaccionesView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MiHistorialTransaccionesView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MiHistorialTransaccionesView.get" title="Link to this definition"></a></dt>
+<dd><p>Exige un cliente activo seleccionado antes de listar su historial.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MiHistorialTransaccionesView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MiHistorialTransaccionesView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MiHistorialTransaccionesView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega el estado de los filtros y si el cliente tiene transacciones sin filtrar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MiHistorialTransaccionesView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MiHistorialTransaccionesView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MiHistorialTransaccionesView.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Devuelve las transacciones propias, filtradas, del más reciente al más antiguo.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MiHistorialTransaccionesView.paginate_by">
+<span class="sig-name descname"><span class="pre">paginate_by</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span><a class="headerlink" href="#apps.divisas.views.MiHistorialTransaccionesView.paginate_by" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MiHistorialTransaccionesView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/mis_transacciones.html'</span></span><a class="headerlink" href="#apps.divisas.views.MiHistorialTransaccionesView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MiHistorialTransaccionesView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MiHistorialTransaccionesView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MiHistorialTransaccionesView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite consultar el historial propio a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionOperacionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DetalleTransaccionOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionOperacionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Muestra el detalle completo, de solo lectura, de una compra o venta propia.</p>
+<p>Es la pantalla de detalle a la que se accede desde
+<code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code> al hacer clic en una fila. A diferencia
+de <code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionOperacionView</span></code>, no ofrece ningún botón para
+confirmar, cancelar ni recalcular: solo expone tipo de operación, divisa,
+monto, tasa aplicada, comisión, importe final, estado y fecha, sin
+importar en qué estado se encuentre la transacción.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionOperacionView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionOperacionView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionOperacionView.get" title="Link to this definition"></a></dt>
+<dd><p>Recupera la transacción propia, o informa por qué no se puede continuar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionOperacionView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionOperacionView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionOperacionView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite consultar el detalle solo a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionCambioView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DetalleTransaccionCambioView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionCambioView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionCambioView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Muestra el detalle completo, de solo lectura, de un cambio entre divisas propio.</p>
+<p>Es la pantalla de detalle a la que se accede desde
+<code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code> al hacer clic en una fila de tipo
+«Cambio». A diferencia de <code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionCambioView</span></code>, no ofrece
+ningún botón para confirmar, cancelar ni recalcular: solo expone las
+divisas, el monto, las tasas aplicadas, la comisión, el importe final, el
+estado y la fecha, sin importar en qué estado se encuentre el cambio.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionCambioView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionCambioView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionCambioView.get" title="Link to this definition"></a></dt>
+<dd><p>Recupera el cambio propio, o informa por qué no se puede continuar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionCambioView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionCambioView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionCambioView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite consultar el detalle solo a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionOperacionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">PagarTransaccionOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionOperacionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Permite pagar una compra o venta propia ya «Confirmada».</p>
+<p>Implementa la HU «Asociación de pagos a transacciones» (GE-25): el
+cliente elige uno de sus métodos de pago guardados
+(<code class="docutils literal notranslate"><span class="pre">apps.clientes.models.MetodoPago</span></code>) y el sistema registra el pago
+(<code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code>) con el monto exacto de la transacción, que el
+cliente no puede modificar. Está pensada como base de HU futuras de pago
+real (tarjeta vía Stripe, transferencia vía SIPAP): esta vista hace,
+sincrónicamente y como proveedor «MANUAL», lo mismo que esas harán desde
+sus propios webhooks.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionOperacionView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionOperacionView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionOperacionView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario de pago, o por qué todavía no se puede pagar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionOperacionView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionOperacionView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionOperacionView.post" title="Link to this definition"></a></dt>
+<dd><p>Registra el pago con el método elegido, de forma idempotente.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con el campo <code class="docutils literal notranslate"><span class="pre">metodo_pago</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección al detalle de la transacción con el resultado.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionOperacionView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionOperacionView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionOperacionView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite pagar solo a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionCambioView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">PagarTransaccionCambioView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionCambioView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionCambioView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Permite pagar un cambio entre divisas propio ya «Confirmado».</p>
+<p>Ver <code class="docutils literal notranslate"><span class="pre">PagarTransaccionOperacionView</span></code>: mismo flujo y mismas HU futuras
+como base, aplicado a <code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code> en vez de a una compra o
+venta.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionCambioView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionCambioView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionCambioView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario de pago, o por qué todavía no se puede pagar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionCambioView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionCambioView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionCambioView.post" title="Link to this definition"></a></dt>
+<dd><p>Registra el pago con el método elegido, de forma idempotente.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con el campo <code class="docutils literal notranslate"><span class="pre">metodo_pago</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección al detalle del cambio con el resultado.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionCambioView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionCambioView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionCambioView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite pagar solo a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfiguracionComisionListView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ConfiguracionComisionListView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfiguracionComisionListView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfiguracionComisionListView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Lista el porcentaje de comisión vigente para cada segmento de clientes.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfiguracionComisionListView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfiguracionComisionListView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfiguracionComisionListView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Combina cada segmento con su comisión configurada o el valor por defecto.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfiguracionComisionListView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/comision_list.html'</span></span><a class="headerlink" href="#apps.divisas.views.ConfiguracionComisionListView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfiguracionComisionListView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfiguracionComisionListView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfiguracionComisionListView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite configurar comisiones a administración y análisis cambiario.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ActualizarComisionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarComisionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateView</span></code></p>
+<p>Permite crear o actualizar la comisión configurada para un segmento.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView.form_class">
+<span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView.form_class" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm" title="apps.divisas.forms.ConfiguracionComisionForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfiguracionComisionForm</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView.form_valid">
+<span class="sig-name descname"><span class="pre">form_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarComisionView.form_valid"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView.form_valid" title="Link to this definition"></a></dt>
+<dd><p>Asigna el segmento y el usuario responsable antes de guardar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarComisionView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega el nombre legible del segmento al contexto del formulario.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView.get_object">
+<span class="sig-name descname"><span class="pre">get_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarComisionView.get_object"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView.get_object" title="Link to this definition"></a></dt>
+<dd><p>Recupera la configuración del segmento o construye una nueva.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.ConfiguracionComision" title="apps.divisas.models.ConfiguracionComision"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfiguracionComision</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView.success_url">
+<span class="sig-name descname"><span class="pre">success_url</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/divisas/comisiones/'</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView.success_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/comision_form.html'</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarComisionView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarComisionView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarComisionView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite configurar comisiones a administración y análisis cambiario.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.SimulacionDivisasView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SimulacionDivisasView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#SimulacionDivisasView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.SimulacionDivisasView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Simula una compra, venta o cambio de divisas sin registrar la operación.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.SimulacionDivisasView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#SimulacionDivisasView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.SimulacionDivisasView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Prepara el formulario de simulación.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.SimulacionDivisasView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#SimulacionDivisasView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.SimulacionDivisasView.post" title="Link to this definition"></a></dt>
+<dd><p>Valida los datos y simula la compra, venta o cambio solicitado.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.SimulacionDivisasView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/simulacion_divisas.html'</span></span><a class="headerlink" href="#apps.divisas.views.SimulacionDivisasView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.SimulacionDivisasView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#SimulacionDivisasView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.SimulacionDivisasView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite simular a los roles que operan con divisas.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.CalculoOperacionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CalculoOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#CalculoOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.CalculoOperacionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Calcula el importe de una compra o venta, como previsualización sin persistir.</p>
+<p>La transacción recién se crea cuando el cliente confirma (ver
+<code class="docutils literal notranslate"><span class="pre">confirmar_calculo_operacion_view</span></code>); este cálculo es un Paso 1 efímero,
+igual que el simulador, con la diferencia de que expone los campos ocultos
+necesarios para poder confirmarlo en un segundo paso.</p>
+<p>En una venta (<code class="docutils literal notranslate"><span class="pre">/divisas/operar/venta/</span></code>) el importe a recibir se calcula
+con la tasa de compra vigente de la divisa, descontando la comisión del
+cliente activo (ver <code class="docutils literal notranslate"><span class="pre">_calcular_importe_operacion</span></code>). Un monto inválido
+(negativo, cero o no numérico), una divisa inactiva o una divisa sin
+cotización vigente se rechazan con un mensaje y sin generar ningún
+resultado confirmable.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.CalculoOperacionView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#CalculoOperacionView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.CalculoOperacionView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Prepara el formulario para compra o venta.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.CalculoOperacionView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#CalculoOperacionView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.CalculoOperacionView.post" title="Link to this definition"></a></dt>
+<dd><p>Valida datos y calcula el importe, sin crear todavía la transacción.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con <code class="docutils literal notranslate"><span class="pre">divisa</span></code> y <code class="docutils literal notranslate"><span class="pre">monto</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>La pantalla de operación con el detalle del importe
+o con los errores de validación.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.CalculoOperacionView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/calculo_operacion.html'</span></span><a class="headerlink" href="#apps.divisas.views.CalculoOperacionView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.CalculoOperacionView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#CalculoOperacionView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.CalculoOperacionView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite calcular a los roles que pueden operar con divisas.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.views.confirmar_calculo_operacion_view">
+<span class="sig-name descname"><span class="pre">confirmar_calculo_operacion_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#confirmar_calculo_operacion_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.confirmar_calculo_operacion_view" title="Link to this definition"></a></dt>
+<dd><p>Revalida el cálculo previo (Paso 1) y recién ahí crea la transacción.</p>
+<p>El Paso 1 («Calcular importe») no persiste nada: viaja como campos
+ocultos. Acá se revalida que la cotización usada siga siendo la vigente y
+que no haya pasado el tiempo de reserva antes de crear el registro, ya
+directamente en estado «Pendiente de confirmación». Sirve tanto para la
+compra como para la venta de divisas; la transacción queda registrada
+con el tipo de la ruta, el cliente activo, la divisa, el monto y la fecha
+de creación, para que el cliente la revise y la confirme o cancele en
+<code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionOperacionView</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con los campos ocultos del Paso 1.</p></li>
+<li><p><strong>tipo</strong> (<em>str</em>) – <code class="docutils literal notranslate"><span class="pre">compra</span></code> o <code class="docutils literal notranslate"><span class="pre">venta</span></code>, según la ruta.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección a la pantalla de confirmación de la
+transacción recién creada, o al inicio si algo falla antes de
+crearla.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+<dt class="field-even">Muestra<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Http404</strong> – Si el tipo de la ruta no es compra ni venta.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfirmarTransaccionOperacionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ConfirmarTransaccionOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfirmarTransaccionOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfirmarTransaccionOperacionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Muestra el resumen de una compra o venta pendiente y permite confirmarla o cancelarla.</p>
+<p>Implementa la HU «Confirmación de operación cambiaria»: el cliente ve el
+resumen completo (tipo de operación, divisa, monto, tasa aplicada,
+comisión y monto final) de una transacción en estado «Pendiente de
+confirmación» y decide si la confirma (si la tasa vigente no cambió desde
+el cálculo inicial, pasa a «Confirmada» y se registra la fecha y hora de
+confirmación) o la cancela manualmente (pasa a «Cancelada» y no se
+procesa más). Si al confirmar la tasa vigente ya cambió, la transacción
+se cancela automáticamente como «Cancelada por cambio de cotización» (ver
+<code class="docutils literal notranslate"><span class="pre">CalculoOperacion.tasa_vigente_cambio</span></code>) en vez de confirmarse.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfirmarTransaccionOperacionView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfirmarTransaccionOperacionView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfirmarTransaccionOperacionView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el resumen completo de la transacción pendiente.</p>
+<p>Si el tiempo para confirmarla ya venció (por ejemplo, el cliente
+cerró la pestaña sin decidir nada), la marca «Vencida» en este mismo
+acceso, antes de mostrarla. Si el cliente activo cambió desde que se
+abrió esta pantalla, informa que la transacción no corresponde en
+vez de mostrarla (ver <code class="docutils literal notranslate"><span class="pre">_resolver_transaccion_propia</span></code>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfirmarTransaccionOperacionView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfirmarTransaccionOperacionView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfirmarTransaccionOperacionView.post" title="Link to this definition"></a></dt>
+<dd><p>Confirma o cancela la transacción según la acción elegida.</p>
+<p>Antes de procesar la acción, revisa si el tiempo para confirmar ya
+venció (ya sea recién ahora o desde una visita anterior) y, de ser
+así, bloquea la acción en vez de procesarla. Al confirmar, si la tasa
+vigente ya no coincide con la usada al calcular, la transacción se
+cancela automáticamente como «Cancelada por cambio de cotización» en
+vez de confirmarse. Si el cliente activo cambió desde que se abrió
+esta pantalla, informa que la transacción no corresponde en vez de
+procesar la acción.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con el campo <code class="docutils literal notranslate"><span class="pre">accion</span></code>
+(<code class="docutils literal notranslate"><span class="pre">confirmar</span></code> o <code class="docutils literal notranslate"><span class="pre">cancelar</span></code>).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección a la misma pantalla con el resultado.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfirmarTransaccionOperacionView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfirmarTransaccionOperacionView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfirmarTransaccionOperacionView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite revisar la transacción solo a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.TriangulacionOperacionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">TriangulacionOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#TriangulacionOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TriangulacionOperacionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Calcula el importe de un cambio entre dos divisas extranjeras triangulando por PYG.</p>
+<p>Igual que en la compra y la venta, el cálculo es un Paso 1 efímero: no
+persiste nada y expone los campos ocultos necesarios para confirmarlo en
+un segundo paso (ver <code class="docutils literal notranslate"><span class="pre">confirmar_triangulacion_view</span></code>), que es el que
+registra la transacción.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.TriangulacionOperacionView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TriangulacionOperacionView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TriangulacionOperacionView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Prepara el formulario de cambio entre divisas extranjeras.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.TriangulacionOperacionView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TriangulacionOperacionView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TriangulacionOperacionView.post" title="Link to this definition"></a></dt>
+<dd><p>Valida datos, verifica ambas cotizaciones y calcula el importe sin persistirlo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con <code class="docutils literal notranslate"><span class="pre">divisa_origen</span></code>,
+<code class="docutils literal notranslate"><span class="pre">divisa_destino</span></code> y <code class="docutils literal notranslate"><span class="pre">monto</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>La pantalla del cambio con el detalle del importe o
+con los errores de validación.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.TriangulacionOperacionView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/triangulacion.html'</span></span><a class="headerlink" href="#apps.divisas.views.TriangulacionOperacionView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.TriangulacionOperacionView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TriangulacionOperacionView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TriangulacionOperacionView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite triangular a los mismos roles habilitados para operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.views.confirmar_triangulacion_view">
+<span class="sig-name descname"><span class="pre">confirmar_triangulacion_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#confirmar_triangulacion_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.confirmar_triangulacion_view" title="Link to this definition"></a></dt>
+<dd><p>Revalida el cálculo previo de un cambio y recién ahí crea la transacción.</p>
+<p>Comprueba que no haya vencido el tiempo de reserva y que ambas
+cotizaciones sigan siendo las usadas al calcular. Si es así, recalcula el
+importe con las tasas actuales (nunca confía en los montos que viajan
+desde el navegador) y registra el cambio en estado «Pendiente de
+confirmación», a nombre del cliente activo, para que el cliente lo revise
+y lo confirme o cancele en <code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionCambioView</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con los campos ocultos del cálculo.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección a la pantalla de confirmación del cambio
+recién creado, o al inicio si algo falla antes de crearlo.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfirmarTransaccionCambioView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ConfirmarTransaccionCambioView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfirmarTransaccionCambioView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfirmarTransaccionCambioView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Muestra el resumen de un cambio pendiente y permite confirmarlo o cancelarlo.</p>
+<p>Implementa la HU «Confirmación de operación cambiaria» para los cambios
+entre divisas: el cliente ve el resumen completo de una transacción en
+estado «Pendiente de confirmación» y decide si la confirma (si las tasas
+vigentes no cambiaron desde el cálculo inicial) o la cancela. Si al
+confirmar alguna tasa vigente ya cambió, el cambio se cancela
+automáticamente como «Cancelada por cambio de cotización» (ver
+<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion.tasas_vigentes_cambiaron</span></code>) en vez de confirmarse.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfirmarTransaccionCambioView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfirmarTransaccionCambioView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfirmarTransaccionCambioView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el resumen completo del cambio pendiente.</p>
+<p>Si el tiempo para confirmarlo ya venció (por ejemplo, el cliente
+cerró la pestaña sin decidir nada), lo marca «Vencida» en este mismo
+acceso, antes de mostrarlo. Si el cliente activo cambió desde que se
+abrió esta pantalla, informa que el cambio no corresponde en vez de
+mostrarlo (ver <code class="docutils literal notranslate"><span class="pre">_resolver_transaccion_propia</span></code>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfirmarTransaccionCambioView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfirmarTransaccionCambioView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfirmarTransaccionCambioView.post" title="Link to this definition"></a></dt>
+<dd><p>Confirma o cancela el cambio según la acción elegida.</p>
+<p>Antes de procesar la acción, revisa si el tiempo para confirmar ya
+venció (ya sea recién ahora o desde una visita anterior) y, de ser
+así, bloquea la acción en vez de procesarla. Al confirmar, si alguna
+tasa vigente ya no coincide con la usada al calcular, el cambio se
+cancela automáticamente como «Cancelada por cambio de cotización» en
+vez de confirmarse. Si el cliente activo cambió desde que se abrió
+esta pantalla, informa que el cambio no corresponde en vez de
+procesar la acción.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con el campo <code class="docutils literal notranslate"><span class="pre">accion</span></code>
+(<code class="docutils literal notranslate"><span class="pre">confirmar</span></code> o <code class="docutils literal notranslate"><span class="pre">cancelar</span></code>).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección a la misma pantalla con el resultado.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConfirmarTransaccionCambioView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConfirmarTransaccionCambioView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConfirmarTransaccionCambioView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite revisar el cambio solo a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.AdminDivisasMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AdminDivisasMixin</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#AdminDivisasMixin"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.AdminDivisasMixin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code></p>
+<p>Control de acceso: solo administradores (rol “admin” en Keycloak).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.AdminDivisasMixin.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#AdminDivisasMixin.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.AdminDivisasMixin.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el rol de administrador esté en la sesión.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaListView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaListView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaListView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaListView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Lista el catálogo administrativo de divisas.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaListView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas'</span></span><a class="headerlink" href="#apps.divisas.views.DivisaListView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaListView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.DivisaListView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa" title="apps.divisas.models.Divisa"><code class="xref py py-class docutils literal notranslate"><span class="pre">Divisa</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaListView.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'codigo'</span></span><a class="headerlink" href="#apps.divisas.views.DivisaListView.ordering" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaListView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/divisa_list.html'</span></span><a class="headerlink" href="#apps.divisas.views.DivisaListView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaCreateView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaCreateView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaCreateView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaCreateView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CreateView</span></code></p>
+<p>Permite registrar una divisa nueva en el catálogo.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaCreateView.form_class">
+<span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#apps.divisas.views.DivisaCreateView.form_class" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.DivisaForm" title="apps.divisas.forms.DivisaForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">DivisaForm</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaCreateView.form_valid">
+<span class="sig-name descname"><span class="pre">form_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaCreateView.form_valid"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaCreateView.form_valid" title="Link to this definition"></a></dt>
+<dd><p>Marca como activa la divisa recién creada.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaCreateView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.DivisaCreateView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa" title="apps.divisas.models.Divisa"><code class="xref py py-class docutils literal notranslate"><span class="pre">Divisa</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaCreateView.success_url">
+<span class="sig-name descname"><span class="pre">success_url</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/divisas/administrar/'</span></span><a class="headerlink" href="#apps.divisas.views.DivisaCreateView.success_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaCreateView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/divisa_form.html'</span></span><a class="headerlink" href="#apps.divisas.views.DivisaCreateView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaUpdateView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaUpdateView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateView</span></code></p>
+<p>Permite editar los datos de una divisa existente.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView.form_class">
+<span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView.form_class" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.DivisaForm" title="apps.divisas.forms.DivisaForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">DivisaForm</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa" title="apps.divisas.models.Divisa"><code class="xref py py-class docutils literal notranslate"><span class="pre">Divisa</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView.success_url">
+<span class="sig-name descname"><span class="pre">success_url</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/divisas/administrar/'</span></span><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView.success_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/divisa_form.html'</span></span><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaSoftDeleteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaSoftDeleteView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaSoftDeleteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaSoftDeleteView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Confirma y ejecuta la baja lógica de una divisa.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaSoftDeleteView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaSoftDeleteView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaSoftDeleteView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario de confirmación de baja.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaSoftDeleteView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaSoftDeleteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaSoftDeleteView.post" title="Link to this definition"></a></dt>
+<dd><p>Valida la causa y registra la baja lógica de la divisa.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.divisas.urls.html" class="btn btn-neutral float-left" title="apps.divisas.urls module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.users.html" class="btn btn-neutral float-right" title="apps.users package" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

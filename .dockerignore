@@ -4,7 +4,14 @@ __pycache__/
 .git/
 .pytest_cache/
 .cc-history/
-docs/build/
+# El resto de docs/build/ (el HTML ya compilado) sí tiene que llegar a la
+# imagen: lo sirve global_exchange.views.documentacion en /docs/. Acá solo
+# se excluye el cache interno de Sphinx, que no hace falta para servir el
+# HTML (hay dos directorios de cache por un historial de builds
+# inconsistente: uno con -d explícito y otro con el nombre oculto por
+# defecto).
+docs/build/doctrees/
+docs/build/.doctrees/
 docs/ai-conversations/
 staticfiles/
 *.sqlite3

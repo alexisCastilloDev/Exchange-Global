@@ -76,6 +76,17 @@ TIME_ZONE = 'America/Asuncion'
 USE_I18N = True
 USE_TZ = True
 
+# Separador de miles en todos los números que se muestran en pantalla
+# (montos, tasas, comisiones, etc.): "." para miles y "," para decimales,
+# igual que en Paraguay/Argentina. Django no trae ese formato para el
+# locale "en-us" (usa "," de miles y "." de decimales), así que se
+# sobreescribe puntualmente con un módulo de formato propio en
+# global_exchange/formats/en_US/formats.py, sin tocar LANGUAGE_CODE ni,
+# por lo tanto, los mensajes de validación en inglés que el resto del
+# proyecto ya reemplaza a mano por mensajes en español.
+USE_THOUSAND_SEPARATOR = True
+FORMAT_MODULE_PATH = ['global_exchange.formats']
+
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 # El directorio static/ vivía en la raíz del proyecto pero nunca estaba

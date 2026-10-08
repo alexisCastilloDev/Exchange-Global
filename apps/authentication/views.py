@@ -45,17 +45,16 @@ class CustomOIDCLogoutView(OIDCLogoutView):
 
 
 class CustomOIDCCallbackView(OIDCAuthenticationCallbackView):
-    """Redirige al usuario autenticado según sus permisos y roles efectivos."""
+    """Redirige siempre a la pantalla de inicio tras un login exitoso."""
 
     def login_success(self):
-        """Selecciona el panel de destino después de un login exitoso."""
-        response = super().login_success()
-        user = self.request.user
-        roles = self.request.session.get('keycloak_roles', [])
-        if user.is_staff:
-            return redirect(reverse('panel_admin'))
-        if 'analista_cambiario' in roles:
-            return redirect(reverse('divisas:tasas_vigentes'))
+        """Ignora el destino que calcula mozilla-django-oidc y va a "Inicio".
+
+        Antes variaba según el rol (admin al panel de clientes, analista a
+        tasas vigentes); se unificó a un único destino para que cualquier
+        cuenta, sea cual sea su rol, entre siempre por la misma pantalla.
+        """
+        super().login_success()
         return redirect(reverse('home'))
 
     def login_failure(self):

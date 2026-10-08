@@ -24,6 +24,8 @@ from .views import (
     MiHistorialTransaccionesView,
     DetalleTransaccionOperacionView,
     DetalleTransaccionCambioView,
+    PagarTransaccionOperacionView,
+    PagarTransaccionCambioView,
 )
 """
 Configuración de URLs para la aplicación de divisas.
@@ -42,12 +44,22 @@ urlpatterns = [
         ConfirmarTransaccionOperacionView.as_view(),
         name='confirmar_transaccion',
     ),
+    path(
+        'operar/transaccion/<uuid:pk>/pagar/',
+        PagarTransaccionOperacionView.as_view(),
+        name='pagar_transaccion',
+    ),
     path('triangulacion/', TriangulacionOperacionView.as_view(), name='triangulacion'),
     path('triangulacion/confirmar/', confirmar_triangulacion_view, name='confirmar_triangulacion'),
     path(
         'triangulacion/transaccion/<uuid:pk>/',
         ConfirmarTransaccionCambioView.as_view(),
         name='confirmar_transaccion_cambio',
+    ),
+    path(
+        'triangulacion/transaccion/<uuid:pk>/pagar/',
+        PagarTransaccionCambioView.as_view(),
+        name='pagar_transaccion_cambio',
     ),
     path('cotizaciones/<int:divisa_id>/actualizar/', ActualizarCotizacionView.as_view(), name='actualizar_cotizacion'),
     path('cotizaciones/<int:divisa_id>/historial/', HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),

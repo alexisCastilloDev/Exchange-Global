@@ -1,0 +1,337 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.authentication.backends &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.authentication.backends</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.authentication.backends</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Backend OIDC para Keycloak -&gt; autenticación Y autorización 100% en Keycloak.</span>
+
+<span class="sd">Los roles del usuario se guardan tal cual llegan del token en</span>
+<span class="sd">`request.session['keycloak_roles']`, sin persistir nada en las tablas</span>
+<span class="sd">auth.Group / auth.Permission de Django. La sesión se refresca en cada</span>
+<span class="sd">login, que es el único momento en que Django "aprende" el estado</span>
+<span class="sd">actual de roles en Keycloak.</span>
+
+<span class="sd">Características:</span>
+
+<span class="sd">- verifica email_verified</span>
+<span class="sd">- busca usuario por email; si no existe, busca por preferred_username</span>
+<span class="sd">- extrae roles desde:</span>
+
+<span class="sd">    - realm_access.roles</span>
+<span class="sd">    - claim 'roles' (mapper opcional)</span>
+<span class="sd">    - resource_access.&lt;client&gt;.roles (client roles)</span>
+<span class="sd">- marca is_staff True sólo si 'admin' está presente (útil para /admin/)</span>
+<span class="sd">- NO usa is_superuser (por seguridad)</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mozilla_django_oidc.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">OIDCAuthenticationBackend</span>
+
+<span class="c1"># Roles técnicos que Keycloak agrega solo a todo usuario y que NO</span>
+<span class="c1"># representan un permiso de negocio real.</span>
+<span class="n">ROLES_TECNICOS_EXCLUIDOS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'offline_access'</span><span class="p">,</span>
+    <span class="s1">'uma_authorization'</span><span class="p">,</span>
+    <span class="s1">'default-roles-global'</span><span class="p">,</span>  <span class="c1"># ajustar si el realm no se llama "global"</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="es_rol_tecnico">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.es_rol_tecnico">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Indica si un rol de Keycloak es técnico y no representa negocio."""</span>
+    <span class="k">return</span> <span class="n">rol</span> <span class="ow">in</span> <span class="n">ROLES_TECNICOS_EXCLUIDOS</span> <span class="ow">or</span> <span class="n">rol</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'default-roles-'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeycloakOIDCAuthenticationBackend</span><span class="p">(</span><span class="n">OIDCAuthenticationBackend</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Autentica usuarios OIDC y conserva sus roles efectivos en la sesión."""</span>
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.verify_claims">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.verify_claims">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_claims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Verifica claims basales y que el email esté verificado.</span>
+<span class="sd">        """</span>
+        <span class="n">claims_verified</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">verify_claims</span><span class="p">(</span><span class="n">claims</span><span class="p">)</span>
+        <span class="n">email_verified</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email_verified'</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">claims_verified</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">email_verified</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.filter_users_by_claims">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.filter_users_by_claims">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">filter_users_by_claims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Localiza usuarios existentes:</span>
+<span class="sd">         - primero por email (insensible a mayúsculas),</span>
+<span class="sd">         - fallback a preferred_username si no hay email.</span>
+<span class="sd">        """</span>
+        <span class="n">email</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'email'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">email</span><span class="p">:</span>
+            <span class="n">users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">email__iexact</span><span class="o">=</span><span class="n">email</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">users</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">users</span>
+
+        <span class="n">preferred</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'preferred_username'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">preferred</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">username__iexact</span><span class="o">=</span><span class="n">preferred</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">UserModel</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.create_user">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.create_user">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Crea un usuario local y sincroniza sus datos y roles iniciales."""</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="n">claims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_user_claims</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user</span></div>
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.update_user">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Actualiza un usuario existente con la información de las claims."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_user_claims</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user</span></div>
+
+
+<div class="viewcode-block" id="KeycloakOIDCAuthenticationBackend.update_user_claims">
+<a class="viewcode-back" href="../../../reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.update_user_claims">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_user_claims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">claims</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Actualiza datos básicos y guarda los roles en la sesión.</span>
+<span class="sd">        Soporta roles en realm_access, en claim 'roles' y en resource_access.</span>
+<span class="sd">        """</span>
+        <span class="n">given</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'given_name'</span><span class="p">)</span>
+        <span class="n">family</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'family_name'</span><span class="p">)</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">given</span> <span class="ow">and</span> <span class="n">user</span><span class="o">.</span><span class="n">first_name</span> <span class="o">!=</span> <span class="n">given</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">first_name</span> <span class="o">=</span> <span class="n">given</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">family</span> <span class="ow">and</span> <span class="n">user</span><span class="o">.</span><span class="n">last_name</span> <span class="o">!=</span> <span class="n">family</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">last_name</span> <span class="o">=</span> <span class="n">family</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># 1) roles en realm_access</span>
+        <span class="n">realm_access</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'realm_access'</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">roles_realm</span> <span class="o">=</span> <span class="n">realm_access</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]</span>
+
+        <span class="c1"># 2) roles en claim 'roles' (mapper personalizado)</span>
+        <span class="n">roles_custom</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">roles_custom</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">roles_custom</span> <span class="o">=</span> <span class="p">[</span><span class="n">roles_custom</span><span class="p">]</span>
+
+        <span class="c1"># 3) roles en resource_access (client roles)</span>
+        <span class="n">resource_access</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'resource_access'</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">client_roles</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource_access</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">client_info</span> <span class="ow">in</span> <span class="n">resource_access</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="n">client_roles</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">client_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'roles'</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[])</span>
+
+        <span class="c1"># Consolidar y excluir roles técnicos de Keycloak</span>
+        <span class="n">roles_keycloak</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles_realm</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles_custom</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">client_roles</span><span class="p">)</span>
+        <span class="n">roles_negocio</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">rol</span> <span class="k">for</span> <span class="n">rol</span> <span class="ow">in</span> <span class="n">roles_keycloak</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">es_rol_tecnico</span><span class="p">(</span><span class="n">rol</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># is_staff para acceder al admin site (no sustituye autorización)</span>
+        <span class="n">is_staff_value</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles_negocio</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="o">!=</span> <span class="n">is_staff_value</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="o">=</span> <span class="n">is_staff_value</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Nunca permitir is_superuser por token</span>
+        <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Si Keycloak emitió el token, el usuario está habilitado allá (una</span>
+        <span class="c1"># baja lo deshabilita primero en Keycloak). Un registro local inactivo</span>
+        <span class="c1"># es un resto viejo, por ejemplo de un usuario borrado y vuelto a</span>
+        <span class="c1"># registrar con el mismo email: sin esto el login fallaba en silencio.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">is_active</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">changed</span><span class="p">:</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'first_name'</span><span class="p">,</span> <span class="s1">'last_name'</span><span class="p">,</span> <span class="s1">'is_staff'</span><span class="p">,</span> <span class="s1">'is_superuser'</span><span class="p">,</span> <span class="s1">'is_active'</span><span class="p">])</span>
+
+        <span class="c1"># Única fuente de autorización: la sesión, no auth.Group.</span>
+        <span class="c1"># Usa el request explícito si lo pasan (tests); si no, el de la</span>
+        <span class="c1"># instancia que setea mozilla_django_oidc durante authenticate() real.</span>
+        <span class="n">effective_request</span> <span class="o">=</span> <span class="n">request</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'request'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">effective_request</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">effective_request</span><span class="p">,</span> <span class="s1">'session'</span><span class="p">):</span>
+            <span class="n">effective_request</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s1">'keycloak_roles'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">roles_negocio</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

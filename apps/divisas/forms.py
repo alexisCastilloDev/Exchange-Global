@@ -2,6 +2,8 @@
 
 from django import forms
 from django.core.validators import RegexValidator
+
+from apps.clientes.models import MetodoPago
 from .models import CalculoOperacion, ConfiguracionComision, ConfiguracionVigencia, Cotizacion, Divisa
 
 
@@ -240,6 +242,33 @@ class ConfirmarTriangulacionForm(forms.Form):
         if origen and destino and origen.pk == destino.pk:
             raise forms.ValidationError('Debe seleccionar dos divisas distintas.')
         return cleaned_data
+
+
+class PagarTransaccionForm(forms.Form):
+    """Elige con qué método de pago guardado se paga una transacción confirmada.
+
+    Es deliberadamente simple: solo pide un ``MetodoPago`` ya existente del
+    cliente activo (``apps.clientes.models.MetodoPago``, de GE-19). El medio
+    de pago efectivo (``Pago.medio_pago``) se deriva de
+    ``metodo_pago.tipo_medio`` en la vista; este formulario no decide nada
+    de proveedor, identificador externo ni monto, que son responsabilidad de
+    ``Pago.registrar_pago``.
+    """
+
+    metodo_pago = forms.ModelChoiceField(
+        queryset=MetodoPago.objects.none(),
+        label='Método de pago',
+        empty_label=None,
+        error_messages={
+            'required': 'Elegí un método de pago.',
+            'invalid_choice': 'El método de pago elegido no es válido.',
+        },
+    )
+
+    def __init__(self, *args, cliente=None, **kwargs):
+        """Restringe las opciones a los métodos de pago del cliente activo."""
+        super().__init__(*args, **kwargs)
+        self.fields['metodo_pago'].queryset = MetodoPago.objects.filter(cliente=cliente)
 
 
 class SimulacionDivisasForm(forms.Form):

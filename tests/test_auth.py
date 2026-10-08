@@ -208,26 +208,28 @@ def test_update_user_claims_reemplaza_roles_previos_en_sesion(backend, rf):
 
 
 @pytest.mark.django_db
-def test_login_de_analista_redirige_a_gestion_de_divisas(rf):
-    """El callback de Keycloak lleva al analista a su pantalla operativa."""
-    request = rf.get('/oidc/callback/')
-    request.session = SessionStore()
-    request.session['keycloak_roles'] = ['analista_cambiario']
-    request.user = User.objects.create_user(
-        username='analista-login',
-        email='analista-login@test.com',
-    )
-    callback = CustomOIDCCallbackView()
-    callback.request = request
+def test_login_siempre_redirige_a_inicio_sin_importar_el_rol(rf):
+    """El callback de Keycloak lleva a "Inicio" sin importar el rol (admin, analista, cliente)."""
+    for roles in (['analista_cambiario'], ['admin'], ['cliente'], []):
+        request = rf.get('/oidc/callback/')
+        request.session = SessionStore()
+        request.session['keycloak_roles'] = roles
+        request.user = User.objects.create_user(
+            username=f'login-{"-".join(roles) or "sin-rol"}',
+            email=f'login-{"-".join(roles) or "sin-rol"}@test.com',
+            is_staff='admin' in roles,
+        )
+        callback = CustomOIDCCallbackView()
+        callback.request = request
 
-    with patch(
-        'mozilla_django_oidc.views.OIDCAuthenticationCallbackView.login_success',
-        return_value=None,
-    ):
-        response = callback.login_success()
+        with patch(
+            'mozilla_django_oidc.views.OIDCAuthenticationCallbackView.login_success',
+            return_value=None,
+        ):
+            response = callback.login_success()
 
-    assert response.status_code == 302
-    assert response.url == reverse('divisas:tasas_vigentes')
+        assert response.status_code == 302
+        assert response.url == reverse('home')
 
 
 # ============================================================================

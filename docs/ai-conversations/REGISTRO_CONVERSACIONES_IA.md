@@ -22,7 +22,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 6. [Sesión 6 — 21/09/2026 — GE-31 — Venta de divisas](#sesión-6--21092026--ge-31--sprint-3-venta-de-divisas-y-corrección-del-cambio-de-divisas)
 7. [Sesión 7 — 22/09/2026 — GE-73 — Confirmación de operación cambiaria](#sesión-7--22092026--ge-73--sprint-3-confirmación-de-operación-cambiaria)
 8. [Sesión 8 — 24/09/2026 — GE-37 — Consultar el historial de transacciones](#sesión-8--24092026--ge-37--consultar-el-historial-de-transacciones)
-9. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+9. [Sesión 9 — 08/10/2026 — GE-25 — Asociación de pagos a transacciones](#sesión-9--08102026--ge-25--asociación-de-pagos-a-transacciones)
+10. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -1130,6 +1131,144 @@ Dos tests nuevos en `tests/test_seleccion_cliente.py` (estilo pytest, junto a lo
 - El filtro por estado usa una lista fija (`CalculoOperacion.ESTADO_CHOICES`, idéntica a la de `CalculoTriangulacion`); si algún día los estados de ambos modelos divergen, el combo debería construirse a partir de la unión de ambos en vez de asumir que son iguales.
 
 ---
+
+## Sesión 9 — 08/10/2026 — GE-25 — Asociación de pagos a transacciones
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-25
+**Rama:** `feature/GE-25`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Asociación de pagos a transacciones" en la rama en la que ya se estaba
+trabajando (`feature/GE-25`), con tests, docstrings, Sphinx actualizado y esta documentación de
+la conversación. El pedido aclaraba además que la producción en AWS ya estaba levantada, así que
+el desarrollo tenía que funcionar tanto en desarrollo como en producción sin romper nada.
+
+> Como usuario cliente quiero que los pagos realizados queden asociados a mis transacciones para
+> poder identificar correctamente cada operación.
+
+Criterios de aceptación:
+
+1. Al confirmarse un pago, queda asociado a una única transacción, con el medio de pago, el
+   proveedor, el identificador externo, el monto y la fecha. Un pago no puede registrarse sin una
+   transacción válida.
+2. Un pago exitoso sobre una transacción "Confirmada" la pasa a "Pagada".
+3. Una transacción con un pago exitoso rechaza cualquier otro intento de pago, sea cual sea el
+   medio.
+4. Una confirmación duplicada del mismo pago (mismo proveedor e identificador externo) no registra
+   un segundo pago ni altera la transacción.
+5. El cliente ve, en el detalle de su transacción, el pago asociado (medio, monto, fecha,
+   identificador) o que todavía no tiene uno registrado.
+6. Un cliente no puede ver el pago ni la transacción de otro cliente.
+
+### Diagnóstico inicial y una pregunta que cambió el alcance
+
+Antes de diseñar nada se preguntó explícitamente cómo debía "registrarse"/"confirmarse" un pago,
+dado que el proyecto no tiene ninguna pasarela de pago real integrada ni webhooks existentes: la
+opción propuesta por defecto era un flujo simulado y síncrono, iniciado por el propio cliente desde
+la pantalla de una transacción "Confirmada", eligiendo uno de sus métodos de pago ya guardados
+(`apps.clientes.models.MetodoPago`, de GE-19).
+
+La respuesta cambió el enfoque del diseño: esta HU es explícitamente la base de dos HU futuras que
+todavía no existen en el código — "Pago con tarjeta vía Stripe" y "Pago por transferencia bancaria
+vía SIPAP" —, ambas con webhooks propios (verificación de firma de Stripe, verificación de origen
+de SIPAP, y en el caso de SIPAP un estado "observado" para montos que no coinciden). Con ese dato,
+se decidió separar claramente dos capas:
+
+- Un punto de entrada único e idempotente, `Pago.registrar_pago`, que no sabe nada de Stripe ni de
+  SIPAP: solo recibe medio, proveedor, identificador externo y monto ya resueltos, valida y persiste.
+- El flujo *manual* de esta HU (el cliente elige un método guardado y paga) es, para
+  `registrar_pago`, un proveedor más (`Pago.PROVEEDOR_MANUAL`), exactamente como lo serán Stripe y
+  SIPAP el día que se implementen — sin necesitar tocar `registrar_pago` ni `Pago` para agregarlos.
+
+Se resolvió explícitamente no modelar ahora un estado "observado" ni verificación de firma: son
+responsabilidad de las HU de Stripe/SIPAP cuando existan, y adelantarlas sin esas HU implementadas
+habría sido especular sobre un diseño que todavía no está pedido.
+
+### Diseño
+
+- **Modelo nuevo `Pago`** (`apps/divisas/models.py`): dos `OneToOneField` nulos,
+  `calculo_operacion` y `calculo_triangulacion` (exactamente uno de los dos, nunca ambos ni
+  ninguno, validado en `clean()`), siguiendo el mismo patrón que el resto del código usa para los
+  dos tipos de transacción (vistas y templates paralelos) en vez de una `GenericForeignKey`, que no
+  tiene precedente en este proyecto. Además `medio_pago` (reusa
+  `MetodoPago.TIPO_MEDIO_CHOICES`), `proveedor` y `identificador_externo` (como texto libre, para
+  no tener que migrar cuando se agregue Stripe/SIPAP), `monto`, `creado_en` y un `metodo_pago`
+  opcional (FK a `MetodoPago`, para trazabilidad cuando el pago vino de un método guardado).
+- **`Pago.registrar_pago`** (classmethod): el único punto de escritura. Si ya existe un pago con el
+  mismo `(proveedor, identificador_externo)`, lo devuelve sin tocar nada (criterio 4). Si la
+  transacción no está "Confirmada" (incluido el caso de que ya esté "Pagada"), levanta
+  `PagoRechazadoError`. Si pasa ambas validaciones, crea el `Pago` y marca la transacción "Pagada"
+  dentro de una única transacción de base de datos.
+- **Idempotencia bajo concurrencia real, no solo "a simple vista".** Entre el chequeo inicial y el
+  `create()` hay una ventana de carrera (dos confirmaciones casi simultáneas del mismo pago, o dos
+  intentos de pago distintos sobre la misma transacción). Se resolvió capturando `IntegrityError`
+  del `create()` y, recién ahí, distinguiendo los dos casos posibles: si ya existe un pago con ese
+  mismo `(proveedor, identificador_externo)`, era la otra llamada ganando la carrera del mismo pago
+  (se devuelve esa fila, caso idempotente); si no, la colisión fue el propio `OneToOneField` de la
+  transacción (alguien más ya le registró un pago distinto), y se informa "ya fue pagada" — así el
+  criterio 3 ("por cualquier medio") queda garantizado por la base de datos, no solo por un chequeo
+  previo en Python que una carrera podría saltarse.
+- **Estado nuevo `PAGADA`** agregado a `ESTADO_CHOICES` de `CalculoOperacion` y
+  `CalculoTriangulacion` (migración `0013`, solo metadata).
+- **Vistas nuevas** `PagarTransaccionOperacionView` y `PagarTransaccionCambioView` (mismo patrón
+  `LoginRequiredMixin`/`UserPassesTestMixin` que el resto de pantallas de cliente, ownership por
+  `cliente=cliente_activo` — no por `usuario`, a propósito, porque el criterio 6 habla
+  explícitamente de "otro cliente"): GET muestra el formulario de pago (o por qué todavía no se
+  puede pagar) y POST registra el pago con `monto_final` de la transacción, que el cliente no puede
+  modificar. El identificador externo del flujo manual es el propio `pk` de la transacción, lo que
+  de paso lo hace naturalmente idempotente ante un doble clic en "Pagar".
+- **Formulario `PagarTransaccionForm`**: un único campo `metodo_pago`, acotado por `__init__` a los
+  métodos de pago del cliente activo (mismo patrón que ya usan `ConfirmarCalculoOperacionForm` y
+  `ConfirmarTriangulacionForm` para acotar choices dinámicamente).
+- **Templates**: dos pantallas nuevas (`pagar_transaccion.html`/`pagar_transaccion_cambio.html`,
+  siguiendo la misma duplicación por tipo que ya usan `confirmar_transaccion*.html`); un botón
+  "Pagar" nuevo en la rama "Confirmada" de `confirmar_transaccion*.html`; y una sección "Pago" nueva
+  en `detalle_transaccion_operacion.html`/`detalle_transaccion_cambio.html` que muestra el pago
+  asociado o, si no hay ninguno, un aviso explícito con un acceso directo para pagar (criterio 5).
+
+### Tests
+
+- `PagoRegistrarPagoTest` (7 tests): ejercita `Pago.registrar_pago` directamente, sin pasar por
+  vistas — los 4 criterios centrales (asociación completa, paso a "Pagada", rechazo del segundo pago
+  "por cualquier medio", idempotencia ante una confirmación duplicada), el rechazo por falta de
+  transacción válida, el rechazo si la transacción no está "Confirmada", y que el mismo método
+  funciona igual para un cambio entre divisas (`CalculoTriangulacion`), no solo para compra/venta.
+- `PagarTransaccionOperacionTest` (8 tests) y `PagarTransaccionCambioTest` (3 tests): el flujo
+  completo vía HTTP — la pantalla ofrece los métodos de pago guardados, pagar marca la transacción
+  "Pagada" con todos los datos del pago, no se ofrece el formulario si la transacción no está
+  confirmada, se rechaza pagar una transacción ya pagada, un reenvío del mismo pago no duplica nada,
+  el detalle muestra el pago o la ausencia de uno, y otro cliente recibe 404 tanto al intentar ver
+  como al intentar pagar la transacción ajena (criterio 6).
+
+### Resultado final
+
+- Suite completa: **250 passed**, sin fallas (18 tests nuevos en `tests/test_operaciones.py` para
+  esta HU).
+- `manage.py check` y `makemigrations --check --dry-run`: sin problemas.
+- Sphinx recompilado en modo estricto (`-W`): sin advertencias. `guia.rst` documenta el flujo de
+  pago, el rol de `Pago.registrar_pago` y por qué está pensado como base de Stripe/SIPAP;
+  `templates.rst` incluye las dos pantallas nuevas; las páginas de referencia de `models`, `forms` y
+  `views` de `apps.divisas` incluyen `Pago`, `PagoRechazadoError`, `PagarTransaccionForm`,
+  `PagarTransaccionOperacionView` y `PagarTransaccionCambioView`.
+- No fue necesario tocar nada de la infraestructura de producción (Dockerfile, `docker-compose.yml`,
+  Nginx, ni el workflow de GitHub Actions): la migración `0013` se aplica sola en el próximo
+  despliegue, porque `deploy/aws/entrypoint.sh` ya corre `migrate` al arrancar el contenedor de la
+  app, y esta HU no agrega variables de entorno ni servicios nuevos.
+
+### Pendiente / fuera de alcance
+
+- No se implementó ningún proveedor real de pago: ni Stripe ni SIPAP existen todavía en este
+  código. Esta HU deja `Pago` y `registrar_pago` listos para que esas dos HU futuras los reutilicen
+  desde sus propios webhooks, sin tener que rediseñar nada de lo construido acá.
+- No se modeló un estado "observado" (pago con monto distinto al esperado, mencionado en la futura
+  HU de SIPAP): no lo pide esta HU y se prefirió no especular sobre un diseño que todavía no está
+  definido.
+- El pago manual de esta HU no tiene ninguna verificación de firma ni de autenticidad: es, a
+  propósito, el mismo flujo simulado que ya usaban las operaciones de compra/venta/cambio antes de
+  tener un gateway real.
 
 ## Enlaces externos (conversaciones completas)
 
