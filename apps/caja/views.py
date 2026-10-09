@@ -25,6 +25,24 @@ class AbrirCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
         roles = self.request.session.get('keycloak_roles', [])
         return 'cajero' in roles
 
+    @staticmethod
+    def _avisar_divisas_sin_cotizar(request, form):
+        """Informa qué divisas activas no se pueden incluir por falta de cotización.
+
+        No es un criterio de aceptación de esta HU en sí, pero una divisa
+        sin ninguna cotización vigente no se puede valuar: dejar que el
+        cajero le cuente un saldo inicial igual sería un dato que ningún
+        otro cálculo del sistema (cambio, arqueo futuro) podría usar.
+        """
+        if not form.divisas_sin_cotizar:
+            return
+        codigos = ', '.join(divisa.codigo for divisa in form.divisas_sin_cotizar)
+        messages.warning(
+            request,
+            f'Hace falta cotizar {codigos} antes de poder manejarla en una caja. '
+            'Contactate con un analista cambiario o un administrador.',
+        )
+
     def get(self, request, *args, **kwargs):
         """Muestra el formulario de apertura, o por qué no se puede abrir otra."""
         caja_abierta = Caja.objects.filter(usuario=request.user, estado=Caja.ESTADO_ABIERTA).first()
@@ -32,6 +50,7 @@ class AbrirCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
             messages.error(request, 'Ya tenés una caja abierta. Cerrala antes de abrir otra.')
             return redirect('caja:panel')
         form = AperturaCajaForm()
+        self._avisar_divisas_sin_cotizar(request, form)
         return render(request, 'caja/abrir_caja.html', {'form': form})
 
     def post(self, request, *args, **kwargs):
@@ -51,6 +70,7 @@ class AbrirCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
             return redirect('caja:panel')
 
         form = AperturaCajaForm(request.POST)
+        self._avisar_divisas_sin_cotizar(request, form)
         if not form.is_valid():
             return render(request, 'caja/abrir_caja.html', {'form': form})
 

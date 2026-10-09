@@ -21,6 +21,15 @@ Contexto esperado: form.
 <div class="row g-4 justify-content-center">
     <div class="col-lg-7">
         <div class="ge-card">
+            {% if form.divisas_sin_cotizar %}
+            <div class="operation-expiry mb-3">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                {% for divisa in form.divisas_sin_cotizar %}{{ divisa.codigo }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                todavía no {% if form.divisas_sin_cotizar|length > 1 %}tienen{% else %}tiene{% endif %} una cotización vigente,
+                así que no se puede{% if form.divisas_sin_cotizar|length > 1 %}n{% endif %} registrar en esta caja.
+                Contactate con un analista cambiario o un administrador para que la{% if form.divisas_sin_cotizar|length > 1 %}s{% endif %} cotice{% if form.divisas_sin_cotizar|length > 1 %}n{% endif %}.
+            </div>
+            {% endif %}
             {% if form.divisas %}
             <form method="post">
                 {% csrf_token %}
@@ -36,7 +45,7 @@ Contexto esperado: form.
                 <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i> Abrir caja</button>
             </form>
             {% else %}
-            <div class="ge-empty-state">No hay divisas activas para registrar un saldo inicial.</div>
+            <div class="ge-empty-state">No hay ninguna divisa cotizada todavía para registrar un saldo inicial.</div>
             {% endif %}
         </div>
     </div>

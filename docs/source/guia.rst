@@ -44,7 +44,27 @@ Flujo de autenticación
 #. El backend valida las claims y extrae los roles de negocio.
 #. Los roles efectivos se guardan en ``request.session['keycloak_roles']``.
 #. Las vistas comprueban la sesión mediante decoradores o mixins de Django.
-#. El callback redirige al usuario hacia el panel apropiado según su rol.
+#. El callback (``apps.authentication.views.CustomOIDCCallbackView.login_success``)
+   redirige siempre a "Inicio" (``home``), sin importar el rol: cada pantalla de
+   inicio ya muestra únicamente los accesos que corresponden al rol del usuario.
+
+Administración de usuarios y roles vía Keycloak
+-------------------------------------------------
+
+``apps.users.services`` administra usuarios y realm roles contra la Admin API de
+Keycloak (sincronizar usuarios, consultar o asignar roles): todo vía
+``python-keycloak``, sin persistir roles en ``auth.Group``/``auth.Permission`` de
+Django. Para que esas llamadas funcionen, ``settings.KEYCLOAK_SERVER_URL`` debe
+terminar en ``/`` si Keycloak corre bajo un path propio (por ejemplo
+``--http-relative-path /auth``, como en producción): ``python-keycloak`` arma cada
+endpoint con ``urllib.parse.urljoin(server_url, path)``, que **descarta** el
+último tramo del path si ``server_url`` no termina en "/" (``urljoin('.../auth',
+'admin/realms/x')`` da ``'.../admin/realms/x'``, perdiendo ``/auth``). En
+desarrollo esto no se nota porque ``KEYCLOAK_SERVER_URL`` ahí no tiene ningún
+tramo de path propio. ``apps.users.services._obtener_keycloak_admin`` ya
+normaliza la URL para que esto no dependa de cómo se escriba la variable de
+entorno, pero el valor configurado en ``.env`` conviene dejarlo con la barra
+final igual, para que coincida con lo que el código termina usando realmente.
 
 Flujo operativo de divisas
 --------------------------

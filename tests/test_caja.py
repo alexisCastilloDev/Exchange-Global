@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.caja.models import Caja, SaldoInicialCaja
-from apps.divisas.models import Divisa
+from apps.divisas.models import Cotizacion, Divisa
 
 User = get_user_model()
 
@@ -25,6 +25,7 @@ class AperturaCajaTest(TestCase):
         session.save()
         self.pyg = Divisa.objects.create(codigo='PYG', nombre='Guaraní', simbolo='Gs.', activa=True)
         self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        Cotizacion.objects.create(divisa=self.usd, tasa_compra=Decimal('7300.00'), tasa_venta=Decimal('7400.00'))
         self.url_abrir = reverse('caja:abrir')
         self.url_panel = reverse('caja:panel')
 
@@ -94,6 +95,28 @@ class AperturaCajaTest(TestCase):
             caja.saldos_iniciales.get(divisa=self.usd).monto,
             Decimal('0.00'),
         )
+
+    def test_una_divisa_activa_sin_cotizacion_no_se_ofrece_para_registrar_saldo(self):
+        """Una divisa activa sin ninguna cotización vigente no recibe un campo de saldo."""
+        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+
+        response = self.client.get(self.url_abrir)
+
+        self.assertNotContains(response, f'name="saldo_{eur.pk}"')
+        self.assertContains(response, 'EUR')
+        self.assertContains(response, 'Hace falta cotizar')
+        self.assertContains(response, 'analista cambiario o un administrador')
+
+    def test_se_puede_abrir_la_caja_sin_la_divisa_sin_cotizar(self):
+        """Una divisa sin cotizar no bloquea la apertura: se abre con el resto, sin ese saldo."""
+        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+
+        response = self.client.post(self.url_abrir, self._datos(), follow=True)
+
+        self.assertContains(response, 'La caja fue abierta correctamente')
+        caja = Caja.objects.get()
+        self.assertEqual(caja.saldos_iniciales.count(), 2)
+        self.assertFalse(caja.saldos_iniciales.filter(divisa=eur).exists())
 
     def test_el_panel_muestra_el_saldo_inicial_tal_como_se_registro(self):
         """Criterio 4: tras abrir, el panel muestra el saldo inicial por moneda registrado."""
