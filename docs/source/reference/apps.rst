@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    apps.authentication
+   apps.caja
    apps.clientes
    apps.divisas
    apps.users

@@ -184,6 +184,17 @@ Divisas
    :language: html
    :lines: 1-7
 
+Caja
+----
+
+.. literalinclude:: ../../templates/caja/abrir_caja.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/caja/panel_caja.html
+   :language: html
+   :lines: 1-7
+
 Parciales
 ---------
 

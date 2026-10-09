@@ -30,7 +30,7 @@ Contexto esperado: user, cliente_activo y permisos de UI.
                 {% endif %}
 
                 <a href="{% url 'oidc_authentication_init' %}" class="btn btn-primary btn-lg px-4">
-                    <i class="bi bi-shield-lock me-2"></i>Iniciar Sesión
+                    <i class="bi bi-shield-lock me-2"></i>Iniciar Sesión con Keycloak SSO
                 </a>
             </div>
 
@@ -213,6 +213,17 @@ Contexto esperado: user, cliente_activo y permisos de UI.
                 <i class="bi bi-clock-history" style="font-size: 22px; color: var(--ge-brass);"></i>
                 <h2 style="font-size:16px; margin: 10px 0 4px;">Historial de transacciones</h2>
                 <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá las operaciones de compra y venta de los clientes.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_ver_caja %}
+    <div class="col-md-4">
+        <a href="{% url 'caja:panel' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-cash-stack" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Mi caja</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Abrí tu caja o consultá el saldo inicial del turno.</p>
             </div>
         </a>
     </div>

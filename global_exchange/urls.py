@@ -48,4 +48,5 @@ urlpatterns = [
 
     path('clientes/', include('apps.clientes.urls')),
     path('divisas/', include('apps.divisas.urls')),   # <- esta línea es la que rescatás de GE-18/20
+    path('caja/', include('apps.caja.urls')),
 ]

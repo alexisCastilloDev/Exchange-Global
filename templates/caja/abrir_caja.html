@@ -1,0 +1,44 @@
+<!--
+Formulario de apertura de caja: saldo inicial por cada divisa activa.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: form.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Abrir caja - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-cash-stack"></i> Caja</span>
+        <h1>Abrir caja</h1>
+        <p>Registrá el saldo inicial de cada moneda para empezar tu turno.</p>
+    </div>
+    <a href="{% url 'caja:panel' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver</a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+        <div class="ge-card">
+            {% if form.divisas %}
+            <form method="post">
+                {% csrf_token %}
+                {% for campo in form %}
+                <div class="mb-3">
+                    <label for="{{ campo.id_for_label }}" class="form-label">{{ campo.label }}</label>
+                    {{ campo }}
+                    {% if campo.errors %}
+                        <div class="text-danger small mt-1">{{ campo.errors|join:' ' }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i> Abrir caja</button>
+            </form>
+            {% else %}
+            <div class="ge-empty-state">No hay divisas activas para registrar un saldo inicial.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
