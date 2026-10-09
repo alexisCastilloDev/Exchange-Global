@@ -23,7 +23,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 7. [Sesión 7 — 22/09/2026 — GE-73 — Confirmación de operación cambiaria](#sesión-7--22092026--ge-73--sprint-3-confirmación-de-operación-cambiaria)
 8. [Sesión 8 — 24/09/2026 — GE-37 — Consultar el historial de transacciones](#sesión-8--24092026--ge-37--consultar-el-historial-de-transacciones)
 9. [Sesión 9 — 08/10/2026 — GE-25 — Asociación de pagos a transacciones](#sesión-9--08102026--ge-25--asociación-de-pagos-a-transacciones)
-10. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+10. [Sesión 10 — 09/10/2026 — Apertura de Caja](#sesión-10--09102026--apertura-de-caja)
+11. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -1269,6 +1270,122 @@ habría sido especular sobre un diseño que todavía no está pedido.
 - El pago manual de esta HU no tiene ninguna verificación de firma ni de autenticidad: es, a
   propósito, el mismo flujo simulado que ya usaban las operaciones de compra/venta/cambio antes de
   tener un gateway real.
+
+## Sesión 10 — 09/10/2026 — Apertura de Caja
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Apertura de Caja
+**Rama:** `feature/GE-25`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Apertura de Caja", con tests, docstrings, Sphinx actualizado y esta
+documentación de la conversación.
+
+> Como cajero quiero abrir una caja registrando el inventario inicial por moneda para comenzar mi
+> turno operativo.
+
+Criterios de aceptación:
+
+1. Sin una caja abierta, al ingresar el saldo inicial de cada moneda que va a manejar, el sistema
+   crea una caja en estado "Abierta", asociada al cajero y a la fecha y hora de apertura.
+2. Con una caja ya abierta, intentar abrir otra se rechaza, indicando que hay que cerrar la actual
+   primero.
+3. Un saldo inicial negativo o con formato inválido en alguna moneda muestra el error de validación
+   sin crear la caja; un saldo inicial de cero es válido.
+4. Al acceder a su panel tras abrir la caja correctamente, el cajero ve el saldo inicial por moneda
+   tal como lo registró.
+5. Un usuario sin rol de cajero no puede acceder a ninguna función de caja (apertura, operaciones,
+   arqueo, movimientos o cierre).
+
+### Diagnóstico inicial
+
+El rol `cajero` ya existía como string reconocido en el flujo de autenticación desde las primeras
+sesiones de este proyecto (GE-7), pero no estaba conectado a ninguna lógica de autorización ni vista
+real: `apps.authentication.backends` no filtra roles contra una lista fija del lado de Django (todo
+rol no técnico que llega de Keycloak pasa directo a `session['keycloak_roles']`), así que no hizo
+falta tocar nada ahí — solo empezar a *usar* `'cajero' in roles` en las vistas nuevas, igual que ya
+se hace con `'cliente'`/`'admin'`/`'analista_cambiario'`.
+
+No existía ningún modelo de caja en el proyecto. Se evaluó dónde ubicarlo: dado que el resto del
+código separa dominios en apps propias (`apps.authentication`, `apps.clientes`, `apps.divisas`,
+`apps.users`), se creó una app nueva, `apps.caja`, en vez de forzarlo dentro de `apps.divisas` solo
+porque maneja montos — la caja es un dominio propio (apertura, y a futuro operaciones, arqueo,
+movimientos y cierre), no una extensión del catálogo de divisas.
+
+### Diseño
+
+- **`apps.caja.models.Caja`**: UUID, `usuario` (el cajero), `estado` (`ABIERTA`/`CERRADA`),
+  `abierta_en` (automático), `cerrada_en` (nulo por ahora). El cierre, las operaciones, el arqueo y
+  los movimientos son HU futuras que no existen todavía en este código; `estado` ya contempla
+  "Cerrada" desde ahora para no migrar el modelo de nuevo cuando se implementen, siguiendo el mismo
+  criterio que ya se usó en GE-25 (`Pago` como base de Stripe/SIPAP).
+- **`apps.caja.models.SaldoInicialCaja`**: una fila por divisa activa con el monto contado al abrir,
+  asociada a la `Caja`.
+- **Restricción única parcial en la base** (`UniqueConstraint` con `condition=Q(estado='ABIERTA')`
+  sobre `usuario`): el Criterio 2 no depende solo de que la vista chequee si ya hay una caja abierta
+  antes de crear otra — la propia base de datos lo impide, así que una carrera entre dos pestañas
+  abriendo caja casi al mismo tiempo no puede crear dos filas "Abierta" para el mismo cajero. La
+  vista captura el `IntegrityError` de esa carrera y lo convierte en el mismo mensaje de rechazo, en
+  vez de dejarlo explotar como error 500 (mismo patrón que `Pago.registrar_pago` en GE-25).
+- **`apps.caja.forms.AperturaCajaForm`**: en vez de pedirle al cajero que elija qué monedas va a
+  manejar y después el monto de cada una (dos pasos), genera dinámicamente un campo
+  `saldo_<divisa.pk>` por cada divisa activa del sistema (incluido PYG, si existe como divisa
+  activa) en un único paso. Un saldo en cero simplemente significa "no manejo esta moneda en este
+  turno", que es exactamente lo que pide el Criterio 3 al declarar válido un saldo en cero.
+  `DecimalField(min_value=0)` con mensajes de error en español (mismo criterio que
+  `CalculoOperacionForm.monto` en `apps.divisas`) cubre tanto el monto negativo como el no numérico.
+- **`apps.caja.views.AbrirCajaView`** y **`PanelCajaView`**: ambas restringen `test_func` a
+  `'cajero' in roles`, sin excepción para `admin` ni `analista_cambiario` (a diferencia de otras
+  pantallas del sistema) porque el Criterio 5 no menciona ninguna excepción. El panel
+  (`/caja/`) muestra la caja abierta del cajero con su saldo inicial por moneda, o invita a abrir
+  una si todavía no tiene ninguna.
+- Se agregó el enlace "Mi caja" al sidebar (sección nueva "Caja") y una tarjeta en `home.html`,
+  ambos condicionados al flag de UI `puede_ver_caja`, siguiendo el mismo patrón que el resto de
+  accesos — con la corrección reciente (misma sesión anterior) de que ningún acceso del sidebar
+  quede sin su tarjeta correspondiente en el inicio.
+
+### Tests
+
+`tests/test_caja.py` (14 tests nuevos): uno por cada criterio de aceptación (apertura con el saldo
+de cada moneda, rechazo de una segunda caja abierta tanto por POST como por no ofrecer el formulario
+en el GET, monto negativo, formato inválido, saldo en cero válido, el panel muestra el saldo
+registrado, acceso denegado sin rol cajero —en apertura y en panel, por GET y por POST— y sin ningún
+rol, redirección al login sin sesión), más una clase aparte (`CajaModeloTest`) que prueba la
+restricción de base de datos directamente contra el modelo, sin pasar por la vista: ni una segunda
+`Caja.objects.create()` para el mismo cajero con estado "Abierta", ni un `SaldoInicialCaja`
+duplicado para la misma divisa en la misma caja, pasan la restricción.
+
+### Problema encontrado durante la sesión (no introducido por esta HU)
+
+Al correr la suite completa antes de cerrar, falló `test_home_page_unauthenticated`: el botón de
+login en `home.html` decía "Iniciar Sesión" en vez de "Iniciar Sesión con Keycloak SSO". El archivo
+había cambiado por fuera de esta sesión de Claude Code (el sistema lo señaló explícitamente al
+empezar esta conversación) antes de tocar nada de Caja; no pareció un cambio intencional —acorta el
+texto del botón sin ningún motivo aparente y rompía un test que no tiene relación con esta HU—, así
+que se restauró el texto completo y se avisó explícitamente en la respuesta, en vez de corregirlo en
+silencio.
+
+### Resultado final
+
+- Suite completa: **253 passed** (239 anteriores + 14 nuevos de esta HU), sin fallas tras restaurar
+  el texto del botón de login.
+- `manage.py check` y `makemigrations --check --dry-run`: sin problemas. Migración `apps.caja.0001`
+  verificada contra la base de desarrollo (PostgreSQL), incluida la restricción única parcial.
+- Sphinx recompilado con `-W`: sin advertencias. `guia.rst` documenta el flujo de apertura y por qué
+  el resto de las funciones de caja quedan fuera de esta HU; `templates.rst` incluye las dos
+  pantallas nuevas; se agregó `reference/apps.caja.rst` (y sus submódulos) a la referencia, enlazado
+  desde `reference/apps.rst`.
+
+### Pendiente / fuera de alcance
+
+- El cierre de caja, las operaciones de caja, el arqueo y los movimientos son HU futuras: no existe
+  ninguna vista para ellas todavía, solo el modelo ya preparado (`Caja.estado` contempla "Cerrada")
+  para no tener que migrar de nuevo cuando se implementen.
+- No se ofrece elegir qué monedas manejar antes de ingresar los montos: se pidió el saldo de todas
+  las divisas activas de una vez, usando cero como "no manejo esta moneda", que es más simple y
+  cumple el criterio igual.
 
 ## Enlaces externos (conversaciones completas)
 

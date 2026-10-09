@@ -1,0 +1,59 @@
+<!--
+Panel del cajero: muestra la caja abierta y su saldo inicial por moneda.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: caja (None si no tiene ninguna abierta).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Mi caja - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-cash-stack"></i> Caja</span>
+        <h1>Mi caja</h1>
+        <p>Saldo inicial registrado al abrir tu turno.</p>
+    </div>
+    {% if not caja %}
+    <a href="{% url 'caja:abrir' %}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Abrir caja</a>
+    {% endif %}
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+        <div class="ge-card">
+            {% if caja %}
+                <div class="ge-card__header mb-3">
+                    <h2>Caja abierta</h2>
+                    <span class="badge-activo">{{ caja.get_estado_display }}</span>
+                </div>
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Abierta el: </span><strong class="operation-summary__value">{{ caja.abierta_en|date:"d/m/Y H:i" }}</strong></div>
+                </div>
+                <h3 class="mt-4" style="font-size:15px;">Saldo inicial por moneda</h3>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Divisa</th>
+                                <th>Saldo inicial</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for saldo in caja.saldos_iniciales.all %}
+                            <tr>
+                                <td>{{ saldo.divisa.codigo }}</td>
+                                <td class="ge-num">{{ saldo.monto|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="ge-empty-state">Todavía no tenés una caja abierta.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

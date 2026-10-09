@@ -8,6 +8,7 @@ Global Exchange es una aplicación Django organizada por dominios funcionales:
 
 * ``apps.authentication``: integración OIDC con Keycloak, roles de sesión,
   filtros de plantillas y auditoría de bajas.
+* ``apps.caja``: apertura de caja y saldo inicial por moneda de un cajero.
 * ``apps.clientes``: perfiles de clientes, selección del cliente activo,
   asociaciones de usuarios y métodos de pago.
 * ``apps.divisas``: catálogo de divisas, cotizaciones, historial y simulación.
@@ -43,7 +44,27 @@ Flujo de autenticación
 #. El backend valida las claims y extrae los roles de negocio.
 #. Los roles efectivos se guardan en ``request.session['keycloak_roles']``.
 #. Las vistas comprueban la sesión mediante decoradores o mixins de Django.
-#. El callback redirige al usuario hacia el panel apropiado según su rol.
+#. El callback (``apps.authentication.views.CustomOIDCCallbackView.login_success``)
+   redirige siempre a "Inicio" (``home``), sin importar el rol: cada pantalla de
+   inicio ya muestra únicamente los accesos que corresponden al rol del usuario.
+
+Administración de usuarios y roles vía Keycloak
+-------------------------------------------------
+
+``apps.users.services`` administra usuarios y realm roles contra la Admin API de
+Keycloak (sincronizar usuarios, consultar o asignar roles): todo vía
+``python-keycloak``, sin persistir roles en ``auth.Group``/``auth.Permission`` de
+Django. Para que esas llamadas funcionen, ``settings.KEYCLOAK_SERVER_URL`` debe
+terminar en ``/`` si Keycloak corre bajo un path propio (por ejemplo
+``--http-relative-path /auth``, como en producción): ``python-keycloak`` arma cada
+endpoint con ``urllib.parse.urljoin(server_url, path)``, que **descarta** el
+último tramo del path si ``server_url`` no termina en "/" (``urljoin('.../auth',
+'admin/realms/x')`` da ``'.../admin/realms/x'``, perdiendo ``/auth``). En
+desarrollo esto no se nota porque ``KEYCLOAK_SERVER_URL`` ahí no tiene ningún
+tramo de path propio. ``apps.users.services._obtener_keycloak_admin`` ya
+normaliza la URL para que esto no dependa de cómo se escriba la variable de
+entorno, pero el valor configurado en ``.env`` conviene dejarlo con la barra
+final igual, para que coincida con lo que el código termina usando realmente.
 
 Flujo operativo de divisas
 --------------------------
@@ -244,6 +265,35 @@ de la comisión, acá no participa ``analista_cambiario``). Se resuelven así:
 
 Ver ``apps.divisas.models.ConfiguracionVigencia.vigencia_calculo_segundos`` y
 ``vigencia_confirmacion_segundos``.
+
+Apertura de caja
+-----------------
+
+Un usuario con rol ``cajero`` abre su caja en ``/caja/abrir/``
+(``apps.caja.views.AbrirCajaView``), registrando el saldo inicial de cada
+divisa activa del sistema (incluido PYG, si existe como divisa activa):
+``apps.caja.forms.AperturaCajaForm`` genera un campo por divisa en vez de
+pedirle al cajero que elija cuáles va a manejar, así que un saldo en cero
+simplemente significa que no maneja esa moneda en el turno. Al confirmar,
+se crea una ``apps.caja.models.Caja`` en estado "Abierta" —asociada al
+cajero y a la fecha y hora de apertura— junto con un
+``apps.caja.models.SaldoInicialCaja`` por cada divisa.
+
+Un cajero no puede tener dos cajas "Abierta" al mismo tiempo: además de la
+validación en la vista, ``Caja.Meta.constraints`` agrega una restricción
+única parcial en la base de datos (solo entre filas con
+``estado='ABIERTA'``) para que ni una carrera entre dos pestañas pueda
+crear una segunda. El panel del cajero (``/caja/``,
+``apps.caja.views.PanelCajaView``) muestra la caja abierta con el saldo
+inicial de cada moneda tal como se registró, o la invitación a abrir una si
+todavía no tiene ninguna.
+
+El cierre de caja, las operaciones de caja, el arqueo y los movimientos son
+HU futuras que no existen todavía en este código; ``Caja.estado`` ya
+contempla "Cerrada" para no tener que migrar el modelo de nuevo cuando se
+implementen. El acceso a cualquier función de caja está restringido al rol
+``cajero`` exclusivamente (sin excepción para administración ni análisis
+cambiario, a diferencia de otras pantallas de este sistema).
 
 Acceso a esta documentación desde el sistema
 ----------------------------------------------

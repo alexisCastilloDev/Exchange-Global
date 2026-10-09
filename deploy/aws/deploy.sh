@@ -12,6 +12,12 @@ echo "==> Commit desplegado: $(git rev-parse --short HEAD) (rama $(git branch --
 echo "==> Construyendo y levantando contenedores"
 "${COMPOSE[@]}" up -d --build
 
+echo "==> Verificando que Keycloak vea el tema de login"
+if ! "${COMPOSE[@]}" exec -T keycloak test -f /opt/keycloak/themes/global-exchange/login/theme.properties; then
+  echo "==> El tema no es visible en el contenedor; recreando Keycloak"
+  "${COMPOSE[@]}" up -d --force-recreate keycloak
+fi
+
 echo "==> Reiniciando Nginx (para que resuelva las IPs nuevas de app y keycloak)"
 "${COMPOSE[@]}" restart nginx
 

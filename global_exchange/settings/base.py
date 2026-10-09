@@ -25,8 +25,9 @@ INSTALLED_APPS = [
     
     'apps.divisas',
     'apps.users',
-    'apps.authentication', 
-    'apps.clientes',       
+    'apps.authentication',
+    'apps.clientes',
+    'apps.caja',
 ]
 
 MIDDLEWARE = [
