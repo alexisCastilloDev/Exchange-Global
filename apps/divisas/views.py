@@ -219,8 +219,14 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def get_queryset(self):
         """
         Criterio de Aceptación 4: Las divisas inactivas no se muestran.
+
+        Tampoco PYG: es la moneda local/base del sistema (garantizada en el
+        catálogo por la migración de datos
+        ``apps.divisas.0014_crear_divisa_pyg``), nunca tiene una cotización
+        propia que listar acá, igual que ya la excluyen los selectores de
+        divisa operable (``DivisaSelect``/``CalculoOperacionForm``).
         """
-        return Divisa.objects.filter(activa=True)
+        return Divisa.objects.filter(activa=True).exclude(codigo='PYG')
 
 
 class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):

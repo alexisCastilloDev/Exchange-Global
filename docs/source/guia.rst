@@ -8,7 +8,8 @@ Global Exchange es una aplicación Django organizada por dominios funcionales:
 
 * ``apps.authentication``: integración OIDC con Keycloak, roles de sesión,
   filtros de plantillas y auditoría de bajas.
-* ``apps.caja``: apertura de caja y saldo inicial por moneda de un cajero.
+* ``apps.caja``: apertura de caja, saldo inicial por moneda y operaciones de
+  ventanilla (compra y venta de divisas en efectivo) de un cajero.
 * ``apps.clientes``: perfiles de clientes, selección del cliente activo,
   asociaciones de usuarios y métodos de pago.
 * ``apps.divisas``: catálogo de divisas, cotizaciones, historial y simulación.
@@ -271,8 +272,10 @@ Apertura de caja
 
 Un usuario con rol ``cajero`` abre su caja en ``/caja/abrir/``
 (``apps.caja.views.AbrirCajaView``), registrando el saldo inicial de cada
-divisa activa del sistema (incluido PYG, si existe como divisa activa):
-``apps.caja.forms.AperturaCajaForm`` genera un campo por divisa en vez de
+divisa activa del sistema, incluido PYG (su existencia en el catálogo está
+garantizada por la migración de datos ``apps.divisas.0014_crear_divisa_pyg``,
+ver `Operaciones en ventanilla`_): ``apps.caja.forms.AperturaCajaForm``
+genera un campo por divisa en vez de
 pedirle al cajero que elija cuáles va a manejar, así que un saldo en cero
 simplemente significa que no maneja esa moneda en el turno. Al confirmar,
 se crea una ``apps.caja.models.Caja`` en estado "Abierta" —asociada al
@@ -284,16 +287,77 @@ validación en la vista, ``Caja.Meta.constraints`` agrega una restricción
 única parcial en la base de datos (solo entre filas con
 ``estado='ABIERTA'``) para que ni una carrera entre dos pestañas pueda
 crear una segunda. El panel del cajero (``/caja/``,
-``apps.caja.views.PanelCajaView``) muestra la caja abierta con el saldo
-inicial de cada moneda tal como se registró, o la invitación a abrir una si
-todavía no tiene ninguna.
+``apps.caja.views.PanelCajaView``) muestra la caja abierta, o la invitación
+a abrir una si todavía no tiene ninguna; al momento de abrir, antes de
+registrar cualquier operación, el saldo que muestra ese panel coincide con
+el saldo inicial recién contado (ver `Operaciones en ventanilla`_ para cómo
+cambia a partir de ahí).
 
-El cierre de caja, las operaciones de caja, el arqueo y los movimientos son
-HU futuras que no existen todavía en este código; ``Caja.estado`` ya
-contempla "Cerrada" para no tener que migrar el modelo de nuevo cuando se
-implementen. El acceso a cualquier función de caja está restringido al rol
-``cajero`` exclusivamente (sin excepción para administración ni análisis
-cambiario, a diferencia de otras pantallas de este sistema).
+El cierre de caja y el arqueo son HU futuras que no existen todavía en este
+código; ``Caja.estado`` ya contempla "Cerrada" para no tener que migrar el
+modelo de nuevo cuando se implementen. El acceso a cualquier función de caja
+está restringido al rol ``cajero`` exclusivamente (sin excepción para
+administración ni análisis cambiario, a diferencia de otras pantallas de este
+sistema).
+
+Operaciones en ventanilla
+-------------------------
+
+Implementa la HU "Gestión de operaciones en ventanilla": con la caja ya
+abierta, el cajero registra en ``/caja/operaciones/compra/`` o
+``/caja/operaciones/venta/`` (``apps.caja.views.RegistrarOperacionVentanillaView``)
+una compra o venta de divisas en efectivo con un cliente de mostrador, usando
+``apps.caja.forms.OperacionVentanillaForm`` para validar la divisa (activa,
+cotizada, nunca PYG) y el monto (mayor que cero, numérico).
+
+El cálculo de tasa y comisión **reutiliza** la misma función que ya usa el
+flujo online del cliente, ``apps.divisas.views._calcular_importe_operacion``
+(ver `Flujo operativo de divisas`_), en vez de duplicar esa lógica. La única
+particularidad es que ``apps.caja.models.OperacionVentanilla.TIPO_COMPRA`` y
+``TIPO_VENTA`` están escritos desde la perspectiva de la casa de cambio, al
+revés de ``CalculoOperacion.TIPO_COMPRA``/``TIPO_VENTA`` (escritos desde la
+perspectiva del cliente):
+
+* **Compra** (la casa le compra divisa al cliente): equivale a una "Venta"
+  para ``_calcular_importe_operacion``. El cliente entrega la divisa
+  (ingresa a la caja) y el cajero entrega guaraníes (egresa).
+* **Venta** (la casa le vende divisa al cliente): equivale a una "Compra"
+  para ``_calcular_importe_operacion``. El cliente entrega guaraníes
+  (ingresa) y el cajero entrega la divisa (egresa).
+
+Esta inversión está documentada explícitamente en el docstring de
+``OperacionVentanilla`` porque es, a propósito, lo contrario de lo que el
+nombre sugiere a primera vista.
+
+El saldo de la caja **no se guarda como un campo mutable**: ``Caja.saldo_actual``
+lo deriva, de forma perezosa, del saldo inicial (``SaldoInicialCaja``) más los
+ingresos y menos los egresos de esa moneda en las operaciones ya registradas,
+siguiendo el mismo patrón de estado computado que ``estado_efectivo``/
+``ultima_cotizacion`` usan en el resto del sistema. Antes de registrar la
+operación, la vista verifica que la caja tenga saldo suficiente de la moneda
+que el cajero debe entregar —la divisa en una venta, guaraníes en una
+compra— y, si no alcanza, la rechaza informando el saldo disponible y el
+monto necesario, sin crear nada.
+
+Sin una caja abierta, tanto el formulario como el registro se rechazan,
+redirigiendo a abrir una primero. Al guardarse, la operación queda vinculada
+a la caja activa y al cajero (``OperacionVentanilla.caja``/``cajero``), con
+la tasa, la comisión y los montos de ambas monedas (``monto_divisa``,
+``monto_pyg``). El panel del cajero (``/caja/``) muestra el saldo actual por
+moneda y las últimas operaciones registradas en el turno.
+
+Una compra necesita, además, poder valuar guaraníes contra una ``Divisa`` de
+código ``PYG`` real del catálogo. PYG es la moneda local/base del sistema —se
+cotiza y liquida todo contra ella, nunca se la ofrece como una divisa
+operable más (``DivisaSelect``/``CalculoOperacionForm``/
+``OperacionVentanillaForm`` la excluyen explícitamente)—, así que su
+existencia **no** depende de que un administrador la dé de alta a mano desde
+"Divisas → Nueva divisa" como si fuera una divisa extranjera: la migración de
+datos ``apps.divisas.0014_crear_divisa_pyg`` la garantiza en el catálogo desde
+el primer ``migrate``. Por el mismo motivo, ``TasasVigentesListView`` la
+excluye de la pantalla de tasas vigentes (nunca tiene una cotización propia
+que mostrar ahí). Una venta no tiene esta dependencia: solo entrega la divisa
+extranjera, nunca necesita resolver la fila de PYG.
 
 Acceso a esta documentación desde el sistema
 ----------------------------------------------

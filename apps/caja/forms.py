@@ -1,4 +1,4 @@
-"""Formularios para la apertura de caja."""
+"""Formularios para la apertura de caja y las operaciones de ventanilla."""
 
 from decimal import Decimal
 
@@ -64,3 +64,60 @@ class AperturaCajaForm(forms.Form):
             divisa: self.cleaned_data[self.nombre_campo(divisa)]
             for divisa in self.divisas
         }
+
+
+class OperacionVentanillaForm(forms.Form):
+    """Valida la divisa y el monto de una compra o venta de divisas en ventanilla.
+
+    Mismo criterio de validación que ``apps.divisas.forms.CalculoOperacionForm``
+    usa para el flujo online del cliente: rechaza un monto negativo, en cero
+    o no numérico, con mensajes en español. PYG no se ofrece como divisa
+    operable (es la moneda contra la que siempre se opera, nunca la que se
+    compra o vende), y tampoco una divisa sin cotización vigente, porque no
+    hay con qué calcular la tasa aplicada.
+    """
+
+    divisa = forms.ChoiceField(
+        label='Divisa',
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        error_messages={
+            'required': 'Debe seleccionar una divisa.',
+            'invalid_choice': (
+                'La divisa seleccionada está inactiva, no tiene cotización'
+                ' vigente o no está disponible.'
+            ),
+        },
+    )
+    monto = forms.DecimalField(
+        label='Monto en divisa',
+        min_value=Decimal('0.01'),
+        max_digits=18,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'class': 'form-control'}),
+        error_messages={
+            'required': 'Debe ingresar un monto.',
+            'invalid': 'El monto debe ser un número válido.',
+            'min_value': 'El monto debe ser mayor que cero.',
+            'max_digits': 'El monto supera la cantidad de dígitos permitida.',
+            'max_decimal_places': 'El monto admite como máximo 2 decimales.',
+            'max_whole_digits': 'El monto supera la cantidad de dígitos permitida.',
+        },
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Carga como opciones las divisas activas y con cotización vigente, sin PYG."""
+        super().__init__(*args, **kwargs)
+        self.divisas = [
+            divisa
+            for divisa in Divisa.objects.filter(activa=True).exclude(codigo='PYG').order_by('codigo')
+            if divisa.ultima_cotizacion is not None
+        ]
+        self.fields['divisa'].choices = [('', 'Seleccionar divisa')] + [
+            (str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})') for divisa in self.divisas
+        ]
+
+    def divisa_seleccionada(self):
+        """Devuelve la ``Divisa`` ya validada. Solo debe llamarse tras confirmar ``is_valid()``."""
+        pk = self.cleaned_data['divisa']
+        return next(divisa for divisa in self.divisas if str(divisa.pk) == pk)

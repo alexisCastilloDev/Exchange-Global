@@ -24,7 +24,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 8. [Sesión 8 — 24/09/2026 — GE-37 — Consultar el historial de transacciones](#sesión-8--24092026--ge-37--consultar-el-historial-de-transacciones)
 9. [Sesión 9 — 08/10/2026 — GE-25 — Asociación de pagos a transacciones](#sesión-9--08102026--ge-25--asociación-de-pagos-a-transacciones)
 10. [Sesión 10 — 09/10/2026 — Apertura de Caja](#sesión-10--09102026--apertura-de-caja)
-11. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+11. [Sesión 11 — 11/10/2026 — Gestión de operaciones en ventanilla](#sesión-11--11102026--gestión-de-operaciones-en-ventanilla)
+12. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -1386,6 +1387,173 @@ silencio.
 - No se ofrece elegir qué monedas manejar antes de ingresar los montos: se pidió el saldo de todas
   las divisas activas de una vez, usando cero como "no manejo esta moneda", que es más simple y
   cumple el criterio igual.
+
+## Sesión 11 — 11/10/2026 — Gestión de operaciones en ventanilla
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Gestión de operaciones en ventanilla
+**Rama:** `develop`
+**Participantes:** Ruth, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Gestión de operaciones en ventanilla", con tests, docstrings, Sphinx
+actualizado y esta documentación de la conversación.
+
+> Como cajero quiero registrar las operaciones de compra y venta de divisas realizadas en
+> efectivo para mantener actualizado el saldo de la caja.
+
+Criterios de aceptación:
+
+1. Dado que tengo una caja abierta, cuando registro una operación de compra o venta en
+   efectivo (reutilizando el cálculo de cotización ya existente), entonces el saldo de la
+   caja se actualiza según la divisa y el sentido de la operación: ingresa lo que el cliente
+   entrega y egresa lo que el cajero entrega.
+2. Dado que no tengo una caja abierta, cuando intento registrar una operación de ventanilla,
+   entonces el sistema rechaza la acción e indica que debo abrir una caja primero.
+3. Dado que el saldo de la moneda que el cajero debe entregar es insuficiente (la divisa en
+   una venta, guaraníes en una compra), cuando intento registrar la operación, entonces el
+   sistema la rechaza e informa el motivo.
+4. Dado que registro una operación en ventanilla, cuando se guarda, entonces queda vinculada
+   a la caja activa y al cajero, con la tasa y la comisión aplicadas y los montos de ambas
+   monedas.
+
+### Diagnóstico inicial
+
+El proyecto ya tenía todo lo necesario para reutilizar en vez de duplicar: `apps.caja.models.Caja`
+y `SaldoInicialCaja` (HU "Apertura de Caja", Sesión 10) para el saldo inicial por moneda, y
+`apps.divisas.views._calcular_importe_operacion` para el cálculo de tasa y comisión que ya usa el
+flujo online del cliente (`CalculoOperacionView`). No existía, en cambio, ningún concepto de "saldo
+actual" de una caja (solo el saldo inicial contado al abrir) ni ningún modelo de operación de
+ventanilla — había que diseñar ambos desde cero.
+
+Una decisión de nombres resultó más sutil de lo esperado: el Criterio 3 describe "la divisa en una
+venta, guaraníes en una compra" como lo que el cajero debe entregar. Eso implica que, en esta HU,
+"Compra" significa que **la casa le compra divisa al cliente** (perspectiva del cajero/casa de
+cambio) — exactamente lo opuesto a `apps.divisas.models.CalculoOperacion.TIPO_COMPRA`, que significa
+que el cliente compra divisa (perspectiva del cliente, usada en el flujo online). Confundir ambas
+convenciones habría invertido silenciosamente qué moneda entra y cuál sale en cada caso, así que la
+inversión quedó documentada explícitamente en el docstring del modelo nuevo en vez de dejarla
+implícita.
+
+### Diseño
+
+- **`apps.caja.models.OperacionVentanilla`** (nuevo): UUID, `caja` y `cajero` (vínculo explícito a
+  ambos, tal como pide el Criterio 4, aunque `caja.usuario` ya identifica al cajero), `tipo`
+  (`COMPRA`/`VENTA`, con el significado invertido respecto de `CalculoOperacion` explicado arriba),
+  `divisa`, `monto_divisa`, `tasa_aplicada`, `comision_porcentaje`, `comision` y `monto_pyg` (el
+  monto final en guaraníes, equivalente a `CalculoOperacion.monto_final`).
+- **`Caja.saldo_actual(divisa)`** (nuevo): en vez de agregar un campo mutable que haya que
+  mantener sincronizado en cada operación, el saldo se deriva de forma perezosa —mismo patrón que
+  `CalculoOperacion.estado_efectivo`/`Divisa.ultima_cotizacion` ya usan en este proyecto— como el
+  saldo inicial (`SaldoInicialCaja`) más los ingresos y menos los egresos de esa moneda en las
+  `OperacionVentanilla` ya registradas. Para PYG, una "Venta" ingresa y una "Compra" egresa
+  `monto_pyg`; para la divisa extranjera, una "Compra" ingresa y una "Venta" egresa `monto_divisa`
+  — el espejo exacto de a quién le entrega qué cada tipo de operación.
+- **`apps.caja.views.RegistrarOperacionVentanillaView`**: sigue el mismo patrón que
+  `CalculoOperacionView` (tipo normalizado desde la URL, `/caja/operaciones/<tipo>/`). Antes de
+  calcular nada, resuelve la caja abierta del cajero (Criterio 2) devolviendo la misma redirección a
+  `caja:abrir` que ya usa `AbrirCajaView`. Para calcular, invierte el `tipo` antes de llamar a
+  `_calcular_importe_operacion` (ver el diagnóstico) y nunca duplica esa función. Antes de guardar,
+  compara `caja.saldo_actual(...)` contra lo que el cajero debe entregar según el Criterio 3 y
+  rechaza con el motivo si no alcanza, sin crear nada.
+- **`apps.caja.forms.OperacionVentanillaForm`**: mismo criterio de validación que
+  `apps.divisas.forms.CalculoOperacionForm` (monto mayor que cero, numérico, con mensajes en
+  español) y mismo filtro de divisas operables (activas, cotizadas, nunca PYG).
+- El panel del cajero (`apps.caja.views.PanelCajaView`, `templates/caja/panel_caja.html`) pasó de
+  mostrar solo el saldo inicial a mostrar el **saldo actual** por moneda, dos accesos directos
+  ("Comprar divisas" / "Vender divisas") y el historial de las últimas operaciones del turno, para
+  poder verificar visualmente el Criterio 1 sin tener que ir a la base de datos.
+
+### Tests
+
+`tests/test_operaciones_ventanilla.py` (21 tests nuevos): uno o más por cada criterio (compra
+ingresa divisa y egresa guaraníes, venta al revés, la comisión configurada se descuenta
+correctamente, sin caja abierta se rechaza tanto el GET como el POST, saldo insuficiente de
+guaraníes rechaza una compra, saldo insuficiente de la divisa rechaza una venta, el límite exacto es
+suficiente, la operación guardada referencia caja/cajero/tasa/comisión/ambos montos), más
+validaciones de formulario (monto negativo, no numérico, PYG no ofrecido, divisa sin cotización no
+ofrecida, tipo de URL desconocido responde 404) y permisos (sin rol cajero, sin sesión). Se agregó
+además `CajaSaldoActualTest`, una clase aparte que prueba `Caja.saldo_actual` directamente contra el
+modelo (sin saldo inicial registrado parte de cero, no de un error; una operación de otra caja nunca
+se mezcla con el saldo de esta).
+
+### Resultado final
+
+- Suite completa: sin fallas tras agregar los 21 tests nuevos (ver el resultado de esta misma
+  sesión), sin ninguna regresión sobre `tests/test_caja.py` ni el resto del proyecto.
+- `manage.py check` y `makemigrations --check --dry-run`: sin problemas. Migración
+  `apps.caja.0002_operacionventanilla` generada y verificada.
+- Sphinx recompilado con `-W`: sin advertencias. `guia.rst` agregó la sección "Operaciones en
+  ventanilla" (con la explicación de la inversión de nombres respecto del flujo online, enlazada
+  desde "Flujo operativo de divisas"); `reference/apps.caja.models.rst`,
+  `reference/apps.caja.forms.rst` y `reference/apps.caja.views.rst` incluyen los símbolos nuevos;
+  `templates.rst` incluye la plantilla nueva (`operacion_ventanilla.html`) y el encabezado actualizado
+  de `panel_caja.html`.
+
+### Pendiente / fuera de alcance
+
+- No se modela un cliente de mostrador: ninguno de los 4 criterios de aceptación pide identificar
+  con qué cliente se hizo la operación, así que no se agregó ese campo para no construir algo que no
+  se pidió.
+- El cierre de caja y el arqueo siguen siendo HU futuras, igual que antes de esta sesión.
+
+### Corrección posterior (mismo día): compra rota por falta de la Divisa PYG en el catálogo
+
+Al probar una compra en el entorno real (no en los tests, que sí la creaban explícitamente), el
+sistema devolvía un error 500 (`Divisa.DoesNotExist: Divisa matching query does not exist.`) al
+intentar resolver la Divisa de código `PYG` para comprobar el saldo disponible (Criterio 3). La
+causa: en este proyecto, a diferencia de lo que esta sesión asumió, `PYG` **no** es una fila
+garantizada del catálogo de divisas — `AperturaCajaForm` ya trata su saldo inicial como opcional por
+el mismo motivo ("PYG, si existe como divisa activa"), y en la base real todavía no se había creado
+esa fila.
+
+Como una venta de ventanilla nunca necesita resolver la Divisa PYG (solo entrega la divisa
+extranjera), el problema era exclusivo de la rama de compra. Se corrigió reemplazando
+`Divisa.objects.get(codigo='PYG')` por una consulta que no rompe si no existe
+(`Divisa.objects.filter(codigo='PYG').first()`), informando el problema con un mensaje accionable
+("Divisas → Nueva divisa, código PYG") en vez de un error de servidor — mismo criterio que ya usa
+`AbrirCajaView._avisar_divisas_sin_cotizar` para una divisa extranjera sin cotizar.
+
+Se agregó `RegistrarOperacionVentanillaSinDivisaPygTest` (2 tests nuevos) que reproduce el escenario
+real, sin crear la Divisa PYG en el `setUp` (a diferencia del resto de la suite): confirma que una
+compra informa el problema sin romper y que una venta sigue funcionando igual sin esa fila. Suite
+completa: sin fallas tras el fix.
+
+### Segunda corrección (mismo día): el mensaje seguía siendo conceptualmente incorrecto
+
+El usuario señaló que el mensaje de la corrección anterior ("un administrador debe crearla desde
+Divisas → Nueva divisa") estaba mal planteado: PYG es la divisa **local/base** del sistema —contra
+la que se cotizan y liquidan todas las operaciones—, no una divisa extranjera más que alguien deba
+dar de alta manualmente desde el catálogo de divisas operables. Tratarla como un dato de catálogo
+opcional, a cargo de un administrador, contradice cómo el resto del sistema ya la trata: `DivisaSelect`,
+`CalculoOperacionForm`, `TriangulacionForm` y `OperacionVentanillaForm` la excluyen explícitamente de
+cualquier selector de "divisa a operar", precisamente porque nunca es algo que se compre o venda
+directamente.
+
+La corrección real no era mejorar el mensaje, sino eliminar la dependencia de que alguien la creara
+a mano: se agregó la migración de datos `apps.divisas.0014_crear_divisa_pyg` (`get_or_create`,
+reversible como no-op) que garantiza la fila `Divisa(codigo='PYG')` desde el primer `migrate` en
+cualquier base, nueva o existente. Con esa garantía, se revirtió el mensaje defensivo de la corrección
+anterior: la vista vuelve a `Divisa.objects.get(codigo='PYG')` sin ninguna rama de error, porque su
+ausencia ya no es un escenario posible en el flujo normal del sistema (coherente con la guía del
+proyecto de no agregar manejo de errores para casos que no pueden ocurrir).
+
+Efecto colateral detectado y corregido de paso: al garantizar PYG en el catálogo, empezaba a
+aparecer también en la pantalla de "tasas vigentes" (`TasasVigentesListView`), mostrando "sin
+cotización" junto a USD/EUR — exactamente la inconsistencia que el usuario señaló, porque PYG nunca
+tiene una cotización propia que mostrar ahí. Se la excluyó de esa vista con el mismo criterio que ya
+usan los selectores de divisa operable.
+
+Se actualizaron los tests que antes creaban `Divisa(codigo='PYG', ...)` a mano
+(`tests/test_caja.py`, `tests/test_operaciones_ventanilla.py`) para usar `Divisa.objects.get(...)` en
+su lugar (la migración ya la crea; volver a crearla ahora chocaría con la unicidad del código ISO), y
+se cambió el ejemplo de `test_admin_registra_divisa_activa_con_datos_obligatorios` de PYG a JPY por el
+mismo motivo. `RegistrarOperacionVentanillaSinDivisaPygTest` se reescribió: ya no se puede simular la
+ausencia de PYG (la migración la garantiza), así que ahora confirma lo contrario — que una compra
+funciona de punta a punta sin que nadie la haya dado de alta manualmente. `manage.py makemigrations
+--check` y `manage.py check`: sin problemas. Sphinx recompilado con `-W`: sin advertencias. Suite
+completa: sin fallas tras este segundo fix.
 
 ## Enlaces externos (conversaciones completas)
 

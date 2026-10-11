@@ -8,3 +8,7 @@ apps.caja.views module
 .. autoclass:: apps.caja.views.PanelCajaView
    :members:
    :show-inheritance:
+
+.. autoclass:: apps.caja.views.RegistrarOperacionVentanillaView
+   :members:
+   :show-inheritance:

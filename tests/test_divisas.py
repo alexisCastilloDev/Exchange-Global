@@ -140,16 +140,23 @@ class AdministracionDivisasTest(TestCase):
         session.save()
 
     def test_admin_registra_divisa_activa_con_datos_obligatorios(self):
-        """Registra una divisa activa con datos válidos."""
+        """Registra una divisa activa con datos válidos.
+
+        Usa JPY como ejemplo en vez de PYG: PYG ya existe de antemano (la
+        migración de datos ``apps.divisas.0014_crear_divisa_pyg`` la
+        garantiza como moneda local/base del sistema), así que intentar
+        crearla de nuevo acá chocaría con la unicidad del código ISO — y
+        el propósito de este test no depende de qué divisa se use.
+        """
         response = self.client.post(
             reverse('divisas:crear_divisa'),
-            {'codigo': 'PYG', 'nombre': 'Guaraní', 'simbolo': '₲'},
+            {'codigo': 'JPY', 'nombre': 'Yen', 'simbolo': '¥'},
         )
 
         self.assertEqual(response.status_code, 302)
-        divisa = Divisa.objects.get(codigo='PYG')
-        self.assertEqual(divisa.nombre, 'Guaraní')
-        self.assertEqual(divisa.simbolo, '₲')
+        divisa = Divisa.objects.get(codigo='JPY')
+        self.assertEqual(divisa.nombre, 'Yen')
+        self.assertEqual(divisa.simbolo, '¥')
         self.assertTrue(divisa.activa)
 
     def test_registro_rechaza_codigo_iso_duplicado(self):
