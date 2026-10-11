@@ -1,8 +1,11 @@
 <!--
-Panel del cajero: muestra la caja abierta y su saldo inicial por moneda.
+Panel del cajero: muestra la caja abierta, su saldo inicial y actual por
+moneda, los accesos para registrar operaciones de ventanilla y el
+historial reciente de esas operaciones.
 Hereda de: base.html.
 Bloques definidos: title, content.
-Contexto esperado: caja (None si no tiene ninguna abierta).
+Contexto esperado: caja (None si no tiene ninguna abierta), saldos_actuales
+(lista de tuplas (divisa, saldo)), operaciones (últimas operaciones de la caja).
 -->
 {% extends 'base.html' %}
 
@@ -13,10 +16,19 @@ Contexto esperado: caja (None si no tiene ninguna abierta).
     <div>
         <span class="ge-eyebrow"><i class="bi bi-cash-stack"></i> Caja</span>
         <h1>Mi caja</h1>
-        <p>Saldo inicial registrado al abrir tu turno.</p>
+        <p>Saldo actual por moneda y operaciones de ventanilla de tu turno.</p>
     </div>
     {% if not caja %}
     <a href="{% url 'caja:abrir' %}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Abrir caja</a>
+    {% else %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'caja:registrar_operacion' 'compra' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-down-circle me-1"></i> Comprar divisas
+        </a>
+        <a href="{% url 'caja:registrar_operacion' 'venta' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-up-circle me-1"></i> Vender divisas
+        </a>
+    </div>
     {% endif %}
 </div>
 
@@ -31,25 +43,55 @@ Contexto esperado: caja (None si no tiene ninguna abierta).
                 <div class="operation-summary">
                     <div class="operation-summary__row"><span class="operation-summary__label">Abierta el: </span><strong class="operation-summary__value">{{ caja.abierta_en|date:"d/m/Y H:i" }}</strong></div>
                 </div>
-                <h3 class="mt-4" style="font-size:15px;">Saldo inicial por moneda</h3>
+                <h3 class="mt-4" style="font-size:15px;">Saldo actual por moneda</h3>
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead>
                             <tr>
                                 <th>Divisa</th>
-                                <th>Saldo inicial</th>
+                                <th>Saldo actual</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for saldo in caja.saldos_iniciales.all %}
+                            {% for divisa, saldo in saldos_actuales %}
                             <tr>
-                                <td>{{ saldo.divisa.codigo }}</td>
-                                <td class="ge-num">{{ saldo.monto|floatformat:2 }}</td>
+                                <td>{{ divisa.codigo }}</td>
+                                <td class="ge-num">{{ saldo|floatformat:2 }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+
+                <h3 class="mt-4" style="font-size:15px;">Últimas operaciones de ventanilla</h3>
+                {% if operaciones %}
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Divisa</th>
+                                <th>Monto divisa</th>
+                                <th>Monto guaraníes</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for operacion in operaciones %}
+                            <tr>
+                                <td>{{ operacion.get_tipo_display }}</td>
+                                <td>{{ operacion.divisa.codigo }}</td>
+                                <td class="ge-num">{{ operacion.monto_divisa|floatformat:2 }}</td>
+                                <td class="ge-num">{{ operacion.monto_pyg|floatformat:2 }}</td>
+                                <td>{{ operacion.creado_en|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="ge-empty-state">Todavía no registraste ninguna operación de ventanilla en este turno.</div>
+                {% endif %}
             {% else %}
                 <div class="ge-empty-state">Todavía no tenés una caja abierta.</div>
             {% endif %}

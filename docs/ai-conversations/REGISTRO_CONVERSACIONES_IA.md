@@ -24,7 +24,7 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 8. [Sesión 8 — 24/09/2026 — GE-37 — Consultar el historial de transacciones](#sesión-8--24092026--ge-37--consultar-el-historial-de-transacciones)
 9. [Sesión 9 — 08/10/2026 — GE-25 — Asociación de pagos a transacciones](#sesión-9--08102026--ge-25--asociación-de-pagos-a-transacciones)
 10. [Sesión 10 — 09/10/2026 — Apertura de Caja](#sesión-10--09102026--apertura-de-caja)
-11. [Sesión 11 — 09/10/2026 — GE-22 — Pago con tarjeta vía Stripe](#sesión-11--09102026--ge-22--pago-con-tarjeta-vía-stripe)
+11. [Sesión 11 — 11/10/2026 — Gestión de operaciones en ventanilla](#sesión-11--11102026--gestión-de-operaciones-en-ventanilla)
 12. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
@@ -1388,370 +1388,172 @@ silencio.
   las divisas activas de una vez, usando cero como "no manejo esta moneda", que es más simple y
   cumple el criterio igual.
 
-## Sesión 11 — 09/10/2026 — GE-22 — Pago con tarjeta vía Stripe
+## Sesión 11 — 11/10/2026 — Gestión de operaciones en ventanilla
 
 **Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
-**HU relacionada:** Pago con tarjeta vía Stripe
-**Rama:** `feature/GE-22`
-**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+**HU relacionada:** Gestión de operaciones en ventanilla
+**Rama:** `develop`
+**Participantes:** Ruth, integrante del equipo Global Exchange
 
 ### Pedido
 
-Implementar la HU "Pago con tarjeta vía Stripe", con tests, docstrings, Sphinx actualizado y esta
-documentación de la conversación.
+Implementar la HU "Gestión de operaciones en ventanilla", con tests, docstrings, Sphinx
+actualizado y esta documentación de la conversación.
 
-> Como usuario cliente quiero pagar mis operaciones cambiarias con tarjeta de crédito o débito para
-> completar el pago de forma inmediata, sin salir del proceso en línea.
+> Como cajero quiero registrar las operaciones de compra y venta de divisas realizadas en
+> efectivo para mantener actualizado el saldo de la caja.
 
 Criterios de aceptación:
 
-1. Con una transacción "Confirmada", elegir pagar con tarjeta redirige a la página de pago de
-   Stripe con el monto exacto de la transacción, calculado por el sistema y no modificable por el
-   usuario.
-2. Cuando Stripe confirma el pago exitoso mediante webhook, el sistema registra el pago como
-   exitoso con el identificador de Stripe y el medio "tarjeta".
-3. Una notificación al webhook con firma inválida se rechaza sin modificar el estado de ninguna
-   transacción.
-4. Si Stripe informa que el pago fue rechazado, la transacción permanece "Confirmada" y se muestra
-   un mensaje de error claro, con opción de reintentar.
-5. Si el cliente abandona o cancela el pago en Stripe, al volver al sistema la transacción sigue
-   "Confirmada" y puede reintentarse.
-6. Si Stripe no responde o la conexión falla, el sistema no marca la transacción como pagada y
-   muestra un mensaje de problema de comunicación, sin perder el estado de la transacción.
+1. Dado que tengo una caja abierta, cuando registro una operación de compra o venta en
+   efectivo (reutilizando el cálculo de cotización ya existente), entonces el saldo de la
+   caja se actualiza según la divisa y el sentido de la operación: ingresa lo que el cliente
+   entrega y egresa lo que el cajero entrega.
+2. Dado que no tengo una caja abierta, cuando intento registrar una operación de ventanilla,
+   entonces el sistema rechaza la acción e indica que debo abrir una caja primero.
+3. Dado que el saldo de la moneda que el cajero debe entregar es insuficiente (la divisa en
+   una venta, guaraníes en una compra), cuando intento registrar la operación, entonces el
+   sistema la rechaza e informa el motivo.
+4. Dado que registro una operación en ventanilla, cuando se guarda, entonces queda vinculada
+   a la caja activa y al cajero, con la tasa y la comisión aplicadas y los montos de ambas
+   monedas.
 
-También se preguntó si la documentación Sphinx servida en producción se actualiza
-automáticamente al hacer merge a `main`, igual que el resto de la app.
+### Diagnóstico inicial
 
-### Diagnóstico y diseño
+El proyecto ya tenía todo lo necesario para reutilizar en vez de duplicar: `apps.caja.models.Caja`
+y `SaldoInicialCaja` (HU "Apertura de Caja", Sesión 10) para el saldo inicial por moneda, y
+`apps.divisas.views._calcular_importe_operacion` para el cálculo de tasa y comisión que ya usa el
+flujo online del cliente (`CalculoOperacionView`). No existía, en cambio, ningún concepto de "saldo
+actual" de una caja (solo el saldo inicial contado al abrir) ni ningún modelo de operación de
+ventanilla — había que diseñar ambos desde cero.
 
-Esta HU es, explícitamente, una de las dos continuaciones previstas para GE-25 ("Asociación de
-pagos a transacciones", Sesión 9): esa HU dejó `apps.divisas.models.Pago.registrar_pago` como el
-único punto de escritura para marcar una transacción como pagada, pensado para que los webhooks de
-Stripe y SIPAP armen sus propios datos (medio, proveedor, identificador externo, monto) y llamen
-ahí, sin duplicar lógica. Por eso casi todo el trabajo de esta sesión fue de integración: no hizo
-falta tocar `Pago` ni su modelo de datos.
+Una decisión de nombres resultó más sutil de lo esperado: el Criterio 3 describe "la divisa en una
+venta, guaraníes en una compra" como lo que el cajero debe entregar. Eso implica que, en esta HU,
+"Compra" significa que **la casa le compra divisa al cliente** (perspectiva del cajero/casa de
+cambio) — exactamente lo opuesto a `apps.divisas.models.CalculoOperacion.TIPO_COMPRA`, que significa
+que el cliente compra divisa (perspectiva del cliente, usada en el flujo online). Confundir ambas
+convenciones habría invertido silenciosamente qué moneda entra y cuál sale en cada caso, así que la
+inversión quedó documentada explícitamente en el docstring del modelo nuevo en vez de dejarla
+implícita.
 
-Se instaló el SDK oficial de Stripe (`stripe==16.0.0`) y se agregaron `STRIPE_SECRET_KEY`/
-`STRIPE_WEBHOOK_SECRET` a la configuración (`global_exchange/settings/base.py`, `.env.example`,
-`.env.prod.example`) con `default=''`: sin cuenta de Stripe configurada, iniciar un pago con
-tarjeta falla igual que un corte de comunicación real (criterio 6), en vez de necesitar una clave
-de mentira para poder arrancar el proyecto.
+### Diseño
 
-Decisiones de diseño, una por cada criterio de aceptación:
-
-- **Criterio 1.** Se usó Stripe *Checkout* (una página de pago hospedada por Stripe), no la API de
-  tarjetas en bruto: la sesión se crea en el servidor con `transaccion.monto_final`, así que el
-  cliente nunca tiene un campo editable. La moneda de liquidación reutiliza el mismo criterio que
-  ya usa el pago manual de GE-25 (PYG para una compra/venta, la divisa de destino para un cambio).
-  Como Stripe espera enteros y PYG es una de sus monedas "sin decimales" (a diferencia de la
-  mayoría), se agregó `_monto_en_unidad_minima_stripe` para no cobrar, por error, 100 veces el
-  monto real en un pago en guaraníes.
-- **Criterio 2.** El webhook (`stripe_webhook_view`) escucha `checkout.session.completed` con
-  `payment_status == "paid"` y llama a `Pago.registrar_pago` con el `payment_intent` de Stripe como
-  identificador externo y `MetodoPago.TIPO_TARJETA` como medio. El `pk` de la transacción y si es
-  una compra/venta o un cambio viajan en los metadatos de la sesión de Checkout, porque es lo único
-  que el webhook recibe de vuelta para saber a qué transacción corresponde.
-- **Criterio 3.** La firma se valida con `stripe.Webhook.construct_event` antes de mirar el
-  contenido del evento; si falla, se responde 400 sin tocar nada.
-- **Criterio 4.** Con Stripe Checkout, un rechazo de tarjeta ocurre *dentro* de la página hospedada
-  por Stripe, que ya le muestra al cliente el motivo y lo deja reintentar sin salir de ahí ni
-  generar ningún webhook (a diferencia de implementar la API de tarjetas a mano, donde el rechazo
-  habría que manejarlo del lado de Global Exchange). Se documentó esta decisión explícitamente en
-  el docstring del módulo en vez de dejarla implícita, porque es la razón por la que no hay código
-  para ese caso.
-- **Criterio 5.** `cancel_url` vuelve a la pantalla de detalle de la transacción con
-  `?pago=cancelado`; como el webhook nunca se disparó, la transacción sigue "Confirmada". Se agregó
-  `_avisar_resultado_pago_stripe` para mostrar el aviso correspondiente ahí.
-- **Criterio 6.** La creación de la sesión está envuelta en `try/except stripe.error.StripeError`
-  (cubre, entre otros, `APIConnectionError`); si falla, se informa el problema sin tocar la
-  transacción.
-
-El webhook se expuso en `/webhooks/stripe/`, fuera del namespace `divisas:` y en
-`global_exchange/urls.py` en vez de `apps/divisas/urls.py`: es una URL fija que se configura una
-sola vez en el dashboard de Stripe, no una pantalla de la aplicación.
+- **`apps.caja.models.OperacionVentanilla`** (nuevo): UUID, `caja` y `cajero` (vínculo explícito a
+  ambos, tal como pide el Criterio 4, aunque `caja.usuario` ya identifica al cajero), `tipo`
+  (`COMPRA`/`VENTA`, con el significado invertido respecto de `CalculoOperacion` explicado arriba),
+  `divisa`, `monto_divisa`, `tasa_aplicada`, `comision_porcentaje`, `comision` y `monto_pyg` (el
+  monto final en guaraníes, equivalente a `CalculoOperacion.monto_final`).
+- **`Caja.saldo_actual(divisa)`** (nuevo): en vez de agregar un campo mutable que haya que
+  mantener sincronizado en cada operación, el saldo se deriva de forma perezosa —mismo patrón que
+  `CalculoOperacion.estado_efectivo`/`Divisa.ultima_cotizacion` ya usan en este proyecto— como el
+  saldo inicial (`SaldoInicialCaja`) más los ingresos y menos los egresos de esa moneda en las
+  `OperacionVentanilla` ya registradas. Para PYG, una "Venta" ingresa y una "Compra" egresa
+  `monto_pyg`; para la divisa extranjera, una "Compra" ingresa y una "Venta" egresa `monto_divisa`
+  — el espejo exacto de a quién le entrega qué cada tipo de operación.
+- **`apps.caja.views.RegistrarOperacionVentanillaView`**: sigue el mismo patrón que
+  `CalculoOperacionView` (tipo normalizado desde la URL, `/caja/operaciones/<tipo>/`). Antes de
+  calcular nada, resuelve la caja abierta del cajero (Criterio 2) devolviendo la misma redirección a
+  `caja:abrir` que ya usa `AbrirCajaView`. Para calcular, invierte el `tipo` antes de llamar a
+  `_calcular_importe_operacion` (ver el diagnóstico) y nunca duplica esa función. Antes de guardar,
+  compara `caja.saldo_actual(...)` contra lo que el cajero debe entregar según el Criterio 3 y
+  rechaza con el motivo si no alcanza, sin crear nada.
+- **`apps.caja.forms.OperacionVentanillaForm`**: mismo criterio de validación que
+  `apps.divisas.forms.CalculoOperacionForm` (monto mayor que cero, numérico, con mensajes en
+  español) y mismo filtro de divisas operables (activas, cotizadas, nunca PYG).
+- El panel del cajero (`apps.caja.views.PanelCajaView`, `templates/caja/panel_caja.html`) pasó de
+  mostrar solo el saldo inicial a mostrar el **saldo actual** por moneda, dos accesos directos
+  ("Comprar divisas" / "Vender divisas") y el historial de las últimas operaciones del turno, para
+  poder verificar visualmente el Criterio 1 sin tener que ir a la base de datos.
 
 ### Tests
 
-`tests/test_pagos_stripe.py` (17 tests nuevos), mockeando `stripe.checkout.Session.create` y
-`stripe.Webhook.construct_event` para no depender de la red: conversión de monto y moneda
-(PYG sin centavos vs. una moneda común), creación de la sesión con el monto y los metadatos
-correctos para una compra/venta y para un cambio, rechazo de una transacción que no está
-"Confirmada", error de comunicación con Stripe sin modificar la transacción (criterio 6), acceso
-restringido al rol `cliente`, aviso de cancelación sin tocar la transacción (criterio 5), aviso de
-confirmación pendiente al volver con el pago iniciado, firma inválida sin modificar nada
-(criterio 3), registro del pago con el identificador y medio correctos ante una sesión completada y
-pagada (criterio 2), sesión completada pero no pagada y evento no relevante sin modificar nada
-(criterio 4), reenvío del mismo evento sin duplicar el pago, y el webhook rechazando cualquier
-método que no sea POST.
+`tests/test_operaciones_ventanilla.py` (21 tests nuevos): uno o más por cada criterio (compra
+ingresa divisa y egresa guaraníes, venta al revés, la comisión configurada se descuenta
+correctamente, sin caja abierta se rechaza tanto el GET como el POST, saldo insuficiente de
+guaraníes rechaza una compra, saldo insuficiente de la divisa rechaza una venta, el límite exacto es
+suficiente, la operación guardada referencia caja/cajero/tasa/comisión/ambos montos), más
+validaciones de formulario (monto negativo, no numérico, PYG no ofrecido, divisa sin cotización no
+ofrecida, tipo de URL desconocido responde 404) y permisos (sin rol cajero, sin sesión). Se agregó
+además `CajaSaldoActualTest`, una clase aparte que prueba `Caja.saldo_actual` directamente contra el
+modelo (sin saldo inicial registrado parte de cero, no de un error; una operación de otra caja nunca
+se mezcla con el saldo de esta).
 
 ### Resultado final
 
-- Suite completa: pasa sin fallas (ver el run de esta misma sesión).
-- `manage.py check`: sin problemas.
-- Sphinx recompilado con `-W` (a un directorio temporal, sin tocar `docs/build/` directamente):
-  sin advertencias. Se agregó `reference/apps.divisas.pagos_stripe.rst` (enlazado desde
-  `reference/apps.divisas.rst`) y una sección nueva "Pago con tarjeta vía Stripe" en `guia.rst`,
-  justo después de la sección de GE-25 que esta HU continúa.
-- Se agregó el botón "Pagar con tarjeta (Stripe)" a `pagar_transaccion.html` y
-  `pagar_transaccion_cambio.html`, junto al pago manual ya existente (ver la corrección del mismo
-  día más abajo: este botón se terminó eliminando a favor de una redirección automática).
-
-### Respuesta a la pregunta sobre despliegue y documentación
-
-El pipeline de GitHub Actions (`deploy.yml`) despliega automáticamente a producción en cada push a
-`main`: vía SSM se conecta a la instancia EC2, hace `git pull` y reconstruye la imagen con
-`docker compose up -d --build`, cuyo `entrypoint.sh` corre `migrate`, `collectstatic` y levanta
-Gunicorn. Eso sí se actualiza solo.
-
-La documentación Sphinx **no** se actualizaba solo: `docs/build/`, lo que sirve
-`global_exchange.views.documentacion` en producción, es un directorio versionado en git —
-una foto fija de la última vez que alguien corrió `sphinx-build` a mano y comiteó el resultado—, y
-ni `deploy.yml` ni `entrypoint.sh` ejecutaban `sphinx-build` en ningún momento. Mergear a `main`
-actualizaba el código y, con él, `docs/source/`, pero la versión HTML servida seguía siendo la
-vieja hasta el próximo commit manual de `docs/build/`.
-
-Se corrigió como parte de esta sesión: `deploy/aws/entrypoint.sh` ahora reconstruye la
-documentación (`python -m sphinx -b html docs/source docs/build`) en cada despliegue, antes de
-levantar Gunicorn, sin `-W` y con un `|| echo ...` de respaldo para que un warning o error de
-Sphinx nunca impida que la aplicación arranque. Con este cambio ya mergeado, la documentación en
-producción también queda al día con cada `push` a `main`, igual que el resto de la app.
+- Suite completa: sin fallas tras agregar los 21 tests nuevos (ver el resultado de esta misma
+  sesión), sin ninguna regresión sobre `tests/test_caja.py` ni el resto del proyecto.
+- `manage.py check` y `makemigrations --check --dry-run`: sin problemas. Migración
+  `apps.caja.0002_operacionventanilla` generada y verificada.
+- Sphinx recompilado con `-W`: sin advertencias. `guia.rst` agregó la sección "Operaciones en
+  ventanilla" (con la explicación de la inversión de nombres respecto del flujo online, enlazada
+  desde "Flujo operativo de divisas"); `reference/apps.caja.models.rst`,
+  `reference/apps.caja.forms.rst` y `reference/apps.caja.views.rst` incluyen los símbolos nuevos;
+  `templates.rst` incluye la plantilla nueva (`operacion_ventanilla.html`) y el encabezado actualizado
+  de `panel_caja.html`.
 
 ### Pendiente / fuera de alcance
 
-- El pago por transferencia vía SIPAP, la segunda continuación prevista para GE-25, sigue sin
-  implementar.
-- No se implementó un reintento automático ni un reenvío manual del webhook desde la UI de Global
-  Exchange: si Stripe no logra entregar la notificación, depende de los reintentos automáticos que
-  ya hace Stripe por su cuenta.
+- No se modela un cliente de mostrador: ninguno de los 4 criterios de aceptación pide identificar
+  con qué cliente se hizo la operación, así que no se agregó ese campo para no construir algo que no
+  se pidió.
+- El cierre de caja y el arqueo siguen siendo HU futuras, igual que antes de esta sesión.
 
-### Corrección posterior (mismo día): error real al probar en desarrollo
+### Corrección posterior (mismo día): compra rota por falta de la Divisa PYG en el catálogo
 
-Al configurar las claves reales de una cuenta de Stripe de prueba y probar el flujo en desarrollo,
-iniciar un pago fallaba con "No se pudo conectar con Stripe". El error real (reproducido llamando
-directamente a `stripe.checkout.Session.create` con la clave del `.env`) era
-`InvalidRequestError: The payment_method_types parameter is no longer supported when creating a
-Checkout Session` — Stripe retiró ese parámetro; los métodos de pago aceptados se configuran ahora
-desde el Dashboard, no desde el código. Se quitó `payment_method_types=['card']` de la llamada en
-`apps.divisas.pagos_stripe` y se volvió a probar en vivo contra la cuenta de test: la sesión se
-crea correctamente.
+Al probar una compra en el entorno real (no en los tests, que sí la creaban explícitamente), el
+sistema devolvía un error 500 (`Divisa.DoesNotExist: Divisa matching query does not exist.`) al
+intentar resolver la Divisa de código `PYG` para comprobar el saldo disponible (Criterio 3). La
+causa: en este proyecto, a diferencia de lo que esta sesión asumió, `PYG` **no** es una fila
+garantizada del catálogo de divisas — `AperturaCajaForm` ya trata su saldo inicial como opcional por
+el mismo motivo ("PYG, si existe como divisa activa"), y en la base real todavía no se había creado
+esa fila.
 
-De paso, se simplificó la UI a pedido del usuario: en vez de un botón separado "Pagar con tarjeta
-(Stripe)" junto al botón "Pagar" manual, queda un único botón "Pagar". `PagarTransaccionOperacionView`/
-`PagarTransaccionCambioView` ahora miran el `tipo_medio` del método de pago elegido: si es
-"tarjeta" (`MetodoPago.TIPO_TARJETA`), redirigen a iniciar el cobro con Stripe en vez de registrar
-el pago ahí mismo; para transferencia o billetera, el registro sigue siendo manual e inmediato,
-como ya hacía GE-25. Se actualizaron tres tests de GE-25 en `tests/test_operaciones.py` que usaban
-un método de tipo "tarjeta" para probar el flujo manual (pasaron a usar transferencia, ya que ese
-camino ya no aplica a tarjetas) y se agregaron dos tests nuevos que verifican la redirección
-automática a Stripe. Suite completa: sigue sin fallas tras el cambio.
+Como una venta de ventanilla nunca necesita resolver la Divisa PYG (solo entrega la divisa
+extranjera), el problema era exclusivo de la rama de compra. Se corrigió reemplazando
+`Divisa.objects.get(codigo='PYG')` por una consulta que no rompe si no existe
+(`Divisa.objects.filter(codigo='PYG').first()`), informando el problema con un mensaje accionable
+("Divisas → Nueva divisa, código PYG") en vez de un error de servidor — mismo criterio que ya usa
+`AbrirCajaView._avisar_divisas_sin_cotizar` para una divisa extranjera sin cotizar.
 
-### Ampliación posterior (mismo día): tarjeta guardada con cobro directo
+Se agregó `RegistrarOperacionVentanillaSinDivisaPygTest` (2 tests nuevos) que reproduce el escenario
+real, sin crear la Divisa PYG en el `setUp` (a diferencia del resto de la suite): confirma que una
+compra informa el problema sin romper y que una venta sigue funcionando igual sin esa fila. Suite
+completa: sin fallas tras el fix.
 
-El usuario preguntó si el número de tarjeta que ya tiene guardado un cliente en
-`apps.clientes.models.MetodoPago` (GE-19) se podía usar para precargar el pago en Stripe, y si era
-obligatorio pasar por una ventana de Stripe o se podía cobrar solo por API. La respuesta fue que no:
-Stripe no acepta (ni conviene) mandarle un número de tarjeta crudo desde el backend — es
-justamente lo que PCI-DSS prohíbe — pero sí se puede lograr el mismo efecto (no volver a pedir la
-tarjeta) guardándola del lado de Stripe la primera vez y reutilizando esa referencia después. El
-usuario pidió esa opción completa.
+### Segunda corrección (mismo día): el mensaje seguía siendo conceptualmente incorrecto
 
-Se implementó:
+El usuario señaló que el mensaje de la corrección anterior ("un administrador debe crearla desde
+Divisas → Nueva divisa") estaba mal planteado: PYG es la divisa **local/base** del sistema —contra
+la que se cotizan y liquidan todas las operaciones—, no una divisa extranjera más que alguien deba
+dar de alta manualmente desde el catálogo de divisas operables. Tratarla como un dato de catálogo
+opcional, a cargo de un administrador, contradice cómo el resto del sistema ya la trata: `DivisaSelect`,
+`CalculoOperacionForm`, `TriangulacionForm` y `OperacionVentanillaForm` la excluyen explícitamente de
+cualquier selector de "divisa a operar", precisamente porque nunca es algo que se compre o venda
+directamente.
 
-- **`apps.clientes.models.Cliente.stripe_customer_id`** (migración `0015`): el id del `Customer`
-  de Stripe de cada cliente, separado a propósito de `MetodoPago` — la tarjeta nunca se guarda en
-  esta base, solo la referencia que da Stripe.
-- **`_obtener_o_crear_cliente_stripe`**: crea el `Customer` la primera vez (`stripe.Customer.create`)
-  y lo reutiliza después.
-- **`_tarjeta_guardada`**: consulta (`stripe.PaymentMethod.list`) si ese `Customer` ya tiene una
-  tarjeta guardada.
-- **`_IniciarPagoStripeBaseView.get`** ahora resuelve estos dos datos antes de decidir el camino:
-  sin tarjeta guardada, crea la sesión de Checkout de siempre, pero con `customer=...` y
-  `payment_intent_data.setup_future_usage = "off_session"` para que Stripe la guarde si el pago
-  sale bien; con una tarjeta ya guardada, cobra directo con un `PaymentIntent`
-  (`off_session=True, confirm=True`) sin mostrar ninguna página de Stripe, usando una
-  `idempotency_key` fija por transacción (`ge22-pago-directo-<pk>`) para que un doble clic no cobre
-  la tarjeta dos veces. Si ese cobro directo es rechazado (`stripe.error.CardError`, criterio 4) o
-  el banco exige 3-D Secure/SCA (`status == "requires_action"`), cae al camino de Checkout para que
-  el cliente confirme ahí, con la misma tarjeta preseleccionada.
+La corrección real no era mejorar el mensaje, sino eliminar la dependencia de que alguien la creara
+a mano: se agregó la migración de datos `apps.divisas.0014_crear_divisa_pyg` (`get_or_create`,
+reversible como no-op) que garantiza la fila `Divisa(codigo='PYG')` desde el primer `migrate` en
+cualquier base, nueva o existente. Con esa garantía, se revirtió el mensaje defensivo de la corrección
+anterior: la vista vuelve a `Divisa.objects.get(codigo='PYG')` sin ninguna rama de error, porque su
+ausencia ya no es un escenario posible en el flujo normal del sistema (coherente con la guía del
+proyecto de no agregar manejo de errores para casos que no pueden ocurrir).
 
-Tests nuevos en `tests/test_pagos_stripe.py` (25 en total en el archivo): creación/reutilización
-del `Customer`, consulta de la tarjeta guardada, cobro directo exitoso (sin llamar a Checkout),
-caída a Checkout ante un rechazo y ante una autenticación adicional exigida, y que ninguno de estos
-caminos toca la transacción salvo el que efectivamente la cobra. `manage.py makemigrations
---check`: sin cambios pendientes. Sphinx recompilado con `-W`: sin advertencias, con una sección
-nueva "Tarjeta guardada: cobro directo sin pasar por Stripe" en `guia.rst`.
+Efecto colateral detectado y corregido de paso: al garantizar PYG en el catálogo, empezaba a
+aparecer también en la pantalla de "tasas vigentes" (`TasasVigentesListView`), mostrando "sin
+cotización" junto a USD/EUR — exactamente la inconsistencia que el usuario señaló, porque PYG nunca
+tiene una cotización propia que mostrar ahí. Se la excluyó de esa vista con el mismo criterio que ya
+usan los selectores de divisa operable.
 
-### Segunda ampliación (mismo día): integrar la tarjeta con los métodos de pago guardados (GE-19)
-
-El usuario pidió respetar el sistema de métodos de pago guardados ya existente (GE-19): que una
-tarjeta se pueda agregar y elegir desde ese mismo menú, en vez de depender solo de "la primera
-tarjeta que Stripe encuentre" para el cliente (el diseño de la ampliación anterior), y que el mismo
-esquema sirva a futuro para mostrar cuentas bancarias de SIPAP en ese menú.
-
-Se rediseñó la integración para que una tarjeta sea, en los hechos, un `MetodoPago` más:
-
-- **Modelo.** `MetodoPago` ganó dos campos genéricos (no específicos de Stripe, migración `0016`):
-  `proveedor_externo` (`STRIPE`/`SIPAP`, pensado para que SIPAP identifique cuentas bancarias del
-  mismo modo el día que se implemente) y `referencia_externa` (el id que da ese proveedor — para
-  Stripe, un `PaymentMethod` — nunca el número real).
-- **Alta de una tarjeta.** `apps.clientes.forms.MetodoPagoForm` (el formulario manual de GE-19) deja
-  de ofrecer "Tarjeta" como opción al crear: una tarjeta ahora se agrega exclusivamente vía
-  `IniciarAgregarTarjetaStripeView`/`confirmar_tarjeta_stripe_view` (nuevas, en
-  `apps.divisas.pagos_stripe`), que piden solo el nombre del titular, abren una sesión de Stripe
-  Checkout en modo `"setup"` (guarda una tarjeta sin cobrar nada) y, al volver, crean el
-  `MetodoPago` con la marca y los últimos 4 dígitos que devuelve Stripe — nunca el número completo,
-  que Stripe no entrega. Al editar una tarjeta ya vinculada a Stripe, el formulario bloquea tipo,
-  entidad financiera y número (vienen de Stripe), dejando editable solo el nombre del titular y si
-  es la predeterminada.
-- **Pago.** El cliente sigue eligiendo un `MetodoPago` cualquiera en la pantalla de pago de siempre;
-  si es de tipo tarjeta, la vista de Stripe ya no adivina "la tarjeta guardada del cliente"
-  (`_tarjeta_guardada`, eliminada): recibe el `pk` del método elegido por `?metodo_pago=` y resuelve
-  esa tarjeta puntual (`_resolver_metodo_pago_tarjeta`), cobrando con su `referencia_externa`. Esto
-  también deja al cliente tener varias tarjetas guardadas y elegir cuál usar, algo que el diseño
-  anterior no permitía.
-- **UI.** El listado de métodos de pago (`metodo_pago_list.html`) agregó el botón "Agregar tarjeta"
-  (lleva al flujo de Stripe) junto al de transferencia/billetera, muestra "•••• •••• •••• <últimos
-  4>" para una tarjeta de Stripe sin el botón "Ver datos" (no hay nada más que revelar), y conserva
-  el comportamiento anterior para los métodos manuales.
-
-Tests nuevos: `MetodoPagoFormStripeTest` en `tests/test_metodos_pago.py` (el formulario no ofrece
-"Tarjeta" al crear, la rechaza si se la fuerza a mano, y bloquea los datos de Stripe al editar sin
-impedir cambiar el titular); `test_pagos_stripe.py` se reescribió para reflejar el nuevo diseño
-(40 tests: resolución del método de pago elegido —propio, ajeno, sin vínculo a Stripe, de otro
-tipo—, cobro directo con sus kwargs exactos, caída a Checkout, alta y confirmación de una tarjeta
-nueva —incluida una sesión de Stripe que no corresponde al cliente, que responde 404—). Se
-actualizaron además los dos tests de GE-25 que verificaban la redirección a Stripe, para esperar el
-`?metodo_pago=` en la URL. Sphinx recompilado con `-W`: sin advertencias, con la sección de
-`guia.rst` reescrita para describir el alta vía Stripe y el cobro por `MetodoPago` elegido.
-
-### Tercera corrección (mismo día): bug real al probar el alta de una tarjeta
-
-Al probar el alta de una tarjeta contra la cuenta de test real, `confirmar_tarjeta_stripe_view`
-tiraba `AttributeError: 'get' is a dict method, but a StripeObject is not a dict` justo en la
-línea que leía `metadata.get('nombre_titular')`. La causa: el SDK de Stripe devuelve objetos
-`StripeObject` (una sesión, un `SetupIntent`, el evento de un webhook), que en esta versión del SDK
-no heredan de `dict` — no tienen `.get()` ni son iterables, solo soportan `objeto['clave']` y
-`objeto.atributo`. Los tests no lo habían detectado porque mockeaban esas respuestas con dicts
-planos o `SimpleNamespace`, que sí tienen `.get()` y por lo tanto no reproducían el problema.
-
-El mismo bug existía también, sin haber llegado todavía a probarse, en `_procesar_sesion_completada`
-(el webhook de confirmación de pago), que hacía `session.get(...)` sobre el mismo tipo de objeto.
-
-Se agregó `_a_dict` (convierte un `StripeObject` a dict plano con `.to_dict()`, recursivo; un dict
-ya plano o `None` se devuelve sin tocar) y se aplicó en ambos puntos antes de cualquier `.get()`.
-Para que los tests mismos detecten esta clase de bug en el futuro, se reescribieron los mocks más
-sensibles (la sesión de `confirmar_tarjeta_stripe_view`, el evento del webhook) para construir
-`StripeObject` reales (`stripe._stripe_object.StripeObject.construct_from`) en vez de dicts o
-`SimpleNamespace`, y se agregó `ADictTest` con pruebas unitarias dedicadas.
-
-De paso, el usuario pidió que el nombre precargado al agregar una tarjeta fuera solo el nombre del
-cliente, sin su identificador ni su estado (`Cliente.__str__` agrega ambos entre paréntesis, pensado
-para listados administrativos). Se agregó `Cliente.nombre_completo` (solo nombre + apellido, o la
-razón social para una persona jurídica) y se usó en el valor inicial del formulario y como
-alternativa cuando Stripe no devuelve el nombre en los metadatos.
-
-Tests nuevos: `ADictTest` (conversión de un `StripeObject` real, de un dict plano, y de `None`),
-`TestClienteNombreCompleto` en `tests/test_clientes.py` (persona física y jurídica), y un test de
-regresión en `test_pagos_stripe.py` que registra un pago a partir de un evento de webhook armado
-como `StripeObject` real. Suite completa: sin fallas tras el fix.
-
-### Cuarta corrección (mismo día): Stripe ofrecía "Link" en vez de pedir una tarjeta
-
-Al probar el alta de una tarjeta contra la cuenta de test real por segunda vez, apareció otro error
-real: `AttributeError: card` al leer `metodo_stripe.card.brand`. La causa, distinta de la anterior:
-sin `payment_method_types` (Stripe lo retiró de la API, ver la corrección anterior), Checkout ofrece
-cualquier medio habilitado en la cuenta — y por defecto eso incluye "Link", el autocompletado propio
-de Stripe, mostrado de forma muy prominente en la página. Si el cliente elegía Link en vez de
-ingresar una tarjeta, el `PaymentMethod` que devolvía Stripe era de tipo `"link"`, sin el atributo
-`card` que la vista necesitaba leer.
-
-Se investigó si existía algún parámetro vigente para restringir los medios de pago de una sesión
-(ya que `payment_method_types` está retirado) y se encontró `payment_method_configuration`: permite
-referenciar una `PaymentMethodConfiguration` propia de la cuenta. Se agregó
-`_configuracion_solo_tarjeta` (crea, o reutiliza si ya existe por nombre, una configuración con
-tarjeta prendida y Link apagado — verificado contra la cuenta de test real, con
-`link.available: False` confirmado en la respuesta de Stripe) y se la referenció en las dos sesiones
-de Checkout que crea el módulo (el alta de una tarjeta y el fallback de pago cuando el cobro directo
-no alcanza). Como defensa adicional, `confirmar_tarjeta_stripe_view` ahora revisa que el
-`PaymentMethod` devuelto tenga de verdad el atributo `card` antes de leerlo; si no, informa el
-problema sin crear nada en vez de romper.
-
-De paso, el usuario pidió confirmar que las tarjetas agregadas vía Stripe se puedan ver en el
-listado de métodos de pago: ya estaba implementado desde la ampliación anterior (el bug impedía
-llegar a probarlo), así que se reforzó el test de confirmación existente para verificar
-explícitamente que, tras agregar una tarjeta, el listado la muestra enmascarada
-("•••• •••• •••• 4242").
-
-Tests nuevos: `ConfiguracionSoloTarjetaTest` (reutiliza una configuración existente, crea una nueva
-con los valores correctos si no existe, y cachea el resultado sin volver a llamar a la API) y un
-test de regresión que simula un `PaymentMethod` de tipo `"link"` para confirmar que no rompe ni crea
-nada. Suite completa: sin fallas tras el fix.
-
-### Ajuste final (mismo día): solo eliminar métodos de pago, sin editar
-
-El usuario pidió sacar la opción de editar un método de pago (quedando solo "eliminar"), y adaptar
-sus criterios de aceptación de la HU "Pago con tarjeta vía Stripe" —sobre todo el primero— para que
-reflejen lo que realmente se construyó (el diseño original asumía que pagar con tarjeta siempre
-redirige a una página de Stripe; la implementación final cobra directo la mayoría de las veces).
-
-Se eliminó `apps.clientes.views.metodo_pago_update` y su URL (en `apps/clientes/urls.py` y en el
-alias de `global_exchange/urls.py`), el botón "Editar" de `metodo_pago_list.html`, y la lógica ahora
-muerta de `MetodoPagoForm` que bloqueaba los campos de una tarjeta de Stripe al editarla (ya no hay
-ninguna vista que la instancie con `instance=`). `MetodoPagoForm` quedó exclusivamente para crear una
-transferencia o billetera; se le sacó el campo `numero_tarjeta` (ya no se usa ahí) y a
-`metodo_pago_form.html` el bloque y el JS que mostraban ese campo. El criterio 4 de GE-19
-("Modificar datos de un método existente") quedó reemplazado por una prueba que confirma que esa
-URL ya no existe y que el listado no ofrece "Editar": para cambiar algo, el flujo es eliminar y
-volver a crear.
-
-Los 6 criterios de aceptación de "Pago con tarjeta vía Stripe" se reescribieron (ver la respuesta
-completa en el chat) para reflejar el diseño final: el criterio 1 pasó de "redirige siempre a
-Stripe" a "cobra directo, sin redirigir, salvo que haga falta confirmar un rechazo o una
-autenticación adicional"; se agregó un criterio 7 nuevo para el alta de la tarjeta (prerequisito que
-el texto original no contemplaba, porque esa HU se escribió asumiendo que cada pago pediría la
-tarjeta de nuevo). El resto de los criterios se mantuvieron o se ajustaron mínimamente.
-
-También se explicó, sin cambios de código, cómo verificar que el pago con tarjeta realmente se
-comunica con Stripe (aunque en modo test el dinero no sea real): comparando el
-`identificador_externo` guardado en cada `Pago` contra el Dashboard de Stripe en modo test
-(`https://dashboard.stripe.com/test/payments`) y contra el log de Developers → Events, que muestran
-la petición y la respuesta real de la API. Más adelante, el mismo día, se explicó también cómo
-habilitar Stripe en producción (webhook con la URL real, secretos propios del `.env` del servidor,
-reinicio del contenedor) y que `STRIPE_SECRET_KEY` sí se puede compartir entre entornos pero
-`STRIPE_WEBHOOK_SECRET` no (es propio de cada endpoint configurado en el Dashboard).
-
-### Corrección de fondo: qué divisa y qué monto paga de verdad un cambio
-
-El usuario pegó el resumen de un cambio real (500,00 EUR a USD, con tasas, comisión e "Importe a
-recibir" de 559,16 USD) y preguntó, con razón, qué iba a figurar en Stripe. Al explicar el cálculo
-completo (`_calcular_triangulacion`) quedó claro un problema de fondo heredado de GE-25: el sistema
-cobraba siempre `monto_final` —que para un cambio es el "Importe a **recibir**"— en la divisa
-**destino**. Es decir: para este ejemplo, Stripe le habría cobrado a la tarjeta 559,16 **USD**, el
-mismo valor (y la misma moneda) que el cliente iba a recibir a cambio, sin que sus 500 EUR entraran
-en la ecuación para nada.
-
-Se le preguntó al usuario qué debía cobrarse (el equivalente en PYG, el monto de la divisa de
-origen, o dejarlo como estaba) y eligió **el monto de la divisa de origen**: lo que el cliente
-entrega, no lo que recibe. Se implementó de forma consistente para los dos medios de pago, no solo
-Stripe:
-
-- `apps.divisas.models.monto_a_pagar`/`moneda_a_pagar` (funciones nuevas, compartidas): para una
-  compra/venta siguen siendo `monto_final`/PYG; para un cambio son `monto_origen`/
-  `codigo_divisa_origen`.
-- `apps.divisas.pagos_stripe._moneda_de_liquidacion` pasó a delegar en `moneda_a_pagar`, y los tres
-  lugares que usaban `transaccion.monto_final` como monto a cobrar (el cobro directo, el fallback de
-  Checkout y el webhook) pasaron a usar `monto_a_pagar`.
-- El pago manual de GE-25 (`PagarTransaccionCambioView.post`, transferencia/billetera) se actualizó
-  igual, para que un cambio registre el mismo monto sin importar el medio con el que se pagó.
-- `detalle_transaccion_cambio.html` dejó de etiquetar el monto del pago con la divisa destino
-  (ahora muestra la de origen, que es la que realmente corresponde); `pagar_transaccion_cambio.html`
-  agregó una fila "Importe a pagar" junto a "Importe a recibir", para que la distinción quede clara
-  en la propia pantalla y no dependa de que alguien lo explique.
-
-Se agregó `MontoAPagarTest` en `tests/test_operaciones.py` (una compra/venta paga `monto_final` en
-PYG; un cambio paga `monto_origen` en su divisa de origen) y se actualizaron las aserciones que
-asumían lo contrario en `test_operaciones.py` y `test_pagos_stripe.py`. Suite completa: sin fallas
-tras el fix.
+Se actualizaron los tests que antes creaban `Divisa(codigo='PYG', ...)` a mano
+(`tests/test_caja.py`, `tests/test_operaciones_ventanilla.py`) para usar `Divisa.objects.get(...)` en
+su lugar (la migración ya la crea; volver a crearla ahora chocaría con la unicidad del código ISO), y
+se cambió el ejemplo de `test_admin_registra_divisa_activa_con_datos_obligatorios` de PYG a JPY por el
+mismo motivo. `RegistrarOperacionVentanillaSinDivisaPygTest` se reescribió: ya no se puede simular la
+ausencia de PYG (la migración la garantiza), así que ahora confirma lo contrario — que una compra
+funciona de punta a punta sin que nadie la haya dado de alta manualmente. `manage.py makemigrations
+--check` y `manage.py check`: sin problemas. Sphinx recompilado con `-W`: sin advertencias. Suite
+completa: sin fallas tras este segundo fix.
 
 ## Enlaces externos (conversaciones completas)
 

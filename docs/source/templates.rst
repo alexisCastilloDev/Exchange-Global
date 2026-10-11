@@ -193,6 +193,10 @@ Caja
 
 .. literalinclude:: ../../templates/caja/panel_caja.html
    :language: html
+   :lines: 1-9
+
+.. literalinclude:: ../../templates/caja/operacion_ventanilla.html
+   :language: html
    :lines: 1-7
 
 Parciales

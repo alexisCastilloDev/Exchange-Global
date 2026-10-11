@@ -1,6 +1,7 @@
-"""Modelos de caja: apertura de turno y saldo inicial por moneda."""
+"""Modelos de caja: apertura de turno, saldo inicial y operaciones de ventanilla."""
 
 import uuid
+from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
@@ -58,13 +59,55 @@ class Caja(models.Model):
         """Identifica la caja por su cajero y su estado."""
         return f'Caja de {self.usuario} ({self.get_estado_display()})'
 
+    def saldo_actual(self, divisa):
+        """Calcula el saldo actual de una moneda en esta caja.
+
+        No se guarda como un campo mutable que haya que mantener
+        sincronizado en cada operación: se deriva, de forma perezosa, del
+        saldo inicial registrado al abrir (``SaldoInicialCaja``) más los
+        ingresos y menos los egresos de esa moneda en las operaciones de
+        ventanilla ya registradas (``OperacionVentanilla``) — el mismo
+        patrón de estado computado que ya usan
+        ``CalculoOperacion.estado_efectivo``/``Divisa.ultima_cotizacion`` en
+        vez de columnas que haya que ir actualizando a mano.
+
+        Args:
+            divisa (apps.divisas.models.Divisa): La moneda a consultar
+                (incluye PYG).
+
+        Returns:
+            decimal.Decimal: El saldo actual de esa moneda en esta caja.
+        """
+        saldo_inicial = self.saldos_iniciales.filter(divisa=divisa).first()
+        saldo = saldo_inicial.monto if saldo_inicial else Decimal('0.00')
+
+        if divisa.codigo == 'PYG':
+            # En una "Venta" (la casa le vende divisa al cliente) el cliente
+            # entrega guaraníes: ingreso. En una "Compra" (la casa le compra
+            # divisa al cliente) es el cajero quien entrega guaraníes: egreso.
+            ingresos = self.operaciones.filter(tipo=OperacionVentanilla.TIPO_VENTA)
+            egresos = self.operaciones.filter(tipo=OperacionVentanilla.TIPO_COMPRA)
+            campo = 'monto_pyg'
+        else:
+            # En una "Compra" el cliente entrega la divisa: ingreso. En una
+            # "Venta" es el cajero quien la entrega: egreso.
+            ingresos = self.operaciones.filter(tipo=OperacionVentanilla.TIPO_COMPRA, divisa=divisa)
+            egresos = self.operaciones.filter(tipo=OperacionVentanilla.TIPO_VENTA, divisa=divisa)
+            campo = 'monto_divisa'
+
+        total_ingresos = ingresos.aggregate(total=models.Sum(campo))['total'] or Decimal('0.00')
+        total_egresos = egresos.aggregate(total=models.Sum(campo))['total'] or Decimal('0.00')
+        return saldo + total_ingresos - total_egresos
+
 
 class SaldoInicialCaja(models.Model):
     """Saldo inicial de una moneda puntual, registrado al abrir una caja.
 
-    Una fila por cada divisa activa que el cajero contó al momento de abrir
-    (incluido PYG, si existe como divisa activa): el inventario completo de
-    la apertura es la colección de estas filas asociadas a una ``Caja``.
+    Una fila por cada divisa activa que el cajero contó al momento de abrir,
+    incluido PYG (su existencia en el catálogo está garantizada por la
+    migración de datos ``apps.divisas.0014_crear_divisa_pyg``, ya que es la
+    moneda local/base del sistema): el inventario completo de la apertura
+    es la colección de estas filas asociadas a una ``Caja``.
     """
 
     caja = models.ForeignKey(Caja, on_delete=models.CASCADE, related_name='saldos_iniciales')
@@ -86,3 +129,72 @@ class SaldoInicialCaja(models.Model):
     def __str__(self):
         """Muestra el código de la divisa y el monto registrado."""
         return f'{self.divisa.codigo}: {self.monto}'
+
+
+class OperacionVentanilla(models.Model):
+    """Registra una compra o venta de divisas en efectivo realizada en ventanilla.
+
+    Implementa la HU "Gestión de operaciones en ventanilla": reutiliza el
+    mismo cálculo de cotización que ya usa el flujo online del cliente
+    (``apps.divisas.views._calcular_importe_operacion``, ver
+    ``apps.caja.views.RegistrarOperacionVentanillaView``) en vez de
+    duplicarlo, pero ``TIPO_COMPRA``/``TIPO_VENTA`` acá significan lo
+    *opuesto* a ``apps.divisas.models.CalculoOperacion.TIPO_COMPRA``/
+    ``TIPO_VENTA``, que están escritos desde la perspectiva del cliente. En
+    esta HU los nombres son desde la perspectiva de la casa de cambio:
+
+    - "Compra": la casa le compra divisa al cliente. El cliente entrega la
+      divisa (ingresa a la caja) y el cajero entrega guaraníes (egresa).
+      Equivale a una "Venta" para ``_calcular_importe_operacion``.
+    - "Venta": la casa le vende divisa al cliente. El cliente entrega
+      guaraníes (ingresa) y el cajero entrega la divisa (egresa). Equivale
+      a una "Compra" para ``_calcular_importe_operacion``.
+
+    Es exactamente la lectura que usa el Criterio 3 de la HU al describir
+    qué moneda debe entregar el cajero en cada caso ("la divisa en una
+    venta, guaraníes en una compra").
+    """
+
+    TIPO_COMPRA = 'COMPRA'
+    TIPO_VENTA = 'VENTA'
+    TIPO_CHOICES = [
+        (TIPO_COMPRA, 'Compra de divisas (la casa compra)'),
+        (TIPO_VENTA, 'Venta de divisas (la casa vende)'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    caja = models.ForeignKey(
+        Caja,
+        on_delete=models.PROTECT,
+        related_name='operaciones',
+        verbose_name='Caja',
+    )
+    cajero = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='operaciones_ventanilla',
+        verbose_name='Cajero',
+    )
+    tipo = models.CharField(max_length=6, choices=TIPO_CHOICES, verbose_name='Tipo de operación')
+    divisa = models.ForeignKey(
+        Divisa,
+        on_delete=models.PROTECT,
+        related_name='operaciones_ventanilla',
+        verbose_name='Divisa operada',
+    )
+    monto_divisa = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='Monto en divisa')
+    tasa_aplicada = models.DecimalField(max_digits=18, decimal_places=6, verbose_name='Tasa aplicada')
+    comision_porcentaje = models.DecimalField(max_digits=6, decimal_places=3, verbose_name='Comisión (%)')
+    comision = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='Comisión')
+    monto_pyg = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='Monto en guaraníes')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Define el orden y las etiquetas administrativas de las operaciones."""
+        verbose_name = 'Operación de ventanilla'
+        verbose_name_plural = 'Operaciones de ventanilla'
+        ordering = ['-creado_en']
+
+    def __str__(self):
+        """Describe el tipo, el monto en divisa y la caja de la operación."""
+        return f'{self.get_tipo_display()}: {self.monto_divisa} {self.divisa.codigo} ({self.caja})'
