@@ -1838,6 +1838,24 @@ class PagarTransaccionOperacionTest(TestCase):
         self.assertEqual(pago.monto, self.transaccion.monto_final)
         self.assertContains(response, 'El pago se registró correctamente')
 
+    def test_pagar_con_un_metodo_de_tarjeta_redirige_a_stripe_en_vez_de_registrar_el_pago(self):
+        """Un método guardado de tipo 'tarjeta' se cobra vía Stripe, no de forma manual (HU "Pago con tarjeta vía Stripe")."""
+        tarjeta = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Cliente Pagar',
+            entidad_financiera='Visa Test',
+            numero_tarjeta='4111111111111111',
+        )
+
+        response = self.client.post(self.url, {'metodo_pago': tarjeta.pk})
+
+        url_stripe = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': self.transaccion.pk})
+        self.assertRedirects(
+            response, f'{url_stripe}?metodo_pago={tarjeta.pk}', fetch_redirect_response=False,
+        )
+        self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
+
     def test_no_ofrece_el_formulario_de_pago_si_la_transaccion_no_esta_confirmada(self):
         """Una transacción pendiente todavía no puede pagarse."""
         self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
@@ -1967,10 +1985,11 @@ class PagarTransaccionCambioTest(TestCase):
         )
         self.metodo_pago = MetodoPago.objects.create(
             cliente=self.cliente,
-            tipo_medio=MetodoPago.TIPO_TARJETA,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
             nombre_titular='Cliente Cambio',
-            entidad_financiera='Visa Test',
-            numero_tarjeta='4111111111111111',
+            entidad_financiera='Banco Test',
+            numero_cuenta='333444',
+            tipo_cuenta='AHORRO',
         )
         self.url = reverse('divisas:pagar_transaccion_cambio', kwargs={'pk': self.transaccion.pk})
         self.detalle_url = reverse('divisas:detalle_transaccion_cambio', kwargs={'pk': self.transaccion.pk})
@@ -1983,14 +2002,32 @@ class PagarTransaccionCambioTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PAGADA)
         pago = Pago.objects.get(calculo_triangulacion=self.transaccion)
-        self.assertEqual(pago.medio_pago, MetodoPago.TIPO_TARJETA)
+        self.assertEqual(pago.medio_pago, MetodoPago.TIPO_TRANSFERENCIA)
         self.assertEqual(pago.monto, self.transaccion.monto_final)
+
+    def test_pagar_con_un_metodo_de_tarjeta_redirige_a_stripe_en_vez_de_registrar_el_pago(self):
+        """Un método guardado de tipo 'tarjeta' se cobra vía Stripe, no de forma manual (HU "Pago con tarjeta vía Stripe")."""
+        tarjeta = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Cliente Cambio',
+            entidad_financiera='Visa Test',
+            numero_tarjeta='4111111111111111',
+        )
+
+        response = self.client.post(self.url, {'metodo_pago': tarjeta.pk})
+
+        url_stripe = reverse('divisas:pagar_transaccion_cambio_stripe', kwargs={'pk': self.transaccion.pk})
+        self.assertRedirects(
+            response, f'{url_stripe}?metodo_pago={tarjeta.pk}', fetch_redirect_response=False,
+        )
+        self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
 
     def test_rechaza_pagar_un_cambio_que_ya_fue_pagado(self):
         """Criterio 3, aplicado al cambio entre divisas."""
         Pago.registrar_pago(
             self.transaccion,
-            medio_pago=MetodoPago.TIPO_TARJETA,
+            medio_pago=MetodoPago.TIPO_TRANSFERENCIA,
             proveedor=Pago.PROVEEDOR_MANUAL,
             identificador_externo=str(self.transaccion.pk),
             monto=self.transaccion.monto_final,
@@ -2007,5 +2044,5 @@ class PagarTransaccionCambioTest(TestCase):
 
         response = self.client.get(self.detalle_url)
 
-        self.assertContains(response, 'Tarjeta de Débito/Crédito')
+        self.assertContains(response, 'Transferencia Bancaria')
         self.assertContains(response, str(self.transaccion.pk))

@@ -27,6 +27,10 @@ from .views import (
     PagarTransaccionOperacionView,
     PagarTransaccionCambioView,
 )
+from .pagos_stripe import (
+    IniciarPagoStripeOperacionView,
+    IniciarPagoStripeCambioView,
+)
 """
 Configuración de URLs para la aplicación de divisas.
 Contiene las rutas necesarias para la consulta de tasas y la gestión de divisas.
@@ -49,6 +53,11 @@ urlpatterns = [
         PagarTransaccionOperacionView.as_view(),
         name='pagar_transaccion',
     ),
+    path(
+        'operar/transaccion/<uuid:pk>/pagar/stripe/',
+        IniciarPagoStripeOperacionView.as_view(),
+        name='pagar_transaccion_stripe',
+    ),
     path('triangulacion/', TriangulacionOperacionView.as_view(), name='triangulacion'),
     path('triangulacion/confirmar/', confirmar_triangulacion_view, name='confirmar_triangulacion'),
     path(
@@ -60,6 +69,11 @@ urlpatterns = [
         'triangulacion/transaccion/<uuid:pk>/pagar/',
         PagarTransaccionCambioView.as_view(),
         name='pagar_transaccion_cambio',
+    ),
+    path(
+        'triangulacion/transaccion/<uuid:pk>/pagar/stripe/',
+        IniciarPagoStripeCambioView.as_view(),
+        name='pagar_transaccion_cambio_stripe',
     ),
     path('cotizaciones/<int:divisa_id>/actualizar/', ActualizarCotizacionView.as_view(), name='actualizar_cotizacion'),
     path('cotizaciones/<int:divisa_id>/historial/', HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),

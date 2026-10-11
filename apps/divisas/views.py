@@ -16,7 +16,7 @@ from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from apps.authentication.forms import CausaBajaForm
 from apps.authentication.models import HistorialBaja
-from apps.clientes.models import Cliente
+from apps.clientes.models import Cliente, MetodoPago
 from apps.divisas.forms import (
     CalculoOperacionForm,
     ConfiguracionComisionForm,
@@ -50,6 +50,32 @@ def _puede_pagarse(transaccion):
     únicamente de la validación que hace el propio ``registrar_pago``.
     """
     return transaccion.estado_efectivo == transaccion.ESTADO_CONFIRMADA
+
+
+def _avisar_resultado_pago_stripe(request):
+    """Informa, en la pantalla de detalle, el desenlace de un pago con tarjeta.
+
+    ``IniciarPagoStripeOperacionView``/``IniciarPagoStripeCambioView``
+    (ver ``apps.divisas.pagos_stripe``) traen de vuelta al cliente a esta
+    misma pantalla con ``?pago=iniciado`` o ``?pago=cancelado`` en la URL,
+    según haya completado el pago en Stripe o lo haya abandonado. En
+    ningún caso se tocó la transacción desde esta vista: un pago exitoso
+    recién se confirma de forma asíncrona cuando llega el webhook de
+    Stripe (criterio 2), así que el aviso de "iniciado" es deliberadamente
+    tentativo en vez de afirmar que ya está pagada.
+    """
+    resultado = request.GET.get('pago')
+    if resultado == 'iniciado':
+        messages.info(
+            request,
+            'Tu pago con tarjeta fue recibido por Stripe y se está confirmando. '
+            'El estado se actualiza automáticamente apenas Stripe lo confirme.',
+        )
+    elif resultado == 'cancelado':
+        messages.warning(
+            request,
+            'Cancelaste el pago con tarjeta en Stripe. La transacción sigue "Confirmada" y podés reintentarlo cuando quieras.',
+        )
 
 
 def _resolver_transaccion_propia(request, model, pk, url_fallback='divisas:mis_transacciones'):
@@ -532,6 +558,7 @@ class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, V
         transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
         if redireccion is not None:
             return redireccion
+        _avisar_resultado_pago_stripe(request)
         return render(request, 'divisas/detalle_transaccion_operacion.html', {'transaccion': transaccion})
 
 
@@ -560,6 +587,7 @@ class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View
         transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
         if redireccion is not None:
             return redireccion
+        _avisar_resultado_pago_stripe(request)
         return render(request, 'divisas/detalle_transaccion_cambio.html', {'transaccion': transaccion})
 
 
@@ -568,12 +596,14 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
 
     Implementa la HU "Asociación de pagos a transacciones" (GE-25): el
     cliente elige uno de sus métodos de pago guardados
-    (``apps.clientes.models.MetodoPago``) y el sistema registra el pago
-    (``Pago.registrar_pago``) con el monto exacto de la transacción, que el
-    cliente no puede modificar. Está pensada como base de HU futuras de pago
-    real (tarjeta vía Stripe, transferencia vía SIPAP): esta vista hace,
-    sincrónicamente y como proveedor "MANUAL", lo mismo que esas harán desde
-    sus propios webhooks.
+    (``apps.clientes.models.MetodoPago``). Si el método elegido es de tipo
+    "tarjeta", no se registra nada acá: se redirige a
+    ``apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView``, que es
+    quien de verdad cobra con Stripe (HU "Pago con tarjeta vía Stripe"). Para
+    cualquier otro tipo de método (transferencia, billetera), esta vista
+    sigue registrando el pago (``Pago.registrar_pago``) sincrónicamente y
+    como proveedor "MANUAL", con el monto exacto de la transacción, que el
+    cliente no puede modificar.
     """
 
     def test_func(self):
@@ -595,13 +625,15 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
         return render(request, 'divisas/pagar_transaccion.html', {'transaccion': transaccion, 'form': form})
 
     def post(self, request, *args, **kwargs):
-        """Registra el pago con el método elegido, de forma idempotente.
+        """Registra el pago con el método elegido, o inicia el cobro con Stripe.
 
         Args:
             request (HttpRequest): Solicitud POST con el campo ``metodo_pago``.
 
         Returns:
-            HttpResponse: Redirección al detalle de la transacción con el resultado.
+            HttpResponse: Redirección a Stripe si el método es "tarjeta", o
+            al detalle de la transacción con el resultado en cualquier otro
+            caso.
         """
         transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
         if redireccion is not None:
@@ -620,6 +652,14 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
             return render(request, 'divisas/pagar_transaccion.html', {'transaccion': transaccion, 'form': form})
 
         metodo_pago = form.cleaned_data['metodo_pago']
+        if metodo_pago.tipo_medio == MetodoPago.TIPO_TARJETA:
+            # Un método guardado de tipo "tarjeta" se cobra vía Stripe, no
+            # de forma manual: en vez de registrar el pago acá, se redirige
+            # a cobrar con esa tarjeta puntual (ver
+            # apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView).
+            url = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': transaccion.pk})
+            return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+
         try:
             pago, creado = Pago.registrar_pago(
                 transaccion,
@@ -667,13 +707,14 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
         return render(request, 'divisas/pagar_transaccion_cambio.html', {'transaccion': transaccion, 'form': form})
 
     def post(self, request, *args, **kwargs):
-        """Registra el pago con el método elegido, de forma idempotente.
+        """Registra el pago con el método elegido, o inicia el cobro con Stripe.
 
         Args:
             request (HttpRequest): Solicitud POST con el campo ``metodo_pago``.
 
         Returns:
-            HttpResponse: Redirección al detalle del cambio con el resultado.
+            HttpResponse: Redirección a Stripe si el método es "tarjeta", o
+            al detalle del cambio con el resultado en cualquier otro caso.
         """
         transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
         if redireccion is not None:
@@ -694,6 +735,12 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
             )
 
         metodo_pago = form.cleaned_data['metodo_pago']
+        if metodo_pago.tipo_medio == MetodoPago.TIPO_TARJETA:
+            # Ver PagarTransaccionOperacionView.post: un método de tipo
+            # "tarjeta" se cobra vía Stripe, no de forma manual.
+            url = reverse('divisas:pagar_transaccion_cambio_stripe', kwargs={'pk': transaccion.pk})
+            return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+
         try:
             pago, creado = Pago.registrar_pago(
                 transaccion,
