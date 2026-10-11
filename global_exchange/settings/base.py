@@ -142,6 +142,14 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+# --- Stripe (pago con tarjeta) ---
+# Con default='' el proyecto sigue arrancando en desarrollo sin tener
+# cuenta de Stripe configurada; sin una clave real, iniciar un pago con
+# tarjeta falla igual que un corte de comunicación real (ver
+# apps.divisas.pagos_stripe), así que no hace falta un valor de mentira.
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
+
 # Parámetros del cálculo previo de operaciones cambiarias.
 COMISION_OPERACION_PORCENTAJE = Decimal('1.00')
 CALCULO_OPERACION_VIGENCIA_SEGUNDOS = 300

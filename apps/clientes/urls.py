@@ -11,6 +11,7 @@ from .views import (
     AsociarUsuariosClienteView
 )
 from apps.clientes import views
+from apps.divisas.pagos_stripe import IniciarAgregarTarjetaStripeView, confirmar_tarjeta_stripe_view
 
 app_name = 'clientes'
 
@@ -37,8 +38,17 @@ urlpatterns = [
     # --- NUEVAS RUTAS PARA GE-19: MÉTODOS DE PAGO ---
     path('metodos-pago/', views.metodo_pago_list, name='metodo_pago_list'),
     path('metodos-pago/nuevo/', views.metodo_pago_create, name='metodo_pago_create'),
-    path('metodos-pago/<int:pk>/editar/', views.metodo_pago_update, name='metodo_pago_update'),
     path('metodos-pago/<int:pk>/eliminar/', views.metodo_pago_delete, name='metodo_pago_delete'),
     path('metodos-pago/<int:pk>/predeterminado/', views.metodo_pago_set_default, name='metodo_pago_set_default'),
     path('metodos-pago/<int:pk>/ver-datos/', views.metodo_pago_reveal, name='metodo_pago_reveal'),
+    path(
+        'metodos-pago/tarjeta/nueva/',
+        IniciarAgregarTarjetaStripeView.as_view(),
+        name='agregar_tarjeta_stripe',
+    ),
+    path(
+        'metodos-pago/tarjeta/confirmar/',
+        confirmar_tarjeta_stripe_view,
+        name='confirmar_tarjeta_stripe',
+    ),
 ]

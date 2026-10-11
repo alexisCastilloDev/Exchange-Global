@@ -560,5 +560,36 @@ class TestClienteView:
 
         assert response.status_code == 200
         clientes_en_contexto = response.context['clientes']
-        
+
         assert cliente_inactivo not in clientes_en_contexto
+
+
+@pytest.mark.django_db
+class TestClienteNombreCompleto:
+    """Verifica que ``nombre_completo`` muestre solo el nombre, sin identificador ni estado.
+
+    A diferencia de ``__str__`` (pensado para listados administrativos),
+    este campo se usa para precargar formularios de cara al propio cliente
+    (p. ej. el titular al agregar una tarjeta vía Stripe).
+    """
+
+    def test_persona_fisica_devuelve_nombre_y_apellido(self):
+        """Para una persona física, es 'nombre apellido', sin el CI ni el estado."""
+        cliente = Cliente.objects.create(
+            tipo_cliente='FISICA', nombre='Ana', apellido='Gómez',
+            identificador='CI-NOMBRE-001', is_active=True,
+        )
+
+        assert cliente.nombre_completo == 'Ana Gómez'
+        assert cliente.identificador not in cliente.nombre_completo
+        assert 'Activo' not in cliente.nombre_completo
+
+    def test_persona_juridica_devuelve_la_razon_social(self):
+        """Para una persona jurídica, es la razón social, sin el RUC ni el estado."""
+        cliente = Cliente.objects.create(
+            tipo_cliente='JURIDICA', razon_social='Importadora SA',
+            identificador='RUC-NOMBRE-001', is_active=True,
+        )
+
+        assert cliente.nombre_completo == 'Importadora SA'
+        assert cliente.identificador not in cliente.nombre_completo

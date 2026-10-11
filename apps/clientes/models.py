@@ -118,6 +118,19 @@ class Cliente(models.Model):
 
     fecha_registro = models.DateTimeField(default=timezone.now)
 
+    stripe_customer_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='ID de cliente en Stripe',
+        help_text=(
+            'Lo asigna Stripe la primera vez que este cliente paga con '
+            'tarjeta (ver apps.divisas.pagos_stripe). Permite reutilizar la '
+            'tarjeta guardada en pagos siguientes sin pedirla de nuevo ni '
+            'guardar nunca el número real en esta base.'
+        ),
+    )
+
     # MANAGERS
     objects = models.Manager()
     activos = ClienteActiveManager()
@@ -131,6 +144,23 @@ class Cliente(models.Model):
     def primer_usuario(self):
         """Retorna el usuario titular o el primer usuario de la relación M2M."""
         return self.user or self.usuarios.first()
+
+    @property
+    def nombre_completo(self):
+        """Devuelve solo el nombre del cliente, sin identificador ni estado.
+
+        A diferencia de ``__str__`` (pensado para listados administrativos,
+        donde conviene ver el identificador y el estado de un vistazo), este
+        campo es para precargar un nombre en un formulario de cara al propio
+        cliente — p. ej. el titular al agregar una tarjeta vía Stripe
+        (``apps.divisas.pagos_stripe``) — donde ese identificador/estado no
+        pinta nada.
+        """
+        if self.tipo_cliente == self.TIPO_JURIDICA:
+            return self.razon_social or ''
+        nombre_str = self.nombre if self.nombre else ''
+        apellido_str = self.apellido if self.apellido else ''
+        return f'{nombre_str} {apellido_str}'.strip()
 
     def __str__(self):
         """Devuelve una descripción legible del cliente y su estado."""
@@ -152,6 +182,17 @@ class MetodoPago(models.Model):
 
     Permite almacenar cuentas bancarias, tarjetas o billeteras digitales asociadas
     a un cliente para la realización de operaciones cambiarias.
+
+    ``proveedor_externo``/``referencia_externa`` identifican, cuando
+    corresponde, la integración real que respalda este método: para una
+    tarjeta (HU "Pago con tarjeta vía Stripe", ver
+    ``apps.divisas.pagos_stripe``), ``referencia_externa`` es el id de un
+    ``PaymentMethod`` de Stripe, nunca el número real de la tarjeta — por
+    eso ``numero_tarjeta`` guarda, para esos métodos, solo los últimos 4
+    dígitos que devuelve Stripe, no el número completo. Estos dos campos
+    quedan genéricos (no específicos de Stripe) a propósito, pensados para
+    que una futura integración con SIPAP pueda identificar del mismo modo
+    una cuenta bancaria real sin guardar sus datos completos acá.
     """
 
     TIPO_TRANSFERENCIA = 'TRANSFERENCIA'
@@ -167,6 +208,14 @@ class MetodoPago(models.Model):
     TIPO_CUENTA_CHOICES = [
         ('AHORRO', 'Caja de Ahorro'),
         ('CORRIENTE', 'Cuenta Corriente'),
+    ]
+
+    PROVEEDOR_STRIPE = 'STRIPE'
+    PROVEEDOR_SIPAP = 'SIPAP'
+
+    PROVEEDOR_EXTERNO_CHOICES = [
+        (PROVEEDOR_STRIPE, 'Stripe'),
+        (PROVEEDOR_SIPAP, 'SIPAP'),
     ]
 
     # Anclado al perfil de Cliente activo, no al usuario que autentica: así
@@ -209,6 +258,30 @@ class MetodoPago(models.Model):
         blank=True,
         null=True,
         verbose_name='Número de Tarjeta'
+    )
+    proveedor_externo = models.CharField(
+        max_length=20,
+        choices=PROVEEDOR_EXTERNO_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name='Proveedor externo',
+        help_text=(
+            'Integración real que respalda este método (Stripe para '
+            'tarjetas; SIPAP, a futuro, para cuentas bancarias). Vacío '
+            'para un método sin ninguna integración real detrás.'
+        ),
+    )
+    referencia_externa = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='Referencia externa',
+        help_text=(
+            'Id que usa el proveedor externo para este método (p. ej. un '
+            'PaymentMethod de Stripe). Nunca es el número real de la '
+            'tarjeta o cuenta: esa información vive solo del lado del '
+            'proveedor.'
+        ),
     )
     es_predeterminado = models.BooleanField(
         default=False,

@@ -170,11 +170,45 @@ class AsociarUsuarioClienteForm(forms.Form):
 # FORMULARIOS PARA GE-19: Gestión de métodos de pago
 # ==============================================================================
 
+class AgregarTarjetaStripeForm(forms.Form):
+    """Pide el nombre del titular antes de ir a Stripe a capturar la tarjeta.
+
+    Es deliberadamente mínimo: el número de tarjeta nunca pasa por este
+    formulario ni por ningún campo de Global Exchange — lo captura Stripe
+    directamente en su propia página (ver
+    ``apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView``). El
+    nombre del titular es el único dato propio que hace falta pedir antes
+    de salir hacia Stripe, porque la entidad financiera y los últimos 4
+    dígitos los va a devolver Stripe recién al confirmar.
+    """
+
+    nombre_titular = forms.CharField(
+        max_length=150,
+        label='Nombre del Titular',
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+
+
 class MetodoPagoForm(forms.ModelForm):
     """
-    Formulario para la creación y edición de métodos de pago del cliente.
-    Realiza validaciones condicionales de acuerdo al tipo de medio de pago seleccionado.
+    Formulario para registrar un método de pago manual del cliente (transferencia o billetera).
+
+    Solo se usa para crear: los métodos de pago ya no se editan, solo se
+    eliminan y se vuelven a crear si hace falta cambiar algo (ver
+    ``apps.clientes.views.metodo_pago_delete``). Tampoco ofrece "Tarjeta de
+    Débito/Crédito" como opción: desde la HU "Pago con tarjeta vía Stripe",
+    una tarjeta se agrega exclusivamente a través de Stripe (ver
+    ``IniciarAgregarTarjetaStripeView`` en ``apps.divisas.pagos_stripe``),
+    que es quien conoce el número real y nunca lo entrega a este
+    formulario.
     """
+
+    def __init__(self, *args, **kwargs):
+        """Quita "Tarjeta" de las opciones: esa alta pasa siempre por Stripe."""
+        super().__init__(*args, **kwargs)
+        self.fields['tipo_medio'].choices = [
+            choice for choice in MetodoPago.TIPO_MEDIO_CHOICES if choice[0] != MetodoPago.TIPO_TARJETA
+        ]
 
     class Meta:
         """Define los campos, etiquetas y widgets del método de pago."""
@@ -185,7 +219,6 @@ class MetodoPagoForm(forms.ModelForm):
             'entidad_financiera',
             'numero_cuenta',
             'tipo_cuenta',
-            'numero_tarjeta',  # Se reemplaza 'ultimos_4_digitos' por 'numero_tarjeta'
             'es_predeterminado'
         ]
         widgets = {
@@ -194,36 +227,20 @@ class MetodoPagoForm(forms.ModelForm):
             'entidad_financiera': forms.TextInput(attrs={'class': 'form-control'}),
             'numero_cuenta': forms.TextInput(attrs={'class': 'form-control'}),
             'tipo_cuenta': forms.Select(attrs={'class': 'form-select'}),
-            'numero_tarjeta': forms.TextInput(attrs={
-                'class': 'form-control',
-                'maxlength': '19',
-                'minlength': '13',
-                'placeholder': 'Ej. 4532123456789012',
-                'inputmode': 'numeric'
-            }),
             'es_predeterminado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean(self):
-        """
-        Valida que se ingresen los campos obligatorios correspondientes a cada tipo de pago (Criterio 2).
-        """
+        """Valida los campos obligatorios de una transferencia bancaria (Criterio 2)."""
         cleaned_data = super().clean()
         tipo_medio = cleaned_data.get('tipo_medio')
         numero_cuenta = cleaned_data.get('numero_cuenta')
         tipo_cuenta = cleaned_data.get('tipo_cuenta')
-        numero_tarjeta = cleaned_data.get('numero_tarjeta')
 
         if tipo_medio == MetodoPago.TIPO_TRANSFERENCIA:
             if not numero_cuenta:
                 self.add_error('numero_cuenta', 'El número de cuenta es obligatorio para transferencias bancarias.')
             if not tipo_cuenta:
                 self.add_error('tipo_cuenta', 'Debe seleccionar el tipo de cuenta.')
-
-        elif tipo_medio == MetodoPago.TIPO_TARJETA:
-            if not numero_tarjeta:
-                self.add_error('numero_tarjeta', 'Debe ingresar el número de la tarjeta.')
-            elif not numero_tarjeta.isdigit() or not (13 <= len(numero_tarjeta) <= 19):
-                self.add_error('numero_tarjeta', 'Debe ingresar un número de tarjeta válido (entre 13 y 19 dígitos numéricos).')
 
         return cleaned_data

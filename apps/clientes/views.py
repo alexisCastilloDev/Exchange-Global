@@ -463,45 +463,6 @@ def metodo_pago_create(request):
 
 
 @requiere_rol('cliente')
-def metodo_pago_update(request, pk):
-    """
-    Permite modificar los datos de un método de pago existente del cliente activo (Criterio 4).
-    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.
-    """
-    roles = request.session.get('keycloak_roles', [])
-    if 'admin' in roles or 'cliente' not in roles:
-        messages.error(request, 'No tenés permiso para acceder a métodos de pago.')
-        return redirect('home')
-
-    cliente_activo = getattr(request, 'cliente_activo', None)
-    if cliente_activo is None:
-        messages.error(request, 'No tenés clientes asociados para gestionar métodos de pago.')
-        return redirect('home')
-
-    metodo = get_object_or_404(MetodoPago, pk=pk, cliente=cliente_activo)
-    if request.method == 'POST':
-        form = MetodoPagoForm(request.POST, instance=metodo)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Método de pago actualizado correctamente.')
-            return redirect('clientes:metodo_pago_list')
-        else:
-            messages.error(request, 'Por favor, corrija los errores en el formulario.')
-    else:
-        form = MetodoPagoForm(instance=metodo)
-
-    response = TemplateResponse(
-        request,
-        'clientes/metodo_pago_form.html',
-        {'form': form, 'titulo': 'Editar Método de Pago'}
-    )
-    response.context_data = {'form': form, 'titulo': 'Editar Método de Pago'}
-    response.context = response.context_data
-    response.render()
-    return response
-
-
-@requiere_rol('cliente')
 def metodo_pago_delete(request, pk):
     """
     Confirma y elimina un método de pago del cliente activo (Criterio 5).

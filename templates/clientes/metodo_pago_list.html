@@ -14,9 +14,14 @@ Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context pro
     <h1>Métodos de pago</h1>
     <p>Administra las cuentas y medios que utilizarás para tus operaciones.</p>
   </div>
-  <a href="{% url 'clientes:metodo_pago_create' %}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-1"></i>Agregar método
-  </a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'clientes:agregar_tarjeta_stripe' %}" class="btn btn-outline-primary">
+      <i class="bi bi-credit-card-2-front me-1"></i>Agregar tarjeta
+    </a>
+    <a href="{% url 'clientes:metodo_pago_create' %}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i>Agregar transferencia o billetera
+    </a>
+  </div>
 </div>
 
 <div class="ge-card ge-payment-summary mb-3">
@@ -68,7 +73,10 @@ Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context pro
             <div>
               <span>Tarjeta</span>
               <strong>
-                {% if metodo.pk in metodos_revelados %}
+                {% if metodo.proveedor_externo == 'STRIPE' %}
+                  {# Guardada en Stripe: nunca hay más que los últimos 4 dígitos para mostrar. #}
+                  •••• •••• •••• {{ metodo.numero_tarjeta|default:'????' }}
+                {% elif metodo.pk in metodos_revelados %}
                   {{ metodo.numero_tarjeta }}
                 {% elif metodo.numero_tarjeta %}
                   {% with total=metodo.numero_tarjeta|length %}
@@ -92,7 +100,7 @@ Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context pro
 
         <div class="ge-payment-card__actions">
           <div class="d-flex gap-2">
-            {% if metodo.cliente_id == cliente_activo.id %}
+            {% if metodo.cliente_id == cliente_activo.id and metodo.proveedor_externo != 'STRIPE' %}
             <form action="{% url 'clientes:metodo_pago_reveal' metodo.pk %}" method="post" class="d-inline">
               {% csrf_token %}
               {% if metodo.pk in metodos_revelados %}
@@ -102,7 +110,6 @@ Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context pro
               {% endif %}
             </form>
             {% endif %}
-            <a href="{% url 'clientes:metodo_pago_update' metodo.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Editar</a>
             <a href="{% url 'clientes:metodo_pago_delete' metodo.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Eliminar</a>
           </div>
 

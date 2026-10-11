@@ -162,10 +162,16 @@ cliente puede pagarla desde ``apps.divisas.views.PagarTransaccionOperacionView``
 o ``PagarTransaccionCambioView``, eligiendo uno de sus métodos de pago ya
 guardados (``apps.clientes.models.MetodoPago``, de la HU "Métodos de pago").
 El monto a pagar es siempre el ``monto_final`` ya calculado por el sistema;
-el cliente no puede modificarlo.
+el cliente no puede modificarlo. Hay un único botón "Pagar": si el método
+elegido es de tipo "tarjeta" (``MetodoPago.TIPO_TARJETA``), la vista
+redirige a cobrar con Stripe (ver `Pago con tarjeta vía Stripe`_ más abajo)
+en vez de registrar el pago ahí mismo; para transferencia o billetera, el
+registro sigue siendo inmediato, como se describe a continuación.
 
-El registro del pago pasa siempre por ``apps.divisas.models.Pago.registrar_pago``,
-pensado como punto de entrada único e idempotente:
+El registro del pago (para transferencia o billetera; el caso de tarjeta
+se resuelve del lado de Stripe) pasa siempre por
+``apps.divisas.models.Pago.registrar_pago``, pensado como punto de entrada
+único e idempotente:
 
 * Asocia el pago a una única transacción (``calculo_operacion`` o
   ``calculo_triangulacion``, nunca ambas), con el medio de pago, el
@@ -183,9 +189,10 @@ pensado como punto de entrada único e idempotente:
   un segundo registro ni volver a tocar la transacción.
 * Al registrarse un pago exitoso, la transacción pasa a "Pagada".
 
-Esta HU ("Asociación de pagos a transacciones") es, a propósito, la base de
-dos HU futuras que todavía no están implementadas: pago con tarjeta vía
-Stripe y pago por transferencia vía SIPAP. Ambas se integrarán como
+Esta HU ("Asociación de pagos a transacciones") se diseñó, a propósito,
+como la base de HU futuras de pago real: pago con tarjeta vía Stripe (ya
+implementado, ver `Pago con tarjeta vía Stripe`_ más abajo) y pago por
+transferencia vía SIPAP (todavía no implementado). Ambas se integran como
 webhooks de su proveedor (con su propia verificación de firma, que no es
 responsabilidad de ``Pago``) que arman los mismos datos genéricos
 (medio, proveedor, identificador externo, monto) a partir de su propio
@@ -199,6 +206,172 @@ Tanto el detalle de una compra/venta como el de un cambio entre divisas
 muestran el pago asociado (medio, monto, fecha e identificador) o,
 si todavía no se registró ninguno, un mensaje indicándolo en vez de dejar
 la sección vacía sin explicación.
+
+Pago con tarjeta vía Stripe
+---------------------------
+
+Implementa la HU "Pago con tarjeta vía Stripe" (``apps.divisas.pagos_stripe``),
+la primera de las dos HU futuras para las que GE-25 se diseñó como base (ver
+sección anterior). Una tarjeta es, a todos los efectos de la UI, un
+``apps.clientes.models.MetodoPago`` más (HU "Métodos de pago", GE-19): no
+agrega ningún botón nuevo a la pantalla de pago de una transacción "Confirmada"
+(``pagar_transaccion.html``/``pagar_transaccion_cambio.html``), el cliente
+sigue viendo un único botón "Pagar", y es la propia vista
+(``PagarTransaccionOperacionView``/``PagarTransaccionCambioView``) la que
+decide qué hacer según el tipo del método de pago elegido. Si es de tipo
+"tarjeta" (``MetodoPago.TIPO_TARJETA``), en vez de registrar el pago en el
+momento redirige a cobrar con esa tarjeta puntual vía Stripe (pasando su
+``pk`` como ``?metodo_pago=``); para transferencia o billetera sigue
+registrando el pago manualmente, como ya hacía GE-25. El flujo de Stripe
+tiene dos mitades independientes:
+
+#. **Cobrar** (``IniciarPagoStripeOperacionView``/
+   ``IniciarPagoStripeCambioView``, en ``apps.divisas.pagos_stripe``).
+   Resuelve el ``MetodoPago`` elegido (``_resolver_metodo_pago_tarjeta``):
+   tiene que ser del cliente, de tipo tarjeta y tener una
+   ``referencia_externa`` de Stripe; si no, se pide elegir una tarjeta
+   guardada válida, sin llamar a Stripe para nada. Con esa referencia y el
+   ``Customer`` de Stripe del cliente (``_obtener_o_crear_cliente_stripe``,
+   ver más abajo), cobra directo por API con un ``PaymentIntent``
+   ``off_session=True, confirm=True`` — sin mostrar ninguna página de
+   Stripe — por el monto exacto de ``transaccion.monto_final`` (criterio 1;
+   nunca editable por el cliente), en PYG para una compra/venta o en la
+   divisa de destino para un cambio (``_moneda_de_liquidacion``, convertida
+   a la unidad que espera Stripe con ``_monto_en_unidad_minima_stripe``,
+   sin centavos para PYG). Si el banco la rechaza
+   (``stripe.error.CardError``, criterio 4) o exige una autenticación
+   adicional (3-D Secure/SCA, ``status == "requires_action"``), cae a una
+   sesión de `Stripe Checkout <https://stripe.com/docs/payments/checkout>`_
+   (``customer=...``, para que esa misma tarjeta aparezca preseleccionada)
+   para que el cliente confirme ahí. En cualquiera de los dos casos, si
+   Stripe no responde o la conexión falla (``stripe.error.StripeError``),
+   se informa el problema sin tocar la transacción (criterio 6); si el
+   cliente abandona o cancela el pago en la página de Stripe, vuelve al
+   detalle de la transacción con un aviso, también sin que nada se haya
+   tocado (criterio 5).
+#. **Confirmar el pago.** Para el cobro directo, la propia respuesta
+   síncrona del ``PaymentIntent`` (``status == "succeeded"``) es la
+   confirmación: no hace falta esperar ningún webhook. Para el camino de
+   Checkout (solo cuando el cobro directo no alcanzó), confirma
+   ``stripe_webhook_view`` (expuesta en ``/webhooks/stripe/`` fuera de
+   cualquier namespace de la aplicación, porque la URL la configura una
+   vez el dashboard de Stripe): valida la firma con
+   ``stripe.Webhook.construct_event`` antes de mirar el contenido; si no
+   es válida, la rechaza con un 400 sin tocar ninguna transacción
+   (criterio 3). Si la firma es válida y el evento es
+   ``checkout.session.completed`` con ``payment_status == "paid"``, llama
+   a ``Pago.registrar_pago`` con el identificador de Stripe (el
+   ``payment_intent``) y ``MetodoPago.TIPO_TARJETA`` (criterio 2).
+   Cualquier otro evento, o una sesión todavía no cobrada, no modifica
+   nada.
+
+Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Una tarjeta se agrega desde el mismo listado de métodos de pago
+(``clientes:metodo_pago_list``, botón "Agregar tarjeta"), pero **no** a
+través del formulario manual de GE-19
+(``apps.clientes.forms.MetodoPagoForm``, que desde esta HU dejó de ofrecer
+"Tarjeta" como opción): el número de tarjeta nunca pasa por un campo de
+Global Exchange ni se guarda en esta base. El alta tiene también dos
+mitades:
+
+#. **Iniciar** (``IniciarAgregarTarjetaStripeView``). Pide solo el nombre
+   del titular (``apps.clientes.forms.AgregarTarjetaStripeForm``),
+   precargado con ``Cliente.nombre_completo`` (solo el nombre, a
+   diferencia de ``Cliente.__str__`` que agrega el identificador y el
+   estado entre paréntesis — útil en un listado administrativo, pero no
+   acá, de cara al propio cliente) y crea una sesión de Stripe Checkout en
+   modo ``"setup"`` (guarda una tarjeta sin cobrar nada), asociada al
+   ``Customer`` de Stripe del cliente, con el nombre del titular en los
+   metadatos del ``SetupIntent`` para recuperarlo al confirmar.
+#. **Confirmar** (``confirmar_tarjeta_stripe_view``, el ``success_url`` de
+   la sesión anterior). Recupera la sesión y su ``SetupIntent``; si la
+   sesión no corresponde al ``Customer`` de este cliente, responde 404 (no
+   hay nada legítimo que hacer con una sesión ajena). Si el ``SetupIntent``
+   llegó a ``"succeeded"``, consulta el ``PaymentMethod`` que generó
+   (``stripe.PaymentMethod.retrieve``) y recién ahí crea el ``MetodoPago``:
+   ``tipo_medio=TARJETA``, ``proveedor_externo=STRIPE``,
+   ``referencia_externa`` (el id del ``PaymentMethod``), y, solo para
+   mostrarlo en el listado, la marca (``entidad_financiera``) y los
+   últimos 4 dígitos (``numero_tarjeta``) que devuelve Stripe — nunca el
+   número completo, que Stripe jamás entrega. Confirmar la misma sesión
+   dos veces (el cliente refresca la página de vuelta) no duplica el
+   método: se detecta por ``referencia_externa`` ya existente.
+
+``proveedor_externo``/``referencia_externa`` son campos genéricos de
+``MetodoPago`` (no específicos de Stripe) a propósito: la idea es que una
+futura integración con SIPAP pueda identificar del mismo modo una cuenta
+bancaria real (``proveedor_externo=SIPAP``) sin guardar sus datos
+completos acá, y que el mismo listado de métodos de pago termine
+mostrando, con el tiempo, tanto tarjetas (Stripe) como cuentas bancarias
+(SIPAP) de manera uniforme.
+
+Ningún método de pago se edita: ``apps.clientes.views`` ya no tiene una
+vista de edición, ``apps.clientes.forms.MetodoPagoForm`` solo se usa para
+crear una transferencia o billetera, y ``metodo_pago_list.html`` ofrece
+únicamente "Eliminar" junto a cada método. Para cambiar cualquier dato, el
+flujo es eliminar el método y crear uno nuevo; para una tarjeta de Stripe,
+eso además evita el problema de "editar" datos que en realidad viven del
+lado de Stripe (marca, últimos 4 dígitos) y no tendría sentido escribir a
+mano.
+
+Al pagar, cobrar directo con el ``MetodoPago`` elegido usa una
+``idempotency_key`` fija por transacción
+(``f'ge22-pago-directo-{transaccion.pk}'``): si la vista se llama dos veces
+para la misma transacción (doble clic, el cliente vuelve atrás y refresca),
+Stripe devuelve el mismo ``PaymentIntent`` ya creado en vez de cobrar la
+tarjeta una segunda vez — el mismo problema que la clave de idempotencia
+``(proveedor, identificador_externo)`` de ``Pago.registrar_pago`` resuelve
+para el resto de los medios de pago, pero un paso antes, porque acá la
+vista misma es la que ejecuta el cobro (no solo lo registra).
+
+La sesión de Checkout se crea **sin** pasar ``payment_method_types``: Stripe
+retiró ese parámetro de ``checkout.Session.create`` (ahora los métodos de
+pago aceptados se configuran desde el Dashboard de Stripe, no desde el
+código) y volver a agregarlo rompe la creación de la sesión con un
+``InvalidRequestError`` en cualquier cuenta nueva. Sin ninguna restricción,
+Checkout ofrece cualquier medio habilitado en la cuenta — típicamente
+también "Link" (el autocompletado propio de Stripe), mostrado de forma muy
+prominente —, y si el cliente lo elige en vez de una tarjeta, el
+``PaymentMethod`` resultante es de tipo ``"link"``, sin los datos de
+tarjeta que esta HU necesita guardar. En su lugar, ambas sesiones de
+Checkout (el alta de una tarjeta y el fallback de pago) se crean con
+``payment_method_configuration=_configuracion_solo_tarjeta()``: una
+``PaymentMethodConfiguration`` propia, creada (o reutilizada, cacheada en
+el proceso) con tarjeta prendida y Link apagado, así Checkout nunca
+ofrece otra cosa. Como defensa adicional, ``confirmar_tarjeta_stripe_view``
+revisa que el ``PaymentMethod`` devuelto tenga de verdad el atributo
+``card`` antes de leerlo, y si no, informa el problema sin crear nada en
+vez de romper con un ``AttributeError``.
+
+Los objetos que devuelve el SDK de Stripe (``StripeObject``: una sesión de
+Checkout, un ``SetupIntent``, el evento de un webhook) **no** son dicts en
+esta versión del SDK: no tienen ``.get()`` ni son iterables, aunque sí
+soportan ``objeto['clave']`` y ``objeto.clave``. Por eso
+``_procesar_sesion_completada`` y ``confirmar_tarjeta_stripe_view`` pasan
+cualquier ``metadata``/sesión por ``_a_dict`` (que llama a
+``.to_dict()``, recursivo) antes de usar ``.get()`` sobre ellos — omitir
+ese paso tira ``AttributeError: 'get' is a dict method, but a StripeObject
+is not a dict`` en cuanto se usa contra Stripe de verdad, algo que un mock
+armado con un dict plano o un ``SimpleNamespace`` no detecta (los tests de
+este módulo usan, a propósito, ``StripeObject`` reales para cubrir este
+caso).
+
+Ni la vista de inicio, ni el cobro directo, ni el webhook tocan
+``transaccion.estado`` directamente: los tres construyen los mismos datos
+genéricos (medio, proveedor "STRIPE", identificador externo, monto) y
+llaman a ``Pago.registrar_pago``, igual que ya hace el flujo manual de
+GE-25. Esto también resuelve la idempotencia ante un webhook reenviado por
+Stripe (algo que Stripe hace activamente si no recibe un 200 a tiempo): la
+segunda llamada con el mismo ``(proveedor, identificador_externo)`` devuelve
+el pago ya existente sin duplicar nada.
+
+``STRIPE_SECRET_KEY`` y ``STRIPE_WEBHOOK_SECRET`` (ver ``.env.example``) son
+opcionales en desarrollo (``default=''``): sin una cuenta de Stripe
+configurada, iniciar un pago con tarjeta simplemente falla con el mismo
+mensaje de "no se pudo conectar con Stripe" que un corte de comunicación
+real, sin impedir trabajar en el resto del sistema.
 
 Venta de divisas
 ----------------

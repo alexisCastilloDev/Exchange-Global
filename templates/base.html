@@ -174,7 +174,7 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                 <div class="ge-sidebar__section-label">Configuración</div>
                 <ul class="ge-sidebar__nav">
                     <li>
-                        <a href="{% url 'clientes:metodo_pago_list' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'metodo_pago_list,metodo_pago_create,metodo_pago_update,metodo_pago_delete' %}is-active{% endif %}">
+                        <a href="{% url 'clientes:metodo_pago_list' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'metodo_pago_list,metodo_pago_create,metodo_pago_delete,agregar_tarjeta_stripe,confirmar_tarjeta_stripe' %}is-active{% endif %}">
                             <i class="bi bi-wallet2"></i> Métodos de pago
                         </a>
                     </li>

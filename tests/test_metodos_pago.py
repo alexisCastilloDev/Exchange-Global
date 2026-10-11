@@ -2,7 +2,8 @@
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
+from apps.clientes.forms import MetodoPagoForm
 from apps.clientes.models import Cliente, MetodoPago
 
 User = get_user_model()
@@ -250,8 +251,12 @@ class MetodoPagoTestCase(TestCase):
         self.assertContains(response, 'Banco Ajeno')
         self.assertNotContains(response, 'Banco Propio')
 
-    def test_modificar_metodo_pago(self):
-        """Criterio 4: Modificar datos de un método existente."""
+    def test_no_existe_ninguna_opcion_para_editar_un_metodo_de_pago(self):
+        """Criterio 4 (adaptado): un método de pago ya no se edita, solo se elimina.
+
+        Para cambiar algo, el flujo esperado es eliminar el método y crear
+        uno nuevo; no hay ninguna URL de edición expuesta.
+        """
         metodo = MetodoPago.objects.create(
             cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
@@ -260,15 +265,12 @@ class MetodoPagoTestCase(TestCase):
             numero_cuenta='987654',
             tipo_cuenta='CORRIENTE'
         )
-        response = self.client.post(reverse('clientes:metodo_pago_update', args=[metodo.pk]), {
-            'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
-            'nombre_titular': 'Juan Pérez Modificado',
-            'entidad_financiera': 'Sudameris',
-            'numero_cuenta': '987654',
-            'tipo_cuenta': 'CORRIENTE'
-        })
-        metodo.refresh_from_db()
-        self.assertEqual(metodo.nombre_titular, 'Juan Pérez Modificado')
+
+        with self.assertRaises(NoReverseMatch):
+            reverse('clientes:metodo_pago_update', args=[metodo.pk])
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+        self.assertNotContains(response, 'Editar')
 
     def test_eliminar_metodo_pago(self):
         """Criterio 5: Eliminar un método de pago."""
@@ -306,3 +308,39 @@ class MetodoPagoTestCase(TestCase):
 
         self.assertFalse(metodo1.es_predeterminado)
         self.assertTrue(metodo2.es_predeterminado)
+
+
+class MetodoPagoFormStripeTest(TestCase):
+    """Verifica que 'Tarjeta' quede reservada al alta vía Stripe (HU 'Pago con tarjeta vía Stripe')."""
+
+    def setUp(self):
+        """Prepara un cliente con una tarjeta ya vinculada a Stripe."""
+        self.user = User.objects.create_user(
+            username='cliente-form-stripe', email='form-stripe@test.com', password='password123',
+        )
+        self.cliente = Cliente.objects.create(
+            user=self.user, identificador='CI-FORM-STRIPE-001', nombre='Lucía', apellido='Gómez',
+            email='form-stripe@test.com', is_active=True,
+        )
+
+    def test_el_formulario_de_alta_no_ofrece_tarjeta_como_opcion(self):
+        """Al crear, 'Tarjeta' no aparece: esa alta pasa siempre por Stripe."""
+        form = MetodoPagoForm()
+
+        valores = [valor for valor, _ in form.fields['tipo_medio'].choices]
+
+        self.assertNotIn(MetodoPago.TIPO_TARJETA, valores)
+        self.assertIn(MetodoPago.TIPO_TRANSFERENCIA, valores)
+        self.assertIn(MetodoPago.TIPO_BILLETERA, valores)
+
+    def test_el_formulario_rechaza_crear_una_tarjeta_directamente(self):
+        """Ni mandando 'TARJETA' a mano se puede crear una tarjeta por este formulario."""
+        form = MetodoPagoForm(data={
+            'tipo_medio': MetodoPago.TIPO_TARJETA,
+            'nombre_titular': 'Lucía Gómez',
+            'entidad_financiera': 'Visa',
+            'numero_tarjeta': '4111111111111111',
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('tipo_medio', form.errors)
