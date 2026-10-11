@@ -38,6 +38,7 @@ from apps.divisas.models import (
     Divisa,
     Pago,
     PagoRechazadoError,
+    monto_a_pagar,
 )
 
 
@@ -685,7 +686,10 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     Ver ``PagarTransaccionOperacionView``: mismo flujo y mismas HU futuras
     como base, aplicado a ``CalculoTriangulacion`` en vez de a una compra o
-    venta.
+    venta. Una diferencia importante: lo que el cliente paga es
+    ``monto_origen`` (``apps.divisas.models.monto_a_pagar``), en su divisa
+    de origen, no ``monto_final`` — eso es lo que recibe a cambio, no lo
+    que entrega.
     """
 
     def test_func(self):
@@ -747,7 +751,7 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
                 medio_pago=metodo_pago.tipo_medio,
                 proveedor=Pago.PROVEEDOR_MANUAL,
                 identificador_externo=str(transaccion.pk),
-                monto=transaccion.monto_final,
+                monto=monto_a_pagar(transaccion),
                 metodo_pago=metodo_pago,
             )
         except PagoRechazadoError as error:

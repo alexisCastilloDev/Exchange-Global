@@ -161,8 +161,11 @@ Una vez que una transacción (compra/venta o cambio) está "Confirmada", el
 cliente puede pagarla desde ``apps.divisas.views.PagarTransaccionOperacionView``
 o ``PagarTransaccionCambioView``, eligiendo uno de sus métodos de pago ya
 guardados (``apps.clientes.models.MetodoPago``, de la HU "Métodos de pago").
-El monto a pagar es siempre el ``monto_final`` ya calculado por el sistema;
-el cliente no puede modificarlo. Hay un único botón "Pagar": si el método
+El monto a pagar es siempre el que calcula el sistema (``apps.divisas.models.monto_a_pagar``);
+el cliente no puede modificarlo. Para una compra/venta es ``monto_final``, en
+PYG; para un cambio entre divisas es ``monto_origen``, en la divisa de
+origen — lo que el cliente entrega, no ``monto_final`` (lo que recibe a
+cambio): ver el docstring de ``monto_a_pagar`` para el porqué. Hay un único botón "Pagar": si el método
 elegido es de tipo "tarjeta" (``MetodoPago.TIPO_TARJETA``), la vista
 redirige a cobrar con Stripe (ver `Pago con tarjeta vía Stripe`_ más abajo)
 en vez de registrar el pago ahí mismo; para transferencia o billetera, el
@@ -234,11 +237,11 @@ tiene dos mitades independientes:
    ``Customer`` de Stripe del cliente (``_obtener_o_crear_cliente_stripe``,
    ver más abajo), cobra directo por API con un ``PaymentIntent``
    ``off_session=True, confirm=True`` — sin mostrar ninguna página de
-   Stripe — por el monto exacto de ``transaccion.monto_final`` (criterio 1;
-   nunca editable por el cliente), en PYG para una compra/venta o en la
-   divisa de destino para un cambio (``_moneda_de_liquidacion``, convertida
-   a la unidad que espera Stripe con ``_monto_en_unidad_minima_stripe``,
-   sin centavos para PYG). Si el banco la rechaza
+   Stripe — por el monto exacto que devuelve ``monto_a_pagar`` (criterio 1;
+   nunca editable por el cliente): en PYG para una compra/venta, o en la
+   divisa de **origen** para un cambio (``_moneda_de_liquidacion``, que
+   delega en ``moneda_a_pagar``), convertida a la unidad que espera Stripe
+   con ``_monto_en_unidad_minima_stripe``, sin centavos para PYG. Si el banco la rechaza
    (``stripe.error.CardError``, criterio 4) o exige una autenticación
    adicional (3-D Secure/SCA, ``status == "requires_action"``), cae a una
    sesión de `Stripe Checkout <https://stripe.com/docs/payments/checkout>`_
@@ -264,6 +267,22 @@ tiene dos mitades independientes:
    ``payment_intent``) y ``MetodoPago.TIPO_TARJETA`` (criterio 2).
    Cualquier otro evento, o una sesión todavía no cobrada, no modifica
    nada.
+
+Qué paga y qué recibe el cliente en un cambio entre divisas
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+En un cambio (``CalculoTriangulacion``, ver ``_calcular_triangulacion``),
+el cliente entrega una divisa (origen) y recibe otra (destino); la
+triangulación por PYG es solo un paso de cálculo interno, no algo que el
+cliente vea como un pago en guaraníes. Por ejemplo, para "Cambio de
+EUR a USD" con un monto de 500,00 EUR: el cliente **entrega 500,00 EUR**
+(``monto_origen``, en ``codigo_divisa_origen``) y, neto de la comisión,
+**recibe 559,16 USD** (``monto_final``, en ``codigo_divisa_destino``). Lo
+que cobra Stripe (y lo que queda registrado en ``Pago.monto``, sea cual
+sea el medio) es siempre lo que el cliente entrega — ``monto_origen``, en
+``codigo_divisa_origen`` — nunca ``monto_final``: cobrarle al cliente lo
+que va a recibir, en la moneda que va a recibir, no tendría sentido como
+pago de un cambio.
 
 Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
