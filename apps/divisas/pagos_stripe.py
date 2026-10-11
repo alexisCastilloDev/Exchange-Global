@@ -30,8 +30,10 @@ Diseño elegido para cada criterio de aceptación:
 
 - Criterio 1 (monto exacto, no modificable): tanto la sesión de Checkout
   como el ``PaymentIntent`` del cobro directo se crean con
-  ``transaccion.monto_final`` tomado del servidor; el cliente nunca tiene
-  un campo para escribir un monto.
+  ``apps.divisas.models.monto_a_pagar`` tomado del servidor (``monto_final``
+  para una compra/venta; para un cambio, ``monto_origen`` — lo que el
+  cliente entrega, no lo que recibe, ver el docstring de esa función); el
+  cliente nunca tiene un campo para escribir un monto.
 - Criterio 2 (confirmación del pago): para Checkout, ``stripe_webhook_view``
   procesa ``checkout.session.completed`` con ``payment_status == "paid"``
   y llama a ``Pago.registrar_pago``; para el cobro directo, la propia
@@ -73,7 +75,14 @@ from django.views.decorators.csrf import csrf_exempt
 
 from apps.clientes.forms import AgregarTarjetaStripeForm
 from apps.clientes.models import MetodoPago
-from apps.divisas.models import CalculoOperacion, CalculoTriangulacion, Pago, PagoRechazadoError
+from apps.divisas.models import (
+    CalculoOperacion,
+    CalculoTriangulacion,
+    Pago,
+    PagoRechazadoError,
+    moneda_a_pagar,
+    monto_a_pagar,
+)
 from apps.divisas.views import _puede_pagarse, _resolver_transaccion_propia
 
 PROVEEDOR_STRIPE = 'STRIPE'
@@ -91,16 +100,14 @@ MONEDAS_SIN_DECIMALES_STRIPE = frozenset({
 
 
 def _moneda_de_liquidacion(transaccion):
-    """Devuelve el código ISO de la moneda en la que se paga la transacción.
+    """Devuelve el código ISO de la moneda en la que se cobra la transacción.
 
-    Una compra/venta (``CalculoOperacion``) siempre liquida en PYG; un
-    cambio entre divisas (``CalculoTriangulacion``) liquida en la divisa de
-    destino (``codigo_divisa_destino``), igual que ya hace el formulario de
-    pago manual de GE-25.
+    Delegado en ``apps.divisas.models.moneda_a_pagar``: una compra/venta
+    siempre se cobra en PYG; un cambio entre divisas se cobra en su divisa
+    de **origen** (lo que el cliente entrega), no en la de destino (lo que
+    recibe a cambio) — ver ``monto_a_pagar`` para el porqué.
     """
-    if isinstance(transaccion, CalculoTriangulacion):
-        return transaccion.codigo_divisa_destino
-    return 'PYG'
+    return moneda_a_pagar(transaccion)
 
 
 def _monto_en_unidad_minima_stripe(monto, codigo_moneda):
@@ -316,7 +323,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
                 line_items=[{
                     'price_data': {
                         'currency': moneda.lower(),
-                        'unit_amount': _monto_en_unidad_minima_stripe(transaccion.monto_final, moneda),
+                        'unit_amount': _monto_en_unidad_minima_stripe(monto_a_pagar(transaccion), moneda),
                         'product_data': {'name': f'Transacción {transaccion.pk}'},
                     },
                     'quantity': 1,
@@ -355,7 +362,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
         """
         try:
             intent = stripe.PaymentIntent.create(
-                amount=_monto_en_unidad_minima_stripe(transaccion.monto_final, moneda),
+                amount=_monto_en_unidad_minima_stripe(monto_a_pagar(transaccion), moneda),
                 currency=moneda.lower(),
                 customer=customer_id,
                 payment_method=metodo_guardado,
@@ -396,7 +403,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
                 medio_pago=MetodoPago.TIPO_TARJETA,
                 proveedor=PROVEEDOR_STRIPE,
                 identificador_externo=intent.id,
-                monto=transaccion.monto_final,
+                monto=monto_a_pagar(transaccion),
             )
         except PagoRechazadoError as error:
             messages.error(request, str(error))
@@ -629,7 +636,7 @@ def _procesar_sesion_completada(session):
             medio_pago=MetodoPago.TIPO_TARJETA,
             proveedor=PROVEEDOR_STRIPE,
             identificador_externo=identificador_externo,
-            monto=transaccion.monto_final,
+            monto=monto_a_pagar(transaccion),
         )
     except PagoRechazadoError:
         # La transacción ya no está en condiciones de pagarse con este

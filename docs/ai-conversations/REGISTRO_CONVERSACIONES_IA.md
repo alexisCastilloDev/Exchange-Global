@@ -1715,7 +1715,43 @@ También se explicó, sin cambios de código, cómo verificar que el pago con ta
 comunica con Stripe (aunque en modo test el dinero no sea real): comparando el
 `identificador_externo` guardado en cada `Pago` contra el Dashboard de Stripe en modo test
 (`https://dashboard.stripe.com/test/payments`) y contra el log de Developers → Events, que muestran
-la petición y la respuesta real de la API.
+la petición y la respuesta real de la API. Más adelante, el mismo día, se explicó también cómo
+habilitar Stripe en producción (webhook con la URL real, secretos propios del `.env` del servidor,
+reinicio del contenedor) y que `STRIPE_SECRET_KEY` sí se puede compartir entre entornos pero
+`STRIPE_WEBHOOK_SECRET` no (es propio de cada endpoint configurado en el Dashboard).
+
+### Corrección de fondo: qué divisa y qué monto paga de verdad un cambio
+
+El usuario pegó el resumen de un cambio real (500,00 EUR a USD, con tasas, comisión e "Importe a
+recibir" de 559,16 USD) y preguntó, con razón, qué iba a figurar en Stripe. Al explicar el cálculo
+completo (`_calcular_triangulacion`) quedó claro un problema de fondo heredado de GE-25: el sistema
+cobraba siempre `monto_final` —que para un cambio es el "Importe a **recibir**"— en la divisa
+**destino**. Es decir: para este ejemplo, Stripe le habría cobrado a la tarjeta 559,16 **USD**, el
+mismo valor (y la misma moneda) que el cliente iba a recibir a cambio, sin que sus 500 EUR entraran
+en la ecuación para nada.
+
+Se le preguntó al usuario qué debía cobrarse (el equivalente en PYG, el monto de la divisa de
+origen, o dejarlo como estaba) y eligió **el monto de la divisa de origen**: lo que el cliente
+entrega, no lo que recibe. Se implementó de forma consistente para los dos medios de pago, no solo
+Stripe:
+
+- `apps.divisas.models.monto_a_pagar`/`moneda_a_pagar` (funciones nuevas, compartidas): para una
+  compra/venta siguen siendo `monto_final`/PYG; para un cambio son `monto_origen`/
+  `codigo_divisa_origen`.
+- `apps.divisas.pagos_stripe._moneda_de_liquidacion` pasó a delegar en `moneda_a_pagar`, y los tres
+  lugares que usaban `transaccion.monto_final` como monto a cobrar (el cobro directo, el fallback de
+  Checkout y el webhook) pasaron a usar `monto_a_pagar`.
+- El pago manual de GE-25 (`PagarTransaccionCambioView.post`, transferencia/billetera) se actualizó
+  igual, para que un cambio registre el mismo monto sin importar el medio con el que se pagó.
+- `detalle_transaccion_cambio.html` dejó de etiquetar el monto del pago con la divisa destino
+  (ahora muestra la de origen, que es la que realmente corresponde); `pagar_transaccion_cambio.html`
+  agregó una fila "Importe a pagar" junto a "Importe a recibir", para que la distinción quede clara
+  en la propia pantalla y no dependa de que alguien lo explique.
+
+Se agregó `MontoAPagarTest` en `tests/test_operaciones.py` (una compra/venta paga `monto_final` en
+PYG; un cambio paga `monto_origen` en su divisa de origen) y se actualizaron las aserciones que
+asumían lo contrario en `test_operaciones.py` y `test_pagos_stripe.py`. Suite completa: sin fallas
+tras el fix.
 
 ## Enlaces externos (conversaciones completas)
 

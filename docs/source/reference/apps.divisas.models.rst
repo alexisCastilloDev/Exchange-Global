@@ -17,6 +17,10 @@ apps.divisas.models module
    :members:
    :show-inheritance:
 
+.. autofunction:: apps.divisas.models.monto_a_pagar
+
+.. autofunction:: apps.divisas.models.moneda_a_pagar
+
 .. autoclass:: apps.divisas.models.ConfiguracionComision
    :members:
    :show-inheritance:

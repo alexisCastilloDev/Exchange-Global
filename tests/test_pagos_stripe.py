@@ -94,10 +94,10 @@ class MontoYMonedaTest(TestCase):
         operacion = CalculoOperacion(codigo_divisa='USD')
         self.assertEqual(_moneda_de_liquidacion(operacion), 'PYG')
 
-    def test_moneda_de_liquidacion_de_un_cambio_es_la_divisa_destino(self):
-        """Un cambio entre divisas liquida en la divisa de destino."""
+    def test_moneda_de_liquidacion_de_un_cambio_es_la_divisa_de_origen(self):
+        """Un cambio se cobra en su divisa de ORIGEN (lo que el cliente entrega), no en la de destino."""
         cambio = CalculoTriangulacion(codigo_divisa_origen='USD', codigo_divisa_destino='EUR')
-        self.assertEqual(_moneda_de_liquidacion(cambio), 'EUR')
+        self.assertEqual(_moneda_de_liquidacion(cambio), 'USD')
 
 
 class ADictTest(TestCase):
@@ -496,8 +496,8 @@ class IniciarPagoStripeCambioTest(TestCase):
 
     @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.create')
     @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
-    def test_cobra_directo_con_el_monto_en_centavos_de_la_divisa_destino(self, mock_payment_intent, mock_checkout):
-        """Criterio 1: un cambio liquida en su divisa destino, con el monto exacto en centavos."""
+    def test_cobra_directo_con_el_monto_en_centavos_de_la_divisa_de_origen(self, mock_payment_intent, mock_checkout):
+        """Criterio 1: un cambio se cobra en su divisa de ORIGEN (lo que el cliente entrega), no la de destino."""
         mock_payment_intent.return_value = SimpleNamespace(id='pi_directo_456', status='succeeded')
 
         response = self.client.get(self.url, follow=True)
@@ -506,9 +506,11 @@ class IniciarPagoStripeCambioTest(TestCase):
         mock_checkout.assert_not_called()
         self.transaccion.refresh_from_db()
         self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PAGADA)
+        pago = Pago.objects.get(calculo_triangulacion=self.transaccion)
+        self.assertEqual(pago.monto, self.transaccion.monto_origen)
         kwargs = mock_payment_intent.call_args.kwargs
-        self.assertEqual(kwargs['amount'], 8922)
-        self.assertEqual(kwargs['currency'], 'eur')
+        self.assertEqual(kwargs['amount'], 10000)
+        self.assertEqual(kwargs['currency'], 'usd')
         self.assertEqual(kwargs['payment_method'], 'pm_guardado_456')
 
 

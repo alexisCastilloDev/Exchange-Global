@@ -28,6 +28,7 @@ Contexto esperado: transaccion, form (None si no puede pagarse todavía).
             </div>
             <div class="operation-summary">
                 <div class="operation-summary__row"><span class="operation-summary__label">Operación: </span><strong class="operation-summary__value">Cambio de {{ transaccion.codigo_divisa_origen }} a {{ transaccion.codigo_divisa_destino }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Importe a pagar: </span><strong class="operation-summary__value">{{ transaccion.monto_origen|floatformat:2 }} {{ transaccion.codigo_divisa_origen }}</strong></div>
                 <div class="operation-summary__row operation-summary__row--total"><span class="operation-summary__label">Importe a recibir: </span><strong class="operation-summary__value">{{ transaccion.monto_final|floatformat:2 }} {{ transaccion.codigo_divisa_destino }}</strong></div>
             </div>
 

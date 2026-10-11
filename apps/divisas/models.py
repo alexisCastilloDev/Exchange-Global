@@ -473,6 +473,35 @@ class CalculoTriangulacion(models.Model):
         )
 
 
+def monto_a_pagar(transaccion):
+    """Devuelve lo que el cliente entrega de verdad para esta transacción.
+
+    Una compra o venta (``CalculoOperacion``) liquida siempre en PYG:
+    ``monto_final`` ya es ese valor, lo que el cliente paga (compra) o
+    recibe (venta) en guaraníes. Un cambio entre divisas
+    (``CalculoTriangulacion``) usa PYG solo como paso intermedio de la
+    triangulación: lo que el cliente entrega de verdad es
+    ``monto_origen``, en su propia divisa de origen. ``monto_final`` ahí
+    es lo que el cliente *recibe* a cambio, no lo que paga — por eso no
+    sirve como "monto a cobrar" para un cambio, aunque sí lo sea para una
+    compra/venta.
+    """
+    if isinstance(transaccion, CalculoTriangulacion):
+        return transaccion.monto_origen
+    return transaccion.monto_final
+
+
+def moneda_a_pagar(transaccion):
+    """Devuelve el código de la moneda en la que el cliente paga esta transacción.
+
+    Ver ``monto_a_pagar``: una compra/venta siempre se paga en PYG; un
+    cambio se paga en su divisa de origen, no en la de destino.
+    """
+    if isinstance(transaccion, CalculoTriangulacion):
+        return transaccion.codigo_divisa_origen
+    return 'PYG'
+
+
 class PagoRechazadoError(Exception):
     """Señala que un pago no puede registrarse para una transacción dada.
 

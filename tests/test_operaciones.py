@@ -17,6 +17,8 @@ from apps.divisas.models import (
     Divisa,
     Pago,
     PagoRechazadoError,
+    moneda_a_pagar,
+    monto_a_pagar,
 )
 from tests.utils_formato import formato
 
@@ -1616,6 +1618,32 @@ class ConfirmacionCambioDivisasTest(TestCase):
         self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PENDIENTE)
 
 
+class MontoAPagarTest(TestCase):
+    """Verifica qué monto y moneda paga de verdad el cliente en cada tipo de transacción.
+
+    Para una compra/venta es ``monto_final`` en PYG; para un cambio entre
+    divisas es ``monto_origen`` en la divisa de origen — lo que el cliente
+    entrega, no ``monto_final`` (lo que recibe a cambio).
+    """
+
+    def test_una_operacion_paga_el_monto_final_en_pyg(self):
+        """Una compra/venta siempre se paga en PYG, con monto_final."""
+        operacion = CalculoOperacion(codigo_divisa='USD', monto_final=Decimal('747400.00'))
+
+        self.assertEqual(monto_a_pagar(operacion), Decimal('747400.00'))
+        self.assertEqual(moneda_a_pagar(operacion), 'PYG')
+
+    def test_un_cambio_paga_el_monto_origen_en_su_divisa_de_origen(self):
+        """Un cambio se paga con monto_origen, en codigo_divisa_origen — no con monto_final."""
+        cambio = CalculoTriangulacion(
+            codigo_divisa_origen='EUR', codigo_divisa_destino='USD',
+            monto_origen=Decimal('500.00'), monto_final=Decimal('559.16'),
+        )
+
+        self.assertEqual(monto_a_pagar(cambio), Decimal('500.00'))
+        self.assertEqual(moneda_a_pagar(cambio), 'EUR')
+
+
 class PagoRegistrarPagoTest(TestCase):
     """Verifica ``Pago.registrar_pago``, el punto de entrada de la HU
 
@@ -2003,7 +2031,9 @@ class PagarTransaccionCambioTest(TestCase):
         self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PAGADA)
         pago = Pago.objects.get(calculo_triangulacion=self.transaccion)
         self.assertEqual(pago.medio_pago, MetodoPago.TIPO_TRANSFERENCIA)
-        self.assertEqual(pago.monto, self.transaccion.monto_final)
+        # Lo que el cliente paga es monto_origen (lo que entrega), no
+        # monto_final (lo que recibe a cambio) — ver monto_a_pagar.
+        self.assertEqual(pago.monto, self.transaccion.monto_origen)
 
     def test_pagar_con_un_metodo_de_tarjeta_redirige_a_stripe_en_vez_de_registrar_el_pago(self):
         """Un método guardado de tipo 'tarjeta' se cobra vía Stripe, no de forma manual (HU "Pago con tarjeta vía Stripe")."""
@@ -2030,7 +2060,7 @@ class PagarTransaccionCambioTest(TestCase):
             medio_pago=MetodoPago.TIPO_TRANSFERENCIA,
             proveedor=Pago.PROVEEDOR_MANUAL,
             identificador_externo=str(self.transaccion.pk),
-            monto=self.transaccion.monto_final,
+            monto=self.transaccion.monto_origen,
         )
 
         response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)

@@ -46,7 +46,7 @@ Contexto esperado: transaccion.
             {% if transaccion.pago %}
                 <div class="operation-summary">
                     <div class="operation-summary__row"><span class="operation-summary__label">Medio: </span><strong class="operation-summary__value">{{ transaccion.pago.get_medio_pago_display }}</strong></div>
-                    <div class="operation-summary__row"><span class="operation-summary__label">Monto: </span><strong class="operation-summary__value">{{ transaccion.pago.monto|floatformat:2 }} {{ transaccion.codigo_divisa_destino }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Monto: </span><strong class="operation-summary__value">{{ transaccion.pago.monto|floatformat:2 }} {{ transaccion.codigo_divisa_origen }}</strong></div>
                     <div class="operation-summary__row"><span class="operation-summary__label">Fecha: </span><strong class="operation-summary__value">{{ transaccion.pago.creado_en|date:"d/m/Y H:i" }}</strong></div>
                     <div class="operation-summary__row"><span class="operation-summary__label">Identificador: </span><strong class="operation-summary__value">{{ transaccion.pago.identificador_externo }}</strong></div>
                 </div>
