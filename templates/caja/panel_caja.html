@@ -20,10 +20,10 @@ extraordinarios de la caja).
         <h1>Mi caja</h1>
         <p>Saldo actual por moneda, operaciones de ventanilla y movimientos extraordinarios de tu turno.</p>
     </div>
-    {% if not caja %}
-    <a href="{% url 'caja:abrir' %}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Abrir caja</a>
-    {% else %}
     <div class="d-flex gap-2 flex-wrap">
+        {% if not caja %}
+        <a href="{% url 'caja:abrir' %}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Abrir caja</a>
+        {% else %}
         <a href="{% url 'caja:registrar_operacion' 'compra' %}" class="btn btn-outline-primary">
             <i class="bi bi-arrow-down-circle me-1"></i> Comprar divisas
         </a>
@@ -42,8 +42,14 @@ extraordinarios de la caja).
         <a href="{% url 'caja:historial_arqueos' %}" class="btn btn-outline-secondary">
             <i class="bi bi-clock-history me-1"></i> Historial de arqueos
         </a>
+        <a href="{% url 'caja:cerrar' %}" class="btn btn-outline-dark">
+            <i class="bi bi-door-closed me-1"></i> Cerrar caja
+        </a>
+        {% endif %}
+        <a href="{% url 'caja:historial_cajas' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-archive me-1"></i> Historial de cajas
+        </a>
     </div>
-    {% endif %}
 </div>
 
 <div class="row g-4 justify-content-center">
