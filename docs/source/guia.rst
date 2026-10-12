@@ -485,12 +485,11 @@ registrar cualquier operación, el saldo que muestra ese panel coincide con
 el saldo inicial recién contado (ver `Operaciones en ventanilla`_ para cómo
 cambia a partir de ahí).
 
-El cierre de caja todavía es una HU futura que no existe en este código;
-``Caja.estado`` ya contempla "Cerrada" para no tener que migrar el modelo de
-nuevo cuando se implemente. El arqueo (ver `Arqueo de caja`_ más abajo) sí
-está implementado. El acceso a cualquier función de caja está restringido al
-rol ``cajero`` exclusivamente (sin excepción para administración ni análisis
-cambiario, a diferencia de otras pantallas de este sistema).
+El arqueo y el cierre de la caja (ver `Arqueo de caja`_ y `Cierre de caja`_
+más abajo) ya están implementados. El acceso a cualquier función de caja
+está restringido al rol ``cajero`` exclusivamente (sin excepción para
+administración ni análisis cambiario, a diferencia de otras pantallas de
+este sistema).
 
 Operaciones en ventanilla
 -------------------------
@@ -631,6 +630,46 @@ listado ``apps.caja.views.HistorialArqueosCajaView``
 (``/caja/arqueo/historial/``), ambos restringidos al cajero que lo registró
 — el mismo alcance que el resto de las funciones de caja, donde cada cajero
 ve únicamente lo suyo.
+
+Cierre de caja
+--------------
+
+Implementa la HU "Cierre de Caja": con la caja ya abierta, el cajero inicia
+el cierre en ``/caja/cerrar/`` (``apps.caja.views.CerrarCajaView``), que
+muestra primero un resumen completo del turno (Criterio 1) — por cada
+moneda contada al abrir, el saldo inicial y el saldo final
+(``Caja.saldo_actual``, que ya incluye lo registrado en ventanilla y en
+movimientos extraordinarios), más el detalle de las operaciones de
+ventanilla, los movimientos extraordinarios y los arqueos realizados en el
+turno — antes de pedir la confirmación.
+
+Si el turno no tiene ningún arqueo registrado, el resumen muestra una
+advertencia y agrega una casilla de confirmación explícita; sin marcarla,
+el cierre se rechaza (Criterio 3). Al confirmar, ``Caja.cerrar`` persiste
+la transición a "Cerrada" fijando ``cerrada_en`` con la fecha y hora
+actuales (Criterio 2).
+
+Ninguna de las vistas de registro de este módulo necesitó ningún cambio
+para dejar de aceptar operaciones sobre una caja cerrada: ``AbrirCajaView``,
+``RegistrarOperacionVentanillaView``, ``RegistrarMovimientoExtraordinarioView``
+e ``IniciarArqueoCajaView`` ya resolvían "la caja abierta del cajero"
+filtrando por ``estado=Caja.ESTADO_ABIERTA`` desde que existen; una vez
+cerrada, esa misma consulta deja de encontrarla y cada una redirige con su
+mensaje habitual de que hace falta una caja abierta. Por el mismo motivo,
+una caja cerrada queda, en los hechos, inmutable: como nada puede volver a
+escribirle una fila nueva, su ``saldo_actual`` ya no cambia, así que no fue
+necesario "congelar" el balance final en ningún campo aparte (a diferencia
+de ``DetalleArqueoCaja``, que sí necesita congelarlo porque la caja sigue
+operando después de cada arqueo).
+
+Una vez cerrada, el cajero puede abrir un turno nuevo sin que la
+restricción única de ``Caja.Meta.constraints`` lo bloquee (esa restricción
+solo exige unicidad entre cajas "Abierta", nunca entre una "Cerrada" y una
+nueva). El listado ``apps.caja.views.HistorialCajasView``
+(``/caja/historial/``) muestra todas las cajas del cajero, abiertas y
+cerradas, con el período en que cada una estuvo abierta y su balance por
+moneda (Criterio 4); es una pantalla de solo lectura, sin ninguna acción
+para modificar lo ya registrado.
 
 Acceso a esta documentación desde el sistema
 ----------------------------------------------

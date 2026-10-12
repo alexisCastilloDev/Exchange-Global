@@ -7,6 +7,10 @@ apps.caja.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.caja.views.CerrarCajaView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.caja.views.PanelCajaView
    :members:
    :show-inheritance:
@@ -28,5 +32,9 @@ apps.caja.views module
    :show-inheritance:
 
 .. autoclass:: apps.caja.views.HistorialArqueosCajaView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.caja.views.HistorialCajasView
    :members:
    :show-inheritance:

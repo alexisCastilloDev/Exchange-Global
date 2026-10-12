@@ -109,6 +109,89 @@ class AbrirCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
         return redirect('caja:panel')
 
 
+class CerrarCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Muestra el resumen del turno y permite confirmar el cierre de la caja abierta del cajero.
+
+    Implementa la HU "Cierre de Caja". El resumen (Criterio 1) incluye, por
+    cada moneda contada al abrir, el saldo inicial y el saldo final
+    (``Caja.saldo_actual``, que ya incluye lo registrado en ventanilla y en
+    movimientos extraordinarios), más el detalle completo de ambos y de los
+    arqueos del turno. Sin una caja abierta, no hay nada que cerrar y la
+    vista redirige al panel. Si el turno no tiene ningún arqueo registrado,
+    el resumen muestra una advertencia y el cierre solo se procesa si el
+    cajero marca explícitamente que quiere continuar sin arquear
+    (Criterio 3); al confirmarse, ``Caja.cerrar`` persiste la transición a
+    "Cerrada" (Criterio 2).
+    """
+
+    def test_func(self):
+        """Solo el rol cajero puede cerrar su caja (mismo criterio que el resto de caja)."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cajero' in roles
+
+    @staticmethod
+    def _caja_abierta_o_redireccion(request):
+        """Resuelve la caja abierta del cajero, o la redirección a devolver si no tiene una."""
+        caja = Caja.objects.filter(usuario=request.user, estado=Caja.ESTADO_ABIERTA).first()
+        if caja is None:
+            messages.error(request, 'No tenés una caja abierta para cerrar.')
+            return None, redirect('caja:panel')
+        return caja, None
+
+    @staticmethod
+    def _contexto_resumen(caja):
+        """Construye el resumen del turno: saldo inicial y final por moneda, y lo registrado."""
+        saldos = [
+            (saldo_inicial.divisa, saldo_inicial.monto, caja.saldo_actual(saldo_inicial.divisa))
+            for saldo_inicial in caja.saldos_iniciales.select_related('divisa').all()
+        ]
+        return {
+            'caja': caja,
+            'saldos': saldos,
+            'operaciones': caja.operaciones.select_related('divisa'),
+            'movimientos_extraordinarios': caja.movimientos_extraordinarios.select_related('divisa'),
+            'arqueos': caja.arqueos.all(),
+            'tiene_arqueos': caja.arqueos.exists(),
+        }
+
+    def get(self, request, *args, **kwargs):
+        """Muestra el resumen del turno antes de confirmar el cierre."""
+        caja, redireccion = self._caja_abierta_o_redireccion(request)
+        if redireccion is not None:
+            return redireccion
+        return render(request, 'caja/cerrar_caja.html', self._contexto_resumen(caja))
+
+    def post(self, request, *args, **kwargs):
+        """Confirma el cierre, exigiendo confirmación explícita si el turno no tiene arqueos.
+
+        Args:
+            request (HttpRequest): Solicitud POST, con ``confirmar_sin_arqueo``
+                (``'on'``) marcado si el turno no tiene ningún arqueo
+                registrado y el cajero quiere cerrar igual.
+
+        Returns:
+            HttpResponse: Redirección al panel de caja si el cierre se
+            procesa, o el mismo resumen con la advertencia si falta
+            confirmar explícitamente.
+        """
+        caja, redireccion = self._caja_abierta_o_redireccion(request)
+        if redireccion is not None:
+            return redireccion
+
+        contexto = self._contexto_resumen(caja)
+        if not contexto['tiene_arqueos'] and request.POST.get('confirmar_sin_arqueo') != 'on':
+            messages.error(
+                request,
+                'Esta caja no tiene ningún arqueo registrado en el turno. Marcá la '
+                'confirmación si querés cerrarla igual.',
+            )
+            return render(request, 'caja/cerrar_caja.html', contexto)
+
+        caja.cerrar()
+        messages.success(request, 'La caja fue cerrada correctamente.')
+        return redirect('caja:panel')
+
+
 class PanelCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Muestra la caja abierta del cajero, con el saldo inicial por moneda.
 
@@ -509,3 +592,36 @@ class HistorialArqueosCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
             .prefetch_related('detalles__divisa')
         )
         return render(request, 'caja/arqueo_historial.html', {'arqueos': arqueos})
+
+
+class HistorialCajasView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Lista las cajas del cajero, abiertas y cerradas, con su balance final por moneda.
+
+    Implementa el Criterio 4 de "Cierre de Caja": una caja ya cerrada queda
+    disponible para consulta posterior, con su período (``abierta_en``/
+    ``cerrada_en``) y su balance final por moneda (``Caja.saldo_actual``,
+    estable desde el cierre porque ninguna vista vuelve a escribir sobre una
+    caja "Cerrada"). Esta pantalla es de solo lectura, igual que el resto
+    del historial de caja: no ofrece ninguna acción para modificar las
+    operaciones de una caja ya registrada.
+    """
+
+    def test_func(self):
+        """Solo el rol cajero puede consultar su historial de cajas."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cajero' in roles
+
+    def get(self, request, *args, **kwargs):
+        """Lista las cajas del cajero, de la más reciente a la más antigua, con su saldo por moneda."""
+        cajas = Caja.objects.filter(usuario=request.user).prefetch_related('saldos_iniciales__divisa')
+        filas = [
+            {
+                'caja': caja,
+                'saldos': [
+                    (saldo_inicial.divisa, caja.saldo_actual(saldo_inicial.divisa))
+                    for saldo_inicial in caja.saldos_iniciales.all()
+                ],
+            }
+            for caja in cajas
+        ]
+        return render(request, 'caja/historial_cajas.html', {'filas': filas})

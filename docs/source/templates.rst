@@ -191,6 +191,10 @@ Caja
    :language: html
    :lines: 1-7
 
+.. literalinclude:: ../../templates/caja/cerrar_caja.html
+   :language: html
+   :lines: 1-7
+
 .. literalinclude:: ../../templates/caja/panel_caja.html
    :language: html
    :lines: 1-11
@@ -214,6 +218,10 @@ Caja
 .. literalinclude:: ../../templates/caja/arqueo_historial.html
    :language: html
    :lines: 1-6
+
+.. literalinclude:: ../../templates/caja/historial_cajas.html
+   :language: html
+   :lines: 1-7
 
 Parciales
 ---------

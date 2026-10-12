@@ -5,20 +5,27 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from apps.divisas.models import Divisa
 
 
 class Caja(models.Model):
-    """Representa el turno de caja abierto por un cajero.
+    """Representa el turno de caja abierto (o ya cerrado) por un cajero.
 
     Implementa la HU "Apertura de Caja": se crea siempre en estado
     "Abierta", asociada al cajero que la abre y a la fecha y hora de
-    apertura (``abierta_en``). El cierre de una caja es una HU futura que
-    todavía no existe en este código; por eso ``estado`` ya contempla
-    "Cerrada" y ``cerrada_en`` desde ahora (para no tener que migrar el
-    modelo de nuevo más adelante), pero ninguna vista de este archivo los
-    usa todavía.
+    apertura (``abierta_en``). El cierre lo implementa la HU "Cierre de
+    Caja" (ver ``cerrar``): una vez "Cerrada", con ``cerrada_en`` fijado,
+    ninguna de las vistas de registro de este módulo (ventanilla,
+    movimientos extraordinarios, arqueo) vuelve a encontrarla, porque todas
+    resuelven la caja abierta del cajero filtrando por
+    ``estado=ESTADO_ABIERTA`` — cerrarla alcanza para que dejen de aceptar
+    nuevas operaciones sobre ella, sin que ninguna necesite un chequeo
+    adicional. Por eso una caja cerrada queda, en los hechos, inmutable:
+    como nada puede agregarle una fila nueva, su ``saldo_actual`` ya no
+    vuelve a cambiar, así que no hace falta "congelarlo" en un campo
+    aparte para que el historial lo consulte más adelante.
     """
 
     ESTADO_ABIERTA = 'ABIERTA'
@@ -58,6 +65,18 @@ class Caja(models.Model):
     def __str__(self):
         """Identifica la caja por su cajero y su estado."""
         return f'Caja de {self.usuario} ({self.get_estado_display()})'
+
+    def cerrar(self):
+        """Cierra esta caja: pasa a "Cerrada" y fija la fecha y hora actuales.
+
+        Implementa el Criterio 2 de "Cierre de Caja". No valida nada por sí
+        sola (eso lo resuelve ``apps.caja.views.CerrarCajaView`` antes de
+        llamarla, incluida la confirmación explícita si el turno no tuvo
+        ningún arqueo); este método solo persiste la transición.
+        """
+        self.estado = self.ESTADO_CERRADA
+        self.cerrada_en = timezone.now()
+        self.save(update_fields=['estado', 'cerrada_en'])
 
     def saldo_actual(self, divisa):
         """Calcula el saldo actual de una moneda en esta caja.

@@ -4,8 +4,10 @@ from django.urls import path
 
 from apps.caja.views import (
     AbrirCajaView,
+    CerrarCajaView,
     DetalleArqueoCajaView,
     HistorialArqueosCajaView,
+    HistorialCajasView,
     IniciarArqueoCajaView,
     PanelCajaView,
     RegistrarMovimientoExtraordinarioView,
@@ -17,6 +19,8 @@ app_name = 'caja'
 urlpatterns = [
     path('', PanelCajaView.as_view(), name='panel'),
     path('abrir/', AbrirCajaView.as_view(), name='abrir'),
+    path('cerrar/', CerrarCajaView.as_view(), name='cerrar'),
+    path('historial/', HistorialCajasView.as_view(), name='historial_cajas'),
     path('operaciones/<str:tipo>/', RegistrarOperacionVentanillaView.as_view(), name='registrar_operacion'),
     path(
         'movimientos/<str:tipo>/',

@@ -1,0 +1,64 @@
+<!--
+Historial de cajas (abiertas y cerradas) del cajero, con su balance final por moneda.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: filas (lista de diccionarios {caja, saldos}, donde
+saldos es una lista de tuplas (divisa, saldo_actual)).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Historial de cajas - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-archive"></i> Caja</span>
+        <h1>Historial de cajas</h1>
+        <p>Tus turnos de caja, del más reciente al más antiguo, con su balance por moneda.</p>
+    </div>
+    <a href="{% url 'caja:panel' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver</a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+        <div class="ge-card p-0">
+            {% if filas %}
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Abierta el</th>
+                            <th>Cerrada el</th>
+                            <th>Estado</th>
+                            <th>Balance por moneda</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in filas %}
+                        <tr>
+                            <td>{{ fila.caja.abierta_en|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if fila.caja.cerrada_en %}
+                                    {{ fila.caja.cerrada_en|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    <span class="text-muted">— (en curso)</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ fila.caja.get_estado_display }}</td>
+                            <td>
+                                {% for divisa, saldo in fila.saldos %}
+                                    {{ divisa.codigo }}: <span class="ge-num">{{ saldo|floatformat:2 }}</span>{% if not forloop.last %}<br>{% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="ge-empty-state">Todavía no tenés ninguna caja registrada.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1832,6 +1832,141 @@ directamente contra el modelo con movimientos extraordinarios (solos, combinados
 - No se agregó ninguna categoría/clasificación del motivo (por ejemplo, "gasto de oficina", "refuerzo
   de caja"): el criterio solo pide que el campo exista y sea obligatorio, como texto libre.
 
+## Sesión 14 — 12/10/2026 — GE-56 — Cierre de Caja
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-56
+**Rama:** `feature/GE-56`
+**Participantes:** Adriana Benítez, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Cierre de Caja", con tests, docstrings, Sphinx actualizado y esta
+documentación de la conversación.
+
+> Como cajero quiero cerrar mi caja al finalizar el turno para registrar el balance final y
+> consolidar las operaciones realizadas.
+
+Criterios de aceptación:
+
+1. Dado que tengo una caja abierta, cuando inicio el cierre, entonces el sistema muestra un
+   resumen del turno: saldo inicial, operaciones realizadas, movimientos extraordinarios y saldo
+   final por moneda.
+2. Dado que confirmo el cierre, cuando se procesa, entonces la caja pasa a estado "Cerrada" y deja
+   de aceptar operaciones de ventanilla, arqueos y movimientos extraordinarios.
+3. Dado que la caja no tiene ningún arqueo registrado en el turno, cuando inicio el cierre,
+   entonces el sistema muestra una advertencia y permite continuar solo si confirmo
+   explícitamente.
+4. Dado que mi caja se cerró, cuando accedo al historial de cajas, entonces aparece con su balance
+   final y el período en que estuvo abierta, sin posibilidad de modificar sus operaciones.
+
+### Diagnóstico inicial
+
+Esta sesión siguió directamente a la Sesión 13 (GE-54, "Gestión de movimientos extraordinarios de
+Caja"), ya mergeada a `develop`, así que el contexto de `apps.caja` seguía fresco. El propio
+docstring de ``Caja`` (desde la Sesión 10, "Apertura de Caja") venía anticipando exactamente esta
+HU: *"El cierre... son HU futuras que todavía no existen en este código; por eso `estado` ya
+contempla 'Cerrada' y `cerrada_en` desde ahora... para no tener que migrar el modelo de nuevo más
+adelante"*. Confirmado: ambos campos ya existían sin usarse, así que esta HU no necesitó ninguna
+migración nueva.
+
+El punto central del diagnóstico fue notar que las tres vistas de registro (ventanilla,
+movimientos extraordinarios, arqueo) **ya resuelven la caja abierta del cajero filtrando por
+`estado=Caja.ESTADO_ABIERTA`** desde que cada una se escribió. Eso significa que el Criterio 2 ("la
+caja... deja de aceptar operaciones") no requiere ningún cambio en esas tres vistas: en el momento
+en que una caja pasa a "Cerrada", esa misma consulta deja de encontrarla, y cada vista redirige con
+su mensaje habitual de "Necesitás abrir una caja...". La única pieza que faltaba era, literalmente,
+la transición de estado en sí.
+
+Segunda observación relevante: como ninguna vista puede escribir sobre una caja ya cerrada, su
+`Caja.saldo_actual(divisa)` —que siempre fue un valor derivado, nunca un campo mutable— deja de
+poder cambiar desde el momento del cierre. A diferencia de `DetalleArqueoCaja` (Sesión 12), que
+necesitó congelar `saldo_sistema` en un campo propio porque la caja seguía operando después de cada
+arqueo, el "saldo final" de esta HU no necesita ningún campo nuevo: `saldo_actual` ya es,
+de hecho, el balance final definitivo en cuanto la caja se cierra.
+
+### Diseño
+
+- **`Caja.cerrar()`** (nuevo método, sin migración): pasa `estado` a `ESTADO_CERRADA` y fija
+  `cerrada_en = timezone.now()`, con `save(update_fields=[...])`. No valida nada por sí solo —esa
+  responsabilidad es de la vista, incluida la confirmación explícita sin arqueo (Criterio 3)— para
+  mantenerlo como la única pieza que persiste la transición, testeable por separado del flujo HTTP.
+- **`apps.caja.views.CerrarCajaView`** (nueva, junto a `AbrirCajaView`): GET construye el resumen
+  del turno (Criterio 1) — por cada `SaldoInicialCaja` de la caja, su `monto` (saldo inicial) junto
+  a `caja.saldo_actual(esa_divisa)` (saldo final), más las `OperacionVentanilla`,
+  `MovimientoExtraordinario` y `ArqueoCaja` completos del turno (no solo las últimas 20, a
+  diferencia del panel: acá es un cierre de turno, tiene que verse todo) — y lo muestra sin cerrar
+  nada todavía. POST repite la misma resolución de caja abierta que ya usan
+  `RegistrarOperacionVentanillaView`/`IniciarArqueoCajaView`, y agrega la única validación de
+  negocio nueva: si `caja.arqueos.exists()` es falso y el campo `confirmar_sin_arqueo` no llegó
+  marcado (`'on'`), rechaza con un mensaje y vuelve a mostrar el mismo resumen con la advertencia
+  (Criterio 3); en cualquier otro caso, llama a `caja.cerrar()` y redirige al panel.
+- **Sin cambios en `AbrirCajaView`/`RegistrarOperacionVentanillaView`/
+  `RegistrarMovimientoExtraordinarioView`/`IniciarArqueoCajaView`** (Criterio 2): todas ya
+  resolvían "la caja abierta" filtrando por estado, así que cerrar una caja alcanza para que dejen
+  de encontrarla. La restricción única de `Caja.Meta.constraints` tampoco necesitó ningún cambio:
+  solo exige unicidad entre cajas "Abierta", así que el cajero puede abrir un turno nuevo
+  inmediatamente después de cerrar el anterior.
+- **`apps.caja.views.HistorialCajasView`** (nueva, al final de `views.py`): lista todas las cajas
+  del cajero (abiertas y cerradas) con su balance por moneda (``caja.saldo_actual(divisa)`` para
+  cada divisa que esa caja contó al abrir) y su período (`abierta_en`/`cerrada_en`, mostrando
+  "— (en curso)" si todavía está abierta) (Criterio 4). Es de solo lectura: no se diseñó ninguna
+  acción de edición ni eliminación para ninguno de los modelos de `apps.caja` desde que existen
+  (ni siquiera para la caja ya abierta), así que "sin posibilidad de modificar sus operaciones" ya
+  estaba garantizado por lo que el resto del código *no* ofrece, no por un chequeo nuevo.
+- **`templates/caja/panel_caja.html`**: accesos nuevos "Cerrar caja" (solo con una caja abierta) e
+  "Historial de cajas" (siempre visible, a diferencia de "Historial de arqueos", que solo aparece
+  con una caja abierta — el historial de cajas tiene sentido consultarlo incluso sin ninguna
+  abierta en este momento).
+
+### Tests
+
+`tests/test_cierre_caja.py` (nuevo, 19 tests): uno o más por cada criterio (el resumen muestra
+saldo inicial/final por moneda, operaciones y movimientos del turno; sin caja abierta no hay nada
+que cerrar; confirmar el cierre pasa la caja a "Cerrada" con fecha y hora; una caja cerrada
+rechaza una operación de ventanilla, un movimiento extraordinario y un arqueo nuevos con el mismo
+mensaje de "Necesitás abrir una caja..."; tras cerrar se puede abrir una caja nueva sin que la
+restricción única lo bloquee; sin arqueos el resumen avisa y el cierre se rechaza sin la
+confirmación explícita, se acepta marcándola, y no se pide ninguna confirmación si ya hay al menos
+un arqueo; una caja cerrada aparece en el historial con balance y período, una que sigue abierta
+también aparece pero sin fecha de cierre, y el historial no ofrece ninguna acción de edición), más
+permisos (sin rol cajero, sin sesión). Se agregó además `CajaCerrarModeloTest`, una clase aparte
+que prueba `Caja.cerrar()` directamente contra el modelo.
+
+### Problema encontrado: formato numérico localizado en las aserciones
+
+Los primeros tres tests que verificaban un monto renderizado como texto (`assertContains(response,
+'200.00')`) fallaron: el proyecto sobreescribe el formato numérico del locale `en-us` con uno propio
+(`global_exchange/formats/en_US/formats.py`, `THOUSAND_SEPARATOR = '.'`, `DECIMAL_SEPARATOR = ','`,
+convención paraguaya/argentina), así que `floatformat` renderiza `200,00` y `1.000.000,00`, no
+`200.00` ni `1000000.00`. Ninguno de los tests de las HU anteriores de `apps.caja` había chequeado
+un monto renderizado como texto literal (siempre comparaban contra el `Decimal` directamente), así
+que esta sesión fue la primera en tropezar con eso. Se corrigieron las tres aserciones para usar el
+formato localizado correcto.
+
+### Resultado final
+
+- Suite completa: **405 passed** (386 previos + 19 nuevos de esta HU).
+- `manage.py check`: sin problemas. `makemigrations --check --dry-run`: sin cambios pendientes
+  (esta HU no agrega ni modifica campos; `estado`/`cerrada_en` ya existían en `Caja` desde la
+  Sesión 10).
+- Sphinx recompilado con `-W` sobre un directorio temporal (sin tocar `docs/build/`, que está
+  versionado): sin advertencias. `guia.rst` agregó la sección "Cierre de caja" entre "Arqueo de
+  caja" y "Acceso a esta documentación desde el sistema", y corrigió la nota de "Apertura de caja"
+  que todavía decía que el cierre era una HU futura; `reference/apps.caja.views.rst` incluye
+  `CerrarCajaView` y `HistorialCajasView` (``Caja.cerrar`` se documenta solo, sin tocar ningún
+  `.rst`, porque `apps.caja.models.rst` ya usa `:members:` sobre la clase `Caja`); `templates.rst`
+  incluye `cerrar_caja.html` e `historial_cajas.html`.
+
+### Pendiente / fuera de alcance
+
+- No existe ninguna pantalla de detalle por caja en el historial (solo el listado, con el balance
+  final inline por moneda): ningún criterio pide un detalle separado, y el resumen completo de
+  operaciones/movimientos/arqueos de una caja ya es visible una sola vez, en la propia pantalla de
+  cierre, antes de confirmarlo.
+- No se agregó ninguna restricción sobre cuántas veces puede abrir y cerrar cajas un cajero en un
+  mismo día: cada apertura y cierre es independiente, igual que ya permite "Apertura de Caja".
+
 ## Enlaces externos (conversaciones completas)
 
 Extraído de `ia-CONVERSATION.TXT`. Son enlaces a conversaciones completas alojadas en claude.ai (no narrativas resumidas como las sesiones anteriores):
