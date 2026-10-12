@@ -49,21 +49,17 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -361,9 +357,17 @@
 <span class="sd">    ``PaymentMethod`` de Stripe, nunca el número real de la tarjeta — por</span>
 <span class="sd">    eso ``numero_tarjeta`` guarda, para esos métodos, solo los últimos 4</span>
 <span class="sd">    dígitos que devuelve Stripe, no el número completo. Estos dos campos</span>
-<span class="sd">    quedan genéricos (no específicos de Stripe) a propósito, pensados para</span>
-<span class="sd">    que una futura integración con SIPAP pueda identificar del mismo modo</span>
-<span class="sd">    una cuenta bancaria real sin guardar sus datos completos acá.</span>
+<span class="sd">    quedan genéricos (no específicos de Stripe) a propósito, para que</span>
+<span class="sd">    identifiquen del mismo modo una cuenta bancaria o de billetera real</span>
+<span class="sd">    sin guardar sus datos completos acá.</span>
+
+<span class="sd">    Para transferencia o billetera, ``nombre_titular`` y</span>
+<span class="sd">    ``entidad_financiera`` no los escribe el cliente: los completa</span>
+<span class="sd">    ``apps.clientes.forms.MetodoPagoForm`` a partir de lo que confirma</span>
+<span class="sd">    sipap-sim (ver ``apps.clientes.validacion_sipap.validar_cuenta``), que</span>
+<span class="sd">    verifica que la cuenta exista y sea del titular indicado por su</span>
+<span class="sd">    ``documento_titular`` antes de guardar nada — igual que un banco real</span>
+<span class="sd">    no deja vincular una cuenta inventada.</span>
 <span class="sd">    """</span>
 
     <span class="n">TIPO_TRANSFERENCIA</span> <span class="o">=</span> <span class="s1">'TRANSFERENCIA'</span>
@@ -406,6 +410,17 @@
     <span class="n">nombre_titular</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
         <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Nombre del Titular'</span>
+    <span class="p">)</span>
+    <span class="n">documento_titular</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'CI o RUC del Titular'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'Obligatorio para transferencia o billetera: es lo que '</span>
+            <span class="s1">'sipap-sim usa, junto con el número de cuenta, para confirmar '</span>
+            <span class="s1">'que la cuenta existe y es del titular indicado.'</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">entidad_financiera</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>

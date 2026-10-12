@@ -67,7 +67,7 @@ class CalculoOperacionForm(forms.Form):
         tipo_inicial = tipo or self.data.get('tipo') or CalculoOperacion.TIPO_COMPRA
         self.fields['tipo'].initial = tipo_inicial
         self.fields['tipo'].disabled = True
-        divisas = list(Divisa.objects.filter(activa=True).order_by('codigo').exclude(codigo='PYG'))
+        divisas = list(Divisa.objects.filter(activa=True).order_by('codigo').exclude(codigo=Divisa.CODIGO_BASE))
         self.fields['divisa'].choices = [('', 'Seleccionar divisa')] + [
             (str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})') for divisa in divisas
         ]
@@ -87,7 +87,7 @@ class CalculoOperacionForm(forms.Form):
         valor = self.cleaned_data['divisa']
         if not valor:
             raise forms.ValidationError('Debe seleccionar una divisa.')
-        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo='PYG').first()
+        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo=Divisa.CODIGO_BASE).first()
         if not divisa:
             raise forms.ValidationError('Debe elegir una divisa válida.')
         return divisa
@@ -115,13 +115,13 @@ class ConfirmarCalculoOperacionForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['divisa'].choices = [
             (str(divisa.pk), divisa.codigo)
-            for divisa in Divisa.objects.filter(activa=True).exclude(codigo='PYG')
+            for divisa in Divisa.objects.filter(activa=True).exclude(codigo=Divisa.CODIGO_BASE)
         ]
 
     def clean_divisa(self):
         """Resuelve la divisa indicada, validando que siga activa."""
         valor = self.cleaned_data['divisa']
-        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo='PYG').first()
+        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo=Divisa.CODIGO_BASE).first()
         if not divisa:
             raise forms.ValidationError('La divisa ya no está disponible. Recalculá la operación.')
         return divisa
@@ -151,7 +151,7 @@ class TriangulacionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         """Carga las divisas extranjeras activas en ambos selectores."""
         super().__init__(*args, **kwargs)
-        divisas = list(Divisa.objects.filter(activa=True).order_by('codigo').exclude(codigo='PYG'))
+        divisas = list(Divisa.objects.filter(activa=True).order_by('codigo').exclude(codigo=Divisa.CODIGO_BASE))
         opciones = [('', 'Seleccionar divisa')] + [
             (str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})') for divisa in divisas
         ]
@@ -166,7 +166,7 @@ class TriangulacionForm(forms.Form):
         valor = self.cleaned_data[campo]
         if not valor:
             raise forms.ValidationError('Debe seleccionar una divisa.')
-        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo='PYG').first()
+        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo=Divisa.CODIGO_BASE).first()
         if not divisa:
             raise forms.ValidationError('Debe elegir una divisa válida.')
         return divisa
@@ -212,7 +212,7 @@ class ConfirmarTriangulacionForm(forms.Form):
         super().__init__(*args, **kwargs)
         opciones = [
             (str(divisa.pk), divisa.codigo)
-            for divisa in Divisa.objects.filter(activa=True).exclude(codigo='PYG')
+            for divisa in Divisa.objects.filter(activa=True).exclude(codigo=Divisa.CODIGO_BASE)
         ]
         self.fields['divisa_origen'].choices = opciones
         self.fields['divisa_destino'].choices = opciones
@@ -221,7 +221,7 @@ class ConfirmarTriangulacionForm(forms.Form):
         """Resuelve la divisa indicada, validando que siga activa."""
         divisa = Divisa.objects.filter(
             pk=self.cleaned_data[campo], activa=True
-        ).exclude(codigo='PYG').first()
+        ).exclude(codigo=Divisa.CODIGO_BASE).first()
         if not divisa:
             raise forms.ValidationError('La divisa ya no está disponible. Recalculá la operación.')
         return divisa
@@ -318,7 +318,7 @@ class SimulacionDivisasForm(forms.Form):
     def __init__(self, *args, **kwargs):
         """Inicializa el formulario con las opciones vigentes de divisas."""
         super().__init__(*args, **kwargs)
-        divisas = list(Divisa.objects.filter(activa=True).order_by('codigo').exclude(codigo='PYG'))
+        divisas = list(Divisa.objects.filter(activa=True).order_by('codigo').exclude(codigo=Divisa.CODIGO_BASE))
         opciones = [('', 'Seleccionar divisa')] + [
             (str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})') for divisa in divisas
         ]
@@ -332,7 +332,7 @@ class SimulacionDivisasForm(forms.Form):
         valor = self.cleaned_data.get(campo)
         if not valor:
             return None
-        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo='PYG').first()
+        divisa = Divisa.objects.filter(pk=valor, activa=True).exclude(codigo=Divisa.CODIGO_BASE).first()
         if not divisa:
             raise forms.ValidationError('Debe elegir una divisa válida.')
         return divisa
@@ -426,9 +426,18 @@ class ConfiguracionVigenciaForm(forms.ModelForm):
 
 
 class DivisaForm(forms.ModelForm):
-    """Valida los datos básicos de una divisa administrable."""
+    """Valida los datos básicos de una divisa administrable.
+
+    PYG queda fuera de este catálogo a propósito: es la moneda base del
+    sistema (ver ``apps.divisas.models.moneda_a_pagar``), implícita en
+    cualquier operación, y nunca algo que un administrador deba poder
+    crear, editar ni dar de baja desde acá. La fila que la representa en
+    la base (necesaria para otros módulos, como la apertura de caja) la
+    asegura una migración de datos (``0017_asegurar_divisa_pyg``), no
+    este formulario.
+    """
     codigo = forms.CharField(
-        label='Código ISO (Ej. USD, EUR, PYG)',
+        label='Código ISO (Ej. USD, EUR, ARS)',
         max_length=3,
         validators=[
             RegexValidator(
@@ -445,8 +454,12 @@ class DivisaForm(forms.ModelForm):
         fields = ['codigo', 'nombre', 'simbolo']
 
     def clean_codigo(self):
-        """Normaliza el código ISO y controla que no esté duplicado."""
+        """Normaliza el código ISO, rechaza PYG y controla que no esté duplicado."""
         codigo = self.cleaned_data['codigo'].strip().upper()
+        if codigo == Divisa.CODIGO_BASE:
+            raise forms.ValidationError(
+                'PYG es la divisa base del sistema: no se gestiona desde este catálogo.'
+            )
         duplicado = Divisa.objects.filter(codigo__iexact=codigo)
         if self.instance.pk:
             duplicado = duplicado.exclude(pk=self.instance.pk)

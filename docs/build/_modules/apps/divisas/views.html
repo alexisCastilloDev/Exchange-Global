@@ -49,21 +49,17 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -168,7 +164,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span><span class="p">,</span> <span class="n">reverse_lazy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">url_has_allowed_host_and_scheme</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">View</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.views.generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">CreateView</span><span class="p">,</span> <span class="n">ListView</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">,</span> <span class="n">UpdateView</span>
 
@@ -194,10 +189,6 @@
     <span class="n">ConfiguracionVigencia</span><span class="p">,</span>
     <span class="n">Cotizacion</span><span class="p">,</span>
     <span class="n">Divisa</span><span class="p">,</span>
-    <span class="n">NotificacionTasa</span><span class="p">,</span>
-    <span class="n">Pago</span><span class="p">,</span>
-    <span class="n">PagoRechazadoError</span><span class="p">,</span>
-    <span class="n">monto_a_pagar</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -412,14 +403,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Criterio de Aceptación 4: Las divisas inactivas no se muestran.</span>
-
-<span class="sd">        Tampoco PYG: es la moneda local/base del sistema (garantizada en el</span>
-<span class="sd">        catálogo por la migración de datos</span>
-<span class="sd">        ``apps.divisas.0014_crear_divisa_pyg``), nunca tiene una cotización</span>
-<span class="sd">        propia que listar acá, igual que ya la excluyen los selectores de</span>
-<span class="sd">        divisa operable (``DivisaSelect``/``CalculoOperacionForm``).</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="s1">'PYG'</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 </div>
 
 
@@ -845,14 +830,14 @@
 
 <span class="sd">    Implementa la HU "Asociación de pagos a transacciones" (GE-25): el</span>
 <span class="sd">    cliente elige uno de sus métodos de pago guardados</span>
-<span class="sd">    (``apps.clientes.models.MetodoPago``). Si el método elegido es de tipo</span>
-<span class="sd">    "tarjeta", no se registra nada acá: se redirige a</span>
-<span class="sd">    ``apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView``, que es</span>
-<span class="sd">    quien de verdad cobra con Stripe (HU "Pago con tarjeta vía Stripe"). Para</span>
-<span class="sd">    cualquier otro tipo de método (transferencia, billetera), esta vista</span>
-<span class="sd">    sigue registrando el pago (``Pago.registrar_pago``) sincrónicamente y</span>
-<span class="sd">    como proveedor "MANUAL", con el monto exacto de la transacción, que el</span>
-<span class="sd">    cliente no puede modificar.</span>
+<span class="sd">    (``apps.clientes.models.MetodoPago``). Esta vista nunca registra el</span>
+<span class="sd">    pago ella misma: si el método es de tipo "tarjeta", redirige a</span>
+<span class="sd">    ``apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView`` (HU "Pago</span>
+<span class="sd">    con tarjeta vía Stripe"); si es "transferencia" o "billetera", a</span>
+<span class="sd">    ``apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView`` (HU "Pago</span>
+<span class="sd">    por transferencia bancaria vía SIPAP" — sipap-sim simula</span>
+<span class="sd">    indistintamente bancos y billeteras digitales, así que ambos tipos</span>
+<span class="sd">    comparten el mismo flujo).</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="PagarTransaccionOperacionView.test_func">
@@ -916,25 +901,13 @@
             <span class="c1"># apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView).</span>
             <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:pagar_transaccion_stripe'</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'pk'</span><span class="p">:</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
             <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">?metodo_pago=</span><span class="si">{</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">pago</span><span class="p">,</span> <span class="n">creado</span> <span class="o">=</span> <span class="n">Pago</span><span class="o">.</span><span class="n">registrar_pago</span><span class="p">(</span>
-                <span class="n">transaccion</span><span class="p">,</span>
-                <span class="n">medio_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">tipo_medio</span><span class="p">,</span>
-                <span class="n">proveedor</span><span class="o">=</span><span class="n">Pago</span><span class="o">.</span><span class="n">PROVEEDOR_MANUAL</span><span class="p">,</span>
-                <span class="n">identificador_externo</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
-                <span class="n">monto</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">monto_final</span><span class="p">,</span>
-                <span class="n">metodo_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="n">PagoRechazadoError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:detalle_transaccion_operacion'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">creado</span><span class="p">:</span>
-            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El pago se registró correctamente. La operación quedó "Pagada".'</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Este pago ya había sido registrado.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:detalle_transaccion_operacion'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span></div>
+        <span class="c1"># Transferencia o billetera digital: ambas se pagan vía SIPAP, no</span>
+        <span class="c1"># de forma manual (sipap-sim simula indistintamente bancos y</span>
+        <span class="c1"># billeteras). Se redirige a generar la solicitud de pago (ver</span>
+        <span class="c1"># apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView),</span>
+        <span class="c1"># pasando con qué cuenta puntual, igual que con una tarjeta.</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:pagar_transaccion_sipap'</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'pk'</span><span class="p">:</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">?metodo_pago=</span><span class="si">{</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span></div>
 </div>
 
 
@@ -1012,25 +985,10 @@
             <span class="c1"># "tarjeta" se cobra vía Stripe, no de forma manual.</span>
             <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:pagar_transaccion_cambio_stripe'</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'pk'</span><span class="p">:</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
             <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">?metodo_pago=</span><span class="si">{</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">pago</span><span class="p">,</span> <span class="n">creado</span> <span class="o">=</span> <span class="n">Pago</span><span class="o">.</span><span class="n">registrar_pago</span><span class="p">(</span>
-                <span class="n">transaccion</span><span class="p">,</span>
-                <span class="n">medio_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">tipo_medio</span><span class="p">,</span>
-                <span class="n">proveedor</span><span class="o">=</span><span class="n">Pago</span><span class="o">.</span><span class="n">PROVEEDOR_MANUAL</span><span class="p">,</span>
-                <span class="n">identificador_externo</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
-                <span class="n">monto</span><span class="o">=</span><span class="n">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
-                <span class="n">metodo_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="n">PagoRechazadoError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
-            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:detalle_transaccion_cambio'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">creado</span><span class="p">:</span>
-            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El pago se registró correctamente. El cambio quedó "Pagado".'</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Este pago ya había sido registrado.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:detalle_transaccion_cambio'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span></div>
+        <span class="c1"># Ver PagarTransaccionOperacionView.post: transferencia o</span>
+        <span class="c1"># billetera digital, ambas se pagan vía SIPAP.</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:pagar_transaccion_cambio_sipap'</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'pk'</span><span class="p">:</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">?metodo_pago=</span><span class="si">{</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span></div>
 </div>
 
 
@@ -1994,101 +1952,6 @@
         <span class="n">context</span><span class="p">[</span><span class="s1">'titulo'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Historial de bajas de divisas'</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'volver_url'</span><span class="p">]</span> <span class="o">=</span> <span class="n">reverse_lazy</span><span class="p">(</span><span class="s1">'divisas:lista_divisas'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">context</span>
-
-
-<div class="viewcode-block" id="NotificacionesClienteMixin">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.NotificacionesClienteMixin">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">NotificacionesClienteMixin</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Restringe las pantallas de notificaciones de tasas a usuarios clientes.</span>
-
-<span class="sd">    Las notificaciones de cambio de tasa (HU GE-51) están dirigidas a</span>
-<span class="sd">    usuarios clientes, así que se exige el rol ``cliente`` en la sesión de</span>
-<span class="sd">    Keycloak, el mismo criterio con el que se muestra el indicador de no</span>
-<span class="sd">    leídas (ver ``apps.divisas.context_processors.notificaciones_context``).</span>
-<span class="sd">    Además, cada vista filtra siempre por ``request.user``: nadie puede ver</span>
-<span class="sd">    ni modificar notificaciones ajenas.</span>
-<span class="sd">    """</span>
-
-<div class="viewcode-block" id="NotificacionesClienteMixin.test_func">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.NotificacionesClienteMixin.test_func">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Comprueba que el usuario tenga el rol de cliente."""</span>
-        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="k">return</span> <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="MisNotificacionesView">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">MisNotificacionesView</span><span class="p">(</span><span class="n">NotificacionesClienteMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Lista las notificaciones de cambio de tasa del usuario autenticado.</span>
-
-<span class="sd">    Criterio de aceptación 4 de GE-51: las notificaciones se muestran</span>
-<span class="sd">    ordenadas de la más reciente a la más antigua. Cada una muestra la</span>
-<span class="sd">    divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;</span>
-<span class="sd">    las no leídas ofrecen la acción de marcarlas como leídas (ver</span>
-<span class="sd">    ``MarcarNotificacionLeidaView``).</span>
-<span class="sd">    """</span>
-
-    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/mis_notificaciones.html'</span>
-    <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'notificaciones'</span>
-    <span class="n">paginate_by</span> <span class="o">=</span> <span class="mi">20</span>
-
-<div class="viewcode-block" id="MisNotificacionesView.get_queryset">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_queryset">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve solo las notificaciones propias, de la más nueva a la más vieja."""</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">NotificacionTasa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-creada_en'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">)</span>
-        <span class="p">)</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="MarcarNotificacionLeidaView">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">MarcarNotificacionLeidaView</span><span class="p">(</span><span class="n">NotificacionesClienteMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Marca como leída una notificación de cambio de tasa propia.</span>
-
-<span class="sd">    Criterio de aceptación 6 de GE-51: al marcarla, su estado cambia a</span>
-<span class="sd">    leída y deja de contarse en el indicador de no leídas. Solo acepta</span>
-<span class="sd">    POST (es una acción que modifica datos, protegida por CSRF) y responde</span>
-<span class="sd">    404 si la notificación no existe o pertenece a otro usuario, sin</span>
-<span class="sd">    revelar cuál de los dos casos es.</span>
-<span class="sd">    """</span>
-
-    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'post'</span><span class="p">]</span>
-
-<div class="viewcode-block" id="MarcarNotificacionLeidaView.post">
-<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView.post">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Marca la notificación como leída y vuelve a la página de origen.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            request (HttpRequest): La request actual.</span>
-<span class="sd">            pk (int): Identificador de la notificación.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            HttpResponseRedirect: A la URL indicada en ``next`` si es segura</span>
-<span class="sd">            (por ejemplo, para conservar la página del listado), o al</span>
-<span class="sd">            listado de notificaciones en caso contrario.</span>
-<span class="sd">        """</span>
-        <span class="n">notificacion</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">NotificacionTasa</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
-        <span class="n">notificacion</span><span class="o">.</span><span class="n">marcar_como_leida</span><span class="p">()</span>
-
-        <span class="n">destino</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'next'</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">destino</span> <span class="ow">and</span> <span class="n">url_has_allowed_host_and_scheme</span><span class="p">(</span>
-            <span class="n">destino</span><span class="p">,</span>
-            <span class="n">allowed_hosts</span><span class="o">=</span><span class="p">{</span><span class="n">request</span><span class="o">.</span><span class="n">get_host</span><span class="p">()},</span>
-            <span class="n">require_https</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">is_secure</span><span class="p">(),</span>
-        <span class="p">):</span>
-            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:mis_notificaciones'</span><span class="p">)</span></div>
-</div>
-
 </pre></div>
 
            </div>

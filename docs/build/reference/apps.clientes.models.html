@@ -59,6 +59,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
@@ -456,9 +457,16 @@ tarjeta (HU «Pago con tarjeta vía Stripe», ver
 <code class="docutils literal notranslate"><span class="pre">PaymentMethod</span></code> de Stripe, nunca el número real de la tarjeta — por
 eso <code class="docutils literal notranslate"><span class="pre">numero_tarjeta</span></code> guarda, para esos métodos, solo los últimos 4
 dígitos que devuelve Stripe, no el número completo. Estos dos campos
-quedan genéricos (no específicos de Stripe) a propósito, pensados para
-que una futura integración con SIPAP pueda identificar del mismo modo
-una cuenta bancaria real sin guardar sus datos completos acá.</p>
+quedan genéricos (no específicos de Stripe) a propósito, para que
+identifiquen del mismo modo una cuenta bancaria o de billetera real
+sin guardar sus datos completos acá.</p>
+<p>Para transferencia o billetera, <code class="docutils literal notranslate"><span class="pre">nombre_titular</span></code> y
+<code class="docutils literal notranslate"><span class="pre">entidad_financiera</span></code> no los escribe el cliente: los completa
+<code class="docutils literal notranslate"><span class="pre">apps.clientes.forms.MetodoPagoForm</span></code> a partir de lo que confirma
+sipap-sim (ver <code class="docutils literal notranslate"><span class="pre">apps.clientes.validacion_sipap.validar_cuenta</span></code>), que
+verifica que la cuenta exista y sea del titular indicado por su
+<code class="docutils literal notranslate"><span class="pre">documento_titular</span></code> antes de guardar nada — igual que un banco real
+no deja vincular una cuenta inventada.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.DoesNotExist">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.DoesNotExist" title="Link to this definition"></a></dt>
@@ -545,6 +553,13 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.creado_en">
 <span class="sig-name descname"><span class="pre">creado_en</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.creado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.documento_titular">
+<span class="sig-name descname"><span class="pre">documento_titular</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.documento_titular" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
 </dd></dl>
@@ -665,6 +680,21 @@ object the first time, the query is executed.</p>
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/models.html#MetodoPago.save"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.models.MetodoPago.save" title="Link to this definition"></a></dt>
 <dd><p>Sobrescribe save para garantizar que solo exista un método de pago predeterminado
 por cliente a la vez (Criterio 6).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.models.MetodoPago.solicitudes_sipap">
+<span class="sig-name descname"><span class="pre">solicitudes_sipap</span></span><a class="headerlink" href="#apps.clientes.models.MetodoPago.solicitudes_sipap" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
 </dd></dl>
 
 <dl class="py attribute">

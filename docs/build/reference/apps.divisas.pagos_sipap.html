@@ -1,0 +1,449 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.pagos_sipap module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.divisas.pagos_stripe module" href="apps.divisas.pagos_stripe.html" />
+    <link rel="prev" title="apps.divisas.models module" href="apps.divisas.models.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.divisas.html">apps.divisas package</a></li>
+      <li class="breadcrumb-item active">apps.divisas.pagos_sipap module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apps-divisas-pagos-sipap-module">
+<h1>apps.divisas.pagos_sipap module<a class="headerlink" href="#apps-divisas-pagos-sipap-module" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">IniciarPagoSipapOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#IniciarPagoSipapOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_IniciarPagoSipapBaseView</span></code></p>
+<p>Inicia el pago por transferencia/billetera SIPAP de una compra o venta propia ya «Confirmada».</p>
+<p>A ella redirige automáticamente
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.PagarTransaccionOperacionView.post</span></code> cuando el
+método de pago elegido en el formulario de pago normal es de tipo
+«transferencia» o «billetera» (<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TRANSFERENCIA</span></code>/
+<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_BILLETERA</span></code>): ambos se resuelven con el mismo flujo
+de sipap-sim, que simula indistintamente bancos y billeteras
+digitales.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion" title="apps.divisas.models.CalculoOperacion"><code class="xref py py-class docutils literal notranslate"><span class="pre">CalculoOperacion</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView.tipo_transaccion">
+<span class="sig-name descname"><span class="pre">tipo_transaccion</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'operacion'</span></span><a class="headerlink" href="#apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView.tipo_transaccion" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView.url_detalle">
+<span class="sig-name descname"><span class="pre">url_detalle</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas:detalle_transaccion_operacion'</span></span><a class="headerlink" href="#apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView.url_detalle" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.IniciarPagoSipapCambioView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">IniciarPagoSipapCambioView</span></span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#IniciarPagoSipapCambioView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap.IniciarPagoSipapCambioView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_IniciarPagoSipapBaseView</span></code></p>
+<p>Inicia el pago por transferencia/billetera SIPAP de un cambio entre divisas propio ya «Confirmado».</p>
+<p>Ver <code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapOperacionView</span></code>: mismo criterio, al que redirige
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.PagarTransaccionCambioView.post</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.IniciarPagoSipapCambioView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.pagos_sipap.IniciarPagoSipapCambioView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion" title="apps.divisas.models.CalculoTriangulacion"><code class="xref py py-class docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.IniciarPagoSipapCambioView.tipo_transaccion">
+<span class="sig-name descname"><span class="pre">tipo_transaccion</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cambio'</span></span><a class="headerlink" href="#apps.divisas.pagos_sipap.IniciarPagoSipapCambioView.tipo_transaccion" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.IniciarPagoSipapCambioView.url_detalle">
+<span class="sig-name descname"><span class="pre">url_detalle</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas:detalle_transaccion_cambio'</span></span><a class="headerlink" href="#apps.divisas.pagos_sipap.IniciarPagoSipapCambioView.url_detalle" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.sipap_webhook_view">
+<span class="sig-name descname"><span class="pre">sipap_webhook_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#sipap_webhook_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap.sipap_webhook_view" title="Link to this definition"></a></dt>
+<dd><p>Recibe las confirmaciones de sipap-sim y resuelve la solicitud de pago correspondiente.</p>
+<p>Es el único lugar donde una notificación de sipap-sim se traduce en
+un pago real (o en una observación, o en un rechazo). Queda exento de
+CSRF porque lo llama sipap-sim, no un navegador con sesión de Django,
+y en cambio su seguridad depende por completo de <code class="docutils literal notranslate"><span class="pre">_firma_valida</span></code>
+(criterio 4).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>200 si el evento se procesó (incluso si no requería
+ninguna acción, p. ej. una referencia desconocida), 400 si la
+firma no es válida, el payload no es JSON, o el método no es
+POST.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap.SipapComunicacionError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SipapComunicacionError</span></span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#SipapComunicacionError"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap.SipapComunicacionError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Señala que no se pudo hablar con sipap-sim para generar una solicitud (criterio 6).</p>
+<p>Envuelve cualquier falla de red real (<code class="docutils literal notranslate"><span class="pre">requests.exceptions.RequestException</span></code>)
+o una respuesta que no se puede interpretar, para que las vistas de
+este módulo no necesiten conocer la librería HTTP usada para llamar a
+sipap-sim, igual que <code class="docutils literal notranslate"><span class="pre">stripe.error.StripeError</span></code> desacopla a
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code> del transporte.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap._generar_referencia">
+<span class="sig-name descname"><span class="pre">_generar_referencia</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#_generar_referencia"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap._generar_referencia" title="Link to this definition"></a></dt>
+<dd><p>Genera una referencia única y legible para una solicitud de pago SIPAP.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap._firma_valida">
+<span class="sig-name descname"><span class="pre">_firma_valida</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">payload</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firma_recibida</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#_firma_valida"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap._firma_valida" title="Link to this definition"></a></dt>
+<dd><p>Verifica que un payload de webhook esté firmado con <code class="docutils literal notranslate"><span class="pre">SIPAP_WEBHOOK_SECRET</span></code>.</p>
+<p>Esquema propio (HMAC-SHA256 sobre el cuerpo crudo de la request, en
+hexadecimal): SIPAP no publica un SDK como el de Stripe, así que no
+hay una firma «oficial» que verificar; es el mismo esquema que
+implementa <code class="docutils literal notranslate"><span class="pre">sipap_sim.core.webhooks.enviar_confirmacion</span></code> del lado
+del simulador. La comparación es de tiempo constante
+(<code class="docutils literal notranslate"><span class="pre">hmac.compare_digest</span></code>) para no filtrar por timing cuánto de la
+firma es correcto.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>payload</strong> (<em>bytes</em>) – El cuerpo crudo de la request (<code class="docutils literal notranslate"><span class="pre">request.body</span></code>).</p></li>
+<li><p><strong>firma_recibida</strong> (<em>str</em>) – El valor del encabezado de firma.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> si la firma coincide.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap._resolver_metodo_pago_sipap">
+<span class="sig-name descname"><span class="pre">_resolver_metodo_pago_sipap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cliente</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metodo_pago_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#_resolver_metodo_pago_sipap"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap._resolver_metodo_pago_sipap" title="Link to this definition"></a></dt>
+<dd><p>Busca el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> de transferencia o billetera elegido, con cuenta y documento.</p>
+<p>Mismo patrón que <code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe._resolver_metodo_pago_tarjeta</span></code>:
+sipap-sim necesita saber exactamente con qué cuenta paga el cliente
+(no le ofrece elegir entre todas las del sistema), así que acá se
+exige que el método tenga <code class="docutils literal notranslate"><span class="pre">numero_cuenta</span></code>/<code class="docutils literal notranslate"><span class="pre">documento_titular</span></code>
+completos — los dos quedan validados contra sipap-sim al registrar el
+método (ver <code class="docutils literal notranslate"><span class="pre">apps.clientes.validacion_sipap</span></code>), así que en la
+práctica siempre están.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cliente</strong> (<a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.Cliente" title="apps.clientes.models.Cliente"><em>apps.clientes.models.Cliente</em></a>) – El cliente que va a pagar.</p></li>
+<li><p><strong>metodo_pago_id</strong> – El <code class="docutils literal notranslate"><span class="pre">pk</span></code> recibido en <code class="docutils literal notranslate"><span class="pre">?metodo_pago=</span></code>, tal como
+lo elige el cliente en el formulario de pago de siempre (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.PagarTransaccionOperacionView.post</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El método, si existe, es
+del cliente, es de transferencia o billetera, y tiene cuenta y
+documento completos; <code class="docutils literal notranslate"><span class="pre">None</span></code> en cualquier otro caso.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago" title="apps.clientes.models.MetodoPago">apps.clientes.models.MetodoPago</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap._crear_solicitud_cobro_en_sipap">
+<span class="sig-name descname"><span class="pre">_crear_solicitud_cobro_en_sipap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solicitud</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url_retorno</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#_crear_solicitud_cobro_en_sipap"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap._crear_solicitud_cobro_en_sipap" title="Link to this definition"></a></dt>
+<dd><p>Pide a sipap-sim que genere el link de pago de una solicitud, y lo guarda en ella.</p>
+<p>Único punto donde este módulo le habla a sipap-sim por HTTP
+(<code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">{SIPAP_BASE_URL}/api/solicitudes-cobro/</span></code>, autenticado con
+<code class="docutils literal notranslate"><span class="pre">Authorization:</span> <span class="pre">Bearer</span> <span class="pre">{SIPAP_API_KEY}</span></code>). Manda también el número
+de cuenta y el documento del <code class="docutils literal notranslate"><span class="pre">metodo_pago</span></code> de la solicitud, para
+que la «banca en línea» reconozca esa cuenta de entrada en vez de
+ofrecer todas las del sistema para elegir. Deja
+<code class="docutils literal notranslate"><span class="pre">solicitud.id_externo</span></code> y <code class="docutils literal notranslate"><span class="pre">solicitud.link_pago</span></code> con lo que
+responda, sin guardar nada: eso lo hace el llamador, después de
+confirmar que esta llamada no falló.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solicitud</strong> (<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap" title="apps.divisas.models.SolicitudPagoSipap"><em>apps.divisas.models.SolicitudPagoSipap</em></a>) – La solicitud
+recién armada (todavía no guardada necesariamente), con
+<code class="docutils literal notranslate"><span class="pre">metodo_pago</span></code> ya asignado.</p></li>
+<li><p><strong>url_retorno</strong> (<em>str</em>) – La URL absoluta a la que sipap-sim debe
+devolver al cliente después de aprobar o rechazar en su
+«banca en línea» (el detalle de esta misma transacción).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Muestra<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#apps.divisas.pagos_sipap.SipapComunicacionError" title="apps.divisas.pagos_sipap.SipapComunicacionError"><strong>SipapComunicacionError</strong></a> – Si sipap-sim no responde, la conexión
+    falla, responde con un error, o la respuesta no es JSON
+    válido (criterio 6).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap._obtener_o_crear_solicitud">
+<span class="sig-name descname"><span class="pre">_obtener_o_crear_solicitud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo_transaccion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metodo_pago</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url_retorno</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#_obtener_o_crear_solicitud"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap._obtener_o_crear_solicitud" title="Link to this definition"></a></dt>
+<dd><p>Devuelve la solicitud de pago SIPAP vigente de esta transacción, creándola si falta.</p>
+<p>Como <code class="docutils literal notranslate"><span class="pre">SolicitudPagoSipap</span></code> es un <code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code> con la transacción
+(nunca dos solicitudes para la misma), reintentar después de una
+solicitud «Rechazada» o «Vencida» reutiliza la misma fila con una
+referencia y un link de pago nuevos, en vez de crear una segunda
+(criterio 5) — y puede quedar asociada a un método de pago distinto,
+si el cliente elige otra cuenta guardada al reintentar. Una solicitud
+«Observada» no se reinicia sola: ya hay un pago real registrado con
+un monto que no coincide, así que hace falta que alguien lo revise
+antes de intentar de nuevo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transaccion</strong> – Una <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> o <code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>
+ya «Confirmada».</p></li>
+<li><p><strong>tipo_transaccion</strong> (<em>str</em>) – <code class="docutils literal notranslate"><span class="pre">&quot;operacion&quot;</span></code> o <code class="docutils literal notranslate"><span class="pre">&quot;cambio&quot;</span></code>, solo para
+mantener la misma convención que
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code> (no se usa todavía, pero evita
+tener que cambiar la firma si en el futuro hace falta
+diferenciar algo entre los dos tipos).</p></li>
+<li><p><strong>metodo_pago</strong> (<a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago" title="apps.clientes.models.MetodoPago"><em>apps.clientes.models.MetodoPago</em></a>) – La cuenta bancaria
+o billetera guardada que el cliente eligió para pagar (ver
+<code class="docutils literal notranslate"><span class="pre">_resolver_metodo_pago_sipap</span></code>); sipap-sim resuelve
+transferencia y billetera con el mismo flujo, pero hace falta
+recordar cuál es para que el <code class="docutils literal notranslate"><span class="pre">Pago</span></code> resultante lo muestre
+bien y para que la «banca en línea» reconozca la cuenta.</p></li>
+<li><p><strong>url_retorno</strong> (<em>str</em>) – A dónde tiene que volver el cliente después de
+resolver el pago en sipap-sim (ver <code class="docutils literal notranslate"><span class="pre">_crear_solicitud_cobro_en_sipap</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>La solicitud vigente
+(pendiente, o resuelta — la vista decide qué hacer según su
+estado), con <code class="docutils literal notranslate"><span class="pre">link_pago</span></code> listo para redirigir al cliente.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap" title="apps.divisas.models.SolicitudPagoSipap">apps.divisas.models.SolicitudPagoSipap</a></p>
+</dd>
+<dt class="field-even">Muestra<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#apps.divisas.pagos_sipap.SipapComunicacionError" title="apps.divisas.pagos_sipap.SipapComunicacionError"><strong>SipapComunicacionError</strong></a> – Si falla pedirle a sipap-sim la solicitud
+    nueva (criterio 6). No se guarda nada en ese caso.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_sipap._procesar_confirmacion_sipap">
+<span class="sig-name descname"><span class="pre">_procesar_confirmacion_sipap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solicitud</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_sipap.html#_procesar_confirmacion_sipap"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_sipap._procesar_confirmacion_sipap" title="Link to this definition"></a></dt>
+<dd><p>Resuelve una solicitud pendiente según la confirmación recibida de SIPAP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solicitud</strong> (<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap" title="apps.divisas.models.SolicitudPagoSipap"><em>apps.divisas.models.SolicitudPagoSipap</em></a>) – La solicitud a
+resolver; si ya no está «Pendiente» (repetición del webhook, o
+ya vencida/rechazada), no hace nada.</p></li>
+<li><p><strong>datos</strong> (<em>dict</em>) – El payload ya decodificado del webhook, con
+<code class="docutils literal notranslate"><span class="pre">estado</span></code> (<code class="docutils literal notranslate"><span class="pre">&quot;acreditada&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;rechazada&quot;</span></code>), <code class="docutils literal notranslate"><span class="pre">monto</span></code>,
+<code class="docutils literal notranslate"><span class="pre">id_operacion</span></code> y <code class="docutils literal notranslate"><span class="pre">banco_origen</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.divisas.models.html" class="btn btn-neutral float-left" title="apps.divisas.models module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.pagos_stripe.html" class="btn btn-neutral float-right" title="apps.divisas.pagos_stripe module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

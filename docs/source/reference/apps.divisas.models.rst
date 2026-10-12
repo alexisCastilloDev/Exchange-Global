@@ -33,6 +33,10 @@ apps.divisas.models module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.models.SolicitudPagoSipap
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.models.NotificacionTasa
    :members:
    :show-inheritance:

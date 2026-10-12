@@ -1,0 +1,739 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.pagos_sipap &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.divisas.pagos_sipap</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.divisas.pagos_sipap</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Pago por transferencia bancaria o billetera digital vía SIPAP.</span>
+
+<span class="sd">Implementa la HU "Pago por transferencia bancaria vía SIPAP", pensada</span>
+<span class="sd">—igual que ``apps.divisas.pagos_stripe``— como continuación de la HU</span>
+<span class="sd">"Asociación de pagos a transacciones" (GE-25, ver</span>
+<span class="sd">``apps.divisas.models.Pago``). SIPAP es el sistema de pagos interbancario</span>
+<span class="sd">del Banco Central del Paraguay: no tiene un sandbox público al que un</span>
+<span class="sd">proyecto académico pueda conectarse, así que se lo simula con</span>
+<span class="sd">"sipap-sim" (``sipap_sim/``, en la raíz del repositorio), un proyecto</span>
+<span class="sd">Django independiente que corre en su propio contenedor y con su propia</span>
+<span class="sd">base, y que además de bancos simula billeteras digitales — este módulo</span>
+<span class="sd">no distingue entre unos y otras: ambas se pagan con el mismo flujo</span>
+<span class="sd">(``MetodoPago.TIPO_TRANSFERENCIA`` y ``MetodoPago.TIPO_BILLETERA`` llegan</span>
+<span class="sd">acá por igual, ver ``apps.divisas.views.PagarTransaccionOperacionView.post``).</span>
+<span class="sd">Este módulo le habla a sipap-sim solo por HTTP (``settings.SIPAP_BASE_URL``),</span>
+<span class="sd">sin compartir código con él; si en algún momento se integra con el</span>
+<span class="sd">sistema real, solo hay que apuntar esa URL a él y, si cambiara algo del</span>
+<span class="sd">contrato HTTP, ajustar este módulo — el resto (``Pago.registrar_pago``/</span>
+<span class="sd">``registrar_pago_observado`` como único punto de escritura) no cambia.</span>
+
+<span class="sd">A diferencia de Stripe, una transferencia bancaria no es inmediata: el</span>
+<span class="sd">cliente sale del sistema (se lo redirige a la "banca en línea" de</span>
+<span class="sd">sipap-sim), aprueba o rechaza ahí, y la confirmación llega después por</span>
+<span class="sd">webhook. Por eso acá hace falta un registro propio de "pago pendiente"</span>
+<span class="sd">(``apps.divisas.models.SolicitudPagoSipap``) que no existía para Stripe.</span>
+
+<span class="sd">La cuenta con la que se paga no la elige el cliente en sipap-sim: la</span>
+<span class="sd">identifica este módulo (``_resolver_metodo_pago_sipap``) a partir del</span>
+<span class="sd">``MetodoPago`` guardado que eligió en la pantalla de pago de siempre —</span>
+<span class="sd">el mismo que ya validó su número de cuenta y CI/RUC contra sipap-sim al</span>
+<span class="sd">registrarlo (ver ``apps.clientes.validacion_sipap``) — y se le manda a</span>
+<span class="sd">sipap-sim al pedir la solicitud de cobro. Así, la "banca en línea" nunca</span>
+<span class="sd">le muestra al cliente las cuentas de otros clientes de prueba del</span>
+<span class="sd">sistema: solo reconoce la que ya le identificaron.</span>
+
+<span class="sd">Diseño elegido para cada criterio de aceptación:</span>
+
+<span class="sd">- Criterio 1 (solicitud con monto exacto y referencia única): al iniciar</span>
+<span class="sd">  el pago, ``_obtener_o_crear_solicitud`` crea una ``SolicitudPagoSipap``</span>
+<span class="sd">  con ``apps.divisas.models.monto_a_pagar``/``moneda_a_pagar`` (el mismo</span>
+<span class="sd">  monto que calcula el sistema para cualquier medio de pago, nunca</span>
+<span class="sd">  editable por el cliente) y una referencia única</span>
+<span class="sd">  (``_generar_referencia``), se la pide a sipap-sim junto con la cuenta</span>
+<span class="sd">  del método de pago elegido (``POST /api/solicitudes-cobro/``) y se</span>
+<span class="sd">  redirige al cliente al ``link_pago`` que devuelve: su "banca en línea"</span>
+<span class="sd">  simulada, que ya la reconoce.</span>
+<span class="sd">- Criterio 2 (confirmación con identificador, banco y medio): el webhook</span>
+<span class="sd">  (``sipap_webhook_view``), ante un evento ``"acreditada"`` cuyo monto</span>
+<span class="sd">  coincide, llama a ``Pago.registrar_pago`` con el identificador de la</span>
+<span class="sd">  operación SIPAP y el tipo de medio real (transferencia o billetera) de</span>
+<span class="sd">  la solicitud.</span>
+<span class="sd">- Criterio 3 (monto que no coincide → observado): si el monto confirmado</span>
+<span class="sd">  difiere del esperado, llama en cambio a ``Pago.registrar_pago_observado``</span>
+<span class="sd">  (con la diferencia) en vez de ``registrar_pago``: queda un ``Pago`` con</span>
+<span class="sd">  ``observado=True`` para revisión, y la transacción **no** pasa a</span>
+<span class="sd">  "Pagada". La "banca en línea" de sipap-sim deja elegir un monto</span>
+<span class="sd">  distinto del solicitado a propósito, para poder probar este caso.</span>
+<span class="sd">- Criterio 4 (confirmación no verificable): ``_firma_valida`` revisa la</span>
+<span class="sd">  firma HMAC antes de mirar el contenido del payload; si no coincide, se</span>
+<span class="sd">  responde 400 sin tocar ninguna transacción.</span>
+<span class="sd">- Criterio 5 (rechazada o vencida sin completarse): un evento</span>
+<span class="sd">  ``"rechazada"`` deja la ``SolicitudPagoSipap`` en ese estado sin crear</span>
+<span class="sd">  ningún ``Pago``; si nunca llega ninguna confirmación,</span>
+<span class="sd">  ``marcar_vencida_si_corresponde`` la pasa perezosamente a "Vencida" la</span>
+<span class="sd">  próxima vez que el cliente visita la pantalla de pago (mismo patrón que</span>
+<span class="sd">  ``CalculoOperacion.marcar_vencida_si_corresponde``). En ambos casos la</span>
+<span class="sd">  transacción sigue "Confirmada" y volver a iniciar el pago genera una</span>
+<span class="sd">  solicitud nueva (misma fila, nueva referencia y nuevo link de pago)</span>
+<span class="sd">  para reintentar.</span>
+<span class="sd">- Criterio 6 (SIPAP no responde): ``_crear_solicitud_cobro_en_sipap`` es</span>
+<span class="sd">  el único punto donde este módulo le habla a sipap-sim por HTTP; un</span>
+<span class="sd">  timeout, una conexión rechazada (contenedor apagado) o una respuesta de</span>
+<span class="sd">  error (``SIM_MODO_FALLA=error`` del lado del simulador) se traducen en</span>
+<span class="sd">  ``SipapComunicacionError`` sin tocar la transacción, igual que un corte</span>
+<span class="sd">  de comunicación con un banco real.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hmac</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span><span class="p">,</span> <span class="n">InvalidOperation</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpResponse</span><span class="p">,</span> <span class="n">HttpResponseBadRequest</span><span class="p">,</span> <span class="n">HttpResponseNotAllowed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">View</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.decorators.csrf</span><span class="w"> </span><span class="kn">import</span> <span class="n">csrf_exempt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetodoPago</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CalculoOperacion</span><span class="p">,</span>
+    <span class="n">CalculoTriangulacion</span><span class="p">,</span>
+    <span class="n">Pago</span><span class="p">,</span>
+    <span class="n">PagoRechazadoError</span><span class="p">,</span>
+    <span class="n">SolicitudPagoSipap</span><span class="p">,</span>
+    <span class="n">moneda_a_pagar</span><span class="p">,</span>
+    <span class="n">monto_a_pagar</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">_puede_pagarse</span><span class="p">,</span> <span class="n">_resolver_transaccion_propia</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+
+<span class="n">PROVEEDOR_SIPAP</span> <span class="o">=</span> <span class="s1">'SIPAP'</span>
+
+
+<div class="viewcode-block" id="SipapComunicacionError">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.SipapComunicacionError">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SipapComunicacionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Señala que no se pudo hablar con sipap-sim para generar una solicitud (criterio 6).</span>
+
+<span class="sd">    Envuelve cualquier falla de red real (``requests.exceptions.RequestException``)</span>
+<span class="sd">    o una respuesta que no se puede interpretar, para que las vistas de</span>
+<span class="sd">    este módulo no necesiten conocer la librería HTTP usada para llamar a</span>
+<span class="sd">    sipap-sim, igual que ``stripe.error.StripeError`` desacopla a</span>
+<span class="sd">    ``apps.divisas.pagos_stripe`` del transporte.</span>
+<span class="sd">    """</span></div>
+
+
+
+<div class="viewcode-block" id="_generar_referencia">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._generar_referencia">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_generar_referencia</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Genera una referencia única y legible para una solicitud de pago SIPAP."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'SIPAP-</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">12</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s1">'</span></div>
+
+
+
+<div class="viewcode-block" id="_firma_valida">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._firma_valida">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_firma_valida</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">firma_recibida</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Verifica que un payload de webhook esté firmado con ``SIPAP_WEBHOOK_SECRET``.</span>
+
+<span class="sd">    Esquema propio (HMAC-SHA256 sobre el cuerpo crudo de la request, en</span>
+<span class="sd">    hexadecimal): SIPAP no publica un SDK como el de Stripe, así que no</span>
+<span class="sd">    hay una firma "oficial" que verificar; es el mismo esquema que</span>
+<span class="sd">    implementa ``sipap_sim.core.webhooks.enviar_confirmacion`` del lado</span>
+<span class="sd">    del simulador. La comparación es de tiempo constante</span>
+<span class="sd">    (``hmac.compare_digest``) para no filtrar por timing cuánto de la</span>
+<span class="sd">    firma es correcto.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        payload (bytes): El cuerpo crudo de la request (``request.body``).</span>
+<span class="sd">        firma_recibida (str): El valor del encabezado de firma.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: ``True`` si la firma coincide.</span>
+<span class="sd">    """</span>
+    <span class="n">firma_esperada</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_WEBHOOK_SECRET</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">),</span> <span class="n">payload</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">firma_esperada</span><span class="p">,</span> <span class="n">firma_recibida</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_resolver_metodo_pago_sipap">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._resolver_metodo_pago_sipap">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolver_metodo_pago_sipap</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="n">metodo_pago_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Busca el ``MetodoPago`` de transferencia o billetera elegido, con cuenta y documento.</span>
+
+<span class="sd">    Mismo patrón que ``apps.divisas.pagos_stripe._resolver_metodo_pago_tarjeta``:</span>
+<span class="sd">    sipap-sim necesita saber exactamente con qué cuenta paga el cliente</span>
+<span class="sd">    (no le ofrece elegir entre todas las del sistema), así que acá se</span>
+<span class="sd">    exige que el método tenga ``numero_cuenta``/``documento_titular``</span>
+<span class="sd">    completos — los dos quedan validados contra sipap-sim al registrar el</span>
+<span class="sd">    método (ver ``apps.clientes.validacion_sipap``), así que en la</span>
+<span class="sd">    práctica siempre están.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cliente (apps.clientes.models.Cliente): El cliente que va a pagar.</span>
+<span class="sd">        metodo_pago_id: El ``pk`` recibido en ``?metodo_pago=``, tal como</span>
+<span class="sd">            lo elige el cliente en el formulario de pago de siempre (ver</span>
+<span class="sd">            ``apps.divisas.views.PagarTransaccionOperacionView.post``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        apps.clientes.models.MetodoPago | None: El método, si existe, es</span>
+<span class="sd">        del cliente, es de transferencia o billetera, y tiene cuenta y</span>
+<span class="sd">        documento completos; ``None`` en cualquier otro caso.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="n">pk</span><span class="o">=</span><span class="n">metodo_pago_id</span><span class="p">,</span>
+        <span class="n">cliente</span><span class="o">=</span><span class="n">cliente</span><span class="p">,</span>
+        <span class="n">tipo_medio__in</span><span class="o">=</span><span class="p">(</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TRANSFERENCIA</span><span class="p">,</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_BILLETERA</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">numero_cuenta__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">numero_cuenta</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+        <span class="n">documento_titular__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">documento_titular</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="_crear_solicitud_cobro_en_sipap">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._crear_solicitud_cobro_en_sipap">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_crear_solicitud_cobro_en_sipap</span><span class="p">(</span><span class="n">solicitud</span><span class="p">,</span> <span class="n">url_retorno</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pide a sipap-sim que genere el link de pago de una solicitud, y lo guarda en ella.</span>
+
+<span class="sd">    Único punto donde este módulo le habla a sipap-sim por HTTP</span>
+<span class="sd">    (``POST {SIPAP_BASE_URL}/api/solicitudes-cobro/``, autenticado con</span>
+<span class="sd">    ``Authorization: Bearer {SIPAP_API_KEY}``). Manda también el número</span>
+<span class="sd">    de cuenta y el documento del ``metodo_pago`` de la solicitud, para</span>
+<span class="sd">    que la "banca en línea" reconozca esa cuenta de entrada en vez de</span>
+<span class="sd">    ofrecer todas las del sistema para elegir. Deja</span>
+<span class="sd">    ``solicitud.id_externo`` y ``solicitud.link_pago`` con lo que</span>
+<span class="sd">    responda, sin guardar nada: eso lo hace el llamador, después de</span>
+<span class="sd">    confirmar que esta llamada no falló.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        solicitud (apps.divisas.models.SolicitudPagoSipap): La solicitud</span>
+<span class="sd">            recién armada (todavía no guardada necesariamente), con</span>
+<span class="sd">            ``metodo_pago`` ya asignado.</span>
+<span class="sd">        url_retorno (str): La URL absoluta a la que sipap-sim debe</span>
+<span class="sd">            devolver al cliente después de aprobar o rechazar en su</span>
+<span class="sd">            "banca en línea" (el detalle de esta misma transacción).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        SipapComunicacionError: Si sipap-sim no responde, la conexión</span>
+<span class="sd">            falla, responde con un error, o la respuesta no es JSON</span>
+<span class="sd">            válido (criterio 6).</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_BASE_URL</span><span class="si">}</span><span class="s1">/api/solicitudes-cobro/'</span><span class="p">,</span>
+            <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                <span class="s1">'monto'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">solicitud</span><span class="o">.</span><span class="n">monto</span><span class="p">),</span>
+                <span class="s1">'moneda'</span><span class="p">:</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">moneda</span><span class="p">,</span>
+                <span class="s1">'referencia'</span><span class="p">:</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">referencia</span><span class="p">,</span>
+                <span class="s1">'url_retorno'</span><span class="p">:</span> <span class="n">url_retorno</span><span class="p">,</span>
+                <span class="s1">'cuenta_origen_numero'</span><span class="p">:</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">numero_cuenta</span><span class="p">,</span>
+                <span class="s1">'cuenta_origen_documento'</span><span class="p">:</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">documento_titular</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Bearer </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_API_KEY</span><span class="si">}</span><span class="s1">'</span><span class="p">},</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">respuesta</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="n">datos</span> <span class="o">=</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SipapComunicacionError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+
+    <span class="n">solicitud</span><span class="o">.</span><span class="n">id_externo</span> <span class="o">=</span> <span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'id'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span>
+    <span class="n">solicitud</span><span class="o">.</span><span class="n">link_pago</span> <span class="o">=</span> <span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'link_pago'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span></div>
+
+
+
+<div class="viewcode-block" id="_obtener_o_crear_solicitud">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._obtener_o_crear_solicitud">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_obtener_o_crear_solicitud</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">tipo_transaccion</span><span class="p">,</span> <span class="n">metodo_pago</span><span class="p">,</span> <span class="n">url_retorno</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve la solicitud de pago SIPAP vigente de esta transacción, creándola si falta.</span>
+
+<span class="sd">    Como ``SolicitudPagoSipap`` es un ``OneToOneField`` con la transacción</span>
+<span class="sd">    (nunca dos solicitudes para la misma), reintentar después de una</span>
+<span class="sd">    solicitud "Rechazada" o "Vencida" reutiliza la misma fila con una</span>
+<span class="sd">    referencia y un link de pago nuevos, en vez de crear una segunda</span>
+<span class="sd">    (criterio 5) — y puede quedar asociada a un método de pago distinto,</span>
+<span class="sd">    si el cliente elige otra cuenta guardada al reintentar. Una solicitud</span>
+<span class="sd">    "Observada" no se reinicia sola: ya hay un pago real registrado con</span>
+<span class="sd">    un monto que no coincide, así que hace falta que alguien lo revise</span>
+<span class="sd">    antes de intentar de nuevo.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``</span>
+<span class="sd">            ya "Confirmada".</span>
+<span class="sd">        tipo_transaccion (str): ``"operacion"`` o ``"cambio"``, solo para</span>
+<span class="sd">            mantener la misma convención que</span>
+<span class="sd">            ``apps.divisas.pagos_stripe`` (no se usa todavía, pero evita</span>
+<span class="sd">            tener que cambiar la firma si en el futuro hace falta</span>
+<span class="sd">            diferenciar algo entre los dos tipos).</span>
+<span class="sd">        metodo_pago (apps.clientes.models.MetodoPago): La cuenta bancaria</span>
+<span class="sd">            o billetera guardada que el cliente eligió para pagar (ver</span>
+<span class="sd">            ``_resolver_metodo_pago_sipap``); sipap-sim resuelve</span>
+<span class="sd">            transferencia y billetera con el mismo flujo, pero hace falta</span>
+<span class="sd">            recordar cuál es para que el ``Pago`` resultante lo muestre</span>
+<span class="sd">            bien y para que la "banca en línea" reconozca la cuenta.</span>
+<span class="sd">        url_retorno (str): A dónde tiene que volver el cliente después de</span>
+<span class="sd">            resolver el pago en sipap-sim (ver ``_crear_solicitud_cobro_en_sipap``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        apps.divisas.models.SolicitudPagoSipap: La solicitud vigente</span>
+<span class="sd">        (pendiente, o resuelta — la vista decide qué hacer según su</span>
+<span class="sd">        estado), con ``link_pago`` listo para redirigir al cliente.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        SipapComunicacionError: Si falla pedirle a sipap-sim la solicitud</span>
+<span class="sd">            nueva (criterio 6). No se guarda nada en ese caso.</span>
+<span class="sd">    """</span>
+    <span class="n">campo</span> <span class="o">=</span> <span class="s1">'calculo_operacion'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'calculo_triangulacion'</span>
+    <span class="n">solicitud</span> <span class="o">=</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">campo</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">})</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="n">moneda</span> <span class="o">=</span> <span class="n">moneda_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="n">vence_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_SOLICITUD_VIGENCIA_SEGUNDOS</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">solicitud</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">solicitud</span> <span class="o">=</span> <span class="n">SolicitudPagoSipap</span><span class="p">(</span>
+            <span class="n">referencia</span><span class="o">=</span><span class="n">_generar_referencia</span><span class="p">(),</span> <span class="n">monto</span><span class="o">=</span><span class="n">monto</span><span class="p">,</span> <span class="n">moneda</span><span class="o">=</span><span class="n">moneda</span><span class="p">,</span>
+            <span class="n">medio_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="o">.</span><span class="n">tipo_medio</span><span class="p">,</span> <span class="n">metodo_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="p">,</span>
+            <span class="n">vence_en</span><span class="o">=</span><span class="n">vence_en</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">campo</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">_crear_solicitud_cobro_en_sipap</span><span class="p">(</span><span class="n">solicitud</span><span class="p">,</span> <span class="n">url_retorno</span><span class="p">)</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">solicitud</span>
+
+    <span class="n">solicitud</span><span class="o">.</span><span class="n">marcar_vencida_si_corresponde</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">estado</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">ESTADO_RECHAZADA</span><span class="p">,</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">ESTADO_VENCIDA</span><span class="p">):</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">referencia</span> <span class="o">=</span> <span class="n">_generar_referencia</span><span class="p">()</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">monto</span> <span class="o">=</span> <span class="n">monto</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">moneda</span> <span class="o">=</span> <span class="n">moneda</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">medio_pago</span> <span class="o">=</span> <span class="n">metodo_pago</span><span class="o">.</span><span class="n">tipo_medio</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">metodo_pago</span> <span class="o">=</span> <span class="n">metodo_pago</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">banco_origen</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">vence_en</span> <span class="o">=</span> <span class="n">vence_en</span>
+        <span class="n">_crear_solicitud_cobro_en_sipap</span><span class="p">(</span><span class="n">solicitud</span><span class="p">,</span> <span class="n">url_retorno</span><span class="p">)</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">solicitud</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_IniciarPagoSipapBaseView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Base común para iniciar el pago por transferencia/billetera SIPAP de una transacción propia.</span>
+
+<span class="sd">    Las subclases (``IniciarPagoSipapOperacionView``/</span>
+<span class="sd">    ``IniciarPagoSipapCambioView``) solo fijan ``model``,</span>
+<span class="sd">    ``tipo_transaccion`` y ``url_detalle``, igual que las de</span>
+<span class="sd">    ``apps.divisas.pagos_stripe``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">tipo_transaccion</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">url_detalle</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Permite iniciar el pago solo a los roles que pueden operar."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Redirige a la "banca en línea" de sipap-sim, creando la solicitud si falta.</span>
+
+<span class="sd">        La cuenta bancaria o billetera elegida llega en ``?metodo_pago=``</span>
+<span class="sd">        (mismo patrón que ``apps.divisas.pagos_stripe`` con</span>
+<span class="sd">        ``_resolver_metodo_pago_tarjeta``), puesto por</span>
+<span class="sd">        ``apps.divisas.views.PagarTransaccionOperacionView.post`` al</span>
+<span class="sd">        redirigir acá: es uno de los métodos guardados del cliente (HU</span>
+<span class="sd">        "Métodos de pago"), con su cuenta ya validada contra sipap-sim.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección externa al ``link_pago`` de</span>
+<span class="sd">            sipap-sim si todo sale bien; de vuelta al detalle de la</span>
+<span class="sd">            transacción con un mensaje si no se puede pagar todavía, si</span>
+<span class="sd">            el método de pago no es válido, si hay un pago observado</span>
+<span class="sd">            pendiente de revisión, o si sipap-sim no respondió</span>
+<span class="sd">            (criterio 6).</span>
+<span class="sd">        """</span>
+        <span class="n">transaccion</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="n">_resolver_transaccion_propia</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'pk'</span><span class="p">],</span> <span class="n">url_fallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">marcar_vencida_si_corresponde</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_puede_pagarse</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Esta transacción ya fue pagada.'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Esta transacción no está en condiciones de pagarse.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">metodo_pago</span> <span class="o">=</span> <span class="n">_resolver_metodo_pago_sipap</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'metodo_pago'</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">metodo_pago</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Elegí una cuenta bancaria o billetera guardada para pagar por SIPAP.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">url_retorno</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">build_absolute_uri</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'pk'</span><span class="p">:</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">}))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">solicitud</span> <span class="o">=</span> <span class="n">_obtener_o_crear_solicitud</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tipo_transaccion</span><span class="p">,</span> <span class="n">metodo_pago</span><span class="p">,</span> <span class="n">url_retorno</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SipapComunicacionError</span><span class="p">:</span>
+            <span class="c1"># Criterio 6: SIPAP no respondió o la conexión falló. No se</span>
+            <span class="c1"># toca la transacción, que sigue "Confirmada" tal como estaba.</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'No se pudo conectar con SIPAP para generar la solicitud de pago. '</span>
+                <span class="s1">'Intentá nuevamente en unos minutos.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">ESTADO_OBSERVADA</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'Ya se registró una transferencia para esta transacción, pero por un monto distinto '</span>
+                <span class="s1">'al esperado. Quedó pendiente de revisión; contactate con un analista o administrador.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">solicitud</span><span class="o">.</span><span class="n">link_pago</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="IniciarPagoSipapOperacionView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IniciarPagoSipapOperacionView</span><span class="p">(</span><span class="n">_IniciarPagoSipapBaseView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Inicia el pago por transferencia/billetera SIPAP de una compra o venta propia ya "Confirmada".</span>
+
+<span class="sd">    A ella redirige automáticamente</span>
+<span class="sd">    ``apps.divisas.views.PagarTransaccionOperacionView.post`` cuando el</span>
+<span class="sd">    método de pago elegido en el formulario de pago normal es de tipo</span>
+<span class="sd">    "transferencia" o "billetera" (``MetodoPago.TIPO_TRANSFERENCIA``/</span>
+<span class="sd">    ``MetodoPago.TIPO_BILLETERA``): ambos se resuelven con el mismo flujo</span>
+<span class="sd">    de sipap-sim, que simula indistintamente bancos y billeteras</span>
+<span class="sd">    digitales.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">CalculoOperacion</span>
+    <span class="n">tipo_transaccion</span> <span class="o">=</span> <span class="s1">'operacion'</span>
+    <span class="n">url_detalle</span> <span class="o">=</span> <span class="s1">'divisas:detalle_transaccion_operacion'</span></div>
+
+
+
+<div class="viewcode-block" id="IniciarPagoSipapCambioView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.IniciarPagoSipapCambioView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IniciarPagoSipapCambioView</span><span class="p">(</span><span class="n">_IniciarPagoSipapBaseView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Inicia el pago por transferencia/billetera SIPAP de un cambio entre divisas propio ya "Confirmado".</span>
+
+<span class="sd">    Ver ``IniciarPagoSipapOperacionView``: mismo criterio, al que redirige</span>
+<span class="sd">    ``apps.divisas.views.PagarTransaccionCambioView.post``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">CalculoTriangulacion</span>
+    <span class="n">tipo_transaccion</span> <span class="o">=</span> <span class="s1">'cambio'</span>
+    <span class="n">url_detalle</span> <span class="o">=</span> <span class="s1">'divisas:detalle_transaccion_cambio'</span></div>
+
+
+
+<div class="viewcode-block" id="_procesar_confirmacion_sipap">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._procesar_confirmacion_sipap">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_procesar_confirmacion_sipap</span><span class="p">(</span><span class="n">solicitud</span><span class="p">,</span> <span class="n">datos</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Resuelve una solicitud pendiente según la confirmación recibida de SIPAP.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        solicitud (apps.divisas.models.SolicitudPagoSipap): La solicitud a</span>
+<span class="sd">            resolver; si ya no está "Pendiente" (repetición del webhook, o</span>
+<span class="sd">            ya vencida/rechazada), no hace nada.</span>
+<span class="sd">        datos (dict): El payload ya decodificado del webhook, con</span>
+<span class="sd">            ``estado`` (``"acreditada"``/``"rechazada"``), ``monto``,</span>
+<span class="sd">            ``id_operacion`` y ``banco_origen``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">estado</span> <span class="o">!=</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">transaccion</span> <span class="o">=</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">transaccion</span>
+    <span class="k">if</span> <span class="n">transaccion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">estado_sipap</span> <span class="o">=</span> <span class="p">(</span><span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'estado'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">estado_sipap</span> <span class="o">==</span> <span class="s1">'rechazada'</span><span class="p">:</span>
+        <span class="c1"># Criterio 5: queda "Rechazada", sin crear ningún Pago. La</span>
+        <span class="c1"># transacción sigue "Confirmada" y puede reintentarse.</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">ESTADO_RECHAZADA</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">estado_sipap</span> <span class="o">!=</span> <span class="s1">'acreditada'</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">monto_recibido</span> <span class="o">=</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'monto'</span><span class="p">)))</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">InvalidOperation</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="n">identificador_externo</span> <span class="o">=</span> <span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'id_operacion'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span>
+    <span class="n">solicitud</span><span class="o">.</span><span class="n">banco_origen</span> <span class="o">=</span> <span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'banco_origen'</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">monto_recibido</span> <span class="o">==</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">monto</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pago</span><span class="p">,</span> <span class="n">_creado</span> <span class="o">=</span> <span class="n">Pago</span><span class="o">.</span><span class="n">registrar_pago</span><span class="p">(</span>
+                <span class="n">transaccion</span><span class="p">,</span>
+                <span class="n">medio_pago</span><span class="o">=</span><span class="n">solicitud</span><span class="o">.</span><span class="n">medio_pago</span><span class="p">,</span>
+                <span class="n">proveedor</span><span class="o">=</span><span class="n">PROVEEDOR_SIPAP</span><span class="p">,</span>
+                <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+                <span class="n">monto</span><span class="o">=</span><span class="n">monto_recibido</span><span class="p">,</span>
+                <span class="n">metodo_pago</span><span class="o">=</span><span class="n">solicitud</span><span class="o">.</span><span class="n">metodo_pago</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">PagoRechazadoError</span><span class="p">:</span>
+            <span class="c1"># La transacción ya no está en condiciones de pagarse (p. ej.</span>
+            <span class="c1"># otro medio la pagó mientras tanto). No hay más que hacer.</span>
+            <span class="k">return</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">pago</span> <span class="o">=</span> <span class="n">pago</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">ESTADO_ACREDITADA</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Criterio 3: el monto no coincide. Queda observado, sin marcar</span>
+        <span class="c1"># la transacción como "Pagada".</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pago</span><span class="p">,</span> <span class="n">_creado</span> <span class="o">=</span> <span class="n">Pago</span><span class="o">.</span><span class="n">registrar_pago_observado</span><span class="p">(</span>
+                <span class="n">transaccion</span><span class="p">,</span>
+                <span class="n">medio_pago</span><span class="o">=</span><span class="n">solicitud</span><span class="o">.</span><span class="n">medio_pago</span><span class="p">,</span>
+                <span class="n">proveedor</span><span class="o">=</span><span class="n">PROVEEDOR_SIPAP</span><span class="p">,</span>
+                <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+                <span class="n">monto</span><span class="o">=</span><span class="n">monto_recibido</span><span class="p">,</span>
+                <span class="n">diferencia</span><span class="o">=</span><span class="n">monto_recibido</span> <span class="o">-</span> <span class="n">solicitud</span><span class="o">.</span><span class="n">monto</span><span class="p">,</span>
+                <span class="n">metodo_pago</span><span class="o">=</span><span class="n">solicitud</span><span class="o">.</span><span class="n">metodo_pago</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">PagoRechazadoError</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">pago</span> <span class="o">=</span> <span class="n">pago</span>
+        <span class="n">solicitud</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">ESTADO_OBSERVADA</span>
+
+    <span class="n">solicitud</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="sipap_webhook_view">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.sipap_webhook_view">[documentos]</a>
+<span class="nd">@csrf_exempt</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sipap_webhook_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Recibe las confirmaciones de sipap-sim y resuelve la solicitud de pago correspondiente.</span>
+
+<span class="sd">    Es el único lugar donde una notificación de sipap-sim se traduce en</span>
+<span class="sd">    un pago real (o en una observación, o en un rechazo). Queda exento de</span>
+<span class="sd">    CSRF porque lo llama sipap-sim, no un navegador con sesión de Django,</span>
+<span class="sd">    y en cambio su seguridad depende por completo de ``_firma_valida``</span>
+<span class="sd">    (criterio 4).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HttpResponse: 200 si el evento se procesó (incluso si no requería</span>
+<span class="sd">        ninguna acción, p. ej. una referencia desconocida), 400 si la</span>
+<span class="sd">        firma no es válida, el payload no es JSON, o el método no es</span>
+<span class="sd">        POST.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponseNotAllowed</span><span class="p">([</span><span class="s1">'POST'</span><span class="p">])</span>
+
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">body</span>
+    <span class="n">firma</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'HTTP_X_SIPAP_SIGNATURE'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_firma_valida</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">firma</span><span class="p">):</span>
+        <span class="c1"># Criterio 4: firma inválida. Se rechaza sin tocar ninguna</span>
+        <span class="c1"># transacción y sin procesar el contenido del payload.</span>
+        <span class="k">return</span> <span class="n">HttpResponseBadRequest</span><span class="p">(</span><span class="s1">'Firma inválida.'</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">datos</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponseBadRequest</span><span class="p">(</span><span class="s1">'Payload inválido.'</span><span class="p">)</span>
+
+    <span class="n">solicitud</span> <span class="o">=</span> <span class="n">SolicitudPagoSipap</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">referencia</span><span class="o">=</span><span class="n">datos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'referencia'</span><span class="p">))</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">solicitud</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Referencia desconocida: no es un error del remitente, pero no</span>
+        <span class="c1"># hay nada legítimo que hacer con ella.</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+
+    <span class="n">_procesar_confirmacion_sipap</span><span class="p">(</span><span class="n">solicitud</span><span class="p">,</span> <span class="n">datos</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -49,21 +49,17 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -155,7 +151,7 @@
            <div itemprop="articleBody">
              
   <h1>Código fuente para apps.caja.forms</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Formularios para la apertura de caja y las operaciones de ventanilla."""</span>
+<span></span><span class="sd">"""Formularios para la apertura de caja."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
 
@@ -223,227 +219,6 @@
 <div class="viewcode-block" id="AperturaCajaForm.saldos_por_divisa">
 <a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.AperturaCajaForm.saldos_por_divisa">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">saldos_por_divisa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve ``{Divisa: Decimal}`` con los montos ya validados.</span>
-
-<span class="sd">        Solo debe llamarse después de confirmar ``is_valid()``.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">divisa</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nombre_campo</span><span class="p">(</span><span class="n">divisa</span><span class="p">)]</span>
-            <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span>
-        <span class="p">}</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="OperacionVentanillaForm">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">OperacionVentanillaForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Valida la divisa y el monto de una compra o venta de divisas en ventanilla.</span>
-
-<span class="sd">    Mismo criterio de validación que ``apps.divisas.forms.CalculoOperacionForm``</span>
-<span class="sd">    usa para el flujo online del cliente: rechaza un monto negativo, en cero</span>
-<span class="sd">    o no numérico, con mensajes en español. PYG no se ofrece como divisa</span>
-<span class="sd">    operable (es la moneda contra la que siempre se opera, nunca la que se</span>
-<span class="sd">    compra o vende), y tampoco una divisa sin cotización vigente, porque no</span>
-<span class="sd">    hay con qué calcular la tasa aplicada.</span>
-<span class="sd">    """</span>
-
-    <span class="n">divisa</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span>
-        <span class="n">label</span><span class="o">=</span><span class="s1">'Divisa'</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="p">[],</span>
-        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-select'</span><span class="p">}),</span>
-        <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span>
-            <span class="s1">'required'</span><span class="p">:</span> <span class="s1">'Debe seleccionar una divisa.'</span><span class="p">,</span>
-            <span class="s1">'invalid_choice'</span><span class="p">:</span> <span class="p">(</span>
-                <span class="s1">'La divisa seleccionada está inactiva, no tiene cotización'</span>
-                <span class="s1">' vigente o no está disponible.'</span>
-            <span class="p">),</span>
-        <span class="p">},</span>
-    <span class="p">)</span>
-    <span class="n">monto</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
-        <span class="n">label</span><span class="o">=</span><span class="s1">'Monto en divisa'</span><span class="p">,</span>
-        <span class="n">min_value</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.01'</span><span class="p">),</span>
-        <span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
-        <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">NumberInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'step'</span><span class="p">:</span> <span class="s1">'0.01'</span><span class="p">,</span> <span class="s1">'min'</span><span class="p">:</span> <span class="s1">'0.01'</span><span class="p">,</span> <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
-        <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span>
-            <span class="s1">'required'</span><span class="p">:</span> <span class="s1">'Debe ingresar un monto.'</span><span class="p">,</span>
-            <span class="s1">'invalid'</span><span class="p">:</span> <span class="s1">'El monto debe ser un número válido.'</span><span class="p">,</span>
-            <span class="s1">'min_value'</span><span class="p">:</span> <span class="s1">'El monto debe ser mayor que cero.'</span><span class="p">,</span>
-            <span class="s1">'max_digits'</span><span class="p">:</span> <span class="s1">'El monto supera la cantidad de dígitos permitida.'</span><span class="p">,</span>
-            <span class="s1">'max_decimal_places'</span><span class="p">:</span> <span class="s1">'El monto admite como máximo 2 decimales.'</span><span class="p">,</span>
-            <span class="s1">'max_whole_digits'</span><span class="p">:</span> <span class="s1">'El monto supera la cantidad de dígitos permitida.'</span><span class="p">,</span>
-        <span class="p">},</span>
-    <span class="p">)</span>
-
-<div class="viewcode-block" id="OperacionVentanillaForm.__init__">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm.__init__">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Carga como opciones las divisas activas y con cotización vigente, sin PYG."""</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">divisa</span>
-            <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="s1">'PYG'</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">divisa</span><span class="o">.</span><span class="n">ultima_cotizacion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">''</span><span class="p">,</span> <span class="s1">'Seleccionar divisa'</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span>
-            <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">nombre</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span> <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span>
-        <span class="p">]</span></div>
-
-
-<div class="viewcode-block" id="OperacionVentanillaForm.divisa_seleccionada">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm.divisa_seleccionada">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">divisa_seleccionada</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve la ``Divisa`` ya validada. Solo debe llamarse tras confirmar ``is_valid()``."""</span>
-        <span class="n">pk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span>
-        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="n">divisa</span> <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span> <span class="o">==</span> <span class="n">pk</span><span class="p">)</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="MovimientoExtraordinarioForm">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">MovimientoExtraordinarioForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Valida la divisa, el monto y el motivo de un movimiento extraordinario de caja.</span>
-
-<span class="sd">    A diferencia de ``OperacionVentanillaForm``, no excluye PYG ni ninguna</span>
-<span class="sd">    divisa sin cotización vigente: un movimiento extraordinario no calcula</span>
-<span class="sd">    ninguna tasa (no es una compra ni una venta de divisas), así que puede</span>
-<span class="sd">    registrarse en cualquier divisa activa, incluida PYG, tenga o no</span>
-<span class="sd">    cotización cargada — ``Caja.saldo_actual`` tampoco depende de una tasa</span>
-<span class="sd">    para calcular el saldo de una moneda. El ``motivo`` es obligatorio</span>
-<span class="sd">    (Criterio 3): se rechaza vacío o compuesto solo de espacios, mismo</span>
-<span class="sd">    criterio que ``apps.authentication.forms.CausaBajaForm`` usa para la</span>
-<span class="sd">    causa de una baja lógica.</span>
-<span class="sd">    """</span>
-
-    <span class="n">divisa</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span>
-        <span class="n">label</span><span class="o">=</span><span class="s1">'Divisa'</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="p">[],</span>
-        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-select'</span><span class="p">}),</span>
-        <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span>
-            <span class="s1">'required'</span><span class="p">:</span> <span class="s1">'Debe seleccionar una divisa.'</span><span class="p">,</span>
-            <span class="s1">'invalid_choice'</span><span class="p">:</span> <span class="s1">'La divisa seleccionada está inactiva o no está disponible.'</span><span class="p">,</span>
-        <span class="p">},</span>
-    <span class="p">)</span>
-    <span class="n">monto</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
-        <span class="n">label</span><span class="o">=</span><span class="s1">'Monto'</span><span class="p">,</span>
-        <span class="n">min_value</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.01'</span><span class="p">),</span>
-        <span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
-        <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">NumberInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'step'</span><span class="p">:</span> <span class="s1">'0.01'</span><span class="p">,</span> <span class="s1">'min'</span><span class="p">:</span> <span class="s1">'0.01'</span><span class="p">,</span> <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
-        <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span>
-            <span class="s1">'required'</span><span class="p">:</span> <span class="s1">'Debe ingresar un monto.'</span><span class="p">,</span>
-            <span class="s1">'invalid'</span><span class="p">:</span> <span class="s1">'El monto debe ser un número válido.'</span><span class="p">,</span>
-            <span class="s1">'min_value'</span><span class="p">:</span> <span class="s1">'El monto debe ser mayor que cero.'</span><span class="p">,</span>
-            <span class="s1">'max_digits'</span><span class="p">:</span> <span class="s1">'El monto supera la cantidad de dígitos permitida.'</span><span class="p">,</span>
-            <span class="s1">'max_decimal_places'</span><span class="p">:</span> <span class="s1">'El monto admite como máximo 2 decimales.'</span><span class="p">,</span>
-            <span class="s1">'max_whole_digits'</span><span class="p">:</span> <span class="s1">'El monto supera la cantidad de dígitos permitida.'</span><span class="p">,</span>
-        <span class="p">},</span>
-    <span class="p">)</span>
-    <span class="n">motivo</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
-        <span class="n">label</span><span class="o">=</span><span class="s1">'Motivo'</span><span class="p">,</span>
-        <span class="n">max_length</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">Textarea</span><span class="p">(</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="p">{</span>
-                <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">,</span>
-                <span class="s1">'rows'</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-                <span class="s1">'placeholder'</span><span class="p">:</span> <span class="s1">'Indicá el motivo del movimiento.'</span><span class="p">,</span>
-            <span class="p">}</span>
-        <span class="p">),</span>
-        <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span><span class="s1">'required'</span><span class="p">:</span> <span class="s1">'Debe indicar el motivo del movimiento.'</span><span class="p">},</span>
-    <span class="p">)</span>
-
-<div class="viewcode-block" id="MovimientoExtraordinarioForm.__init__">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.__init__">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Carga como opciones todas las divisas activas, PYG incluido."""</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">''</span><span class="p">,</span> <span class="s1">'Seleccionar divisa'</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span>
-            <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">nombre</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span> <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span>
-        <span class="p">]</span></div>
-
-
-<div class="viewcode-block" id="MovimientoExtraordinarioForm.clean_motivo">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.clean_motivo">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">clean_motivo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Rechaza un motivo vacío después de quitar espacios exteriores."""</span>
-        <span class="n">motivo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'motivo'</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">motivo</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Debe indicar el motivo del movimiento.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">motivo</span></div>
-
-
-<div class="viewcode-block" id="MovimientoExtraordinarioForm.divisa_seleccionada">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.divisa_seleccionada">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">divisa_seleccionada</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve la ``Divisa`` ya validada. Solo debe llamarse tras confirmar ``is_valid()``."""</span>
-        <span class="n">pk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span>
-        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="n">divisa</span> <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span> <span class="o">==</span> <span class="n">pk</span><span class="p">)</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="ArqueoCajaForm">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ArqueoCajaForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Pide el monto físico contado de cada divisa cotizada para registrar un arqueo.</span>
-
-<span class="sd">    Genera dinámicamente un campo ``contado_&lt;divisa.pk&gt;`` por cada divisa</span>
-<span class="sd">    activa que tiene una cotización vigente (PYG siempre cuenta como</span>
-<span class="sd">    cotizada, con tasa 1:1, igual que ``AperturaCajaForm`` usa para el saldo</span>
-<span class="sd">    inicial): el cajero cuenta a mano cuánto tiene físicamente de cada una.</span>
-<span class="sd">    Un monto en cero es válido (no tiene nada físico de esa moneda en este</span>
-<span class="sd">    momento); lo que se rechaza es un monto negativo o que no sea un número.</span>
-
-<span class="sd">    Las divisas activas que todavía no tienen ninguna cotización cargada no</span>
-<span class="sd">    reciben un campo: sin una tasa vigente, el saldo que el sistema calcula</span>
-<span class="sd">    para esa moneda (``Caja.saldo_actual``) no se puede comparar contra nada</span>
-<span class="sd">    confiable, así que no tiene sentido pedirle al cajero que la cuente en</span>
-<span class="sd">    este arqueo. Quedan disponibles en ``self.divisas_sin_cotizar`` para que</span>
-<span class="sd">    la vista/plantilla avise que hace falta cotizarlas antes de poder</span>
-<span class="sd">    incluirlas.</span>
-<span class="sd">    """</span>
-
-<div class="viewcode-block" id="ArqueoCajaForm.__init__">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.__init__">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Agrega un campo de monto contado por cada divisa activa ya cotizada."""</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">divisas_sin_cotizar</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span> <span class="o">!=</span> <span class="s1">'PYG'</span> <span class="ow">and</span> <span class="n">divisa</span><span class="o">.</span><span class="n">ultima_cotizacion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">divisas_sin_cotizar</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">divisa</span><span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">divisa</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisas</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nombre_campo</span><span class="p">(</span><span class="n">divisa</span><span class="p">)]</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
-                <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">'Monto contado en </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
-                <span class="n">min_value</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">'0'</span><span class="p">),</span>
-                <span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
-                <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-                <span class="n">initial</span><span class="o">=</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">),</span>
-                <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span>
-                    <span class="s1">'required'</span><span class="p">:</span> <span class="s1">'El monto contado es obligatorio.'</span><span class="p">,</span>
-                    <span class="s1">'invalid'</span><span class="p">:</span> <span class="s1">'Ingresá un monto válido.'</span><span class="p">,</span>
-                    <span class="s1">'min_value'</span><span class="p">:</span> <span class="s1">'El monto contado no puede ser negativo.'</span><span class="p">,</span>
-                <span class="p">},</span>
-            <span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="ArqueoCajaForm.nombre_campo">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.nombre_campo">[documentos]</a>
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">nombre_campo</span><span class="p">(</span><span class="n">divisa</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Nombre del campo del formulario para el monto contado de una divisa."""</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s1">'contado_</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">'</span></div>
-
-
-<div class="viewcode-block" id="ArqueoCajaForm.montos_por_divisa">
-<a class="viewcode-back" href="../../../reference/apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.montos_por_divisa">[documentos]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">montos_por_divisa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Devuelve ``{Divisa: Decimal}`` con los montos ya validados.</span>
 
 <span class="sd">        Solo debe llamarse después de confirmar ``is_valid()``.</span>

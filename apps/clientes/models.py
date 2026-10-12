@@ -190,9 +190,17 @@ class MetodoPago(models.Model):
     ``PaymentMethod`` de Stripe, nunca el número real de la tarjeta — por
     eso ``numero_tarjeta`` guarda, para esos métodos, solo los últimos 4
     dígitos que devuelve Stripe, no el número completo. Estos dos campos
-    quedan genéricos (no específicos de Stripe) a propósito, pensados para
-    que una futura integración con SIPAP pueda identificar del mismo modo
-    una cuenta bancaria real sin guardar sus datos completos acá.
+    quedan genéricos (no específicos de Stripe) a propósito, para que
+    identifiquen del mismo modo una cuenta bancaria o de billetera real
+    sin guardar sus datos completos acá.
+
+    Para transferencia o billetera, ``nombre_titular`` y
+    ``entidad_financiera`` no los escribe el cliente: los completa
+    ``apps.clientes.forms.MetodoPagoForm`` a partir de lo que confirma
+    sipap-sim (ver ``apps.clientes.validacion_sipap.validar_cuenta``), que
+    verifica que la cuenta exista y sea del titular indicado por su
+    ``documento_titular`` antes de guardar nada — igual que un banco real
+    no deja vincular una cuenta inventada.
     """
 
     TIPO_TRANSFERENCIA = 'TRANSFERENCIA'
@@ -235,6 +243,17 @@ class MetodoPago(models.Model):
     nombre_titular = models.CharField(
         max_length=150,
         verbose_name='Nombre del Titular'
+    )
+    documento_titular = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name='CI o RUC del Titular',
+        help_text=(
+            'Obligatorio para transferencia o billetera: es lo que '
+            'sipap-sim usa, junto con el número de cuenta, para confirmar '
+            'que la cuenta existe y es del titular indicado.'
+        ),
     )
     entidad_financiera = models.CharField(
         max_length=100,

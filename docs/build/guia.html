@@ -59,6 +59,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
@@ -348,13 +349,19 @@ PYG; para un cambio entre divisas es <code class="docutils literal notranslate">
 origen — lo que el cliente entrega, no <code class="docutils literal notranslate"><span class="pre">monto_final</span></code> (lo que recibe a
 cambio): ver el docstring de <code class="docutils literal notranslate"><span class="pre">monto_a_pagar</span></code> para el porqué. Hay un único botón «Pagar»: si el método
 elegido es de tipo «tarjeta» (<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TARJETA</span></code>), la vista
-redirige a cobrar con Stripe (ver <a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a> más abajo)
-en vez de registrar el pago ahí mismo; para transferencia o billetera, el
-registro sigue siendo inmediato, como se describe a continuación.</p>
-<p>El registro del pago (para transferencia o billetera; el caso de tarjeta
-se resuelve del lado de Stripe) pasa siempre por
+redirige a cobrar con Stripe (ver <a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a> más abajo);
+si es «transferencia» o «billetera» (<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TRANSFERENCIA</span></code>/
+<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_BILLETERA</span></code>), redirige en cambio a generar una solicitud
+de pago SIPAP (ver <a class="reference internal" href="#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a> más abajo)
+— sipap-sim, que simula SIPAP, simula indistintamente bancos y billeteras
+digitales, así que ambos tipos de método comparten el mismo flujo. Esta
+vista nunca registra el pago ella misma: el registro siempre llega
+después, por una confirmación asíncrona (el webhook de Stripe o el de
+sipap-sim).</p>
+<p>El registro del pago pasa siempre por
 <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.Pago.registrar_pago</span></code>, pensado como punto de entrada
-único e idempotente:</p>
+único e idempotente, al que llegan por igual las confirmaciones de Stripe
+y de sipap-sim:</p>
 <ul class="simple">
 <li><p>Asocia el pago a una única transacción (<code class="docutils literal notranslate"><span class="pre">calculo_operacion</span></code> o
 <code class="docutils literal notranslate"><span class="pre">calculo_triangulacion</span></code>, nunca ambas), con el medio de pago, el
@@ -373,16 +380,21 @@ un segundo registro ni volver a tocar la transacción.</p></li>
 <li><p>Al registrarse un pago exitoso, la transacción pasa a «Pagada».</p></li>
 </ul>
 <p>Esta HU («Asociación de pagos a transacciones») se diseñó, a propósito,
-como la base de HU futuras de pago real: pago con tarjeta vía Stripe (ya
-implementado, ver <a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a> más abajo) y pago por
-transferencia vía SIPAP (todavía no implementado). Ambas se integran como
-webhooks de su proveedor (con su propia verificación de firma, que no es
-responsabilidad de <code class="docutils literal notranslate"><span class="pre">Pago</span></code>) que arman los mismos datos genéricos
-(medio, proveedor, identificador externo, monto) a partir de su propio
-payload y llaman a <code class="docutils literal notranslate"><span class="pre">registrar_pago</span></code>, en vez de duplicar esta lógica. El
-flujo manual de esta HU usa <code class="docutils literal notranslate"><span class="pre">Pago.PROVEEDOR_MANUAL</span></code> como proveedor y el
-<code class="docutils literal notranslate"><span class="pre">pk</span></code> de la transacción como identificador externo, lo que de paso lo hace
-naturalmente idempotente ante un doble clic en «Pagar».</p>
+como la base de dos HU de pago real, ya implementadas sobre esta misma
+base: pago con tarjeta vía Stripe (ver <a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a> más
+abajo) y pago por transferencia o billetera vía SIPAP (ver <a class="reference internal" href="#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por
+transferencia bancaria o billetera digital vía SIPAP</a> más abajo). Ambas se integran como webhooks de su
+proveedor (con su propia verificación de firma, que no es responsabilidad
+de <code class="docutils literal notranslate"><span class="pre">Pago</span></code>) que arman los mismos datos genéricos (medio, proveedor,
+identificador externo, monto) a partir de su propio payload y llaman a
+<code class="docutils literal notranslate"><span class="pre">registrar_pago</span></code> — o, si el monto confirmado no coincide con el
+esperado (solo le pasa a SIPAP: Stripe nunca cobra un monto distinto del
+que el propio sistema le pidió), a <code class="docutils literal notranslate"><span class="pre">registrar_pago_observado</span></code> — en vez
+de duplicar esta lógica. <code class="docutils literal notranslate"><span class="pre">Pago.PROVEEDOR_MANUAL</span></code> sigue existiendo como
+valor válido de <code class="docutils literal notranslate"><span class="pre">proveedor</span></code> (por si alguna vez hace falta registrar un
+pago a mano, por ejemplo desde el admin), pero ya no lo usa ningún flujo
+accesible desde la UI del cliente: tarjeta, transferencia y billetera se
+resuelven siempre por confirmación asíncrona.</p>
 <p>Tanto el detalle de una compra/venta como el de un cambio entre divisas
 (<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code>/<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionCambioView</span></code>)
 muestran el pago asociado (medio, monto, fecha e identificador) o,
@@ -402,9 +414,9 @@ sigue viendo un único botón «Pagar», y es la propia vista
 decide qué hacer según el tipo del método de pago elegido. Si es de tipo
 «tarjeta» (<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TARJETA</span></code>), en vez de registrar el pago en el
 momento redirige a cobrar con esa tarjeta puntual vía Stripe (pasando su
-<code class="docutils literal notranslate"><span class="pre">pk</span></code> como <code class="docutils literal notranslate"><span class="pre">?metodo_pago=</span></code>); para transferencia o billetera sigue
-registrando el pago manualmente, como ya hacía GE-25. El flujo de Stripe
-tiene dos mitades independientes:</p>
+<code class="docutils literal notranslate"><span class="pre">pk</span></code> como <code class="docutils literal notranslate"><span class="pre">?metodo_pago=</span></code>); si es «transferencia» o «billetera»,
+redirige en cambio a SIPAP (ver más abajo). El flujo de Stripe tiene dos
+mitades independientes:</p>
 <ol class="arabic simple">
 <li><p><strong>Cobrar</strong> (<code class="docutils literal notranslate"><span class="pre">IniciarPagoStripeOperacionView</span></code>/
 <code class="docutils literal notranslate"><span class="pre">IniciarPagoStripeCambioView</span></code>, en <code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code>).
@@ -495,12 +507,16 @@ dos veces (el cliente refresca la página de vuelta) no duplica el
 método: se detecta por <code class="docutils literal notranslate"><span class="pre">referencia_externa</span></code> ya existente.</p></li>
 </ol>
 <p><code class="docutils literal notranslate"><span class="pre">proveedor_externo</span></code>/<code class="docutils literal notranslate"><span class="pre">referencia_externa</span></code> son campos genéricos de
-<code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> (no específicos de Stripe) a propósito: la idea es que una
-futura integración con SIPAP pueda identificar del mismo modo una cuenta
-bancaria real (<code class="docutils literal notranslate"><span class="pre">proveedor_externo=SIPAP</span></code>) sin guardar sus datos
-completos acá, y que el mismo listado de métodos de pago termine
-mostrando, con el tiempo, tanto tarjetas (Stripe) como cuentas bancarias
-(SIPAP) de manera uniforme.</p>
+<code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> (no específicos de Stripe) a propósito. En la práctica, la
+HU «Pago por transferencia bancaria vía SIPAP» (ver más abajo) terminó sin
+necesitarlos: a diferencia de una tarjeta, donde Stripe «verifica» un
+<code class="docutils literal notranslate"><span class="pre">PaymentMethod</span></code> concreto al guardarlo, una transferencia no se liga a
+una cuenta bancaria guardada del cliente, sino a una
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.SolicitudPagoSipap</span></code> por transacción, identificada
+por su propia referencia — el banco que SIPAP informa al confirmar ni
+siquiera tiene por qué coincidir con los datos de algún <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code>
+guardado. Estos dos campos quedan igual disponibles para una extensión
+futura que sí los necesite.</p>
 <p>Ningún método de pago se edita: <code class="docutils literal notranslate"><span class="pre">apps.clientes.views</span></code> ya no tiene una
 vista de edición, <code class="docutils literal notranslate"><span class="pre">apps.clientes.forms.MetodoPagoForm</span></code> solo se usa para
 crear una transferencia o billetera, y <code class="docutils literal notranslate"><span class="pre">metodo_pago_list.html</span></code> ofrece
@@ -562,6 +578,110 @@ configurada, iniciar un pago con tarjeta simplemente falla con el mismo
 mensaje de «no se pudo conectar con Stripe» que un corte de comunicación
 real, sin impedir trabajar en el resto del sistema.</p>
 </section>
+</section>
+<section id="pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">
+<h2>Pago por transferencia bancaria o billetera digital vía SIPAP<a class="headerlink" href="#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Pago por transferencia bancaria vía SIPAP»
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_sipap</span></code>), la segunda de las dos HU de pago real para
+las que GE-25 se diseñó como base, extendida para simular también
+billeteras digitales. SIPAP es el sistema de pagos interbancario del
+Banco Central del Paraguay: no existe un sandbox público al que un
+proyecto académico pueda conectarse, así que se lo simula con
+<strong>sipap-sim</strong> (<code class="docutils literal notranslate"><span class="pre">sipap_sim/</span></code>, en la raíz del repositorio), un proyecto
+Django independiente —propio <code class="docutils literal notranslate"><span class="pre">manage.py</span></code>, propios settings, propia
+base de datos— con el que Global Exchange se comunica solo por HTTP
+(<code class="docutils literal notranslate"><span class="pre">settings.SIPAP_BASE_URL</span></code>/<code class="docutils literal notranslate"><span class="pre">SIPAP_API_KEY</span></code>), nunca compartiendo
+código. <code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_sipap</span></code> define su propio esquema de webhook
+(firma HMAC-SHA256 con un secreto propio, <code class="docutils literal notranslate"><span class="pre">SIPAP_WEBHOOK_SECRET</span></code>) en
+vez de depender de un SDK oficial como el de Stripe, porque SIPAP no
+publica uno; si alguna vez se integra con el sistema real del BCP, solo
+hace falta apuntar <code class="docutils literal notranslate"><span class="pre">SIPAP_BASE_URL</span></code> a él y, si el contrato HTTP
+cambiara, ajustar este módulo.</p>
+<p>Igual que con una tarjeta, si el método elegido en el formulario de pago
+de siempre es de tipo «transferencia» o «billetera»
+(<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TRANSFERENCIA</span></code>/<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_BILLETERA</span></code> — ambos
+comparten el mismo flujo, porque sipap-sim simula indistintamente bancos
+y billeteras digitales), la vista redirige en vez de registrar el pago
+ahí mismo — pero a diferencia de Stripe, una transferencia no es
+inmediata: el cliente sale del sistema (se lo redirige a la «banca en
+línea» simulada de sipap-sim), aprueba o rechaza ahí, y la confirmación
+llega después por webhook. Por eso hace falta un registro propio de
+«pago pendiente» que Stripe no necesitó: <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.SolicitudPagoSipap</span></code>,
+con sus propios estados («Pendiente», «Acreditada», «Observada»,
+«Rechazada», «Vencida»), un <code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code> con la transacción (nunca
+dos solicitudes para la misma) y los datos de la llamada a sipap-sim
+(<code class="docutils literal notranslate"><span class="pre">id_externo</span></code>, <code class="docutils literal notranslate"><span class="pre">link_pago</span></code>, <code class="docutils literal notranslate"><span class="pre">medio_pago</span></code> para recordar si fue
+transferencia o billetera, y <code class="docutils literal notranslate"><span class="pre">metodo_pago</span></code> — el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> guardado
+que el cliente elige en el formulario de pago, igual que con Stripe —
+para que sipap-sim reconozca exactamente con qué cuenta se paga).</p>
+<ol class="arabic simple">
+<li><p><strong>Iniciar el pago</strong> (<code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapOperacionView</span></code>/
+<code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapCambioView</span></code>). <code class="docutils literal notranslate"><span class="pre">_resolver_metodo_pago_sipap</span></code> busca
+el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> elegido en <code class="docutils literal notranslate"><span class="pre">?metodo_pago=</span></code> (mismo patrón que
+<code class="docutils literal notranslate"><span class="pre">_resolver_metodo_pago_tarjeta</span></code> de Stripe): tiene que ser del
+cliente, de tipo transferencia o billetera, y tener cuenta y CI/RUC
+completos (siempre los tiene, porque se validaron contra sipap-sim al
+registrarlo — HU «Métodos de pago»); si no hay ninguno válido, se
+pide elegir uno sin llamar a sipap-sim para nada. Con ese método,
+<code class="docutils literal notranslate"><span class="pre">_obtener_o_crear_solicitud</span></code> busca si ya existe una solicitud para
+esta transacción: si no hay ninguna, crea una con el monto exacto que
+calcula el sistema (<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.monto_a_pagar</span></code>/<code class="docutils literal notranslate"><span class="pre">moneda_a_pagar</span></code>
+— la misma fuente de verdad que usa Stripe, nunca editable por el
+cliente) y una referencia única (<code class="docutils literal notranslate"><span class="pre">_generar_referencia</span></code>), y le pide a
+sipap-sim que genere el link de pago, mandándole también el número de
+cuenta y el documento del método elegido
+(<code class="docutils literal notranslate"><span class="pre">_crear_solicitud_cobro_en_sipap</span></code>, <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/solicitudes-cobro/</span></code>);
+si ya hay una «Rechazada» o «Vencida», la reinicia con una referencia y
+un link nuevos en vez de crear una segunda (criterio 5, «reintentar»);
+si ya hay una «Observada» (ver criterio 3 más abajo), no se reinicia
+sola — hace falta que alguien la revise primero. Con todo resuelto, la
+vista redirige al cliente al <code class="docutils literal notranslate"><span class="pre">link_pago</span></code> que devolvió sipap-sim: su
+«banca en línea» simulada, que ya reconoce esa cuenta puntual (no
+ofrece elegir entre todas las del sistema) y muestra su saldo
+disponible antes de aprobar o rechazar (criterio 1).</p></li>
+<li><p><strong>Confirmar el pago</strong> (<code class="docutils literal notranslate"><span class="pre">sipap_webhook_view</span></code>, expuesta en
+<code class="docutils literal notranslate"><span class="pre">/webhooks/sipap/</span></code> fuera de cualquier namespace de la aplicación).
+Valida la firma con <code class="docutils literal notranslate"><span class="pre">_firma_valida</span></code> antes de mirar el contenido; si
+no coincide, responde 400 sin tocar ninguna transacción (criterio 4).
+Con una firma válida, busca la <code class="docutils literal notranslate"><span class="pre">SolicitudPagoSipap</span></code> por la
+referencia del payload (una referencia desconocida se ignora sin
+romper nada) y, si está «Pendiente»:</p>
+<ul class="simple">
+<li><p>Un evento <code class="docutils literal notranslate"><span class="pre">&quot;rechazada&quot;</span></code> la deja en ese estado, sin crear ningún
+<code class="docutils literal notranslate"><span class="pre">Pago</span></code> (criterio 5).</p></li>
+<li><p>Un evento <code class="docutils literal notranslate"><span class="pre">&quot;acreditada&quot;</span></code> con el monto exacto llama a
+<code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code> con el identificador de la operación SIPAP,
+el banco (o billetera) de origen y el <code class="docutils literal notranslate"><span class="pre">medio_pago</span></code> que eligió el
+cliente al iniciar el pago (criterio 2): la transacción pasa a
+«Pagada», igual que con cualquier otro medio.</p></li>
+<li><p>Un evento <code class="docutils literal notranslate"><span class="pre">&quot;acreditada&quot;</span></code> con un monto <strong>distinto</strong> del esperado
+llama en cambio a <code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago_observado</span></code>, con la
+diferencia (<code class="docutils literal notranslate"><span class="pre">monto</span> <span class="pre">recibido</span> <span class="pre">-</span> <span class="pre">monto</span> <span class="pre">esperado</span></code>, con signo): queda
+un <code class="docutils literal notranslate"><span class="pre">Pago</span></code> con <code class="docutils literal notranslate"><span class="pre">observado=True</span></code> para revisión manual, pero la
+transacción <strong>no</strong> pasa a «Pagada» (criterio 3). La «banca en
+línea» de sipap-sim no deja elegir un monto distinto del solicitado
+(acredita siempre el pedido, igual que Stripe); este caso queda
+para cuando la confirmación reporte un monto distinto por otro
+motivo, y está cubierto por los tests del webhook
+(<code class="docutils literal notranslate"><span class="pre">tests/test_pagos_sipap.py</span></code>) aunque no se pueda disparar desde
+la pantalla de sipap-sim.</p></li>
+</ul>
+</li>
+</ol>
+<p>Si nunca llega ninguna confirmación, la solicitud no expira en segundo
+plano: <code class="docutils literal notranslate"><span class="pre">marcar_vencida_si_corresponde</span></code> la pasa perezosamente a «Vencida»
+la próxima vez que el cliente visita la pantalla de pago (mismo patrón
+que <code class="docutils literal notranslate"><span class="pre">CalculoOperacion.marcar_vencida_si_corresponde</span></code>), después de
+<code class="docutils literal notranslate"><span class="pre">settings.SIPAP_SOLICITUD_VIGENCIA_SEGUNDOS</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SIPAP_BASE_URL</span></code>, <code class="docutils literal notranslate"><span class="pre">SIPAP_API_KEY</span></code> y <code class="docutils literal notranslate"><span class="pre">SIPAP_WEBHOOK_SECRET</span></code> (ver
+<code class="docutils literal notranslate"><span class="pre">.env.example</span></code>) son todo lo que Global Exchange necesita saber de
+sipap-sim. Un timeout, una conexión rechazada (el contenedor de
+sipap-sim apagado) o una respuesta de error (<code class="docutils literal notranslate"><span class="pre">SIM_MODO_FALLA=error</span></code> del
+lado del simulador, pensado justo para poder probar esto) en
+<code class="docutils literal notranslate"><span class="pre">_crear_solicitud_cobro_en_sipap</span></code> se traducen en <code class="docutils literal notranslate"><span class="pre">SipapComunicacionError</span></code>
+sin tocar la transacción, igual que un corte de comunicación real
+(criterio 6). Ver <code class="docutils literal notranslate"><span class="pre">sipap_sim/README.md</span></code> para cómo correr el simulador
+en desarrollo y qué datos de prueba trae cargados.</p>
 </section>
 <section id="venta-de-divisas">
 <h2>Venta de divisas<a class="headerlink" href="#venta-de-divisas" title="Link to this heading"></a></h2>

@@ -151,6 +151,20 @@ LOGOUT_REDIRECT_URL = '/'
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
 STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
 
+# --- SIPAP (pago por transferencia bancaria y billeteras digitales) ---
+# SIPAP es el sistema de pagos interbancario del Banco Central del
+# Paraguay: no tiene un sandbox público al que este proyecto académico
+# pueda conectarse, así que lo simula "sipap-sim" (ver sipap_sim/), un
+# proyecto Django independiente que corre en su propio contenedor y con
+# su propia base. Global Exchange le habla solo por HTTP, sin compartir
+# código: estas tres variables son todo lo que necesita conocer de él.
+SIPAP_BASE_URL = env('SIPAP_BASE_URL', default='')
+SIPAP_API_KEY = env('SIPAP_API_KEY', default='')
+SIPAP_WEBHOOK_SECRET = env('SIPAP_WEBHOOK_SECRET', default='')
+# Tiempo que el cliente tiene para completar la transferencia antes de
+# que la solicitud se considere "Vencida" (criterio 5).
+SIPAP_SOLICITUD_VIGENCIA_SEGUNDOS = 3600
+
 # Parámetros del cálculo previo de operaciones cambiarias.
 COMISION_OPERACION_PORCENTAJE = Decimal('1.00')
 CALCULO_OPERACION_VIGENCIA_SEGUNDOS = 300

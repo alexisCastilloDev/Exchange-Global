@@ -59,6 +59,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
@@ -286,6 +287,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.cliente"><code class="docutils literal notranslate"><span class="pre">MetodoPago.cliente</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.cliente_id"><code class="docutils literal notranslate"><span class="pre">MetodoPago.cliente_id</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.creado_en"><code class="docutils literal notranslate"><span class="pre">MetodoPago.creado_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.documento_titular"><code class="docutils literal notranslate"><span class="pre">MetodoPago.documento_titular</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.entidad_financiera"><code class="docutils literal notranslate"><span class="pre">MetodoPago.entidad_financiera</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.es_predeterminado"><code class="docutils literal notranslate"><span class="pre">MetodoPago.es_predeterminado</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.get_next_by_actualizado_en"><code class="docutils literal notranslate"><span class="pre">MetodoPago.get_next_by_actualizado_en()</span></code></a></li>
@@ -304,6 +306,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.proveedor_externo"><code class="docutils literal notranslate"><span class="pre">MetodoPago.proveedor_externo</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.referencia_externa"><code class="docutils literal notranslate"><span class="pre">MetodoPago.referencia_externa</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.save"><code class="docutils literal notranslate"><span class="pre">MetodoPago.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.solicitudes_sipap"><code class="docutils literal notranslate"><span class="pre">MetodoPago.solicitudes_sipap</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.tipo_cuenta"><code class="docutils literal notranslate"><span class="pre">MetodoPago.tipo_cuenta</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago.tipo_medio"><code class="docutils literal notranslate"><span class="pre">MetodoPago.tipo_medio</span></code></a></li>
 </ul>
@@ -311,6 +314,11 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.clientes.urls.html">apps.clientes.urls module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps.clientes.validacion_sipap.html">apps.clientes.validacion_sipap module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.clientes.validacion_sipap.html#apps.clientes.validacion_sipap.SipapComunicacionError"><code class="docutils literal notranslate"><span class="pre">SipapComunicacionError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.clientes.validacion_sipap.html#apps.clientes.validacion_sipap.validar_cuenta"><code class="docutils literal notranslate"><span class="pre">validar_cuenta()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="apps.clientes.views.html">apps.clientes.views module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView"><code class="docutils literal notranslate"><span class="pre">AsociarUsuariosClienteView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView.get"><code class="docutils literal notranslate"><span class="pre">AsociarUsuariosClienteView.get()</span></code></a></li>

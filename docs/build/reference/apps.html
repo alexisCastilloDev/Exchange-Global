@@ -59,6 +59,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
@@ -267,6 +268,11 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.urls.html">apps.clientes.urls module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.clientes.validacion_sipap.html">apps.clientes.validacion_sipap module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.validacion_sipap.html#apps.clientes.validacion_sipap.SipapComunicacionError"><code class="docutils literal notranslate"><span class="pre">SipapComunicacionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.validacion_sipap.html#apps.clientes.validacion_sipap.validar_cuenta"><code class="docutils literal notranslate"><span class="pre">validar_cuenta()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.views.html">apps.clientes.views module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView"><code class="docutils literal notranslate"><span class="pre">AsociarUsuariosClienteView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.ClienteCreateView"><code class="docutils literal notranslate"><span class="pre">ClienteCreateView</span></code></a></li>
@@ -317,7 +323,21 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.ConfiguracionComision"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComision</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.PagoRechazadoError"><code class="docutils literal notranslate"><span class="pre">PagoRechazadoError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Pago"><code class="docutils literal notranslate"><span class="pre">Pago</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap"><code class="docutils literal notranslate"><span class="pre">SolicitudPagoSipap</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.pagos_sipap.html">apps.divisas.pagos_sipap module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView"><code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapOperacionView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.IniciarPagoSipapCambioView"><code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapCambioView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.sipap_webhook_view"><code class="docutils literal notranslate"><span class="pre">sipap_webhook_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.SipapComunicacionError"><code class="docutils literal notranslate"><span class="pre">SipapComunicacionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._generar_referencia"><code class="docutils literal notranslate"><span class="pre">_generar_referencia()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._firma_valida"><code class="docutils literal notranslate"><span class="pre">_firma_valida()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._resolver_metodo_pago_sipap"><code class="docutils literal notranslate"><span class="pre">_resolver_metodo_pago_sipap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._crear_solicitud_cobro_en_sipap"><code class="docutils literal notranslate"><span class="pre">_crear_solicitud_cobro_en_sipap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._obtener_o_crear_solicitud"><code class="docutils literal notranslate"><span class="pre">_obtener_o_crear_solicitud()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._procesar_confirmacion_sipap"><code class="docutils literal notranslate"><span class="pre">_procesar_confirmacion_sipap()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.pagos_stripe.html">apps.divisas.pagos_stripe module</a><ul>

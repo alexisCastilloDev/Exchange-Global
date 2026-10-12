@@ -38,9 +38,6 @@ from apps.divisas.models import (
     Cotizacion,
     Divisa,
     NotificacionTasa,
-    Pago,
-    PagoRechazadoError,
-    monto_a_pagar,
 )
 
 
@@ -141,7 +138,7 @@ def _resolver_transaccion_propia(request, model, pk, url_fallback='divisas:mis_t
 
 def _obtener_cotizacion_operacion(divisa):
     """Obtiene la cotización vigente de una divisa o la tasa unitaria de PYG."""
-    if divisa.codigo == 'PYG':
+    if divisa.es_base:
         return Decimal('1.00'), None
     cotizacion = divisa.ultima_cotizacion
     if not cotizacion:
@@ -249,17 +246,26 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         """
         Criterio de Aceptación 4: Las divisas inactivas no se muestran.
 
-        Tampoco PYG: es la moneda local/base del sistema (garantizada en el
-        catálogo por la migración de datos
-        ``apps.divisas.0014_crear_divisa_pyg``), nunca tiene una cotización
-        propia que listar acá, igual que ya la excluyen los selectores de
-        divisa operable (``DivisaSelect``/``CalculoOperacionForm``).
+        Tampoco PYG: es la moneda base del sistema (1:1 implícito, sin
+        cotización propia que cargar ni actualizar; garantizada en el
+        catálogo por las migraciones de datos
+        ``apps.divisas.0014_crear_divisa_pyg`` y
+        ``apps.divisas.0017_asegurar_divisa_pyg``), no una divisa
+        operable más en esta pantalla, igual que ya la excluyen los
+        selectores de divisa operable (``DivisaSelect``/``CalculoOperacionForm``).
         """
-        return Divisa.objects.filter(activa=True).exclude(codigo='PYG')
+        return Divisa.objects.filter(activa=True).exclude(codigo=Divisa.CODIGO_BASE)
 
 
 class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    """Permite a roles autorizados registrar una nueva cotización."""
+    """Permite a roles autorizados registrar una nueva cotización.
+
+    PYG queda afuera: no tiene una cotización propia que cargar (ver
+    ``TasasVigentesListView``). Se bloquea en ``get``/``post`` —en vez de
+    dejar que ``get_object`` levante un 404 crudo— para avisarle a quien
+    entre por una URL directa con un mensaje claro, no con una página de
+    error de Django.
+    """
     model = Cotizacion
     form_class = CotizacionForm
     template_name = 'divisas/cotizacion_form.html'
@@ -271,10 +277,26 @@ class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
         roles = self.request.session.get('keycloak_roles', [])
         return bool({'admin', 'analista_cambiario'} & set(roles))
 
+    def _bloquear_si_es_pyg(self, request):
+        """Devuelve una redirección si la divisa objetivo es PYG, o ``None`` si no."""
+        divisa = get_object_or_404(Divisa, pk=self.kwargs['divisa_id'])
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no tiene una cotización para actualizar.')
+            return redirect('divisas:tasas_vigentes')
+        return None
+
+    def get(self, request, *args, **kwargs):
+        """Bloquea el acceso a la pantalla de actualización de PYG."""
+        return self._bloquear_si_es_pyg(request) or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Bloquea el guardado directo (sin pasar por la pantalla) sobre PYG."""
+        return self._bloquear_si_es_pyg(request) or super().post(request, *args, **kwargs)
+
     def get_object(self, queryset=None):
         """Construye una cotización nueva para la divisa solicitada."""
         divisa = get_object_or_404(
-            Divisa,
+            Divisa.objects.exclude(codigo=Divisa.CODIGO_BASE),
             pk=self.kwargs['divisa_id'],
             activa=True,
         )
@@ -605,14 +627,14 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
 
     Implementa la HU "Asociación de pagos a transacciones" (GE-25): el
     cliente elige uno de sus métodos de pago guardados
-    (``apps.clientes.models.MetodoPago``). Si el método elegido es de tipo
-    "tarjeta", no se registra nada acá: se redirige a
-    ``apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView``, que es
-    quien de verdad cobra con Stripe (HU "Pago con tarjeta vía Stripe"). Para
-    cualquier otro tipo de método (transferencia, billetera), esta vista
-    sigue registrando el pago (``Pago.registrar_pago``) sincrónicamente y
-    como proveedor "MANUAL", con el monto exacto de la transacción, que el
-    cliente no puede modificar.
+    (``apps.clientes.models.MetodoPago``). Esta vista nunca registra el
+    pago ella misma: si el método es de tipo "tarjeta", redirige a
+    ``apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView`` (HU "Pago
+    con tarjeta vía Stripe"); si es "transferencia" o "billetera", a
+    ``apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView`` (HU "Pago
+    por transferencia bancaria vía SIPAP" — sipap-sim simula
+    indistintamente bancos y billeteras digitales, así que ambos tipos
+    comparten el mismo flujo).
     """
 
     def test_func(self):
@@ -668,25 +690,13 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
             # apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView).
             url = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': transaccion.pk})
             return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
-
-        try:
-            pago, creado = Pago.registrar_pago(
-                transaccion,
-                medio_pago=metodo_pago.tipo_medio,
-                proveedor=Pago.PROVEEDOR_MANUAL,
-                identificador_externo=str(transaccion.pk),
-                monto=transaccion.monto_final,
-                metodo_pago=metodo_pago,
-            )
-        except PagoRechazadoError as error:
-            messages.error(request, str(error))
-            return redirect('divisas:detalle_transaccion_operacion', pk=transaccion.pk)
-
-        if creado:
-            messages.success(request, 'El pago se registró correctamente. La operación quedó "Pagada".')
-        else:
-            messages.info(request, 'Este pago ya había sido registrado.')
-        return redirect('divisas:detalle_transaccion_operacion', pk=transaccion.pk)
+        # Transferencia o billetera digital: ambas se pagan vía SIPAP, no
+        # de forma manual (sipap-sim simula indistintamente bancos y
+        # billeteras). Se redirige a generar la solicitud de pago (ver
+        # apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView),
+        # pasando con qué cuenta puntual, igual que con una tarjeta.
+        url = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': transaccion.pk})
+        return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
 
 
 class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -752,25 +762,10 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
             # "tarjeta" se cobra vía Stripe, no de forma manual.
             url = reverse('divisas:pagar_transaccion_cambio_stripe', kwargs={'pk': transaccion.pk})
             return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
-
-        try:
-            pago, creado = Pago.registrar_pago(
-                transaccion,
-                medio_pago=metodo_pago.tipo_medio,
-                proveedor=Pago.PROVEEDOR_MANUAL,
-                identificador_externo=str(transaccion.pk),
-                monto=monto_a_pagar(transaccion),
-                metodo_pago=metodo_pago,
-            )
-        except PagoRechazadoError as error:
-            messages.error(request, str(error))
-            return redirect('divisas:detalle_transaccion_cambio', pk=transaccion.pk)
-
-        if creado:
-            messages.success(request, 'El pago se registró correctamente. El cambio quedó "Pagado".')
-        else:
-            messages.info(request, 'Este pago ya había sido registrado.')
-        return redirect('divisas:detalle_transaccion_cambio', pk=transaccion.pk)
+        # Ver PagarTransaccionOperacionView.post: transferencia o
+        # billetera digital, ambas se pagan vía SIPAP.
+        url = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': transaccion.pk})
+        return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
 
 
 class ConfiguracionComisionListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -1542,19 +1537,51 @@ class DivisaCreateView(AdminDivisasMixin, CreateView):
 
 
 class DivisaUpdateView(AdminDivisasMixin, UpdateView):
-    """Permite editar los datos de una divisa existente."""
+    """Permite editar los datos de una divisa existente.
+
+    PYG queda afuera: es la moneda base del sistema, implícita en
+    cualquier operación, y no algo que un administrador pueda editar
+    desde este catálogo (ver ``apps.divisas.forms.DivisaForm``). Se
+    bloquea también acá —en ``get``/``post``, después de que
+    ``AdminDivisasMixin`` ya comprobó el rol— para no mostrarle siquiera
+    la pantalla de edición, en vez de confiar solo en que el formulario
+    la rechace al guardar.
+    """
     model = Divisa
     form_class = DivisaForm
     template_name = 'divisas/divisa_form.html'
     success_url = reverse_lazy('divisas:lista_divisas')
 
+    def _bloquear_si_es_pyg(self, request):
+        """Devuelve una redirección si la divisa objetivo es PYG, o ``None`` si no."""
+        if self.get_object().es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede editar.')
+            return redirect('divisas:lista_divisas')
+        return None
+
+    def get(self, request, *args, **kwargs):
+        """Bloquea el acceso a la pantalla de edición de PYG."""
+        return self._bloquear_si_es_pyg(request) or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Bloquea el guardado directo (sin pasar por el formulario) sobre PYG."""
+        return self._bloquear_si_es_pyg(request) or super().post(request, *args, **kwargs)
+
 
 class DivisaSoftDeleteView(AdminDivisasMixin, View):
-    """Confirma y ejecuta la baja lógica de una divisa."""
+    """Confirma y ejecuta la baja lógica de una divisa.
+
+    PYG no se puede dar de baja: es la divisa base del sistema y tiene
+    que seguir siempre activa (otros módulos, como la apertura de caja,
+    dependen de eso).
+    """
 
     def get(self, request, pk, *args, **kwargs):
         """Muestra el formulario de confirmación de baja."""
         divisa = get_object_or_404(Divisa, pk=pk)
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede dar de baja.')
+            return redirect('divisas:lista_divisas')
         return render(
             request,
             'bajas/confirmar_baja.html',
@@ -1569,6 +1596,9 @@ class DivisaSoftDeleteView(AdminDivisasMixin, View):
     def post(self, request, pk, *args, **kwargs):
         """Valida la causa y registra la baja lógica de la divisa."""
         divisa = get_object_or_404(Divisa, pk=pk)
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede dar de baja.')
+            return redirect('divisas:lista_divisas')
         form = CausaBajaForm(request.POST)
         if not form.is_valid():
             return render(

@@ -59,6 +59,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
@@ -512,6 +513,13 @@ de proveedor, identificador externo ni monto, que son responsabilidad de
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaForm</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelForm</span></code></p>
 <p>Valida los datos básicos de una divisa administrable.</p>
+<p>PYG queda fuera de este catálogo a propósito: es la moneda base del
+sistema (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.moneda_a_pagar</span></code>), implícita en
+cualquier operación, y nunca algo que un administrador deba poder
+crear, editar ni dar de baja desde acá. La fila que la representa en
+la base (necesaria para otros módulos, como la apertura de caja) la
+asegura una migración de datos (<code class="docutils literal notranslate"><span class="pre">0017_asegurar_divisa_pyg</span></code>), no
+este formulario.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.forms.DivisaForm.Meta">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm.Meta"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm.Meta" title="Link to this definition"></a></dt>
@@ -538,7 +546,7 @@ de proveedor, identificador externo ni monto, que son responsabilidad de
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.forms.DivisaForm.clean_codigo">
 <span class="sig-name descname"><span class="pre">clean_codigo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm.clean_codigo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm.clean_codigo" title="Link to this definition"></a></dt>
-<dd><p>Normaliza el código ISO y controla que no esté duplicado.</p>
+<dd><p>Normaliza el código ISO, rechaza PYG y controla que no esté duplicado.</p>
 </dd></dl>
 
 <dl class="py method">
