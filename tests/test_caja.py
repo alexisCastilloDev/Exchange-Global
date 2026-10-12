@@ -23,7 +23,7 @@ class AperturaCajaTest(TestCase):
         session = self.client.session
         session['keycloak_roles'] = ['cajero']
         session.save()
-        self.pyg = Divisa.objects.create(codigo='PYG', nombre='Guaraní', simbolo='Gs.', activa=True)
+        self.pyg = Divisa.objects.get(codigo='PYG')
         self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
         Cotizacion.objects.create(divisa=self.usd, tasa_compra=Decimal('7300.00'), tasa_venta=Decimal('7400.00'))
         self.url_abrir = reverse('caja:abrir')

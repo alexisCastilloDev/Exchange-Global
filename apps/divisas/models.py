@@ -4,6 +4,7 @@ import uuid
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction as db_transaction
 from django.utils import timezone
 
@@ -20,10 +21,24 @@ class Divisa(models.Model):
         simbolo (str): Símbolo de la moneda (por ejemplo $, €).
         activa (bool): Indica si la divisa está habilitada para operar.
     """
+
+    # PYG es la moneda base del sistema (ver moneda_a_pagar más abajo):
+    # implícita en cualquier operación, 1:1 consigo misma, sin cotización
+    # propia que cargar. Se identifica siempre por este código, nunca por
+    # su clave primaria — un id autoincremental no es portable entre
+    # instalaciones (depende del orden en que se hayan creado las demás
+    # divisas), mientras que "PYG" sí lo es: es el mismo valor en
+    # cualquier base. Por eso cada protección de este modelo (y las de
+    # los formularios/vistas que lo administran) compara contra
+    # ``CODIGO_BASE``/``es_base``, no contra un número de fila.
+    CODIGO_BASE = 'PYG'
+    NOMBRE_BASE = 'Guaraní'
+    SIMBOLO_BASE = 'Gs.'
+
     codigo = models.CharField(max_length=3, unique=True, verbose_name="Código")
     nombre = models.CharField(max_length=50, verbose_name="Nombre")
     # --- NUEVO CAMPO AÑADIDO ---
-    simbolo = models.CharField(max_length=5, null=True, blank=True, verbose_name="Símbolo") 
+    simbolo = models.CharField(max_length=5, null=True, blank=True, verbose_name="Símbolo")
     activa = models.BooleanField(default=True, verbose_name="Activa")
 
     class Meta:
@@ -34,6 +49,39 @@ class Divisa(models.Model):
     def __str__(self):
         """Retorna la representación en cadena del modelo (el código de la divisa)."""
         return self.codigo
+
+    @property
+    def es_base(self):
+        """Indica si esta es PYG, la moneda base del sistema (implícita, no administrable)."""
+        return self.codigo == self.CODIGO_BASE
+
+    def save(self, *args, **kwargs):
+        """Impide modificar PYG, sin importar qué código llame a ``save`` (vista, shell, admin).
+
+        Si la fila ya existía como PYG, cualquier intento de cambiarle el
+        código se rechaza; cualquier otro dato (nombre, símbolo, si está
+        activa) se fuerza siempre a su valor canónico, en vez de guardar
+        lo que se le haya asignado — así una modificación no declarada
+        como error simplemente no tiene efecto, nunca llega a persistir.
+        La única fila que se crea libremente es la primera (la que carga
+        la migración ``0017_asegurar_divisa_pyg``): antes de que exista,
+        no hay nada que proteger todavía.
+        """
+        if self.pk:
+            codigo_anterior = Divisa.objects.filter(pk=self.pk).values_list('codigo', flat=True).first()
+            if codigo_anterior == self.CODIGO_BASE:
+                if self.codigo != self.CODIGO_BASE:
+                    raise ValidationError('PYG es la divisa base del sistema: no se puede modificar.')
+                self.nombre = self.NOMBRE_BASE
+                self.simbolo = self.SIMBOLO_BASE
+                self.activa = True
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """Impide eliminar PYG: el sistema la necesita siempre presente y activa."""
+        if self.es_base:
+            raise ValidationError('PYG es la divisa base del sistema: no se puede eliminar.')
+        return super().delete(*args, **kwargs)
 
     @property
     def ultima_cotizacion(self):

@@ -38,8 +38,12 @@ Contexto esperado: divisas y acciones administrativas habilitadas.
                     <td>{{ divisa.simbolo }}</td>
                     <td>{% if divisa.activa %}<span class="badge-activo">Activo</span>{% else %}<span class="badge-inactivo">Inactivo</span>{% endif %}</td>
                     <td class="text-nowrap">
-                        <a href="{% url 'divisas:editar_divisa' divisa.pk %}" class="btn btn-sm btn-secondary"><i class="bi bi-pencil me-1"></i>Editar</a>
-                        {% if divisa.activa %}<a href="{% url 'divisas:baja_divisa' divisa.pk %}" class="btn btn-sm btn-danger">Dar de baja</a>{% endif %}
+                        {% if divisa.es_base %}
+                            <span class="badge bg-secondary"><i class="bi bi-shield-lock me-1"></i>Divisa base del sistema</span>
+                        {% else %}
+                            <a href="{% url 'divisas:editar_divisa' divisa.pk %}" class="btn btn-sm btn-secondary"><i class="bi bi-pencil me-1"></i>Editar</a>
+                            {% if divisa.activa %}<a href="{% url 'divisas:baja_divisa' divisa.pk %}" class="btn btn-sm btn-danger">Dar de baja</a>{% endif %}
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}

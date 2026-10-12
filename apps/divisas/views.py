@@ -136,7 +136,7 @@ def _resolver_transaccion_propia(request, model, pk, url_fallback='divisas:mis_t
 
 def _obtener_cotizacion_operacion(divisa):
     """Obtiene la cotización vigente de una divisa o la tasa unitaria de PYG."""
-    if divisa.codigo == 'PYG':
+    if divisa.es_base:
         return Decimal('1.00'), None
     cotizacion = divisa.ultima_cotizacion
     if not cotizacion:
@@ -243,12 +243,23 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def get_queryset(self):
         """
         Criterio de Aceptación 4: Las divisas inactivas no se muestran.
+
+        PYG tampoco: es la moneda base del sistema (1:1 implícito, sin
+        cotización propia que cargar ni actualizar), no una divisa
+        operable más en esta pantalla.
         """
-        return Divisa.objects.filter(activa=True)
+        return Divisa.objects.filter(activa=True).exclude(codigo=Divisa.CODIGO_BASE)
 
 
 class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    """Permite a roles autorizados registrar una nueva cotización."""
+    """Permite a roles autorizados registrar una nueva cotización.
+
+    PYG queda afuera: no tiene una cotización propia que cargar (ver
+    ``TasasVigentesListView``). Se bloquea en ``get``/``post`` —en vez de
+    dejar que ``get_object`` levante un 404 crudo— para avisarle a quien
+    entre por una URL directa con un mensaje claro, no con una página de
+    error de Django.
+    """
     model = Cotizacion
     form_class = CotizacionForm
     template_name = 'divisas/cotizacion_form.html'
@@ -260,10 +271,26 @@ class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
         roles = self.request.session.get('keycloak_roles', [])
         return bool({'admin', 'analista_cambiario'} & set(roles))
 
+    def _bloquear_si_es_pyg(self, request):
+        """Devuelve una redirección si la divisa objetivo es PYG, o ``None`` si no."""
+        divisa = get_object_or_404(Divisa, pk=self.kwargs['divisa_id'])
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no tiene una cotización para actualizar.')
+            return redirect('divisas:tasas_vigentes')
+        return None
+
+    def get(self, request, *args, **kwargs):
+        """Bloquea el acceso a la pantalla de actualización de PYG."""
+        return self._bloquear_si_es_pyg(request) or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Bloquea el guardado directo (sin pasar por la pantalla) sobre PYG."""
+        return self._bloquear_si_es_pyg(request) or super().post(request, *args, **kwargs)
+
     def get_object(self, queryset=None):
         """Construye una cotización nueva para la divisa solicitada."""
         divisa = get_object_or_404(
-            Divisa,
+            Divisa.objects.exclude(codigo=Divisa.CODIGO_BASE),
             pk=self.kwargs['divisa_id'],
             activa=True,
         )
@@ -1504,19 +1531,51 @@ class DivisaCreateView(AdminDivisasMixin, CreateView):
 
 
 class DivisaUpdateView(AdminDivisasMixin, UpdateView):
-    """Permite editar los datos de una divisa existente."""
+    """Permite editar los datos de una divisa existente.
+
+    PYG queda afuera: es la moneda base del sistema, implícita en
+    cualquier operación, y no algo que un administrador pueda editar
+    desde este catálogo (ver ``apps.divisas.forms.DivisaForm``). Se
+    bloquea también acá —en ``get``/``post``, después de que
+    ``AdminDivisasMixin`` ya comprobó el rol— para no mostrarle siquiera
+    la pantalla de edición, en vez de confiar solo en que el formulario
+    la rechace al guardar.
+    """
     model = Divisa
     form_class = DivisaForm
     template_name = 'divisas/divisa_form.html'
     success_url = reverse_lazy('divisas:lista_divisas')
 
+    def _bloquear_si_es_pyg(self, request):
+        """Devuelve una redirección si la divisa objetivo es PYG, o ``None`` si no."""
+        if self.get_object().es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede editar.')
+            return redirect('divisas:lista_divisas')
+        return None
+
+    def get(self, request, *args, **kwargs):
+        """Bloquea el acceso a la pantalla de edición de PYG."""
+        return self._bloquear_si_es_pyg(request) or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Bloquea el guardado directo (sin pasar por el formulario) sobre PYG."""
+        return self._bloquear_si_es_pyg(request) or super().post(request, *args, **kwargs)
+
 
 class DivisaSoftDeleteView(AdminDivisasMixin, View):
-    """Confirma y ejecuta la baja lógica de una divisa."""
+    """Confirma y ejecuta la baja lógica de una divisa.
+
+    PYG no se puede dar de baja: es la divisa base del sistema y tiene
+    que seguir siempre activa (otros módulos, como la apertura de caja,
+    dependen de eso).
+    """
 
     def get(self, request, pk, *args, **kwargs):
         """Muestra el formulario de confirmación de baja."""
         divisa = get_object_or_404(Divisa, pk=pk)
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede dar de baja.')
+            return redirect('divisas:lista_divisas')
         return render(
             request,
             'bajas/confirmar_baja.html',
@@ -1531,6 +1590,9 @@ class DivisaSoftDeleteView(AdminDivisasMixin, View):
     def post(self, request, pk, *args, **kwargs):
         """Valida la causa y registra la baja lógica de la divisa."""
         divisa = get_object_or_404(Divisa, pk=pk)
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede dar de baja.')
+            return redirect('divisas:lista_divisas')
         form = CausaBajaForm(request.POST)
         if not form.is_valid():
             return render(

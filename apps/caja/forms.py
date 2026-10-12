@@ -32,7 +32,7 @@ class AperturaCajaForm(forms.Form):
         self.divisas = []
         self.divisas_sin_cotizar = []
         for divisa in Divisa.objects.filter(activa=True).order_by('codigo'):
-            if divisa.codigo != 'PYG' and divisa.ultima_cotizacion is None:
+            if not divisa.es_base and divisa.ultima_cotizacion is None:
                 self.divisas_sin_cotizar.append(divisa)
                 continue
             self.divisas.append(divisa)
