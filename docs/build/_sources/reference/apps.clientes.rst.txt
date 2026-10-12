@@ -12,6 +12,7 @@ Submodules
    apps.clientes.middleware
    apps.clientes.models
    apps.clientes.urls
+   apps.clientes.validacion_sipap
    apps.clientes.views
 
 Module contents

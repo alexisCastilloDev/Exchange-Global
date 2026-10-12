@@ -45,10 +45,22 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -77,6 +89,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -84,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../reference/apps.users.html">apps.users package</a></li>
@@ -150,10 +164,15 @@
 <span class="sd">la lógica real vivía en otro lado y nunca se enrutaba. Se eliminaron</span>
 <span class="sd">para no tener dos implementaciones compitiendo por la misma URL.</span>
 <span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">login_required</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">PermissionDenied</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.static</span><span class="w"> </span><span class="kn">import</span> <span class="n">serve</span> <span class="k">as</span> <span class="n">static_serve</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Divisa</span>
+
+<span class="n">DOCUMENTACION_ROOT</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">BASE_DIR</span> <span class="o">/</span> <span class="s1">'docs'</span> <span class="o">/</span> <span class="s1">'build'</span>
 
 
 <div class="viewcode-block" id="home">
@@ -197,6 +216,23 @@
 <span class="sd">    """</span>
     <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
     <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'perfil.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'roles'</span><span class="p">:</span> <span class="n">roles</span><span class="p">})</span></div>
+
+
+
+<div class="viewcode-block" id="documentacion">
+<a class="viewcode-back" href="../../reference/global_exchange.views.html#global_exchange.views.documentacion">[documentos]</a>
+<span class="nd">@login_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">documentacion</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">'index.html'</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Sirve la documentación técnica (Sphinx) ya compilada en</span>
+<span class="sd">    ``docs/build/html``, exclusiva de administración, para no exponer</span>
+<span class="sd">    detalles internos de implementación a clientes ni a roles operativos.</span>
+<span class="sd">    """</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">es_admin</span> <span class="o">=</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="ow">or</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">es_admin</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">PermissionDenied</span>
+    <span class="k">return</span> <span class="n">static_serve</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">document_root</span><span class="o">=</span><span class="n">DOCUMENTACION_ROOT</span><span class="p">)</span></div>
 
 </pre></div>
 

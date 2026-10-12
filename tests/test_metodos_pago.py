@@ -1,12 +1,19 @@
 """Pruebas de permisos, validaciones y ciclo de vida de métodos de pago."""
 
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import NoReverseMatch, reverse
 from apps.clientes.forms import MetodoPagoForm
 from apps.clientes.models import Cliente, MetodoPago
+from apps.clientes.validacion_sipap import SipapComunicacionError
 
 User = get_user_model()
+
+RESPUESTA_SIPAP_VALIDA = {
+    'valida': True, 'titular': 'Juan Pérez', 'proveedor': 'Banco Itaú Paraguay', 'moneda': 'PYG',
+}
 
 class MetodoPagoTestCase(TestCase):
     """Verifica la gestión segura de métodos de pago del cliente activo."""
@@ -76,31 +83,95 @@ class MetodoPagoTestCase(TestCase):
 
         self.assertNotContains(response, 'Métodos de pago')
 
-    def test_registro_metodo_pago_exitoso(self):
-        """Criterio 1: Registro exitoso de método de pago, anclado al cliente activo."""
+    @patch('apps.clientes.forms.validar_cuenta')
+    def test_registro_metodo_pago_exitoso(self, mock_validar):
+        """Criterio 1: Registro exitoso de método de pago, anclado al cliente activo.
+
+        El titular y el banco no los manda el formulario: los completa
+        sipap-sim al confirmar que la cuenta existe (ver
+        ``apps.clientes.validacion_sipap.validar_cuenta``).
+        """
+        mock_validar.return_value = RESPUESTA_SIPAP_VALIDA
+
         response = self.client.post(reverse('clientes:metodo_pago_create'), {
             'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
-            'nombre_titular': 'Juan Pérez',
-            'entidad_financiera': 'Banco Itaú',
-            'numero_cuenta': '123456789',
+            'numero_cuenta': '2000000000000101',
+            'documento_titular': '3456789',
             'tipo_cuenta': 'AHORRO',
             'es_predeterminado': True
         })
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(MetodoPago.objects.filter(cliente=self.cliente).count(), 1)
+        mock_validar.assert_called_once_with('2000000000000101', '3456789')
+        metodo = MetodoPago.objects.get(cliente=self.cliente)
+        self.assertEqual(metodo.nombre_titular, 'Juan Pérez')
+        self.assertEqual(metodo.entidad_financiera, 'Banco Itaú Paraguay')
+        self.assertEqual(metodo.documento_titular, '3456789')
 
     def test_validacion_campos_incompletos(self):
         """Criterio 2: Muestra errores de validación si faltan datos requeridos."""
         response = self.client.post(reverse('clientes:metodo_pago_create'), {
             'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
-            'nombre_titular': 'Juan Pérez',
-            'entidad_financiera': 'Banco Itaú',
             'numero_cuenta': '',  # Incompleto a propósito
+            'documento_titular': '',
             'tipo_cuenta': ''
         })
         self.assertEqual(response.status_code, 200)
         form = response.context['form']
-        self.assertFormError(form, 'numero_cuenta', 'El número de cuenta es obligatorio para transferencias bancarias.')
+        self.assertFormError(form, 'numero_cuenta', 'El número de cuenta es obligatorio.')
+        self.assertFormError(form, 'documento_titular', 'El CI o RUC del titular es obligatorio.')
+        self.assertFormError(form, 'tipo_cuenta', 'Debe seleccionar el tipo de cuenta.')
+        self.assertEqual(MetodoPago.objects.filter(cliente=self.cliente).count(), 0)
+
+    @patch('apps.clientes.forms.validar_cuenta')
+    def test_rechaza_una_cuenta_que_no_existe_en_sipap(self, mock_validar):
+        """No se guarda nada si sipap-sim no encuentra la cuenta con ese número y documento."""
+        mock_validar.return_value = {'valida': False}
+
+        response = self.client.post(reverse('clientes:metodo_pago_create'), {
+            'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
+            'numero_cuenta': '0000000000000000',
+            'documento_titular': '0000000',
+            'tipo_cuenta': 'AHORRO',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertFormError(form, 'numero_cuenta', 'No encontramos ninguna cuenta con ese número y ese documento. Verificá los datos.')
+        self.assertEqual(MetodoPago.objects.filter(cliente=self.cliente).count(), 0)
+
+    @patch('apps.clientes.forms.validar_cuenta')
+    def test_no_guarda_nada_si_sipap_sim_no_responde(self, mock_validar):
+        """Sin forma de verificar la cuenta, se rechaza el alta en vez de guardarla a ciegas."""
+        mock_validar.side_effect = SipapComunicacionError('no se pudo conectar')
+
+        response = self.client.post(reverse('clientes:metodo_pago_create'), {
+            'tipo_medio': MetodoPago.TIPO_BILLETERA,
+            'numero_cuenta': '2000000000000501',
+            'documento_titular': '3456789',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertIn('No se pudo verificar la cuenta', form.non_field_errors()[0])
+        self.assertEqual(MetodoPago.objects.filter(cliente=self.cliente).count(), 0)
+
+    @patch('apps.clientes.forms.validar_cuenta')
+    def test_billetera_no_exige_tipo_de_cuenta(self, mock_validar):
+        """Una billetera digital no tiene 'caja de ahorro' ni 'cuenta corriente': no se le pide."""
+        mock_validar.return_value = {
+            'valida': True, 'titular': 'Juan Pérez', 'proveedor': 'Tigo Money', 'moneda': 'PYG',
+        }
+
+        response = self.client.post(reverse('clientes:metodo_pago_create'), {
+            'tipo_medio': MetodoPago.TIPO_BILLETERA,
+            'numero_cuenta': '2000000000000501',
+            'documento_titular': '3456789',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        metodo = MetodoPago.objects.get(cliente=self.cliente)
+        self.assertEqual(metodo.entidad_financiera, 'Tigo Money')
+        self.assertIsNone(metodo.tipo_cuenta)
 
     def test_listar_metodos_pago(self):
         """Criterio 3: El cliente puede ver los métodos del cliente activo."""

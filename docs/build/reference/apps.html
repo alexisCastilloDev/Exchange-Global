@@ -48,10 +48,22 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -80,6 +92,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -87,6 +100,7 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
@@ -180,11 +194,34 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.views.html">apps.authentication.views module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCCallbackView"><code class="docutils literal notranslate"><span class="pre">CustomOIDCCallbackView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCLogoutView"><code class="docutils literal notranslate"><span class="pre">CustomOIDCLogoutView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.url_logout_keycloak"><code class="docutils literal notranslate"><span class="pre">url_logout_keycloak()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.authentication.html#module-apps.authentication">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.caja.html">apps.caja package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html">apps.caja.forms module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.AperturaCajaForm"><code class="docutils literal notranslate"><span class="pre">AperturaCajaForm</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html">apps.caja.models module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja"><code class="docutils literal notranslate"><span class="pre">Caja</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.SaldoInicialCaja"><code class="docutils literal notranslate"><span class="pre">SaldoInicialCaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.urls.html">apps.caja.urls module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html">apps.caja.views module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.AbrirCajaView"><code class="docutils literal notranslate"><span class="pre">AbrirCajaView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.PanelCajaView"><code class="docutils literal notranslate"><span class="pre">PanelCajaView</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.html#module-apps.caja">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a><ul>
@@ -194,6 +231,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.forms.html">apps.clientes.forms module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.AgregarTarjetaStripeForm"><code class="docutils literal notranslate"><span class="pre">AgregarTarjetaStripeForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm"><code class="docutils literal notranslate"><span class="pre">AsociarUsuarioClienteForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.ClienteForm"><code class="docutils literal notranslate"><span class="pre">ClienteForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm"><code class="docutils literal notranslate"><span class="pre">MetodoPagoForm</span></code></a></li>
@@ -210,6 +248,11 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.urls.html">apps.clientes.urls module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.clientes.validacion_sipap.html">apps.clientes.validacion_sipap module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.validacion_sipap.html#apps.clientes.validacion_sipap.SipapComunicacionError"><code class="docutils literal notranslate"><span class="pre">SipapComunicacionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.validacion_sipap.html#apps.clientes.validacion_sipap.validar_cuenta"><code class="docutils literal notranslate"><span class="pre">validar_cuenta()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="apps.clientes.views.html">apps.clientes.views module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView"><code class="docutils literal notranslate"><span class="pre">AsociarUsuariosClienteView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.ClienteCreateView"><code class="docutils literal notranslate"><span class="pre">ClienteCreateView</span></code></a></li>
@@ -224,7 +267,6 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_list"><code class="docutils literal notranslate"><span class="pre">metodo_pago_list()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_reveal"><code class="docutils literal notranslate"><span class="pre">metodo_pago_reveal()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_set_default"><code class="docutils literal notranslate"><span class="pre">metodo_pago_set_default()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.metodo_pago_update"><code class="docutils literal notranslate"><span class="pre">metodo_pago_update()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.views.html#apps.clientes.views.seleccionar_cliente_view"><code class="docutils literal notranslate"><span class="pre">seleccionar_cliente_view()</span></code></a></li>
 </ul>
 </li>
@@ -240,6 +282,7 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.ConfirmarCalculoOperacionForm"><code class="docutils literal notranslate"><span class="pre">ConfirmarCalculoOperacionForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm"><code class="docutils literal notranslate"><span class="pre">TriangulacionForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.ConfirmarTriangulacionForm"><code class="docutils literal notranslate"><span class="pre">ConfirmarTriangulacionForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.PagarTransaccionForm"><code class="docutils literal notranslate"><span class="pre">PagarTransaccionForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm"><code class="docutils literal notranslate"><span class="pre">SimulacionDivisasForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComisionForm</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.DivisaForm"><code class="docutils literal notranslate"><span class="pre">DivisaForm</span></code></a></li>
@@ -251,7 +294,38 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion"><code class="docutils literal notranslate"><span class="pre">Cotizacion</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.monto_a_pagar"><code class="docutils literal notranslate"><span class="pre">monto_a_pagar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.moneda_a_pagar"><code class="docutils literal notranslate"><span class="pre">moneda_a_pagar()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.ConfiguracionComision"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComision</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.PagoRechazadoError"><code class="docutils literal notranslate"><span class="pre">PagoRechazadoError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Pago"><code class="docutils literal notranslate"><span class="pre">Pago</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap"><code class="docutils literal notranslate"><span class="pre">SolicitudPagoSipap</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.pagos_sipap.html">apps.divisas.pagos_sipap module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView"><code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapOperacionView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.IniciarPagoSipapCambioView"><code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapCambioView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.sipap_webhook_view"><code class="docutils literal notranslate"><span class="pre">sipap_webhook_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.SipapComunicacionError"><code class="docutils literal notranslate"><span class="pre">SipapComunicacionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._generar_referencia"><code class="docutils literal notranslate"><span class="pre">_generar_referencia()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._firma_valida"><code class="docutils literal notranslate"><span class="pre">_firma_valida()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._crear_solicitud_cobro_en_sipap"><code class="docutils literal notranslate"><span class="pre">_crear_solicitud_cobro_en_sipap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._obtener_o_crear_solicitud"><code class="docutils literal notranslate"><span class="pre">_obtener_o_crear_solicitud()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._procesar_confirmacion_sipap"><code class="docutils literal notranslate"><span class="pre">_procesar_confirmacion_sipap()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.pagos_stripe.html">apps.divisas.pagos_stripe module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView"><code class="docutils literal notranslate"><span class="pre">IniciarPagoStripeOperacionView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarPagoStripeCambioView"><code class="docutils literal notranslate"><span class="pre">IniciarPagoStripeCambioView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView"><code class="docutils literal notranslate"><span class="pre">IniciarAgregarTarjetaStripeView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.confirmar_tarjeta_stripe_view"><code class="docutils literal notranslate"><span class="pre">confirmar_tarjeta_stripe_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.stripe_webhook_view"><code class="docutils literal notranslate"><span class="pre">stripe_webhook_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._moneda_de_liquidacion"><code class="docutils literal notranslate"><span class="pre">_moneda_de_liquidacion()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._monto_en_unidad_minima_stripe"><code class="docutils literal notranslate"><span class="pre">_monto_en_unidad_minima_stripe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._obtener_o_crear_cliente_stripe"><code class="docutils literal notranslate"><span class="pre">_obtener_o_crear_cliente_stripe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._resolver_metodo_pago_tarjeta"><code class="docutils literal notranslate"><span class="pre">_resolver_metodo_pago_tarjeta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._a_dict"><code class="docutils literal notranslate"><span class="pre">_a_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._configuracion_solo_tarjeta"><code class="docutils literal notranslate"><span class="pre">_configuracion_solo_tarjeta()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.urls.html">apps.divisas.urls module</a></li>
@@ -260,13 +334,20 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView"><code class="docutils literal notranslate"><span class="pre">HistorialTransaccionesView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MiHistorialTransaccionesView"><code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleTransaccionOperacionView"><code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleTransaccionCambioView"><code class="docutils literal notranslate"><span class="pre">DetalleTransaccionCambioView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.PagarTransaccionOperacionView"><code class="docutils literal notranslate"><span class="pre">PagarTransaccionOperacionView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.PagarTransaccionCambioView"><code class="docutils literal notranslate"><span class="pre">PagarTransaccionCambioView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComisionListView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarComisionView"><code class="docutils literal notranslate"><span class="pre">ActualizarComisionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView"><code class="docutils literal notranslate"><span class="pre">SimulacionDivisasView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.CalculoOperacionView"><code class="docutils literal notranslate"><span class="pre">CalculoOperacionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.confirmar_calculo_operacion_view"><code class="docutils literal notranslate"><span class="pre">confirmar_calculo_operacion_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConfirmarTransaccionOperacionView"><code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionOperacionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView"><code class="docutils literal notranslate"><span class="pre">TriangulacionOperacionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.confirmar_triangulacion_view"><code class="docutils literal notranslate"><span class="pre">confirmar_triangulacion_view()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConfirmarTransaccionCambioView"><code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionCambioView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin"><code class="docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaListView"><code class="docutils literal notranslate"><span class="pre">DivisaListView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaCreateView"><code class="docutils literal notranslate"><span class="pre">DivisaCreateView</span></code></a></li>

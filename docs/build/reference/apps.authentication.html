@@ -48,10 +48,22 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -80,6 +92,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -87,6 +100,7 @@
 <li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4 current"><a class="current reference internal" href="#">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
@@ -223,6 +237,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.authentication.views.html">apps.authentication.views module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCCallbackView"><code class="docutils literal notranslate"><span class="pre">CustomOIDCCallbackView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCCallbackView.login_failure"><code class="docutils literal notranslate"><span class="pre">CustomOIDCCallbackView.login_failure()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCCallbackView.login_success"><code class="docutils literal notranslate"><span class="pre">CustomOIDCCallbackView.login_success()</span></code></a></li>
 </ul>
 </li>
@@ -231,6 +246,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.CustomOIDCLogoutView.post"><code class="docutils literal notranslate"><span class="pre">CustomOIDCLogoutView.post()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="apps.authentication.views.html#apps.authentication.views.url_logout_keycloak"><code class="docutils literal notranslate"><span class="pre">url_logout_keycloak()</span></code></a></li>
 </ul>
 </li>
 </ul>

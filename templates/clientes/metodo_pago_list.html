@@ -55,9 +55,9 @@ Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context pro
 
         <div class="ge-payment-card__details">
           <div><span>Titular</span><strong>{{ metodo.nombre_titular }}</strong></div>
-          {% if metodo.tipo_medio == 'TRANSFERENCIA' %}
+          {% if metodo.tipo_medio == 'TRANSFERENCIA' or metodo.tipo_medio == 'BILLETERA' %}
             <div>
-              <span>Cuenta</span>
+              <span>{% if metodo.tipo_medio == 'TRANSFERENCIA' %}Cuenta{% else %}Cuenta / billetera{% endif %}</span>
               <strong>
                 {% if metodo.pk in metodos_revelados %}
                   {{ metodo.numero_cuenta }}
@@ -68,7 +68,21 @@ Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context pro
                 {% endif %}
               </strong>
             </div>
-            <div><span>Tipo de cuenta</span><strong>{{ metodo.get_tipo_cuenta_display }}</strong></div>
+            <div>
+              <span>CI / RUC del titular</span>
+              <strong>
+                {% if metodo.pk in metodos_revelados %}
+                  {{ metodo.documento_titular|default:'No especificado' }}
+                {% elif metodo.documento_titular %}
+                  *****{{ metodo.documento_titular|slice:'-3:' }}
+                {% else %}
+                  No especificado
+                {% endif %}
+              </strong>
+            </div>
+            {% if metodo.tipo_medio == 'TRANSFERENCIA' %}
+              <div><span>Tipo de cuenta</span><strong>{{ metodo.get_tipo_cuenta_display }}</strong></div>
+            {% endif %}
           {% elif metodo.tipo_medio == 'TARJETA' %}
             <div>
               <span>Tarjeta</span>
@@ -93,8 +107,6 @@ Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context pro
                 {% endif %}
               </strong>
             </div>
-          {% else %}
-            <div><span>Medio</span><strong>Billetera digital</strong></div>
           {% endif %}
         </div>
 

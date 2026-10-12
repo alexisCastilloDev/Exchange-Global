@@ -36,9 +36,6 @@ from apps.divisas.models import (
     ConfiguracionVigencia,
     Cotizacion,
     Divisa,
-    Pago,
-    PagoRechazadoError,
-    monto_a_pagar,
 )
 
 
@@ -597,14 +594,14 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
 
     Implementa la HU "Asociación de pagos a transacciones" (GE-25): el
     cliente elige uno de sus métodos de pago guardados
-    (``apps.clientes.models.MetodoPago``). Si el método elegido es de tipo
-    "tarjeta", no se registra nada acá: se redirige a
-    ``apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView``, que es
-    quien de verdad cobra con Stripe (HU "Pago con tarjeta vía Stripe"). Para
-    cualquier otro tipo de método (transferencia, billetera), esta vista
-    sigue registrando el pago (``Pago.registrar_pago``) sincrónicamente y
-    como proveedor "MANUAL", con el monto exacto de la transacción, que el
-    cliente no puede modificar.
+    (``apps.clientes.models.MetodoPago``). Esta vista nunca registra el
+    pago ella misma: si el método es de tipo "tarjeta", redirige a
+    ``apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView`` (HU "Pago
+    con tarjeta vía Stripe"); si es "transferencia" o "billetera", a
+    ``apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView`` (HU "Pago
+    por transferencia bancaria vía SIPAP" — sipap-sim simula
+    indistintamente bancos y billeteras digitales, así que ambos tipos
+    comparten el mismo flujo).
     """
 
     def test_func(self):
@@ -660,25 +657,13 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
             # apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView).
             url = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': transaccion.pk})
             return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
-
-        try:
-            pago, creado = Pago.registrar_pago(
-                transaccion,
-                medio_pago=metodo_pago.tipo_medio,
-                proveedor=Pago.PROVEEDOR_MANUAL,
-                identificador_externo=str(transaccion.pk),
-                monto=transaccion.monto_final,
-                metodo_pago=metodo_pago,
-            )
-        except PagoRechazadoError as error:
-            messages.error(request, str(error))
-            return redirect('divisas:detalle_transaccion_operacion', pk=transaccion.pk)
-
-        if creado:
-            messages.success(request, 'El pago se registró correctamente. La operación quedó "Pagada".')
-        else:
-            messages.info(request, 'Este pago ya había sido registrado.')
-        return redirect('divisas:detalle_transaccion_operacion', pk=transaccion.pk)
+        # Transferencia o billetera digital: ambas se pagan vía SIPAP, no
+        # de forma manual (sipap-sim simula indistintamente bancos y
+        # billeteras). Se redirige a generar la solicitud de pago (ver
+        # apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView),
+        # pasando con qué cuenta puntual, igual que con una tarjeta.
+        url = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': transaccion.pk})
+        return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
 
 
 class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -744,25 +729,10 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
             # "tarjeta" se cobra vía Stripe, no de forma manual.
             url = reverse('divisas:pagar_transaccion_cambio_stripe', kwargs={'pk': transaccion.pk})
             return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
-
-        try:
-            pago, creado = Pago.registrar_pago(
-                transaccion,
-                medio_pago=metodo_pago.tipo_medio,
-                proveedor=Pago.PROVEEDOR_MANUAL,
-                identificador_externo=str(transaccion.pk),
-                monto=monto_a_pagar(transaccion),
-                metodo_pago=metodo_pago,
-            )
-        except PagoRechazadoError as error:
-            messages.error(request, str(error))
-            return redirect('divisas:detalle_transaccion_cambio', pk=transaccion.pk)
-
-        if creado:
-            messages.success(request, 'El pago se registró correctamente. El cambio quedó "Pagado".')
-        else:
-            messages.info(request, 'Este pago ya había sido registrado.')
-        return redirect('divisas:detalle_transaccion_cambio', pk=transaccion.pk)
+        # Ver PagarTransaccionOperacionView.post: transferencia o
+        # billetera digital, ambas se pagan vía SIPAP.
+        url = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': transaccion.pk})
+        return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
 
 
 class ConfiguracionComisionListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):

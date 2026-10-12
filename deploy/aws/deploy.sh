@@ -18,7 +18,7 @@ if ! "${COMPOSE[@]}" exec -T keycloak test -f /opt/keycloak/themes/global-exchan
   "${COMPOSE[@]}" up -d --force-recreate keycloak
 fi
 
-echo "==> Reiniciando Nginx (para que resuelva las IPs nuevas de app y keycloak)"
+echo "==> Reiniciando Nginx (para que resuelva las IPs nuevas de app, keycloak y sipap-sim)"
 "${COMPOSE[@]}" restart nginx
 
 echo "==> Limpiando imágenes viejas para no llenar el disco"

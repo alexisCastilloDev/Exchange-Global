@@ -32,3 +32,7 @@ apps.divisas.models module
 .. autoclass:: apps.divisas.models.Pago
    :members:
    :show-inheritance:
+
+.. autoclass:: apps.divisas.models.SolicitudPagoSipap
+   :members:
+   :show-inheritance:

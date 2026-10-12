@@ -1835,13 +1835,14 @@ class PagarTransaccionOperacionTest(TestCase):
             vence_en=timezone.now() + timedelta(seconds=300),
             confirmado_en=timezone.now(),
         )
+        # Un método guardado de billetera digital, para la pantalla de
+        # selección: igual que transferencia, se paga vía SIPAP, nunca de
+        # forma manual (ver test_pagar_con_un_metodo_de_billetera_redirige_a_sipap_en_vez_de_registrar_el_pago).
         self.metodo_pago = MetodoPago.objects.create(
             cliente=self.cliente,
-            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            tipo_medio=MetodoPago.TIPO_BILLETERA,
             nombre_titular='Cliente Pagar',
             entidad_financiera='Banco Test',
-            numero_cuenta='111222',
-            tipo_cuenta='CORRIENTE',
         )
         self.url = reverse('divisas:pagar_transaccion', kwargs={'pk': self.transaccion.pk})
         self.detalle_url = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.transaccion.pk})
@@ -1853,18 +1854,15 @@ class PagarTransaccionOperacionTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Banco Test')
 
-    def test_pagar_con_un_metodo_guardado_registra_el_pago_y_marca_pagada(self):
-        """Criterios 1 y 2: se registra el pago con todos sus datos y la transacción pasa a 'Pagada'."""
-        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+    def test_pagar_con_un_metodo_de_billetera_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
+        """Una billetera digital se paga vía SIPAP, no de forma manual: sipap-sim simula ambas por igual."""
+        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk})
 
-        self.transaccion.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
-        pago = Pago.objects.get(calculo_operacion=self.transaccion)
-        self.assertEqual(pago.medio_pago, MetodoPago.TIPO_TRANSFERENCIA)
-        self.assertEqual(pago.metodo_pago, self.metodo_pago)
-        self.assertEqual(pago.monto, self.transaccion.monto_final)
-        self.assertContains(response, 'El pago se registró correctamente')
+        url_sipap = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': self.transaccion.pk})
+        self.assertRedirects(
+            response, f'{url_sipap}?metodo_pago={self.metodo_pago.pk}', fetch_redirect_response=False,
+        )
+        self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
 
     def test_pagar_con_un_metodo_de_tarjeta_redirige_a_stripe_en_vez_de_registrar_el_pago(self):
         """Un método guardado de tipo 'tarjeta' se cobra vía Stripe, no de forma manual (HU "Pago con tarjeta vía Stripe")."""
@@ -1881,6 +1879,25 @@ class PagarTransaccionOperacionTest(TestCase):
         url_stripe = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': self.transaccion.pk})
         self.assertRedirects(
             response, f'{url_stripe}?metodo_pago={tarjeta.pk}', fetch_redirect_response=False,
+        )
+        self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
+
+    def test_pagar_con_un_metodo_de_transferencia_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
+        """Un método guardado de tipo 'transferencia' se paga vía SIPAP, no de forma manual (HU SIPAP)."""
+        transferencia = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Cliente Pagar',
+            entidad_financiera='Banco Itaú',
+            numero_cuenta='555666',
+            tipo_cuenta='CORRIENTE',
+        )
+
+        response = self.client.post(self.url, {'metodo_pago': transferencia.pk})
+
+        url_sipap = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': self.transaccion.pk})
+        self.assertRedirects(
+            response, f'{url_sipap}?metodo_pago={transferencia.pk}', fetch_redirect_response=False,
         )
         self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
 
@@ -1908,26 +1925,23 @@ class PagarTransaccionOperacionTest(TestCase):
         self.assertContains(response, 'ya fue pagada')
         self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 1)
 
-    def test_reenviar_el_mismo_pago_no_crea_un_segundo_registro(self):
-        """Criterio 4: un doble envío del mismo pago (p. ej. doble clic) no lo duplica."""
-        self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk})
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
-
-        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
-
-        self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 1)
-        self.assertContains(response, 'ya fue pagada')
-
     def test_detalle_muestra_el_pago_registrado(self):
-        """Criterio 5: el detalle muestra medio, monto, fecha e identificador del pago."""
-        self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk})
+        """Criterio 5: el detalle muestra medio, monto, fecha e identificador del pago.
+
+        El pago llega siempre por confirmación asíncrona (Stripe o el
+        webhook de SIPAP), nunca registrado por esta vista: se simula acá
+        registrándolo directamente, igual que lo haría esa confirmación.
+        """
+        Pago.registrar_pago(
+            self.transaccion, medio_pago=MetodoPago.TIPO_BILLETERA, proveedor='SIPAP',
+            identificador_externo='SPI-TEST-001', monto=self.transaccion.monto_final,
+        )
 
         response = self.client.get(self.detalle_url)
 
-        self.assertContains(response, 'Transferencia Bancaria')
+        self.assertContains(response, 'Billetera Digital')
         self.assertContains(response, formato(self.transaccion.monto_final))
-        self.assertContains(response, str(self.transaccion.pk))
+        self.assertContains(response, 'SPI-TEST-001')
 
     def test_detalle_indica_que_no_hay_pago_registrado_todavia(self):
         """Criterio 5: sin pago, el detalle lo indica explícitamente."""
@@ -2011,29 +2025,27 @@ class PagarTransaccionCambioTest(TestCase):
             vence_en=timezone.now() + timedelta(seconds=300),
             confirmado_en=timezone.now(),
         )
+        # Un método guardado de billetera digital, para la pantalla de
+        # selección: igual que transferencia, se paga vía SIPAP, nunca de
+        # forma manual.
         self.metodo_pago = MetodoPago.objects.create(
             cliente=self.cliente,
-            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            tipo_medio=MetodoPago.TIPO_BILLETERA,
             nombre_titular='Cliente Cambio',
             entidad_financiera='Banco Test',
-            numero_cuenta='333444',
-            tipo_cuenta='AHORRO',
         )
         self.url = reverse('divisas:pagar_transaccion_cambio', kwargs={'pk': self.transaccion.pk})
         self.detalle_url = reverse('divisas:detalle_transaccion_cambio', kwargs={'pk': self.transaccion.pk})
 
-    def test_pagar_un_cambio_confirmado_registra_el_pago_y_lo_marca_pagado(self):
-        """Criterios 1 y 2, aplicados al cambio entre divisas."""
-        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+    def test_pagar_con_un_metodo_de_billetera_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
+        """Una billetera digital se paga vía SIPAP, no de forma manual: sipap-sim simula ambas por igual."""
+        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk})
 
-        self.transaccion.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_PAGADA)
-        pago = Pago.objects.get(calculo_triangulacion=self.transaccion)
-        self.assertEqual(pago.medio_pago, MetodoPago.TIPO_TRANSFERENCIA)
-        # Lo que el cliente paga es monto_origen (lo que entrega), no
-        # monto_final (lo que recibe a cambio) — ver monto_a_pagar.
-        self.assertEqual(pago.monto, self.transaccion.monto_origen)
+        url_sipap = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': self.transaccion.pk})
+        self.assertRedirects(
+            response, f'{url_sipap}?metodo_pago={self.metodo_pago.pk}', fetch_redirect_response=False,
+        )
+        self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
 
     def test_pagar_con_un_metodo_de_tarjeta_redirige_a_stripe_en_vez_de_registrar_el_pago(self):
         """Un método guardado de tipo 'tarjeta' se cobra vía Stripe, no de forma manual (HU "Pago con tarjeta vía Stripe")."""
@@ -2053,11 +2065,30 @@ class PagarTransaccionCambioTest(TestCase):
         )
         self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
 
+    def test_pagar_con_un_metodo_de_transferencia_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
+        """Un método guardado de tipo 'transferencia' se paga vía SIPAP, no de forma manual (HU SIPAP)."""
+        transferencia = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Cliente Cambio',
+            entidad_financiera='Banco Itaú',
+            numero_cuenta='777888',
+            tipo_cuenta='AHORRO',
+        )
+
+        response = self.client.post(self.url, {'metodo_pago': transferencia.pk})
+
+        url_sipap = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': self.transaccion.pk})
+        self.assertRedirects(
+            response, f'{url_sipap}?metodo_pago={transferencia.pk}', fetch_redirect_response=False,
+        )
+        self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
+
     def test_rechaza_pagar_un_cambio_que_ya_fue_pagado(self):
         """Criterio 3, aplicado al cambio entre divisas."""
         Pago.registrar_pago(
             self.transaccion,
-            medio_pago=MetodoPago.TIPO_TRANSFERENCIA,
+            medio_pago=MetodoPago.TIPO_BILLETERA,
             proveedor=Pago.PROVEEDOR_MANUAL,
             identificador_externo=str(self.transaccion.pk),
             monto=self.transaccion.monto_origen,
@@ -2069,10 +2100,18 @@ class PagarTransaccionCambioTest(TestCase):
         self.assertEqual(Pago.objects.filter(calculo_triangulacion=self.transaccion).count(), 1)
 
     def test_detalle_del_cambio_muestra_el_pago_registrado(self):
-        """Criterio 5, aplicado al cambio entre divisas."""
-        self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk})
+        """Criterio 5, aplicado al cambio entre divisas.
+
+        El pago llega siempre por confirmación asíncrona (Stripe o el
+        webhook de SIPAP), nunca registrado por esta vista: se simula acá
+        registrándolo directamente, igual que lo haría esa confirmación.
+        """
+        Pago.registrar_pago(
+            self.transaccion, medio_pago=MetodoPago.TIPO_BILLETERA, proveedor='SIPAP',
+            identificador_externo='SPI-TEST-002', monto=self.transaccion.monto_origen,
+        )
 
         response = self.client.get(self.detalle_url)
 
-        self.assertContains(response, 'Transferencia Bancaria')
-        self.assertContains(response, str(self.transaccion.pk))
+        self.assertContains(response, 'Billetera Digital')
+        self.assertContains(response, 'SPI-TEST-002')

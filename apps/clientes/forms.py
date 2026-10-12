@@ -6,6 +6,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 # Se agregó MetodoPago a la importación existente
 from apps.clientes.models import Cliente, MetodoPago
+from apps.clientes.validacion_sipap import SipapComunicacionError, validar_cuenta
 
 User = get_user_model()
 
@@ -201,6 +202,14 @@ class MetodoPagoForm(forms.ModelForm):
     ``IniciarAgregarTarjetaStripeView`` en ``apps.divisas.pagos_stripe``),
     que es quien conoce el número real y nunca lo entrega a este
     formulario.
+
+    El cliente no escribe el nombre del titular ni el banco/billetera: los
+    completa ``clean()`` a partir de lo que confirma sipap-sim
+    (``apps.clientes.validacion_sipap.validar_cuenta``), igual que
+    cualquier flujo real de vinculación de cuenta (no le creemos al
+    usuario que una cuenta es suya solo porque lo escribió). Por eso esos
+    dos campos del modelo no están en ``Meta.fields``: no hay nada que el
+    formulario le pida tipear al cliente para completarlos.
     """
 
     def __init__(self, *args, **kwargs):
@@ -215,32 +224,67 @@ class MetodoPagoForm(forms.ModelForm):
         model = MetodoPago
         fields = [
             'tipo_medio',
-            'nombre_titular',
-            'entidad_financiera',
             'numero_cuenta',
+            'documento_titular',
             'tipo_cuenta',
             'es_predeterminado'
         ]
         widgets = {
             'tipo_medio': forms.Select(attrs={'class': 'form-select', 'id': 'id_tipo_medio'}),
-            'nombre_titular': forms.TextInput(attrs={'class': 'form-control'}),
-            'entidad_financiera': forms.TextInput(attrs={'class': 'form-control'}),
-            'numero_cuenta': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_cuenta': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de cuenta o de billetera'}),
+            'documento_titular': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CI o RUC del titular'}),
             'tipo_cuenta': forms.Select(attrs={'class': 'form-select'}),
             'es_predeterminado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean(self):
-        """Valida los campos obligatorios de una transferencia bancaria (Criterio 2)."""
+        """Valida los datos obligatorios y confirma la cuenta contra sipap-sim (criterios 1 y 2).
+
+        Una transferencia o billetera necesita número de cuenta y CI/RUC
+        del titular (además, solo para transferencia, el tipo de cuenta);
+        con esos dos datos, se consulta a sipap-sim
+        (``validar_cuenta``) para confirmar que la cuenta exista y sea de
+        ese titular — si no, se rechaza el alta, igual que lo haría un
+        banco real con una cuenta inventada. Si sipap-sim no responde, se
+        rechaza también (no hay forma de confirmar nada sin él), en vez
+        de guardar un método de pago sin verificar.
+        """
         cleaned_data = super().clean()
         tipo_medio = cleaned_data.get('tipo_medio')
         numero_cuenta = cleaned_data.get('numero_cuenta')
+        documento_titular = cleaned_data.get('documento_titular')
         tipo_cuenta = cleaned_data.get('tipo_cuenta')
 
-        if tipo_medio == MetodoPago.TIPO_TRANSFERENCIA:
-            if not numero_cuenta:
-                self.add_error('numero_cuenta', 'El número de cuenta es obligatorio para transferencias bancarias.')
-            if not tipo_cuenta:
-                self.add_error('tipo_cuenta', 'Debe seleccionar el tipo de cuenta.')
+        if tipo_medio not in (MetodoPago.TIPO_TRANSFERENCIA, MetodoPago.TIPO_BILLETERA):
+            return cleaned_data
+
+        if not numero_cuenta:
+            self.add_error('numero_cuenta', 'El número de cuenta es obligatorio.')
+        if not documento_titular:
+            self.add_error('documento_titular', 'El CI o RUC del titular es obligatorio.')
+        if tipo_medio == MetodoPago.TIPO_TRANSFERENCIA and not tipo_cuenta:
+            self.add_error('tipo_cuenta', 'Debe seleccionar el tipo de cuenta.')
+
+        if not numero_cuenta or not documento_titular:
+            return cleaned_data
+
+        try:
+            resultado = validar_cuenta(numero_cuenta, documento_titular)
+        except SipapComunicacionError:
+            self.add_error(
+                None,
+                'No se pudo verificar la cuenta en este momento. Intentá nuevamente en unos minutos.',
+            )
+        else:
+            if not resultado.get('valida'):
+                self.add_error(
+                    'numero_cuenta',
+                    'No encontramos ninguna cuenta con ese número y ese documento. Verificá los datos.',
+                )
+            else:
+                # El titular y el banco/billetera los confirma sipap-sim,
+                # no lo que haya escrito el cliente.
+                self.instance.nombre_titular = resultado['titular']
+                self.instance.entidad_financiera = resultado['proveedor']
 
         return cleaned_data

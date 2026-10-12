@@ -44,6 +44,27 @@ services:
     expose:
       - "8080"
 
+  sipap-sim:
+    build:
+      context: ../../sipap_sim
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: ${SIPAP_SIM_SECRET_KEY}
+      DEBUG: "False"
+      ALLOWED_HOSTS: ${DOMINIO}
+      SIPAP_SCRIPT_NAME: /sipap
+      SIPAP_API_KEY: ${SIPAP_API_KEY}
+      SIPAP_WEBHOOK_SECRET: ${SIPAP_WEBHOOK_SECRET}
+      GLOBAL_EXCHANGE_WEBHOOK_URL: "https://${DOMINIO}/webhooks/sipap/"
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${SIPAP_SIM_DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    expose:
+      - "8001"
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
@@ -58,6 +79,7 @@ services:
     depends_on:
       - app
       - keycloak
+      - sipap-sim
 
   certbot:
     image: certbot/certbot

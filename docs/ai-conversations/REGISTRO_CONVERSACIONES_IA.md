@@ -25,7 +25,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 9. [Sesión 9 — 08/10/2026 — GE-25 — Asociación de pagos a transacciones](#sesión-9--08102026--ge-25--asociación-de-pagos-a-transacciones)
 10. [Sesión 10 — 09/10/2026 — Apertura de Caja](#sesión-10--09102026--apertura-de-caja)
 11. [Sesión 11 — 09/10/2026 — GE-22 — Pago con tarjeta vía Stripe](#sesión-11--09102026--ge-22--pago-con-tarjeta-vía-stripe)
-12. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+12. [Sesión 12 — 11/10/2026 — Pago por transferencia bancaria vía SIPAP](#sesión-12--11102026--pago-por-transferencia-bancaria-vía-sipap)
+13. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -1752,6 +1753,547 @@ Se agregó `MontoAPagarTest` en `tests/test_operaciones.py` (una compra/venta pa
 PYG; un cambio paga `monto_origen` en su divisa de origen) y se actualizaron las aserciones que
 asumían lo contrario en `test_operaciones.py` y `test_pagos_stripe.py`. Suite completa: sin fallas
 tras el fix.
+
+## Sesión 12 — 11/10/2026 — Pago por transferencia bancaria vía SIPAP
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Pago por transferencia bancaria vía SIPAP
+**Rama:** `feature/GE-22`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Pago por transferencia bancaria vía SIPAP", con tests, docstrings, Sphinx
+actualizado y esta documentación de la conversación.
+
+> Como usuario cliente quiero pagar mis operaciones cambiarias mediante transferencia desde mi
+> cuenta bancaria, a través de SIPAP, para completar el pago sin necesidad de usar una tarjeta.
+
+Criterios de aceptación:
+
+1. Con una transacción "Confirmada", elegir pagar por transferencia SIPAP genera una solicitud de
+   pago por el monto exacto, calculado por el sistema y no modificable, e indica cómo completar la
+   transferencia con una referencia única.
+2. Cuando SIPAP confirma que la transferencia fue acreditada, el sistema registra el pago como
+   exitoso con el identificador de la operación SIPAP, el banco de origen y el medio
+   "transferencia".
+3. Si el monto transferido no coincide con el de la transacción, la transacción no pasa a "Pagada"
+   y el pago queda registrado como observado, con la diferencia, para su revisión.
+4. Una confirmación que no puede verificarse como emitida por SIPAP se rechaza sin modificar el
+   estado de ninguna transacción.
+5. Si la transferencia es rechazada o no se completa dentro del plazo de vigencia, la transacción
+   permanece "Confirmada" y se informa al usuario, con opción de reintentar o de elegir otro medio.
+6. Si SIPAP no responde o la conexión falla, el sistema no marca la transacción como pagada y
+   muestra un mensaje de problema de comunicación, sin perder el estado de la transacción.
+
+### Diagnóstico y diseño
+
+SIPAP es el sistema de pagos interbancario del Banco Central del Paraguay: a diferencia de Stripe,
+no tiene un sandbox público al que un proyecto académico pueda conectarse. En vez de bloquearse en
+eso, se diseñó `apps.divisas.pagos_sipap` con su propio esquema de webhook (firma HMAC-SHA256 con
+un secreto propio, `SIPAP_WEBHOOK_SECRET`) en vez de un SDK oficial — documentado explícitamente
+como el punto a reemplazar si algún día se integra con el sistema real.
+
+A diferencia de Stripe (cobro inmediato, por API o en una página de pago), una transferencia
+bancaria real no es instantánea: el cliente sale del sistema, transfiere desde su banco, y la
+confirmación llega después. Eso exigió dos piezas que GE-25/Stripe no necesitaron:
+
+- **`apps.divisas.models.SolicitudPagoSipap`** (migración `0014`, junto con los dos campos de
+  `Pago` de abajo): un registro de "pago pendiente" por transacción (`OneToOneField`, nunca dos
+  solicitudes para la misma), con referencia única, monto/moneda esperados, estado (Pendiente /
+  Acreditada / Observada / Rechazada / Vencida) y vencimiento. Reintentar después de una solicitud
+  "Rechazada" o "Vencida" reutiliza la misma fila con una referencia nueva en vez de crear una
+  segunda; una "Observada" no se reinicia sola, porque ya hay un pago real con un monto que no
+  coincide, y eso necesita revisión humana antes de intentar de nuevo.
+- **`Pago.observado`/`Pago.diferencia`** + **`Pago.registrar_pago_observado`** (classmethod
+  nuevo, misma idempotencia por `(proveedor, identificador_externo)` que `registrar_pago`, pero sin
+  marcar la transacción como "Pagada"): el criterio 3 exige un desenlace que ni Stripe ni el flujo
+  manual necesitaban — un pago real, confirmado por el proveedor, pero por un monto que no es el
+  esperado. Tiene sentido solo para SIPAP porque ahí el monto lo escribe el cliente a mano al
+  transferir; Stripe, en cambio, siempre cobra exactamente lo que el propio sistema le pidió.
+
+Como con Stripe/tarjeta, elegir un método guardado de tipo "transferencia" en la pantalla de pago
+de siempre ahora redirige a SIPAP en vez de registrar el pago manualmente
+(`PagarTransaccionOperacionView.post`/`PagarTransaccionCambioView.post`). Esto dejó "billetera"
+como el único tipo sin una integración real todavía, y rompió varios tests de GE-25 que usaban
+justamente un método de tipo "transferencia" para probar el registro manual inmediato: se
+adaptaron para usar "billetera" en su lugar (el mismo ajuste que ya le había tocado a "tarjeta" en
+la Sesión 11), y se agregó un test nuevo por pantalla confirmando la redirección a SIPAP.
+
+El monto que se le pide al cliente transferir usa `apps.divisas.models.monto_a_pagar`/
+`moneda_a_pagar` (los mismos agregados en la corrección de la Sesión 11): PYG para una
+compra/venta, la divisa de **origen** para un cambio — la misma fuente de verdad que ya usa
+Stripe, sin duplicar el cálculo.
+
+### Tests
+
+`tests/test_pagos_sipap.py` (31 tests nuevos): generación de referencias únicas, verificación de
+firma HMAC (válida/inválida/ausente), `_registrar_solicitud_en_sipap` (sin URL configurada no
+llama a nadie; con URL y éxito no rompe nada; con URL y fallo de red levanta
+`SipapComunicacionError`), vencimiento perezoso de una solicitud (vigente, vencida, ya resuelta no
+se toca), `Pago.registrar_pago_observado` (crea con `observado=True` y la diferencia sin marcar
+pagada, idempotente, rechaza si no está "Confirmada" o ya está "Pagada"), inicio del pago para
+compra/venta y para cambio (monto y moneda correctos, reutiliza la solicitud pendiente al
+revisitar, no permite pagar si no está confirmada, problema de comunicación no crea nada, una
+vencida se reinicia con referencia nueva, una observada no se reinicia sola, control de rol) y el
+webhook completo (firma inválida, acreditada con monto exacto marca pagada, acreditada con monto
+distinto queda observada sin marcar pagada, rechazada no crea nada, referencia desconocida no
+rompe, reenvío del mismo evento no duplica, payload no-JSON, método distinto de POST). Se
+actualizaron además los tests de GE-25 afectados por la redirección nueva en
+`tests/test_operaciones.py`.
+
+### Resultado final
+
+- Suite completa: sin fallas tras agregar la HU.
+- `manage.py check` y `makemigrations --check`: sin problemas.
+- Sphinx recompilado con `-W` (a un directorio temporal): sin advertencias. Se agregó
+  `reference/apps.divisas.pagos_sipap.rst` (enlazado desde `reference/apps.divisas.rst`), se
+  documentó `SolicitudPagoSipap` en `reference/apps.divisas.models.rst`, y se agregó la sección
+  "Pago por transferencia bancaria vía SIPAP" en `guia.rst`, corrigiendo de paso varias menciones
+  desactualizadas ("para transferencia o billetera, el registro sigue siendo inmediato") que había
+  dejado la Sesión 11.
+- Nueva plantilla `templates/divisas/pagar_transaccion_sipap.html` con las instrucciones de
+  transferencia (banco destino, cuenta, referencia, monto, vencimiento).
+- Variables de entorno nuevas (todas opcionales, con default vacío o un valor de relleno):
+  `SIPAP_API_URL`, `SIPAP_WEBHOOK_SECRET`, `SIPAP_BANCO_DESTINO`, `SIPAP_CUENTA_DESTINO`, agregadas
+  a `.env.example` y `.env.prod.example`.
+
+### Pendiente / fuera de alcance
+
+- No hay integración real con el BCP: `SIPAP_API_URL` queda vacía por defecto y
+  `sipap_webhook_view` espera un payload con el formato propio de este módulo, no el de un sistema
+  real (que esta sesión no tuvo forma de conocer).
+- No se construyó ninguna pantalla para que un analista/administrador revise y resuelva un pago
+  "Observado" manualmente; la HU pide que quede registrado para revisión, no que exista un flujo de
+  resolución.
+- Igual que con una tarjeta, no hay forma de simular un evento `"ACREDITADA"`/`"RECHAZADA"` real
+  desde la UI en desarrollo (no hay un "SIPAP CLI" como el de Stripe): probar el webhook a mano
+  requiere armar y firmar el payload por fuera del sistema (ver los tests para el formato exacto).
+
+## Sesión 13 — 11/10/2026 — sipap-sim y billeteras digitales
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Pago por transferencia bancaria vía SIPAP (continuación de la Sesión 12) +
+simulación de billeteras digitales
+**Rama:** `feature/GE-77`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+> no voy a tener un acceso a la api de sipap al parecer asi que simulalo y tambien simula
+> billeteras digitales
+
+seguido de la especificación completa de "sipap-sim": un proyecto Django independiente que
+representa la red bancaria (bancos, cuentas de 16 dígitos, transferencias con estado), con su
+propia API (`solicitudes-cobro`, `transferencias`, `cuentas/validar`, todas con
+`Authorization: Bearer <SIPAP_API_KEY>`), una "banca en línea" simulada donde el cliente elige una
+cuenta y aprueba o rechaza (pudiendo cambiar el monto, para el caso del monto que no coincide),
+webhooks firmados con HMAC-SHA256 hacia Global Exchange, una variable `SIM_MODO_FALLA` para probar
+errores de comunicación, y un despliegue como contenedor aparte (desarrollo: `runserver` en el
+puerto 8001; producción: un servicio más en `deploy/aws/docker-compose.yml`, servido por Nginx en
+`/sipap/`, con su propia base en el mismo RDS). Pedido explícito: el lado de Global Exchange "casi
+no cambia" — el adaptador deja de simular internamente y pasa a ser un cliente HTTP real. Y, en la
+misma línea, agregar billeteras digitales al mismo simulador.
+
+### Diagnóstico y diseño
+
+La Sesión 12 había implementado `apps.divisas.pagos_sipap` simulando SIPAP *por dentro* (sin
+llamar a nadie si `SIPAP_API_URL` estaba vacía, el caso por defecto). Esta sesión construyó el
+simulador real como proyecto aparte y reemplazó esa simulación interna por un cliente HTTP.
+
+**`sipap_sim/`** (proyecto Django nuevo, independiente, con su propio `manage.py`, `settings.py` y
+`pytest.ini`): tres modelos en la app `core` —
+
+- `ProveedorPago` (bancos y billeteras bajo la misma clase, a propósito: para la "banca en línea" y
+  para Global Exchange, pagar desde un banco o desde una billetera es el mismo flujo — elegir una
+  cuenta propia y aprobar — así que no hacía falta duplicar nada para "agregar billeteras").
+- `Cuenta` (número, proveedor, titular, documento, moneda, saldo, y un flag
+  `es_cuenta_casa_de_cambio` para la cuenta destino de cualquier solicitud).
+- `Transferencia` (nace "Pendiente" sin `cuenta_origen`, que se completa solo cuando el cliente
+  elige una cuenta en la "banca en línea"; vencimiento perezoso con el mismo patrón que
+  `CalculoOperacion.marcar_vencida_si_corresponde`).
+
+La API (`core/views.py`) implementa los cuatro endpoints de la especificación, con
+`SIM_MODO_FALLA` (`"error"` → 500; `"lento"` → `time.sleep(15)`, más que cualquier timeout
+razonable del lado de Global Exchange) revisado antes de procesar nada. La "banca en línea"
+(`elegir_cuenta_view`, sin autenticación: la usa el cliente desde su navegador, no Global Exchange)
+deja elegir cualquier cuenta de prueba en la moneda solicitada y, a propósito, cambiar el monto
+antes de aprobar — el mecanismo para probar el caso del monto que no coincide. Al resolverse
+(aprobada o rechazada), `core/webhooks.enviar_confirmacion` firma y manda la confirmación a Global
+Exchange, y redirige al cliente a la `url_retorno` que mandó la solicitud original. Una migración
+de datos (`0002_datos_iniciales`) carga los cuatro bancos de la especificación (Itaú, Continental,
+Ueno, Familiar), tres billeteras inventadas (Tigo Money, Billetera Personal, Zimple), las cuentas
+de la casa de cambio (una por moneda) y varias cuentas de clientes de prueba.
+
+**Del lado de Global Exchange**, `apps.divisas.pagos_sipap._registrar_solicitud_en_sipap` se
+reemplazó por `_crear_solicitud_cobro_en_sipap`: un `POST` real a
+`{SIPAP_BASE_URL}/api/solicitudes-cobro/` con `Authorization: Bearer {SIPAP_API_KEY}`, que guarda
+en la solicitud el `id_externo`/`link_pago` que devuelve sipap-sim (dos campos nuevos en
+`SolicitudPagoSipap`, migración `0015`); `IniciarPagoSipapOperacionView`/`...CambioView.get` ya no
+renderiza una página local con instrucciones de transferencia — redirige directo a ese
+`link_pago`, igual que un Checkout externo. `_procesar_confirmacion_sipap` se adaptó al formato
+exacto del payload de la especificación: `estado` en minúsculas (`"acreditada"`/`"rechazada"`, no
+`"ACREDITADA"`/`"RECHAZADA"`) y `monto` como número JSON, no como string.
+
+Para las billeteras digitales, en vez de un segundo adaptador se decidió que
+`MetodoPago.TIPO_BILLETERA` comparta el mismo flujo que `TIPO_TRANSFERENCIA`: sipap-sim ya simula
+ambas con la misma `Cuenta`/`Transferencia`. Esto requirió un tercer campo nuevo en
+`SolicitudPagoSipap`, `medio_pago` (para que el `Pago` resultante muestre "Billetera Digital" y no
+siempre "Transferencia Bancaria"), que la vista fija a partir de un `?tipo_medio=` que ahora manda
+`PagarTransaccionOperacionView.post`/`...CambioView.post` al redirigir a SIPAP — y que
+`_procesar_confirmacion_sipap` usa en vez del tipo hardcodeado. Con esto, el branching de esas dos
+vistas quedó en dos casos (tarjeta → Stripe; transferencia o billetera → SIPAP), sin ningún caso
+restante que registrara el pago "a mano": se eliminó esa rama muerta y los imports que quedaron sin
+uso (`Pago`, `PagoRechazadoError`, `monto_a_pagar` en `apps.divisas.views`).
+
+### Tests
+
+`sipap_sim/tests/` (24 tests nuevos, suite independiente): los cuatro endpoints de la API
+(autenticación, creación de solicitud, consulta de estado, validación de cuenta, transferencia
+saliente, `SIM_MODO_FALLA` en sus dos variantes), la "banca en línea" (aprobar mueve saldo y
+redirige, aprobar con un monto distinto simula el caso de monto que no coincide, rechazar no mueve
+saldo, saldo insuficiente no se permite, una transferencia ya resuelta o vencida no se puede volver
+a aprobar) y el webhook (formato del cuerpo, firma HMAC válida, una falla de red no rompe al
+llamador). Se usan los datos de la migración de siembra en vez de crear proveedores/cuentas
+propios, para no chocar con las restricciones de unicidad que esa migración ya carga en la base de
+test.
+
+`tests/test_pagos_sipap.py`: se reescribió `RegistrarSolicitudEnSipapTest` como
+`CrearSolicitudCobroEnSipapTest` (URL y encabezado correctos, guarda `id`/`link_pago`, una
+respuesta de error o no-JSON también cuenta como falla de comunicación); las pruebas de
+`IniciarPagoSipap*View` ahora mockean `_crear_solicitud_cobro_en_sipap` (en vez de hacer una
+llamada real) y verifican la redirección al `link_pago`, además de un caso nuevo para
+`?tipo_medio=BILLETERA`; el webhook se probó con `estado` en minúsculas y `monto` numérico, más un
+caso nuevo confirmando que una confirmación de billetera registra el pago como billetera, no como
+transferencia.
+
+`tests/test_operaciones.py`: los tests de GE-25 que usaban "billetera" como el único tipo que
+registraba manualmente (de la Sesión 12) ya no aplican — ahora billetera también redirige a SIPAP.
+Se agregó un test de redirección para billetera (simétrico al de transferencia, con
+`?tipo_medio=BILLETERA`), se adaptaron las aserciones de redirección existentes para incluir ese
+query string, se eliminó el test de "doble envío no duplica" (la premisa, un registro manual
+inmediato, ya no existe para ningún medio) y las pruebas de "el detalle muestra el pago" pasaron a
+registrar el pago directamente (simulando la confirmación asíncrona) en vez de esperar que el POST
+lo registrara.
+
+### Resultado final
+
+- Suite principal: 350 tests, sin fallas. Suite de sipap-sim (independiente): 24 tests, sin
+  fallas. `manage.py check` y `makemigrations --check`: sin problemas en ambos proyectos.
+- Sphinx recompilado con `-W`: sin advertencias (`docs/build/` regenerado). Se actualizó la sección
+  "Pago por transferencia bancaria o billetera digital vía SIPAP" en `guia.rst`, el `.rst` de
+  referencia de `pagos_sipap` (la función renombrada) y `sipap_sim/README.md` documenta la API y el
+  simulador por separado (no se integró al árbol de Sphinx de Global Exchange: es un proyecto
+  Django aparte, igual que Keycloak).
+- `pytest.ini` de la raíz acotado a `testpaths = tests` para que no intente correr los tests de
+  `sipap_sim/` contra el `DJANGO_SETTINGS_MODULE` equivocado.
+- `global_exchange/settings/base.py`: `SIPAP_API_URL`/`SIPAP_BANCO_DESTINO`/`SIPAP_CUENTA_DESTINO`
+  reemplazadas por `SIPAP_BASE_URL`/`SIPAP_API_KEY` (la cuenta destino ahora la decide sipap-sim,
+  no Global Exchange); `.env.example`/`.env.prod.example` actualizados.
+- `deploy/aws/docker-compose.yml`: servicio `sipap-sim` nuevo (mismo patrón que `keycloak`: su
+  propio contenedor, su propia base `sipap_sim` en el mismo RDS); `deploy/aws/nginx/nginx.conf`:
+  `location /sipap/` que le quita el prefijo antes de reenviar (`FORCE_SCRIPT_NAME` del lado de
+  sipap-sim se lo vuelve a agregar al generar URLs).
+- Se eliminó `templates/divisas/pagar_transaccion_sipap.html`: la vista ya no renderiza
+  instrucciones locales, redirige directo a la "banca en línea" de sipap-sim.
+
+### Pendiente / fuera de alcance
+
+- `POST /api/transferencias/` (que la casa de cambio le pague a un cliente) está implementado en
+  sipap-sim según la especificación, pero Global Exchange todavía no lo llama: es la HU de
+  acreditación/retiro de fondos de Sprint 5, fuera de alcance de esta sesión.
+- No se armó ningún `docker-compose.yml` de desarrollo para levantar sipap-sim junto a Global
+  Exchange con un solo comando; en desarrollo se corre a mano (`runserver 8001`), como permite la
+  especificación.
+- Los nombres de las billeteras digitales (Tigo Money, Billetera Personal, Zimple) y los datos de
+  los clientes de prueba son de relleno: la especificación solo fijaba los bancos y la forma de las
+  cuentas, no qué billeteras ni qué clientes simular.
+
+## Sesión 14 — 11/10/2026 — Validación real de cuentas en "Métodos de pago" (GE-19)
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Métodos de pago (GE-19), apoyándose en sipap-sim (Sesión 13)
+**Rama:** `feature/GE-77`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+> modifica la pantalla de metodos de pago para que quede todo bien implementado y puedas ingresar
+> bien los datos de tu cuenta bancaria o billetera digital y que tenga concordancia con el mundo
+> real
+
+### Diagnóstico y diseño
+
+La pantalla de alta de un método de transferencia o billetera (`apps.clientes.forms.MetodoPagoForm`)
+dejaba escribir cualquier cosa: el cliente tipeaba un "banco" de relleno y un número de cuenta sin
+que nada los verificara, y una billetera digital no pedía ningún dato de cuenta en absoluto (ni
+siquiera un número) — el formulario solo mostraba "Billetera digital" genérico en el listado. Con
+sipap-sim ya funcionando (Sesión 13), esto tenía arreglo real: su especificación ya incluía
+`GET /api/cuentas/validar/?numero=...&documento=...` "para verificar que una cuenta exista y sea del
+titular indicado, antes de registrarla en Global Exchange" — un endpoint que quedó construido pero
+nunca llamado por nadie. Esta sesión lo conectó.
+
+Diseño elegido: el cliente ya no escribe el nombre del titular ni el banco/billetera — los completa
+`clean()` a partir de lo que confirma sipap-sim, igual que un alta real de cuenta bancaria (no se le
+cree al usuario que una cuenta es suya solo porque lo escribió). Lo que el cliente sí ingresa es el
+número de cuenta/billetera y su CI o RUC (campo `documento_titular`, nuevo en `MetodoPago`, migración
+`0017`); con esos dos datos, `apps.clientes.validacion_sipap.validar_cuenta` (módulo nuevo) consulta a
+sipap-sim y, si la cuenta existe y el documento coincide, devuelve el titular real y el proveedor
+(banco o billetera) — datos con los que `MetodoPagoForm.clean()` completa `self.instance` antes de
+guardar. Si sipap-sim dice que la cuenta no existe, o no responde, no se guarda nada: se rechaza el
+alta con un mensaje, en vez de confiar en datos sin verificar.
+
+Este módulo se puso en `apps.clientes` (no en `apps.divisas.pagos_sipap`, que ya habla con
+sipap-sim) a propósito: la dirección de dependencia entre esas dos apps ya era
+`apps.divisas → apps.clientes` (`pagos_sipap`/`pagos_stripe` importan de `apps.clientes.models`), y
+hacerla depender al revés para esto habría invertido esa capa sin necesidad — es una verificación de
+datos al registrar el método (GE-19), no parte de cobrar una transacción.
+
+Para que la respuesta de `validar_cuenta` tuviera algo más que ofrecer que un simple `true`/`false`,
+se extendió el endpoint correspondiente de **sipap-sim** (`sipap_sim/core/views.py`) para devolver
+también `titular`, `proveedor`, `tipo_proveedor` y `moneda` cuando la cuenta es válida — en vez de
+limitarse a lo mínimo que pedía la especificación original.
+
+`tipo_cuenta` (caja de ahorro / cuenta corriente) se mantuvo exclusivo de transferencia: una
+billetera digital no tiene ese concepto en el mundo real, así que ni el formulario lo exige ni la
+pantalla lo muestra para ese tipo.
+
+### Verificación de punta a punta
+
+Antes de dar por terminado, se corrieron ambos servidores de desarrollo de verdad (sipap-sim en el
+8001, Global Exchange en el 8000, sin mockear nada) y se probaron tres casos reales: una cuenta
+bancaria existente (se guardó con el titular y el banco reales, tomados de sipap-sim, no de lo que
+se mandó en el POST), una billetera digital existente (mismo resultado, con "Tigo Money" como
+proveedor) y una cuenta inexistente (no se guardó ningún `MetodoPago`). Los tres se comportaron como
+se esperaba.
+
+### Tests
+
+`tests/test_metodos_pago.py`: se adaptó `test_registro_metodo_pago_exitoso` para mockear
+`validar_cuenta` y verificar que el titular y la entidad financiera queden tomados de esa respuesta,
+no del POST; se actualizó el mensaje de `test_validacion_campos_incompletos` y se agregó la
+validación de `documento_titular`; se agregaron `test_rechaza_una_cuenta_que_no_existe_en_sipap`
+(`valida: False` → rechaza sin guardar), `test_no_guarda_nada_si_sipap_sim_no_responde`
+(`SipapComunicacionError` → rechaza con un error no asociado a ningún campo) y
+`test_billetera_no_exige_tipo_de_cuenta`. Los tests que crean un `MetodoPago` directo con
+`objects.create(...)` (sin pasar por el formulario) no necesitaron cambios: `documento_titular` es
+opcional a nivel de modelo, igual que ya lo eran `numero_cuenta`/`tipo_cuenta`.
+
+`sipap_sim/tests/test_api.py`: se actualizó `ValidarCuentaTest` para el nuevo cuerpo de respuesta
+(titular, proveedor, tipo de proveedor y moneda cuando la cuenta es válida).
+
+### Resultado final
+
+- Suite principal: 353 tests, sin fallas (subía de 350 a 353 con los tres tests nuevos). Suite de
+  sipap-sim: 24 tests, sin fallas. `manage.py check`/`makemigrations --check` limpios en ambos
+  proyectos.
+- Sphinx recompilado con `-W`: sin advertencias (`docs/build/` regenerado); se agregó
+  `reference/apps.clientes.validacion_sipap.rst` al árbol de referencia de `apps.clientes`.
+- Plantillas actualizadas: `metodo_pago_form.html` ya no pide "Entidad Financiera" ni "Nombre del
+  Titular" (se completan solos), agrega "CI o RUC del Titular", y el tipo de cuenta se oculta por JS
+  cuando el medio elegido es billetera; `metodo_pago_list.html` muestra el CI/RUC enmascarado (mismo
+  patrón que el número de cuenta) y ya no tiene una rama "Billetera digital" genérica e inalcanzable.
+- Se le dio al usuario, en el chat, una guía paso a paso para levantar y configurar los tres
+  servicios (Global Exchange, sipap-sim, y Keycloak si aplica) en desarrollo y en el servidor de AWS.
+
+### Pendiente / fuera de alcance
+
+- La lista de proveedores (bancos y billeteras) que puede devolver sipap-sim sigue siendo la que
+  carga su migración de datos de siembra; si se agregan más proveedores ahí, el formulario de Global
+  Exchange los acepta sin ningún cambio (no depende de una lista propia).
+- No se agregó un selector de moneda en el método de pago: la moneda de la cuenta la informa
+  sipap-sim en la validación pero no se persiste en `MetodoPago` — no hace falta hoy porque el flujo
+  de pago (vía la "banca en línea" de sipap-sim) no usa el método de pago registrado para decidir con
+  qué cuenta se paga, el cliente la elige ahí en el momento.
+
+  > **Nota de la Sesión 15:** esta última limitación se cerró en la sesión siguiente — el método de
+  > pago registrado pasó a ser justamente lo que decide con qué cuenta se paga.
+
+## Sesión 15 — 12/10/2026 — sipap-sim reconoce la cuenta del método de pago elegido
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Pago por transferencia bancaria vía SIPAP / Métodos de pago (GE-19), continuación
+de las Sesiones 13 y 14
+**Rama:** `feature/GE-77`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+> el sipap simulado tiene que cargar automaticamente los datos seleccionados en el menu de pago del
+> sistema, si se elegio tal metodo de pago, tiene que reconocerlo y tambien el monto ya tiene que
+> estar seleccionado sin poder cambiar, tambien tiene que mostrarte cuando saldo disponible tenes en
+> ese metodo de pago seleccionado y dar un mensaje de fondos insuficientes en tal caso, el sistema de
+> sipap simulado tiene que reconocer solo los metodos de pago que estan registrados en el cliente de
+> un usuario, y no mostrar todos los metodos de pago del sistema
+
+### Diagnóstico y diseño
+
+Hasta esta sesión, `IniciarPagoSipapOperacionView`/`...CambioView` solo le mandaban a sipap-sim
+`monto`, `moneda`, `referencia` y `url_retorno` — nunca le decían con qué cuenta puntual iba a pagar
+el cliente, pese a que el cliente ya había elegido un `MetodoPago` específico en el formulario de
+pago de siempre (`PagarTransaccionForm.metodo_pago`, un `ModelChoiceField`, no solo un tipo). La
+consecuencia: la "banca en línea" de sipap-sim (`elegir_cuenta_view`) mostraba un `<select>` con
+**todas** las cuentas de prueba del sistema, de cualquier cliente — justo lo que el pedido señala
+como incorrecto.
+
+La solución, mirando cómo ya resuelve esto `apps.divisas.pagos_stripe` (que sí sabe, desde el
+principio, con qué tarjeta puntual se cobra): replicar el mismo patrón para SIPAP.
+
+- **Del lado de Global Exchange**: `apps.divisas.views.PagarTransaccionOperacionView.post`/
+  `...CambioView.post` pasan a redirigir con `?metodo_pago={pk}` (antes `?tipo_medio=`, que solo
+  decía "transferencia" o "billetera" sin decir cuál). `apps.divisas.pagos_sipap` ganó
+  `_resolver_metodo_pago_sipap` (mismo patrón que `_resolver_metodo_pago_tarjeta` de Stripe): busca
+  el `MetodoPago` del cliente, de tipo transferencia o billetera, con número de cuenta y CI/RUC
+  completos — que siempre los tiene, porque `apps.clientes.forms.MetodoPagoForm` ya los validó
+  contra sipap-sim al registrarlo (Sesión 14). `SolicitudPagoSipap` ganó un campo `metodo_pago`
+  (FK, migración `0016`), y `_crear_solicitud_cobro_en_sipap` manda ese número de cuenta y documento
+  a sipap-sim junto con el resto de la solicitud.
+- **Del lado de sipap-sim**: `Transferencia` ganó `cuenta_sugerida` (FK, migración `0004`):
+  `crear_solicitud_cobro` la resuelve a partir de `cuenta_origen_numero`/`cuenta_origen_documento`,
+  si vienen en el body (400 si vienen pero no corresponden a ninguna cuenta real — una solicitud sin
+  una cuenta válida no es un estado que debería poder crearse). `elegir_cuenta_view` se reescribió
+  por completo: ya no filtra `Cuenta.objects.filter(moneda=...)` para armar un selector — usa
+  directamente `transferencia.cuenta_sugerida`, muestra su saldo disponible, y si no hay ninguna
+  cuenta sugerida (una solicitud armada sin esos datos, p. ej. a mano contra la API), no ofrece
+  ninguna lista como respaldo: devuelve un error (plantilla `sin_cuenta.html`, 409) en vez de filtrar
+  datos de otros clientes de prueba.
+
+Sobre "el monto ya tiene que estar seleccionado sin poder cambiar": esto entra en tensión directa
+con un criterio de aceptación de la propia especificación de sipap-sim pasada en una sesión anterior
+("también puede elegir un monto distinto, para probar el caso del monto que no coincide" — Sesión 13,
+criterio 3). La resolución elegida, sin pedirle al usuario que decidiera entre las dos: el monto
+queda fijo y de solo lectura por defecto (lo que pide este pedido), con un checkbox explícito
+("simular un monto distinto, para pruebas") que, marcado, lo habilita — así la capacidad de probar el
+criterio 3 sigue existiendo, pero ya no es el comportamiento por defecto ni algo que un cliente real
+activaría sin querer. Si el usuario prefiere que se quite del todo, es un cambio de una línea en
+`elegir_cuenta_view`/la plantilla.
+
+El mensaje de "fondos insuficientes" ya existía desde la Sesión 13 (comparaba el saldo de la cuenta
+elegida por el `<select>` contra el monto); con el rediseño, se comparó directamente contra
+`cuenta_sugerida.saldo`, sin otro cambio funcional.
+
+### Verificación de punta a punta
+
+Se levantaron los dos servidores reales (Global Exchange en 8000, sipap-sim en 8001) y se corrió el
+flujo completo sin mockear nada: crear un `MetodoPago` de transferencia con una cuenta real
+(`2000000000000101`, Juan Pérez), iniciar el pago de una compra "Confirmada", confirmar que la
+"banca en línea" de sipap-sim muestra esa cuenta puntual (sin ningún `<select>` de por medio),
+aprobar la transferencia ahí, y confirmar que el webhook de vuelta marcó la transacción como
+"Pagada" en Global Exchange, con el `Pago` resultante vinculado al `MetodoPago` correcto
+(`pago.metodo_pago_id` coincide con el elegido).
+
+### Tests
+
+`sipap_sim/tests/test_api.py`: `ValidarCuentaTest` sin cambios; se agregaron
+`test_con_cuenta_de_origen_la_identifica_como_cuenta_sugerida` y
+`test_rechaza_si_la_cuenta_de_origen_indicada_no_existe` a `CrearSolicitudCobroTest`.
+
+`sipap_sim/tests/test_banca_en_linea.py`: reescrito para el nuevo flujo sin selector —
+`test_muestra_la_cuenta_identificada_y_su_saldo` (ya no un listado), `test_aprobar_sin_marcar_el_checkbox_ignora_un_monto_distinto_en_el_pedido`
+(nuevo, confirma que el monto queda fijo por defecto), `test_aprobar_con_monto_distinto_simula_el_caso_de_monto_que_no_coincide`
+(ahora requiere marcar el checkbox), y `test_sin_cuenta_sugerida_no_muestra_ninguna_cuenta_del_sistema`
+(nuevo: confirma el 409 en vez de una lista de respaldo).
+
+`tests/test_pagos_sipap.py`: se agregó un `MetodoPago` de prueba (con cuenta y documento) a cada
+fixture que antes solo pasaba `?tipo_medio=`; se agregó `test_sin_metodo_de_pago_valido_no_crea_ninguna_solicitud`
+y se renombró/ajustó `test_tipo_medio_billetera_se_guarda_en_la_solicitud` a
+`test_billetera_se_guarda_en_la_solicitud` (ahora con un segundo `MetodoPago` de billetera real). El
+test del webhook ahora verifica también que `pago.metodo_pago` quede vinculado a la solicitud.
+
+`tests/test_operaciones.py`: las aserciones de redirección (`?tipo_medio=...`) de
+`PagarTransaccionOperacionTest`/`PagarTransaccionCambioTest` pasaron a esperar `?metodo_pago={pk}`.
+
+### Resultado final
+
+- Suite principal: sin fallas. Suite de sipap-sim: 28 tests (4 nuevos), sin fallas. `manage.py check`
+  y `makemigrations --check` limpios en ambos proyectos.
+- Sphinx recompilado con `-W`: sin advertencias (`docs/build/` regenerado). Se actualizó la sección
+  de SIPAP en `guia.rst` y el `.rst` de referencia de `pagos_sipap` (nueva función), y
+  `sipap_sim/README.md` describe el nuevo comportamiento de la API y de la "banca en línea".
+
+### Pendiente / fuera de alcance
+
+- `crear_solicitud_cobro` responde 400 si le mandan una cuenta de origen que no existe, en vez de
+  crear la solicitud sin `cuenta_sugerida` como respaldo — una decisión deliberada (ver diagnóstico),
+  pero significa que un error de sincronización entre las dos bases (poco probable, dado que Global
+  Exchange ya valida la cuenta al registrar el método) bloquearía el pago en vez de degradarlo.
+- El checkbox "simular un monto distinto" queda expuesto en la propia pantalla de "banca en línea",
+  visible para cualquiera que la abra — aceptable en un simulador de desarrollo, pero es justo el
+  tipo de control que en un entorno real no debería existir ahí.
+
+  > **Nota de la Sesión 16:** ese checkbox se quitó en la sesión siguiente, a pedido explícito.
+
+## Sesión 16 — 12/10/2026 — sipap-sim deja de pedir el monto a transferir
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Pago por transferencia bancaria vía SIPAP, continuación directa de la Sesión 15
+**Rama:** `feature/GE-77`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+> que no pida monto a transferir, que directo cargue el monto solicitado si es que la tarjeta tiene
+> los fondos suficientes y tu solo aceptes si es que quieres realizar el pago con la cuenta
+> bancaria/billetera digital
+
+Resuelve, en el sentido que pedía que se eligiera, la tensión que había quedado anotada al cierre de
+la Sesión 15 entre "el monto no se debería poder cambiar" y el criterio 3 de la especificación
+original de sipap-sim ("también puede elegir un monto distinto, para probar ese caso"): esta sesión
+quita esa capacidad de la "banca en línea" por completo, sin que el usuario tuviera que decidir entre
+las dos — ya lo pidió explícitamente.
+
+### Diagnóstico y diseño
+
+Cambio acotado sobre lo que dejó armado la Sesión 15: `core.views.elegir_cuenta_view` ya no lee
+``monto``/``simular_monto_distinto`` del `POST` — al aprobar, usa siempre
+`transferencia.monto_solicitado` directamente, sin ninguna rama condicional. La plantilla
+`elegir_cuenta.html` perdió el `<input type="number">` y el checkbox: el monto se muestra como texto
+de solo lectura, junto a la cuenta reconocida y su saldo disponible (sin cambios en esa parte,
+Sesión 15), y el formulario quedó reducido a dos botones, "Aprobar" y "Rechazar".
+
+El mensaje de "fondos insuficientes" no cambió en su lógica (compara `cuenta_origen.saldo` contra el
+monto a acreditar), solo que ese monto ya no puede ser otra cosa que `monto_solicitado`.
+
+Esto significa que la "banca en línea" ya no tiene ninguna forma de producir, desde su propia
+pantalla, un evento ``"acreditada"`` con un monto que no coincide (criterio 3 de la HU de pago por
+SIPAP) — pero esa pieza del lado de Global Exchange (`apps.divisas.pagos_sipap._procesar_confirmacion_sipap`)
+sigue intacta y sigue probada: `tests/test_pagos_sipap.py::SipapWebhookTest.test_acreditada_con_monto_distinto_queda_observada_sin_marcar_pagada`
+le manda el webhook directamente con un monto distinto, sin pasar por la UI de sipap-sim en absoluto.
+Es decir, el comportamiento que importa (qué hace Global Exchange si alguna vez recibe una
+confirmación con un monto que no coincide, sea por el motivo que sea) sigue cubierto; lo que se quitó
+es solo el botón para fabricar esa situación a mano desde el simulador.
+
+### Tests
+
+`sipap_sim/tests/test_banca_en_linea.py`: `test_aprobar_sin_marcar_el_checkbox_ignora_un_monto_distinto_en_el_pedido`
+se renombró a `test_aprobar_ignora_cualquier_monto_que_mande_el_cliente` (ya no depende de ningún
+checkbox: cualquier `monto` que venga en el `POST` se ignora igual). Se eliminó
+`test_aprobar_con_monto_distinto_simula_el_caso_de_monto_que_no_coincide` (el escenario que probaba
+ya no existe). `test_no_permite_aprobar_con_saldo_insuficiente` se reescribió para armar una
+transferencia cuyo `monto_solicitado` ya supera el saldo de la cuenta, en vez de simular un monto
+inflado por `POST` (que ya no es posible).
+
+### Resultado final
+
+- Suite de sipap-sim: 27 tests (uno menos que la Sesión 15, por el test eliminado), sin fallas.
+  Suite principal sin cambios de comportamiento esperados (no dependía de este detalle de UI).
+  `manage.py check`/`makemigrations --check` limpios en ambos proyectos; nueva migración
+  `core.0005_alter_transferencia_monto_acreditado` (solo un `help_text` actualizado).
+- Verificado a mano contra el sipap-sim real: la pantalla de "banca en línea" muestra el monto
+  solicitado como texto fijo (sin ningún campo editable), la cuenta reconocida con su saldo, y
+  únicamente los botones "Aprobar"/"Rechazar".
+- Se actualizaron los docstrings de `Transferencia`/`monto_acreditado` en `sipap_sim/core/models.py`,
+  `sipap_sim/README.md`, `docs/source/guia.rst` y el docstring de módulo de `apps.divisas.pagos_sipap`
+  para reflejar que el monto ya no es editable desde la "banca en línea". Sphinx recompilado con
+  `-W`, sin advertencias (`docs/build/` regenerado).
+
+### Pendiente / fuera de alcance
+
+- No queda, dentro de este repositorio, ninguna forma de disparar el caso "monto que no coincide" de
+  punta a punta (UI de sipap-sim → webhook → `Pago` observado): solo a nivel del webhook directamente
+  (que es donde ya estaba probado). Si en algún momento hiciera falta una demostración de punta a
+  punta para QA manual, haría falta un mecanismo separado (p. ej. un comando de gestión o un endpoint
+  de sipap-sim pensado explícitamente para pruebas, distinto de la pantalla que ve el cliente).
 
 ## Enlaces externos (conversaciones completas)
 

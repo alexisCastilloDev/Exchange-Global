@@ -31,6 +31,10 @@ from .pagos_stripe import (
     IniciarPagoStripeOperacionView,
     IniciarPagoStripeCambioView,
 )
+from .pagos_sipap import (
+    IniciarPagoSipapOperacionView,
+    IniciarPagoSipapCambioView,
+)
 """
 Configuración de URLs para la aplicación de divisas.
 Contiene las rutas necesarias para la consulta de tasas y la gestión de divisas.
@@ -58,6 +62,11 @@ urlpatterns = [
         IniciarPagoStripeOperacionView.as_view(),
         name='pagar_transaccion_stripe',
     ),
+    path(
+        'operar/transaccion/<uuid:pk>/pagar/sipap/',
+        IniciarPagoSipapOperacionView.as_view(),
+        name='pagar_transaccion_sipap',
+    ),
     path('triangulacion/', TriangulacionOperacionView.as_view(), name='triangulacion'),
     path('triangulacion/confirmar/', confirmar_triangulacion_view, name='confirmar_triangulacion'),
     path(
@@ -74,6 +83,11 @@ urlpatterns = [
         'triangulacion/transaccion/<uuid:pk>/pagar/stripe/',
         IniciarPagoStripeCambioView.as_view(),
         name='pagar_transaccion_cambio_stripe',
+    ),
+    path(
+        'triangulacion/transaccion/<uuid:pk>/pagar/sipap/',
+        IniciarPagoSipapCambioView.as_view(),
+        name='pagar_transaccion_cambio_sipap',
     ),
     path('cotizaciones/<int:divisa_id>/actualizar/', ActualizarCotizacionView.as_view(), name='actualizar_cotizacion'),
     path('cotizaciones/<int:divisa_id>/historial/', HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),
