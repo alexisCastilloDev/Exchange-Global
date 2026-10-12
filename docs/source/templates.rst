@@ -199,6 +199,18 @@ Caja
    :language: html
    :lines: 1-7
 
+.. literalinclude:: ../../templates/caja/arqueo_form.html
+   :language: html
+   :lines: 1-6
+
+.. literalinclude:: ../../templates/caja/arqueo_detalle.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/caja/arqueo_historial.html
+   :language: html
+   :lines: 1-6
+
 Parciales
 ---------
 

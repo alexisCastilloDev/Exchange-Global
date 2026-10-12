@@ -8,8 +8,8 @@ Global Exchange es una aplicación Django organizada por dominios funcionales:
 
 * ``apps.authentication``: integración OIDC con Keycloak, roles de sesión,
   filtros de plantillas y auditoría de bajas.
-* ``apps.caja``: apertura de caja, saldo inicial por moneda y operaciones de
-  ventanilla (compra y venta de divisas en efectivo) de un cajero.
+* ``apps.caja``: apertura de caja, saldo inicial por moneda, operaciones de
+  ventanilla (compra y venta de divisas en efectivo) y arqueo de un cajero.
 * ``apps.clientes``: perfiles de clientes, selección del cliente activo,
   asociaciones de usuarios y métodos de pago.
 * ``apps.divisas``: catálogo de divisas, cotizaciones, historial y simulación.
@@ -485,12 +485,12 @@ registrar cualquier operación, el saldo que muestra ese panel coincide con
 el saldo inicial recién contado (ver `Operaciones en ventanilla`_ para cómo
 cambia a partir de ahí).
 
-El cierre de caja y el arqueo son HU futuras que no existen todavía en este
-código; ``Caja.estado`` ya contempla "Cerrada" para no tener que migrar el
-modelo de nuevo cuando se implementen. El acceso a cualquier función de caja
-está restringido al rol ``cajero`` exclusivamente (sin excepción para
-administración ni análisis cambiario, a diferencia de otras pantallas de este
-sistema).
+El cierre de caja todavía es una HU futura que no existe en este código;
+``Caja.estado`` ya contempla "Cerrada" para no tener que migrar el modelo de
+nuevo cuando se implemente. El arqueo (ver `Arqueo de caja`_ más abajo) sí
+está implementado. El acceso a cualquier función de caja está restringido al
+rol ``cajero`` exclusivamente (sin excepción para administración ni análisis
+cambiario, a diferencia de otras pantallas de este sistema).
 
 Operaciones en ventanilla
 -------------------------
@@ -550,6 +550,50 @@ el primer ``migrate``. Por el mismo motivo, ``TasasVigentesListView`` la
 excluye de la pantalla de tasas vigentes (nunca tiene una cotización propia
 que mostrar ahí). Una venta no tiene esta dependencia: solo entrega la divisa
 extranjera, nunca necesita resolver la fila de PYG.
+
+Arqueo de caja
+--------------
+
+Implementa la HU "Arqueo de Caja": con la caja ya abierta, el cajero inicia
+un arqueo en ``/caja/arqueo/`` (``apps.caja.views.IniciarArqueoCajaView``),
+contando físicamente cuánto tiene de cada divisa activa **ya cotizada**
+(incluido PYG, siempre cotizado con tasa 1:1) — mismo criterio exacto que
+``AperturaCajaForm`` usa para el saldo inicial, hasta reutilizar el mismo
+mensaje de aviso (``apps.caja.views._avisar_divisas_sin_cotizar``):
+``apps.caja.forms.ArqueoCajaForm`` genera un campo ``contado_<divisa.pk>``
+por cada divisa cotizada, y deja **fuera** cualquier divisa activa sin
+ninguna cotización vigente. Sin una tasa de referencia no hay forma
+confiable de interpretar esa moneda en un arqueo, así que ni siquiera se
+ofrece el campo para contarla — a diferencia de la ventanilla (donde una
+divisa sin cotizar simplemente no se puede operar), acá se trata igual que
+en la apertura de caja, incluido el mensaje pidiendo que un analista
+cambiario o un administrador la cotice primero.
+
+Al enviar el formulario, por cada divisa cotizada el sistema congela en un
+``apps.caja.models.DetalleArqueoCaja`` tanto lo contado como
+``Caja.saldo_actual`` en ese instante, y calcula la diferencia entre ambos
+(Criterio 1): positiva es un sobrante, negativa un faltante, cero significa
+que coinciden exactamente.
+
+Una diferencia distinta de cero en cualquier divisa **nunca** rechaza el
+arqueo ni bloquea la caja: se guarda igual, sin impedir que el cajero sigua
+operando con compras, ventas u otro arqueo después (Criterio 2). No hay
+ninguna validación de "la diferencia no puede ser distinta de cero" en
+``ArqueoCajaForm`` — lo único que rechaza es un monto negativo o no numérico,
+igual que el resto de los formularios de caja.
+
+Cada ``apps.caja.models.ArqueoCaja`` queda asociado a la caja y al cajero que
+lo registró, con la fecha y hora (``creado_en``) y, por cada divisa, el
+monto contado y el saldo del sistema en ese momento (Criterio 3). Ambos
+valores quedan **congelados** en ``DetalleArqueoCaja``: no se recalculan
+después, así que un arqueo viejo sigue mostrando el saldo que el sistema
+tenía en ese instante aunque ``Caja.saldo_actual`` haya cambiado desde
+entonces con operaciones nuevas. Queda disponible para consulta posterior en
+``apps.caja.views.DetalleArqueoCajaView`` (``/caja/arqueo/<uuid>/``) y en el
+listado ``apps.caja.views.HistorialArqueosCajaView``
+(``/caja/arqueo/historial/``), ambos restringidos al cajero que lo registró
+— el mismo alcance que el resto de las funciones de caja, donde cada cajero
+ve únicamente lo suyo.
 
 Acceso a esta documentación desde el sistema
 ----------------------------------------------

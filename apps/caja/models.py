@@ -198,3 +198,101 @@ class OperacionVentanilla(models.Model):
     def __str__(self):
         """Describe el tipo, el monto en divisa y la caja de la operación."""
         return f'{self.get_tipo_display()}: {self.monto_divisa} {self.divisa.codigo} ({self.caja})'
+
+
+class ArqueoCaja(models.Model):
+    """Registra la comparación, en un momento puntual, entre el saldo del sistema y lo contado a mano.
+
+    Implementa la HU "Arqueo de Caja": el cajero cuenta físicamente cuánto
+    tiene de cada moneda y el sistema lo compara contra
+    ``Caja.saldo_actual`` en ese instante (ver
+    ``apps.caja.views.IniciarArqueoCajaView``). Ambos valores quedan
+    congelados por divisa en ``DetalleArqueoCaja`` — no se recalculan
+    después — para que el registro sea fiel a lo que realmente se comparó
+    ese día, aunque el saldo de la caja siga cambiando con operaciones
+    posteriores (Criterio 3: "disponible para consulta posterior").
+
+    Una diferencia distinta de cero en cualquier divisa (sobrante o
+    faltante) nunca impide registrar el arqueo ni sigue bloqueando la caja
+    después: solo queda constancia de ella (Criterio 2).
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    caja = models.ForeignKey(
+        Caja,
+        on_delete=models.PROTECT,
+        related_name='arqueos',
+        verbose_name='Caja',
+    )
+    cajero = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='arqueos_caja',
+        verbose_name='Cajero',
+    )
+    creado_en = models.DateTimeField(auto_now_add=True, verbose_name='Fecha y hora del arqueo')
+
+    class Meta:
+        """Define el orden y las etiquetas administrativas de los arqueos."""
+        verbose_name = 'Arqueo de caja'
+        verbose_name_plural = 'Arqueos de caja'
+        ordering = ['-creado_en']
+
+    def __str__(self):
+        """Identifica el arqueo por su caja y la fecha/hora en que se realizó."""
+        return f'Arqueo de {self.caja} el {self.creado_en:%d/%m/%Y %H:%M}'
+
+    @property
+    def tiene_diferencias(self):
+        """Indica si algún detalle de este arqueo tiene una diferencia distinta de cero."""
+        return any(detalle.diferencia != Decimal('0.00') for detalle in self.detalles.all())
+
+
+class DetalleArqueoCaja(models.Model):
+    """Compara, para una moneda puntual, el saldo del sistema contra lo contado en un arqueo.
+
+    Una fila por cada divisa activa incluida en un ``ArqueoCaja``.
+    ``saldo_sistema`` y ``monto_contado`` quedan congelados en el momento
+    del arqueo; ``diferencia`` se deriva de esos dos valores (positiva:
+    sobrante; negativa: faltante; cero: coincide exacto), sin necesidad de
+    guardarla por separado.
+    """
+
+    arqueo = models.ForeignKey(
+        ArqueoCaja,
+        on_delete=models.CASCADE,
+        related_name='detalles',
+        verbose_name='Arqueo',
+    )
+    divisa = models.ForeignKey(Divisa, on_delete=models.PROTECT, related_name='+')
+    saldo_sistema = models.DecimalField(
+        max_digits=18, decimal_places=2, verbose_name='Saldo según el sistema',
+    )
+    monto_contado = models.DecimalField(
+        max_digits=18, decimal_places=2, verbose_name='Monto contado físicamente',
+    )
+
+    class Meta:
+        """Define el orden, las etiquetas administrativas y evita duplicar una divisa por arqueo."""
+        verbose_name = 'Detalle de arqueo de caja'
+        verbose_name_plural = 'Detalles de arqueo de caja'
+        ordering = ['divisa__codigo']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['arqueo', 'divisa'],
+                name='detalle_arqueo_unico_por_divisa',
+            ),
+        ]
+
+    def __str__(self):
+        """Muestra la divisa, lo contado y el saldo del sistema en ese momento."""
+        return f'{self.divisa.codigo}: contado {self.monto_contado}, sistema {self.saldo_sistema}'
+
+    @property
+    def diferencia(self):
+        """Diferencia entre lo contado y el saldo del sistema.
+
+        Positiva indica un sobrante (hay más de lo que el sistema esperaba);
+        negativa, un faltante; cero, que coinciden exactamente.
+        """
+        return self.monto_contado - self.saldo_sistema
