@@ -123,6 +123,78 @@ class OperacionVentanillaForm(forms.Form):
         return next(divisa for divisa in self.divisas if str(divisa.pk) == pk)
 
 
+class MovimientoExtraordinarioForm(forms.Form):
+    """Valida la divisa, el monto y el motivo de un movimiento extraordinario de caja.
+
+    A diferencia de ``OperacionVentanillaForm``, no excluye PYG ni ninguna
+    divisa sin cotización vigente: un movimiento extraordinario no calcula
+    ninguna tasa (no es una compra ni una venta de divisas), así que puede
+    registrarse en cualquier divisa activa, incluida PYG, tenga o no
+    cotización cargada — ``Caja.saldo_actual`` tampoco depende de una tasa
+    para calcular el saldo de una moneda. El ``motivo`` es obligatorio
+    (Criterio 3): se rechaza vacío o compuesto solo de espacios, mismo
+    criterio que ``apps.authentication.forms.CausaBajaForm`` usa para la
+    causa de una baja lógica.
+    """
+
+    divisa = forms.ChoiceField(
+        label='Divisa',
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        error_messages={
+            'required': 'Debe seleccionar una divisa.',
+            'invalid_choice': 'La divisa seleccionada está inactiva o no está disponible.',
+        },
+    )
+    monto = forms.DecimalField(
+        label='Monto',
+        min_value=Decimal('0.01'),
+        max_digits=18,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'class': 'form-control'}),
+        error_messages={
+            'required': 'Debe ingresar un monto.',
+            'invalid': 'El monto debe ser un número válido.',
+            'min_value': 'El monto debe ser mayor que cero.',
+            'max_digits': 'El monto supera la cantidad de dígitos permitida.',
+            'max_decimal_places': 'El monto admite como máximo 2 decimales.',
+            'max_whole_digits': 'El monto supera la cantidad de dígitos permitida.',
+        },
+    )
+    motivo = forms.CharField(
+        label='Motivo',
+        max_length=1000,
+        widget=forms.Textarea(
+            attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Indicá el motivo del movimiento.',
+            }
+        ),
+        error_messages={'required': 'Debe indicar el motivo del movimiento.'},
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Carga como opciones todas las divisas activas, PYG incluido."""
+        super().__init__(*args, **kwargs)
+        self.divisas = list(Divisa.objects.filter(activa=True).order_by('codigo'))
+        self.fields['divisa'].choices = [('', 'Seleccionar divisa')] + [
+            (str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})') for divisa in self.divisas
+        ]
+
+    def clean_motivo(self):
+        """Rechaza un motivo vacío después de quitar espacios exteriores."""
+        motivo = self.cleaned_data['motivo'].strip()
+        if not motivo:
+            raise forms.ValidationError('Debe indicar el motivo del movimiento.')
+        return motivo
+
+    def divisa_seleccionada(self):
+        """Devuelve la ``Divisa`` ya validada. Solo debe llamarse tras confirmar ``is_valid()``."""
+        pk = self.cleaned_data['divisa']
+        return next(divisa for divisa in self.divisas if str(divisa.pk) == pk)
+
+
 class ArqueoCajaForm(forms.Form):
     """Pide el monto físico contado de cada divisa cotizada para registrar un arqueo.
 

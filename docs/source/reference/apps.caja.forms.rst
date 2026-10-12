@@ -9,6 +9,10 @@ apps.caja.forms module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.caja.forms.MovimientoExtraordinarioForm
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.caja.forms.ArqueoCajaForm
    :members:
    :show-inheritance:

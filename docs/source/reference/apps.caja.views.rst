@@ -15,6 +15,10 @@ apps.caja.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.caja.views.RegistrarMovimientoExtraordinarioView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.caja.views.IniciarArqueoCajaView
    :members:
    :show-inheritance:

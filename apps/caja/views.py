@@ -1,4 +1,4 @@
-"""Vistas para la apertura, consulta, operaciones de ventanilla y arqueo de la caja de un cajero."""
+"""Vistas para la apertura, consulta, operaciones de ventanilla, movimientos extraordinarios y arqueo de la caja de un cajero."""
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -7,8 +7,20 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 
-from apps.caja.forms import AperturaCajaForm, ArqueoCajaForm, OperacionVentanillaForm
-from apps.caja.models import ArqueoCaja, Caja, DetalleArqueoCaja, OperacionVentanilla, SaldoInicialCaja
+from apps.caja.forms import (
+    AperturaCajaForm,
+    ArqueoCajaForm,
+    MovimientoExtraordinarioForm,
+    OperacionVentanillaForm,
+)
+from apps.caja.models import (
+    ArqueoCaja,
+    Caja,
+    DetalleArqueoCaja,
+    MovimientoExtraordinario,
+    OperacionVentanilla,
+    SaldoInicialCaja,
+)
 from apps.divisas.models import CalculoOperacion, Divisa
 from apps.divisas.views import _calcular_importe_operacion
 
@@ -119,14 +131,21 @@ class PanelCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
         )
         saldos_actuales = []
         operaciones = []
+        movimientos_extraordinarios = []
         if caja is not None:
             divisas = Divisa.objects.filter(activa=True).order_by('codigo')
             saldos_actuales = [(divisa, caja.saldo_actual(divisa)) for divisa in divisas]
             operaciones = caja.operaciones.select_related('divisa')[:20]
+            movimientos_extraordinarios = caja.movimientos_extraordinarios.select_related('divisa')[:20]
         return render(
             request,
             'caja/panel_caja.html',
-            {'caja': caja, 'saldos_actuales': saldos_actuales, 'operaciones': operaciones},
+            {
+                'caja': caja,
+                'saldos_actuales': saldos_actuales,
+                'operaciones': operaciones,
+                'movimientos_extraordinarios': movimientos_extraordinarios,
+            },
         )
 
 
@@ -268,6 +287,115 @@ class RegistrarOperacionVentanillaView(LoginRequiredMixin, UserPassesTestMixin, 
             monto_pyg=monto_pyg,
         )
         messages.success(request, 'La operación se registró correctamente y el saldo de la caja fue actualizado.')
+        return redirect('caja:panel')
+
+
+class RegistrarMovimientoExtraordinarioView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Registra, para la caja abierta del cajero, un ingreso o egreso extraordinario de efectivo.
+
+    Implementa la HU "Gestión de movimientos extraordinarios de Caja": a
+    diferencia de ``RegistrarOperacionVentanillaView``, no calcula ninguna
+    tasa ni comisión — el cajero indica directamente la divisa, el monto y
+    el motivo del movimiento (ver ``apps.caja.models.MovimientoExtraordinario``).
+    Sin una caja abierta, rechaza la acción e indica abrir una primero
+    (mismo criterio que el resto de las funciones de caja); con saldo
+    insuficiente de la divisa para un egreso, también la rechaza e informa
+    el motivo (Criterio 2).
+    """
+
+    def test_func(self):
+        """Solo el rol cajero puede registrar movimientos extraordinarios (mismo criterio que el resto de caja)."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cajero' in roles
+
+    @staticmethod
+    def _normalizar_tipo(tipo):
+        """Normaliza el tipo recibido por URL y valida que sea 'ingreso' o 'egreso'.
+
+        Args:
+            tipo (str): Tipo indicado en la ruta (por ejemplo ``ingreso``).
+
+        Returns:
+            str: El tipo en mayúsculas, ``INGRESO`` o ``EGRESO``.
+
+        Raises:
+            Http404: Si el tipo no corresponde a un movimiento conocido.
+        """
+        tipo = tipo.upper()
+        if tipo not in dict(MovimientoExtraordinario.TIPO_CHOICES):
+            raise Http404('El tipo de movimiento extraordinario solicitado no existe.')
+        return tipo
+
+    @staticmethod
+    def _caja_abierta_o_redireccion(request):
+        """Resuelve la caja abierta del cajero, o la redirección a devolver si no tiene una."""
+        caja = Caja.objects.filter(usuario=request.user, estado=Caja.ESTADO_ABIERTA).first()
+        if caja is None:
+            messages.error(
+                request,
+                'Necesitás abrir una caja antes de registrar un movimiento extraordinario.',
+            )
+            return None, redirect('caja:abrir')
+        return caja, None
+
+    def get(self, request, *args, **kwargs):
+        """Muestra el formulario de registro, o por qué no se puede usar todavía."""
+        tipo = self._normalizar_tipo(kwargs['tipo'])
+        caja, redireccion = self._caja_abierta_o_redireccion(request)
+        if redireccion is not None:
+            return redireccion
+        form = MovimientoExtraordinarioForm()
+        return render(
+            request, 'caja/movimiento_extraordinario.html', {'form': form, 'tipo': tipo, 'caja': caja},
+        )
+
+    def post(self, request, *args, **kwargs):
+        """Valida la divisa, el monto y el motivo, y registra el movimiento si hay saldo suficiente.
+
+        Args:
+            request (HttpRequest): Solicitud POST con los campos ``divisa``,
+                ``monto`` y ``motivo`` (ver ``MovimientoExtraordinarioForm``).
+
+        Returns:
+            HttpResponse: Redirección al panel de caja si el movimiento se
+            registra correctamente, o el mismo formulario con el error de
+            validación o de saldo insuficiente.
+        """
+        tipo = self._normalizar_tipo(kwargs['tipo'])
+        caja, redireccion = self._caja_abierta_o_redireccion(request)
+        if redireccion is not None:
+            return redireccion
+
+        form = MovimientoExtraordinarioForm(request.POST)
+        if not form.is_valid():
+            return render(
+                request, 'caja/movimiento_extraordinario.html', {'form': form, 'tipo': tipo, 'caja': caja},
+            )
+
+        divisa = form.divisa_seleccionada()
+        monto = form.cleaned_data['monto']
+
+        if tipo == MovimientoExtraordinario.TIPO_EGRESO:
+            saldo_disponible = caja.saldo_actual(divisa)
+            if saldo_disponible < monto:
+                messages.error(
+                    request,
+                    f'Saldo insuficiente de {divisa.codigo} en la caja: hay '
+                    f'{saldo_disponible} y se necesitan {monto} para registrar este egreso.',
+                )
+                return render(
+                    request, 'caja/movimiento_extraordinario.html', {'form': form, 'tipo': tipo, 'caja': caja},
+                )
+
+        MovimientoExtraordinario.objects.create(
+            caja=caja,
+            cajero=request.user,
+            tipo=tipo,
+            divisa=divisa,
+            monto=monto,
+            motivo=form.cleaned_data['motivo'],
+        )
+        messages.success(request, 'El movimiento extraordinario se registró correctamente.')
         return redirect('caja:panel')
 
 

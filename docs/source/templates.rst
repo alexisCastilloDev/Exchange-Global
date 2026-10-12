@@ -193,9 +193,13 @@ Caja
 
 .. literalinclude:: ../../templates/caja/panel_caja.html
    :language: html
-   :lines: 1-9
+   :lines: 1-11
 
 .. literalinclude:: ../../templates/caja/operacion_ventanilla.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/caja/movimiento_extraordinario.html
    :language: html
    :lines: 1-7
 

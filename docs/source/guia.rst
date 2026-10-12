@@ -551,6 +551,43 @@ excluye de la pantalla de tasas vigentes (nunca tiene una cotización propia
 que mostrar ahí). Una venta no tiene esta dependencia: solo entrega la divisa
 extranjera, nunca necesita resolver la fila de PYG.
 
+Movimientos extraordinarios de caja
+------------------------------------
+
+Implementa la HU "Gestión de movimientos extraordinarios de Caja": con la caja
+ya abierta, el cajero registra en ``/caja/movimientos/ingreso/`` o
+``/caja/movimientos/egreso/`` (``apps.caja.views.RegistrarMovimientoExtraordinarioView``)
+un ingreso o egreso de efectivo que **no** proviene de una compra o venta de
+divisas —por ejemplo, un refuerzo de caja o un pago de gastos de oficina—,
+usando ``apps.caja.forms.MovimientoExtraordinarioForm`` para validar la
+divisa, el monto (mayor que cero, numérico) y el motivo.
+
+A diferencia de ``OperacionVentanillaForm`` (ver `Operaciones en
+ventanilla`_), este formulario no excluye PYG ni ninguna divisa sin
+cotización vigente: un movimiento extraordinario no calcula ninguna tasa ni
+comisión, así que puede registrarse en cualquier divisa activa del sistema.
+
+``Caja.saldo_actual`` suma los ingresos y resta los egresos extraordinarios
+de cada moneda exactamente igual que ya hace con las operaciones de
+ventanilla (Criterio 1), de modo que ambos tipos de movimiento conviven en el
+mismo saldo derivado. Antes de registrar un egreso, la vista verifica que la
+caja tenga saldo suficiente de esa divisa y, si no alcanza, lo rechaza
+informando el saldo disponible y el monto necesario, sin crear nada
+(Criterio 2); un ingreso, en cambio, nunca se rechaza por saldo. El motivo es
+obligatorio: un valor vacío o compuesto solo de espacios se rechaza con el
+mismo criterio que ``apps.authentication.forms.CausaBajaForm`` usa para la
+causa de una baja lógica (Criterio 3).
+
+Sin una caja abierta, tanto el formulario como el registro se rechazan,
+redirigiendo a abrir una primero, igual que el resto de las funciones de
+caja. Al guardarse, el movimiento queda vinculado a la caja activa y al
+cajero (``MovimientoExtraordinario.caja``/``cajero``), con el tipo, la
+divisa, el monto y el motivo. En el panel del cajero (``/caja/``), los
+movimientos extraordinarios se muestran en su propia tabla ("Últimos
+movimientos extraordinarios"), separada de "Últimas operaciones de
+ventanilla", para que nunca se confundan con una operación cambiaria en
+ningún listado o reporte de la caja (Criterio 4).
+
 Arqueo de caja
 --------------
 
