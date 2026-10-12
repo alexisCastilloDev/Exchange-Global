@@ -1698,6 +1698,140 @@ el formulario (con el mensaje de aviso), el arqueo se puede registrar igual sin 
 sin advertencias (se agregó `apps.caja.views._avisar_divisas_sin_cotizar` a la referencia). Suite
 completa: sin fallas tras este fix.
 
+## Sesión 13 — 12/10/2026 — GE-54 — Gestión de movimientos extraordinarios de Caja
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-54
+**Rama:** `feature/GE-54`
+**Participantes:** Adriana Benítez, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Gestión de movimientos extraordinarios de Caja", con tests, docstrings, Sphinx
+actualizado y esta documentación de la conversación.
+
+> Como cajero quiero registrar movimientos extraordinarios de caja para reflejar ingresos o
+> egresos que no provienen directamente de operaciones cambiarias.
+
+Criterios de aceptación:
+
+1. Dado que tengo una caja abierta, cuando registro un movimiento extraordinario (ingreso o
+   egreso) indicando monto, moneda y motivo, entonces el saldo de la caja se actualiza en
+   consecuencia.
+2. Dado que intento registrar un egreso extraordinario mayor al saldo disponible de esa divisa,
+   cuando lo intento, entonces el sistema rechaza el movimiento e informa el motivo.
+3. Dado que no ingreso un motivo, cuando intento guardar el movimiento, entonces el sistema exige
+   ese campo antes de permitir el registro.
+4. Dado que se registra un movimiento extraordinario, cuando se guarda, entonces queda
+   identificado como distinto de una operación cambiaria en cualquier listado o reporte de la
+   caja.
+
+### Diagnóstico inicial
+
+Esta sesión arrancó después de un salto de contexto grande: la última vez que se tocó este código
+fue la Sesión 8 (GE-37, "Consultar el historial de transacciones"), pero `develop` había avanzado
+mucho desde entonces sin que esta sesión lo supiera — un `Pago` asociado a transacciones (Sesión 9),
+pagos con tarjeta vía Stripe (dos sesiones, con una corrección), y toda una app `apps.caja` nueva
+construida en tres HU sucesivas (Sesión 10 "Apertura de Caja", Sesión 11 "Gestión de operaciones en
+ventanilla", Sesión 12 "Arqueo de Caja"). Antes de tocar nada se investigó a fondo el estado actual:
+`apps/caja/models.py`, `views.py`, `forms.py`, `urls.py`, los templates de caja, y
+`tests/test_operaciones_ventanilla.py`/`test_arqueo_caja.py`, además de confirmar que la convención
+de esta misma documentación cambió (de un archivo `.md` nuevo por sesión a este único archivo
+consolidado, `REGISTRO_CONVERSACIONES_IA.md`, con una sección "Sesión N" por sesión).
+
+Esa investigación confirmó que "caja abierta" ya es un concepto resuelto (``Caja``, per cajero, con
+una restricción única en base para que nunca haya dos "Abierta" a la vez) y que el único saldo por
+moneda que existe en todo el sistema es ``Caja.saldo_actual(divisa)`` — un valor derivado
+perezosamente del saldo inicial más los ingresos y egresos de ``OperacionVentanilla`` ya registrada,
+sin ningún campo mutable que mantener sincronizado. Esta HU es, en esencia, una segunda fuente de
+ingresos/egresos para ese mismo saldo, que no pasa por ningún cálculo de tasa ni comisión. El propio
+docstring de ``Caja`` (Sesión 10) decía literalmente que "los movimientos" de una caja eran una HU
+futura que todavía no existía en el código — exactamente lo que esta sesión vino a resolver.
+
+### Diseño
+
+- **`apps.caja.models.MovimientoExtraordinario`** (nuevo, junto a `OperacionVentanilla`): UUID,
+  `caja` y `cajero` (mismo vínculo explícito que `OperacionVentanilla`), `tipo`
+  (`INGRESO`/`EGRESO`), `divisa`, `monto` y `motivo` (`TextField`, obligatorio a nivel de modelo,
+  igual que `HistorialBaja.causa`). Migración `apps.caja.0004_movimientoextraordinario`.
+- **`Caja.saldo_actual(divisa)` extendido, no reemplazado**: se agregó, al final del cálculo
+  existente, la suma de ingresos y resta de egresos de `MovimientoExtraordinario` para esa misma
+  divisa, exactamente con el mismo patrón de agregación (`aggregate(Sum(...))` con `or Decimal('0.00')`
+  para el caso sin movimientos) que ya usa para `OperacionVentanilla`. Así ambas fuentes conviven en
+  un mismo saldo derivado, sin que `ArqueoCaja`/`DetalleArqueoCaja` (Sesión 12) necesiten ningún
+  cambio: siguen llamando a `caja.saldo_actual(divisa)` tal cual, y automáticamente comparan contra
+  un saldo que ya incluye los movimientos extraordinarios.
+- **`apps.caja.forms.MovimientoExtraordinarioForm`** (nuevo): a propósito **no** reutiliza el mismo
+  filtro de divisas que `OperacionVentanillaForm` (que excluye PYG y cualquier divisa sin
+  cotización vigente). Un movimiento extraordinario no calcula ninguna tasa, así que esas dos
+  exclusiones no tienen sentido acá: ofrece todas las divisas activas del sistema, PYG incluido. El
+  campo `motivo` usa el mismo criterio de validación que
+  `apps.authentication.forms.CausaBajaForm.clean_causa` (rechaza vacío o solo espacios, con mensaje
+  en español) en vez de inventar uno nuevo para "motivo".
+- **`apps.caja.views.RegistrarMovimientoExtraordinarioView`** (nuevo, junto a
+  `RegistrarOperacionVentanillaView`): mismo patrón de tipo normalizado desde la URL
+  (`/caja/movimientos/<tipo>/`) y de resolución de la caja abierta (Criterio 1). A diferencia de
+  `RegistrarOperacionVentanillaView`, no hay ningún cálculo de tasa/comisión antes de guardar; la
+  única validación de negocio es, para un egreso, comparar `caja.saldo_actual(divisa)` contra el
+  monto y rechazar con el mismo estilo de mensaje ("Saldo insuficiente de ...: hay ... y se
+  necesitan ...") que ya usa la ventanilla (Criterio 2). Un ingreso nunca se valida contra el saldo.
+- **Criterio 4 (distinguible de una operación cambiaria)**: se resolvió con la misma estrategia que
+  ya separa "Operaciones de ventanilla" de "Arqueos" en este mismo panel — una sección y una tabla
+  propias ("Últimos movimientos extraordinarios"), nunca mezclada con la de "Últimas operaciones de
+  ventanilla". No se diseñó ningún listado unificado de "todos los movimientos de caja" porque
+  ningún criterio lo pide, y mezclar dos modelos distintos en una sola tabla habría requerido
+  normalizarlos a un formato común como ya hace `HistorialTransaccionesView` en `apps.divisas` para
+  compras/ventas/cambios — una complejidad que esta HU no necesita.
+- **`PanelCajaView`/`panel_caja.html`**: dos accesos nuevos ("Ingreso extraordinario" / "Egreso
+  extraordinario") junto a los de comprar/vender divisas y arqueo, y la nueva tabla de movimientos
+  extraordinarios (últimos 20 de la caja abierta), con su propio mensaje de "todavía no registraste
+  ninguno" cuando está vacía.
+
+### Problema de entorno encontrado (no introducido por esta HU)
+
+Al correr `manage.py makemigrations caja` por primera vez en esta sesión, falló con
+`ModuleNotFoundError: No module named 'stripe'` — el mismo problema que ya quedó documentado en la
+Sesión 12: el código real de los pagos con tarjeta vía Stripe ya está mergeado en `develop`, pero el
+entorno local de esta sesión nunca había instalado esa dependencia nueva de `requirements.txt`. Se
+corrigió con `pip install -r requirements.txt` (instalación de dependencias ya declaradas, no un
+cambio de código) y recién ahí se pudo generar la migración.
+
+### Tests
+
+`tests/test_movimientos_extraordinarios.py` (nuevo, 23 tests): uno o más por cada criterio (un
+ingreso suma al saldo actual, un egreso resta, un movimiento puede registrarse en PYG —a diferencia
+de ventanilla—, sin caja abierta se rechaza tanto el GET como el POST, un egreso mayor al saldo
+disponible se rechaza informando el motivo, el límite exacto es suficiente, un ingreso nunca se
+rechaza por saldo, un motivo vacío o solo de espacios se rechaza, el movimiento guardado referencia
+caja/cajero/tipo/divisa/monto/motivo, y el panel muestra la tabla de movimientos extraordinarios
+separada de la de operaciones de ventanilla), más validaciones de formulario (monto negativo, no
+numérico, PYG sí se ofrece, una divisa sin cotizar también se ofrece, tipo de URL desconocido
+responde 404) y permisos (sin rol cajero, sin sesión). Se agregó además
+`CajaSaldoActualConMovimientosExtraordinariosTest`, una clase aparte que prueba `Caja.saldo_actual`
+directamente contra el modelo con movimientos extraordinarios (solos, combinados con
+`OperacionVentanilla`, y aislados entre cajas distintas), siguiendo el mismo patrón que
+`CajaSaldoActualTest` ya usa en `test_operaciones_ventanilla.py` (Sesión 11).
+
+### Resultado final
+
+- Suite completa: **386 passed** (363 previos + 23 nuevos de esta HU).
+- `manage.py check`: sin problemas. `makemigrations --check --dry-run`: sin cambios pendientes
+  (ya generada y aplicada la migración `apps.caja.0004_movimientoextraordinario`).
+- Sphinx recompilado con `-W` sobre un directorio temporal (sin tocar `docs/build/`, que está
+  versionado): sin advertencias. `guia.rst` agregó la sección "Movimientos extraordinarios de
+  caja" entre "Operaciones en ventanilla" y "Arqueo de caja"; `reference/apps.caja.models.rst`,
+  `reference/apps.caja.forms.rst` y `reference/apps.caja.views.rst` incluyen los símbolos nuevos;
+  `templates.rst` incluye `movimiento_extraordinario.html` y actualiza el rango de líneas de
+  `panel_caja.html` (su comentario de encabezado creció de 7 a 9 líneas de contenido).
+
+### Pendiente / fuera de alcance
+
+- No existe ningún listado unificado de "todos los movimientos de caja" (ventanilla + extraordinarios
+  + arqueos en una sola vista): cada uno tiene su propia tabla en el panel, que es lo que pide el
+  Criterio 4 (distinguibles entre sí), no un reporte combinado.
+- No se agregó ninguna categoría/clasificación del motivo (por ejemplo, "gasto de oficina", "refuerzo
+  de caja"): el criterio solo pide que el campo exista y sea obligatorio, como texto libre.
+
 ## Enlaces externos (conversaciones completas)
 
 Extraído de `ia-CONVERSATION.TXT`. Son enlaces a conversaciones completas alojadas en claude.ai (no narrativas resumidas como las sesiones anteriores):

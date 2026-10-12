@@ -13,6 +13,10 @@ apps.caja.models module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.caja.models.MovimientoExtraordinario
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.caja.models.ArqueoCaja
    :members:
    :show-inheritance:

@@ -14,11 +14,11 @@ class Caja(models.Model):
 
     Implementa la HU "Apertura de Caja": se crea siempre en estado
     "Abierta", asociada al cajero que la abre y a la fecha y hora de
-    apertura (``abierta_en``). El cierre, las operaciones, el arqueo y los
-    movimientos de una caja son HU futuras que todavía no existen en este
-    código; por eso ``estado`` ya contempla "Cerrada" y ``cerrada_en`` desde
-    ahora (para no tener que migrar el modelo de nuevo más adelante), pero
-    ninguna vista de este archivo los usa todavía.
+    apertura (``abierta_en``). El cierre de una caja es una HU futura que
+    todavía no existe en este código; por eso ``estado`` ya contempla
+    "Cerrada" y ``cerrada_en`` desde ahora (para no tener que migrar el
+    modelo de nuevo más adelante), pero ninguna vista de este archivo los
+    usa todavía.
     """
 
     ESTADO_ABIERTA = 'ABIERTA'
@@ -65,9 +65,10 @@ class Caja(models.Model):
         No se guarda como un campo mutable que haya que mantener
         sincronizado en cada operación: se deriva, de forma perezosa, del
         saldo inicial registrado al abrir (``SaldoInicialCaja``) más los
-        ingresos y menos los egresos de esa moneda en las operaciones de
-        ventanilla ya registradas (``OperacionVentanilla``) — el mismo
-        patrón de estado computado que ya usan
+        ingresos y menos los egresos de esa moneda, tanto en las
+        operaciones de ventanilla (``OperacionVentanilla``) como en los
+        movimientos extraordinarios (``MovimientoExtraordinario``) ya
+        registrados — el mismo patrón de estado computado que ya usan
         ``CalculoOperacion.estado_efectivo``/``Divisa.ultima_cotizacion`` en
         vez de columnas que haya que ir actualizando a mano.
 
@@ -97,7 +98,16 @@ class Caja(models.Model):
 
         total_ingresos = ingresos.aggregate(total=models.Sum(campo))['total'] or Decimal('0.00')
         total_egresos = egresos.aggregate(total=models.Sum(campo))['total'] or Decimal('0.00')
-        return saldo + total_ingresos - total_egresos
+
+        movimientos_extraordinarios = self.movimientos_extraordinarios.filter(divisa=divisa)
+        total_ingresos_extra = movimientos_extraordinarios.filter(
+            tipo=MovimientoExtraordinario.TIPO_INGRESO,
+        ).aggregate(total=models.Sum('monto'))['total'] or Decimal('0.00')
+        total_egresos_extra = movimientos_extraordinarios.filter(
+            tipo=MovimientoExtraordinario.TIPO_EGRESO,
+        ).aggregate(total=models.Sum('monto'))['total'] or Decimal('0.00')
+
+        return saldo + total_ingresos - total_egresos + total_ingresos_extra - total_egresos_extra
 
 
 class SaldoInicialCaja(models.Model):
@@ -198,6 +208,74 @@ class OperacionVentanilla(models.Model):
     def __str__(self):
         """Describe el tipo, el monto en divisa y la caja de la operación."""
         return f'{self.get_tipo_display()}: {self.monto_divisa} {self.divisa.codigo} ({self.caja})'
+
+
+class MovimientoExtraordinario(models.Model):
+    """Registra un ingreso o egreso de caja que no proviene de una operación cambiaria.
+
+    Implementa la HU "Gestión de movimientos extraordinarios de Caja": a
+    diferencia de ``OperacionVentanilla`` (que siempre representa una
+    compra o venta de divisas con tasa y comisión calculadas), un
+    movimiento extraordinario no triangula ninguna cotización — es un
+    ingreso o egreso de efectivo puntual, con su ``motivo`` como único dato
+    que lo explica (por ejemplo, un retiro para gastos de oficina, o un
+    refuerzo de caja). Por eso no excluye PYG ni ninguna divisa sin
+    cotización vigente como sí hace ``OperacionVentanillaForm``: no hace
+    falta ninguna tasa para registrar un monto en una moneda puntual.
+
+    ``Caja.saldo_actual`` suma los ingresos y resta los egresos de este
+    modelo exactamente igual que ya hace con ``OperacionVentanilla``
+    (Criterio 1), y ``apps.caja.views.RegistrarMovimientoExtraordinarioView``
+    rechaza un egreso mayor al saldo disponible de esa moneda (Criterio 2)
+    con el mismo criterio que ya usa ``RegistrarOperacionVentanillaView``
+    para una compra o venta. El campo ``motivo`` es obligatorio a nivel de
+    modelo y de formulario (Criterio 3). En cualquier listado o reporte de
+    la caja, un movimiento extraordinario se distingue de una operación
+    cambiaria por aparecer en su propia sección/tabla, nunca mezclado en el
+    listado de ``OperacionVentanilla`` (Criterio 4; ver
+    ``apps.caja.views.PanelCajaView`` y la plantilla ``panel_caja.html``).
+    """
+
+    TIPO_INGRESO = 'INGRESO'
+    TIPO_EGRESO = 'EGRESO'
+    TIPO_CHOICES = [
+        (TIPO_INGRESO, 'Ingreso extraordinario'),
+        (TIPO_EGRESO, 'Egreso extraordinario'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    caja = models.ForeignKey(
+        Caja,
+        on_delete=models.PROTECT,
+        related_name='movimientos_extraordinarios',
+        verbose_name='Caja',
+    )
+    cajero = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='movimientos_extraordinarios_caja',
+        verbose_name='Cajero',
+    )
+    tipo = models.CharField(max_length=7, choices=TIPO_CHOICES, verbose_name='Tipo de movimiento')
+    divisa = models.ForeignKey(
+        Divisa,
+        on_delete=models.PROTECT,
+        related_name='movimientos_extraordinarios',
+        verbose_name='Divisa',
+    )
+    monto = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='Monto')
+    motivo = models.TextField(verbose_name='Motivo')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Define el orden y las etiquetas administrativas de los movimientos extraordinarios."""
+        verbose_name = 'Movimiento extraordinario de caja'
+        verbose_name_plural = 'Movimientos extraordinarios de caja'
+        ordering = ['-creado_en']
+
+    def __str__(self):
+        """Describe el tipo, el monto y la divisa del movimiento."""
+        return f'{self.get_tipo_display()}: {self.monto} {self.divisa.codigo} ({self.caja})'
 
 
 class ArqueoCaja(models.Model):
