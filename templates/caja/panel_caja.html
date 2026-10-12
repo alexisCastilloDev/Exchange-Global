@@ -28,6 +28,12 @@ Contexto esperado: caja (None si no tiene ninguna abierta), saldos_actuales
         <a href="{% url 'caja:registrar_operacion' 'venta' %}" class="btn btn-outline-primary">
             <i class="bi bi-arrow-up-circle me-1"></i> Vender divisas
         </a>
+        <a href="{% url 'caja:iniciar_arqueo' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-clipboard-check me-1"></i> Arqueo de caja
+        </a>
+        <a href="{% url 'caja:historial_arqueos' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history me-1"></i> Historial de arqueos
+        </a>
     </div>
     {% endif %}
 </div>

@@ -1,6 +1,8 @@
 apps.caja.views module
 =======================
 
+.. autofunction:: apps.caja.views._avisar_divisas_sin_cotizar
+
 .. autoclass:: apps.caja.views.AbrirCajaView
    :members:
    :show-inheritance:
@@ -10,5 +12,17 @@ apps.caja.views module
    :show-inheritance:
 
 .. autoclass:: apps.caja.views.RegistrarOperacionVentanillaView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.caja.views.IniciarArqueoCajaView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.caja.views.DetalleArqueoCajaView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.caja.views.HistorialArqueosCajaView
    :members:
    :show-inheritance:

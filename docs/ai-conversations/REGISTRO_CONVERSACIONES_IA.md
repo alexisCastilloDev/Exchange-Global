@@ -25,7 +25,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 9. [Sesión 9 — 08/10/2026 — GE-25 — Asociación de pagos a transacciones](#sesión-9--08102026--ge-25--asociación-de-pagos-a-transacciones)
 10. [Sesión 10 — 09/10/2026 — Apertura de Caja](#sesión-10--09102026--apertura-de-caja)
 11. [Sesión 11 — 11/10/2026 — Gestión de operaciones en ventanilla](#sesión-11--11102026--gestión-de-operaciones-en-ventanilla)
-12. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+12. [Sesión 12 — 11/10/2026 — Arqueo de Caja](#sesión-12--11102026--arqueo-de-caja)
+13. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -1554,6 +1555,148 @@ ausencia de PYG (la migración la garantiza), así que ahora confirma lo contrar
 funciona de punta a punta sin que nadie la haya dado de alta manualmente. `manage.py makemigrations
 --check` y `manage.py check`: sin problemas. Sphinx recompilado con `-W`: sin advertencias. Suite
 completa: sin fallas tras este segundo fix.
+
+## Sesión 12 — 11/10/2026 — Arqueo de Caja
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Arqueo de Caja
+**Rama:** `develop`
+**Participantes:** Ruth, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Arqueo de Caja", con tests, docstrings, Sphinx actualizado y esta
+documentación de la conversación.
+
+> Como cajero quiero realizar un arqueo de caja para comparar el saldo registrado por el
+> sistema con los valores disponibles en la caja.
+
+Criterios de aceptación:
+
+1. Dado que tengo una caja abierta, cuando inicio un arqueo e ingreso el monto físico contado
+   por cada moneda, entonces el sistema lo compara contra el saldo registrado y muestra la
+   diferencia (sobrante o faltante) por divisa.
+2. Dado que el arqueo arroja una diferencia distinta de cero en alguna divisa, cuando se
+   registra, entonces el sistema deja constancia de esa diferencia sin bloquear la operación
+   de la caja.
+3. Dado que realizo un arqueo, cuando se completa, entonces queda registrado con fecha, hora,
+   cajero y los montos contados frente a los del sistema, disponible para consulta posterior.
+
+### Diagnóstico inicial
+
+El terreno ya estaba preparado por las dos HU anteriores de `apps.caja` (Sesión 10 "Apertura de
+Caja" y Sesión 11 "Gestión de operaciones en ventanilla"): `Caja.saldo_actual(divisa)` ya existía
+como el saldo "según el sistema" (saldo inicial + movimientos de `OperacionVentanilla`), así que
+esta HU no necesitaba ningún cálculo nuevo de saldo — solo comparar ese valor ya disponible contra
+lo que el cajero cuenta a mano. El propio docstring de `Caja` (Sesión 10) ya anticipaba esta HU:
+"el arqueo... son HU futuras que todavía no existen en este código".
+
+Una decisión de diseño central: el saldo "según el sistema" en el momento del arqueo tiene que
+quedar **congelado** en el historial. `Caja.saldo_actual` es un valor derivado que cambia con cada
+operación nueva; si el registro del arqueo solo guardara una referencia a la caja y volviera a
+calcular `saldo_actual` cada vez que se consulta, un arqueo de hace una semana mostraría el saldo
+de *hoy*, no el que realmente se comparó ese día — contradiciendo el Criterio 3 ("disponible para
+consulta posterior"). Por eso `DetalleArqueoCaja` guarda ambos montos (`saldo_sistema` y
+`monto_contado`) como valores fijos en el momento de crearse, no como referencias a recalcular.
+
+### Diseño
+
+- **`apps.caja.models.ArqueoCaja`** (nuevo): UUID, `caja`, `cajero`, `creado_en` (fecha y hora,
+  automática). Una propiedad `tiene_diferencias` (True si algún detalle tiene una diferencia
+  distinta de cero) resume el resultado sin necesidad de iterar manualmente en cada plantilla.
+- **`apps.caja.models.DetalleArqueoCaja`** (nuevo): una fila por divisa dentro de un arqueo, con
+  `saldo_sistema` y `monto_contado` congelados, y una propiedad `diferencia` (`monto_contado -
+  saldo_sistema`: positiva es sobrante, negativa es faltante) derivada de esos dos valores en vez
+  de guardarse por separado — mismo criterio que el resto del proyecto usa para evitar datos
+  redundantes que puedan desincronizarse. Restricción única por `(arqueo, divisa)`.
+- **`apps.caja.forms.ArqueoCajaForm`**: mismo patrón que `AperturaCajaForm` (Sesión 10) — genera un
+  campo `contado_<divisa.pk>` por cada divisa activa, incluido PYG, con cero como valor válido (el
+  cajero no tiene nada físico de esa moneda) y rechazo de negativos/no numéricos.
+- **`apps.caja.views.IniciarArqueoCajaView`**: sin una caja abierta, redirige a abrirla primero
+  (mismo criterio que `RegistrarOperacionVentanillaView`, Sesión 11). Al validar el formulario, por
+  cada divisa llama a `caja.saldo_actual(divisa)` una sola vez y la congela junto con lo contado en
+  un `DetalleArqueoCaja`, dentro de una transacción atómica junto con la creación del `ArqueoCaja`.
+  No existe ninguna validación que rechace una diferencia distinta de cero (Criterio 2): la única
+  validación de `ArqueoCajaForm` es sobre el formato del monto, no sobre el resultado de la
+  comparación.
+- **`apps.caja.views.DetalleArqueoCajaView`** y **`HistorialArqueosCajaView`** (Criterio 3): el
+  detalle de un arqueo (fecha, hora, cajero, y la tabla de saldo del sistema/contado/diferencia por
+  divisa) y el listado de arqueos ya registrados, ambos restringidos al cajero que lo generó
+  (`cajero=request.user` en la consulta, no solo en el `test_func`) — mismo alcance que el resto de
+  las pantallas de caja, donde cada cajero ve únicamente lo suyo.
+- El panel del cajero (`panel_caja.html`) agregó los accesos "Arqueo de caja" e "Historial de
+  arqueos" junto a los de comprar/vender divisas.
+
+### Tests
+
+`tests/test_arqueo_caja.py` (22 tests nuevos): uno o más por cada criterio (la comparación calcula
+sobrante y faltante correctamente por divisa, la pantalla de detalle los muestra explícitamente, un
+arqueo sin diferencias lo indica; una diferencia distinta de cero no bloquea el registro ni impide
+que la caja siga operando después —se verificó registrando una venta de ventanilla tras un arqueo
+con diferencias—; el arqueo guardado tiene fecha, hora, cajero y ambos montos, el detalle y el
+historial permiten consultarlo después, y el saldo del sistema queda congelado aunque
+`Caja.saldo_actual` cambie más tarde), más validaciones de formulario (monto negativo, no numérico,
+cero válido), prerequisito de caja abierta (GET y POST), permisos (sin rol cajero, sin sesión, y que
+un cajero no pueda ver el detalle de un arqueo ajeno), y una clase aparte (`ArqueoCajaModeloTest`)
+que prueba `diferencia`/`tiene_diferencias` y la restricción única directamente contra el modelo.
+
+### Problema de entorno encontrado (no introducido por esta HU)
+
+Al correr `manage.py makemigrations`/`check` por primera vez en esta sesión, falló con
+`ModuleNotFoundError: No module named 'stripe'`: el código real de la HU "Pago con tarjeta vía
+Stripe" ya está mergeado en este `develop` (confirmado al ver aparecer
+`apps.divisas.pagos_stripe` en la recompilación de Sphinx), pero el venv local de esta sesión
+nunca había instalado esa dependencia nueva de `requirements.txt`. Se corrigió con
+`pip install -r requirements.txt`, una instalación de dependencias ya declaradas, no un cambio de
+código.
+
+### Resultado final
+
+- Suite completa: sin fallas tras agregar los 22 tests nuevos, sin ninguna regresión sobre
+  `tests/test_caja.py` ni `tests/test_operaciones_ventanilla.py`.
+- `manage.py check` y `makemigrations --check --dry-run`: sin problemas. Migración
+  `apps.caja.0003_arqueocaja_detallearqueocaja` generada y verificada.
+- Sphinx recompilado con `-W`: sin advertencias. `guia.rst` agregó la sección "Arqueo de caja" (y
+  corrigió una frase de la sección "Apertura de caja" que todavía decía que el arqueo era una HU
+  futura); `reference/apps.caja.models.rst`, `reference/apps.caja.forms.rst` y
+  `reference/apps.caja.views.rst` incluyen los símbolos nuevos; `templates.rst` incluye las tres
+  plantillas nuevas (`arqueo_form.html`, `arqueo_detalle.html`, `arqueo_historial.html`).
+
+### Pendiente / fuera de alcance
+
+- El cierre de caja sigue siendo una HU futura: ninguno de los 3 criterios de esta HU lo menciona.
+- No se limita la cantidad de arqueos por turno: un cajero puede arquear varias veces mientras su
+  caja esté abierta, ya que ningún criterio pide restringirlo a uno solo.
+
+### Corrección posterior (mismo día): no ofrecer una divisa sin tasa para arquear
+
+El usuario pidió que, si existe alguna divisa activa sin tasa, el arqueo no permita ingresar datos
+para ella. El diseño original de `ArqueoCajaForm` generaba un campo `contado_<divisa.pk>` para
+*cualquier* divisa activa, sin mirar si tenía cotización — copiando solo la mitad del patrón de
+`AperturaCajaForm` (Sesión 10), que sí la mira.
+
+Se corrigió `ArqueoCajaForm.__init__` para excluir del arqueo cualquier divisa activa sin ninguna
+cotización vigente (PYG, con su tasa 1:1 implícita, sigue contando siempre como cotizada), dejándola
+en `self.divisas_sin_cotizar` para avisar por qué no se ofrece — exactamente el mismo criterio que
+`AperturaCajaForm` ya usa. Como ese aviso (`messages.warning` con el mismo texto) ya existía
+duplicado en `AbrirCajaView` como método privado, se extrajo a una función de módulo
+`apps.caja.views._avisar_divisas_sin_cotizar` y ambas vistas (`AbrirCajaView` e
+`IniciarArqueoCajaView`) pasaron a llamarla, en vez de mantener dos copias de la misma lógica.
+`arqueo_form.html` ganó el mismo bloque de aviso que ya tiene `abrir_caja.html`.
+
+Como `ArqueoCajaForm` nunca valida campos que no declaró, forzar a mano un `contado_<pk>` de una
+divisa sin cotizar en el POST tampoco cuela: Django simplemente lo ignora porque ese campo no existe
+en el formulario, así que no hace falta ninguna limpieza adicional del lado del servidor para ese
+caso.
+
+Efecto colateral en los tests existentes: como ahora `ArqueoCajaForm` exige cotización para toda
+divisa que no sea PYG, el `setUp` de `IniciarArqueoCajaTest` (que usaba USD sin ninguna `Cotizacion`
+desde que esta HU se escribió) necesitó agregarle una, igual que ya hacía
+`test_operaciones_ventanilla.py`. Se agregaron 3 tests nuevos: una divisa sin cotizar no aparece en
+el formulario (con el mensaje de aviso), el arqueo se puede registrar igual sin esa divisa, y un
+`contado_<pk>` forzado a mano para ella se ignora sin crear su detalle. Sphinx recompilado con `-W`:
+sin advertencias (se agregó `apps.caja.views._avisar_divisas_sin_cotizar` a la referencia). Suite
+completa: sin fallas tras este fix.
 
 ## Enlaces externos (conversaciones completas)
 

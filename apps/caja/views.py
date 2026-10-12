@@ -1,16 +1,36 @@
-"""Vistas para la apertura, consulta y operaciones de ventanilla de la caja de un cajero."""
+"""Vistas para la apertura, consulta, operaciones de ventanilla y arqueo de la caja de un cajero."""
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import IntegrityError, transaction
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 
-from apps.caja.forms import AperturaCajaForm, OperacionVentanillaForm
-from apps.caja.models import Caja, OperacionVentanilla, SaldoInicialCaja
+from apps.caja.forms import AperturaCajaForm, ArqueoCajaForm, OperacionVentanillaForm
+from apps.caja.models import ArqueoCaja, Caja, DetalleArqueoCaja, OperacionVentanilla, SaldoInicialCaja
 from apps.divisas.models import CalculoOperacion, Divisa
 from apps.divisas.views import _calcular_importe_operacion
+
+
+def _avisar_divisas_sin_cotizar(request, form):
+    """Informa qué divisas activas no se pueden incluir por falta de cotización.
+
+    Usada tanto por ``AperturaCajaForm`` (saldo inicial) como por
+    ``ArqueoCajaForm`` (monto contado): ninguna de las dos HU es, en sí
+    misma, sobre cotizaciones, pero una divisa sin ninguna cotización
+    vigente no se puede valuar — dejar que el cajero le cuente un monto
+    igual sería un dato que ningún otro cálculo del sistema (cambio,
+    saldo actual, arqueo) podría usar de forma confiable.
+    """
+    if not form.divisas_sin_cotizar:
+        return
+    codigos = ', '.join(divisa.codigo for divisa in form.divisas_sin_cotizar)
+    messages.warning(
+        request,
+        f'Hace falta cotizar {codigos} antes de poder manejarla en una caja. '
+        'Contactate con un analista cambiario o un administrador.',
+    )
 
 
 class AbrirCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -28,24 +48,6 @@ class AbrirCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
         roles = self.request.session.get('keycloak_roles', [])
         return 'cajero' in roles
 
-    @staticmethod
-    def _avisar_divisas_sin_cotizar(request, form):
-        """Informa qué divisas activas no se pueden incluir por falta de cotización.
-
-        No es un criterio de aceptación de esta HU en sí, pero una divisa
-        sin ninguna cotización vigente no se puede valuar: dejar que el
-        cajero le cuente un saldo inicial igual sería un dato que ningún
-        otro cálculo del sistema (cambio, arqueo futuro) podría usar.
-        """
-        if not form.divisas_sin_cotizar:
-            return
-        codigos = ', '.join(divisa.codigo for divisa in form.divisas_sin_cotizar)
-        messages.warning(
-            request,
-            f'Hace falta cotizar {codigos} antes de poder manejarla en una caja. '
-            'Contactate con un analista cambiario o un administrador.',
-        )
-
     def get(self, request, *args, **kwargs):
         """Muestra el formulario de apertura, o por qué no se puede abrir otra."""
         caja_abierta = Caja.objects.filter(usuario=request.user, estado=Caja.ESTADO_ABIERTA).first()
@@ -53,7 +55,7 @@ class AbrirCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
             messages.error(request, 'Ya tenés una caja abierta. Cerrala antes de abrir otra.')
             return redirect('caja:panel')
         form = AperturaCajaForm()
-        self._avisar_divisas_sin_cotizar(request, form)
+        _avisar_divisas_sin_cotizar(request, form)
         return render(request, 'caja/abrir_caja.html', {'form': form})
 
     def post(self, request, *args, **kwargs):
@@ -73,7 +75,7 @@ class AbrirCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
             return redirect('caja:panel')
 
         form = AperturaCajaForm(request.POST)
-        self._avisar_divisas_sin_cotizar(request, form)
+        _avisar_divisas_sin_cotizar(request, form)
         if not form.is_valid():
             return render(request, 'caja/abrir_caja.html', {'form': form})
 
@@ -267,3 +269,115 @@ class RegistrarOperacionVentanillaView(LoginRequiredMixin, UserPassesTestMixin, 
         )
         messages.success(request, 'La operación se registró correctamente y el saldo de la caja fue actualizado.')
         return redirect('caja:panel')
+
+
+class IniciarArqueoCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Registra un arqueo, comparando lo que el cajero contó contra el saldo que calcula el sistema.
+
+    Implementa la HU "Arqueo de Caja". Sin una caja abierta, rechaza la
+    acción e indica abrir una primero, igual que el resto de las funciones
+    de caja. El registro nunca se bloquea por una diferencia: cualquier
+    combinación de sobrantes o faltantes se guarda igual (Criterio 2); la
+    comparación en sí (Criterio 1) y los datos que quedan disponibles para
+    consulta posterior (Criterio 3) los resuelve ``apps.caja.models.ArqueoCaja``/
+    ``DetalleArqueoCaja``. Una divisa activa sin cotización vigente no recibe
+    campo en ``ArqueoCajaForm``, para no comparar el saldo del sistema contra
+    un monto contado que no se puede valuar de forma confiable.
+    """
+
+    def test_func(self):
+        """Solo el rol cajero puede iniciar un arqueo (mismo criterio que el resto de caja)."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cajero' in roles
+
+    @staticmethod
+    def _caja_abierta_o_redireccion(request):
+        """Resuelve la caja abierta del cajero, o la redirección a devolver si no tiene una."""
+        caja = Caja.objects.filter(usuario=request.user, estado=Caja.ESTADO_ABIERTA).first()
+        if caja is None:
+            messages.error(request, 'Necesitás abrir una caja antes de iniciar un arqueo.')
+            return None, redirect('caja:abrir')
+        return caja, None
+
+    def get(self, request, *args, **kwargs):
+        """Muestra el formulario de arqueo, o por qué no se puede usar todavía."""
+        caja, redireccion = self._caja_abierta_o_redireccion(request)
+        if redireccion is not None:
+            return redireccion
+        form = ArqueoCajaForm()
+        _avisar_divisas_sin_cotizar(request, form)
+        return render(request, 'caja/arqueo_form.html', {'form': form, 'caja': caja})
+
+    def post(self, request, *args, **kwargs):
+        """Valida los montos contados, compara contra el saldo actual y registra el arqueo.
+
+        Args:
+            request (HttpRequest): Solicitud POST con un campo
+                ``contado_<divisa.pk>`` por cada divisa activa.
+
+        Returns:
+            HttpResponse: Redirección al detalle del arqueo recién creado,
+            o el mismo formulario con los errores de validación.
+        """
+        caja, redireccion = self._caja_abierta_o_redireccion(request)
+        if redireccion is not None:
+            return redireccion
+
+        form = ArqueoCajaForm(request.POST)
+        _avisar_divisas_sin_cotizar(request, form)
+        if not form.is_valid():
+            return render(request, 'caja/arqueo_form.html', {'form': form, 'caja': caja})
+
+        with transaction.atomic():
+            arqueo = ArqueoCaja.objects.create(caja=caja, cajero=request.user)
+            DetalleArqueoCaja.objects.bulk_create([
+                DetalleArqueoCaja(
+                    arqueo=arqueo,
+                    divisa=divisa,
+                    saldo_sistema=caja.saldo_actual(divisa),
+                    monto_contado=monto_contado,
+                )
+                for divisa, monto_contado in form.montos_por_divisa().items()
+            ])
+
+        messages.success(request, 'El arqueo se registró correctamente.')
+        return redirect('caja:detalle_arqueo', pk=arqueo.pk)
+
+
+class DetalleArqueoCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Muestra el detalle de un arqueo ya registrado, para consulta posterior (Criterio 3).
+
+    Solo el cajero que lo registró puede consultarlo: mismo alcance que el
+    resto de las funciones de caja, donde cada cajero ve únicamente lo suyo.
+    """
+
+    def test_func(self):
+        """Solo el rol cajero puede consultar el detalle de un arqueo."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cajero' in roles
+
+    def get(self, request, *args, **kwargs):
+        """Muestra fecha, hora, cajero y los montos contados frente a los del sistema."""
+        arqueo = get_object_or_404(
+            ArqueoCaja.objects.select_related('caja', 'cajero').prefetch_related('detalles__divisa'),
+            pk=kwargs['pk'], cajero=request.user,
+        )
+        return render(request, 'caja/arqueo_detalle.html', {'arqueo': arqueo})
+
+
+class HistorialArqueosCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Lista los arqueos ya registrados por el cajero, para consulta posterior (Criterio 3)."""
+
+    def test_func(self):
+        """Solo el rol cajero puede consultar su historial de arqueos."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cajero' in roles
+
+    def get(self, request, *args, **kwargs):
+        """Lista los arqueos del cajero, del más reciente al más antiguo."""
+        arqueos = (
+            ArqueoCaja.objects.filter(cajero=request.user)
+            .select_related('caja')
+            .prefetch_related('detalles__divisa')
+        )
+        return render(request, 'caja/arqueo_historial.html', {'arqueos': arqueos})
