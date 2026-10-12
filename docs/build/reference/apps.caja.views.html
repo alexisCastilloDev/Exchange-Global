@@ -1,0 +1,538 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.caja.views module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.clientes package" href="apps.clientes.html" />
+    <link rel="prev" title="apps.caja.urls module" href="apps.caja.urls.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.caja.html">apps.caja package</a></li>
+      <li class="breadcrumb-item active">apps.caja.views module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apps-caja-views-module">
+<h1>apps.caja.views module<a class="headerlink" href="#apps-caja-views-module" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.caja.views._avisar_divisas_sin_cotizar">
+<span class="sig-name descname"><span class="pre">_avisar_divisas_sin_cotizar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#_avisar_divisas_sin_cotizar"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views._avisar_divisas_sin_cotizar" title="Link to this definition"></a></dt>
+<dd><p>Informa qué divisas activas no se pueden incluir por falta de cotización.</p>
+<p>Usada tanto por <code class="docutils literal notranslate"><span class="pre">AperturaCajaForm</span></code> (saldo inicial) como por
+<code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm</span></code> (monto contado): ninguna de las dos HU es, en sí
+misma, sobre cotizaciones, pero una divisa sin ninguna cotización
+vigente no se puede valuar — dejar que el cajero le cuente un monto
+igual sería un dato que ningún otro cálculo del sistema (cambio,
+saldo actual, arqueo) podría usar de forma confiable.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.AbrirCajaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AbrirCajaView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#AbrirCajaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.AbrirCajaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Permite a un cajero abrir su caja registrando el saldo inicial por moneda.</p>
+<p>Implementa la HU «Apertura de Caja». Si el cajero ya tiene una caja en
+estado «Abierta», rechaza la acción y lo manda a su panel en vez de
+mostrar el formulario (Criterio 2); la vista solo construye la
+transacción con los datos ya validados por <code class="docutils literal notranslate"><span class="pre">AperturaCajaForm</span></code>
+(Criterio 3: un monto negativo o no numérico no llega a crear nada).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.AbrirCajaView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#AbrirCajaView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.AbrirCajaView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario de apertura, o por qué no se puede abrir otra.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.AbrirCajaView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#AbrirCajaView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.AbrirCajaView.post" title="Link to this definition"></a></dt>
+<dd><p>Valida el saldo inicial de cada divisa y crea la caja «Abierta».</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con un campo
+<code class="docutils literal notranslate"><span class="pre">saldo_&lt;divisa.pk&gt;</span></code> por cada divisa activa.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección al panel de caja, con la caja recién
+creada, o el mismo formulario con los errores de validación.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.AbrirCajaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#AbrirCajaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.AbrirCajaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede abrir una caja (Criterio 5).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.CerrarCajaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CerrarCajaView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#CerrarCajaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.CerrarCajaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Muestra el resumen del turno y permite confirmar el cierre de la caja abierta del cajero.</p>
+<p>Implementa la HU «Cierre de Caja». El resumen (Criterio 1) incluye, por
+cada moneda contada al abrir, el saldo inicial y el saldo final
+(<code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code>, que ya incluye lo registrado en ventanilla y en
+movimientos extraordinarios), más el detalle completo de ambos y de los
+arqueos del turno. Sin una caja abierta, no hay nada que cerrar y la
+vista redirige al panel. Si el turno no tiene ningún arqueo registrado,
+el resumen muestra una advertencia y el cierre solo se procesa si el
+cajero marca explícitamente que quiere continuar sin arquear
+(Criterio 3); al confirmarse, <code class="docutils literal notranslate"><span class="pre">Caja.cerrar</span></code> persiste la transición a
+«Cerrada» (Criterio 2).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.CerrarCajaView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#CerrarCajaView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.CerrarCajaView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el resumen del turno antes de confirmar el cierre.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.CerrarCajaView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#CerrarCajaView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.CerrarCajaView.post" title="Link to this definition"></a></dt>
+<dd><p>Confirma el cierre, exigiendo confirmación explícita si el turno no tiene arqueos.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST, con <code class="docutils literal notranslate"><span class="pre">confirmar_sin_arqueo</span></code>
+(<code class="docutils literal notranslate"><span class="pre">'on'</span></code>) marcado si el turno no tiene ningún arqueo
+registrado y el cajero quiere cerrar igual.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección al panel de caja si el cierre se
+procesa, o el mismo resumen con la advertencia si falta
+confirmar explícitamente.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.CerrarCajaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#CerrarCajaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.CerrarCajaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede cerrar su caja (mismo criterio que el resto de caja).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.PanelCajaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">PanelCajaView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#PanelCajaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.PanelCajaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Muestra la caja abierta del cajero, con el saldo inicial por moneda.</p>
+<p>Implementa el Criterio 4 de «Apertura de Caja»: tras abrir la caja, el
+cajero ve en su panel el saldo inicial tal como lo registró. Si no
+tiene ninguna caja abierta, ofrece el acceso para abrir una.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.PanelCajaView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#PanelCajaView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.PanelCajaView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra la caja abierta del cajero, con su saldo actual por moneda.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.PanelCajaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#PanelCajaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.PanelCajaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede ver el panel de caja (Criterio 5).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.RegistrarOperacionVentanillaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">RegistrarOperacionVentanillaView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#RegistrarOperacionVentanillaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.RegistrarOperacionVentanillaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Registra, para la caja abierta del cajero, una compra o venta de divisas en efectivo.</p>
+<p>Implementa la HU «Gestión de operaciones en ventanilla»: reutiliza el
+cálculo de cotización ya existente para el flujo online del cliente
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views._calcular_importe_operacion</span></code>) en vez de
+duplicarlo, pero invirtiendo el tipo que se le pasa — ver
+<code class="docutils literal notranslate"><span class="pre">apps.caja.models.OperacionVentanilla</span></code> para la explicación completa de
+por qué «Compra»/»Venta» significan lo opuesto en una y otra HU. Sin una
+caja abierta, rechaza la acción e indica abrir una primero (Criterio 2);
+con saldo insuficiente de la moneda que el cajero debe entregar, también
+la rechaza e informa el motivo (Criterio 3).</p>
+<p>Una compra necesita, además, poder valuar guaraníes contra una
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.Divisa</span></code> de código <code class="docutils literal notranslate"><span class="pre">PYG</span></code>: su existencia está
+garantizada por la migración de datos <code class="docutils literal notranslate"><span class="pre">apps.divisas.0014_crear_divisa_pyg</span></code>
+(PYG es la moneda local/base del sistema, no una divisa extranjera que
+un administrador deba dar de alta manualmente), así que esta vista no
+necesita manejar su ausencia como un caso de error.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.RegistrarOperacionVentanillaView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#RegistrarOperacionVentanillaView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.RegistrarOperacionVentanillaView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario de registro, o por qué no se puede usar todavía.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.RegistrarOperacionVentanillaView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#RegistrarOperacionVentanillaView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.RegistrarOperacionVentanillaView.post" title="Link to this definition"></a></dt>
+<dd><p>Valida el monto, calcula con la cotización vigente y registra la operación.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con los campos <code class="docutils literal notranslate"><span class="pre">divisa</span></code>
+y <code class="docutils literal notranslate"><span class="pre">monto</span></code> (ver <code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm</span></code>).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección al panel de caja si la operación se
+registra correctamente, o el mismo formulario con el error de
+validación o de saldo insuficiente.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.RegistrarOperacionVentanillaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#RegistrarOperacionVentanillaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.RegistrarOperacionVentanillaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede registrar operaciones de ventanilla (mismo criterio que el resto de caja).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.RegistrarMovimientoExtraordinarioView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">RegistrarMovimientoExtraordinarioView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#RegistrarMovimientoExtraordinarioView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.RegistrarMovimientoExtraordinarioView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Registra, para la caja abierta del cajero, un ingreso o egreso extraordinario de efectivo.</p>
+<p>Implementa la HU «Gestión de movimientos extraordinarios de Caja»: a
+diferencia de <code class="docutils literal notranslate"><span class="pre">RegistrarOperacionVentanillaView</span></code>, no calcula ninguna
+tasa ni comisión — el cajero indica directamente la divisa, el monto y
+el motivo del movimiento (ver <code class="docutils literal notranslate"><span class="pre">apps.caja.models.MovimientoExtraordinario</span></code>).
+Sin una caja abierta, rechaza la acción e indica abrir una primero
+(mismo criterio que el resto de las funciones de caja); con saldo
+insuficiente de la divisa para un egreso, también la rechaza e informa
+el motivo (Criterio 2).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.RegistrarMovimientoExtraordinarioView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#RegistrarMovimientoExtraordinarioView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.RegistrarMovimientoExtraordinarioView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario de registro, o por qué no se puede usar todavía.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.RegistrarMovimientoExtraordinarioView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#RegistrarMovimientoExtraordinarioView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.RegistrarMovimientoExtraordinarioView.post" title="Link to this definition"></a></dt>
+<dd><p>Valida la divisa, el monto y el motivo, y registra el movimiento si hay saldo suficiente.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con los campos <code class="docutils literal notranslate"><span class="pre">divisa</span></code>,
+<code class="docutils literal notranslate"><span class="pre">monto</span></code> y <code class="docutils literal notranslate"><span class="pre">motivo</span></code> (ver <code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinarioForm</span></code>).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección al panel de caja si el movimiento se
+registra correctamente, o el mismo formulario con el error de
+validación o de saldo insuficiente.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.RegistrarMovimientoExtraordinarioView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#RegistrarMovimientoExtraordinarioView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.RegistrarMovimientoExtraordinarioView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede registrar movimientos extraordinarios (mismo criterio que el resto de caja).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.IniciarArqueoCajaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">IniciarArqueoCajaView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#IniciarArqueoCajaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.IniciarArqueoCajaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Registra un arqueo, comparando lo que el cajero contó contra el saldo que calcula el sistema.</p>
+<p>Implementa la HU «Arqueo de Caja». Sin una caja abierta, rechaza la
+acción e indica abrir una primero, igual que el resto de las funciones
+de caja. El registro nunca se bloquea por una diferencia: cualquier
+combinación de sobrantes o faltantes se guarda igual (Criterio 2); la
+comparación en sí (Criterio 1) y los datos que quedan disponibles para
+consulta posterior (Criterio 3) los resuelve <code class="docutils literal notranslate"><span class="pre">apps.caja.models.ArqueoCaja</span></code>/
+<code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja</span></code>. Una divisa activa sin cotización vigente no recibe
+campo en <code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm</span></code>, para no comparar el saldo del sistema contra
+un monto contado que no se puede valuar de forma confiable.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.IniciarArqueoCajaView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#IniciarArqueoCajaView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.IniciarArqueoCajaView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario de arqueo, o por qué no se puede usar todavía.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.IniciarArqueoCajaView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#IniciarArqueoCajaView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.IniciarArqueoCajaView.post" title="Link to this definition"></a></dt>
+<dd><p>Valida los montos contados, compara contra el saldo actual y registra el arqueo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con un campo
+<code class="docutils literal notranslate"><span class="pre">contado_&lt;divisa.pk&gt;</span></code> por cada divisa activa.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Redirección al detalle del arqueo recién creado,
+o el mismo formulario con los errores de validación.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.IniciarArqueoCajaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#IniciarArqueoCajaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.IniciarArqueoCajaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede iniciar un arqueo (mismo criterio que el resto de caja).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.DetalleArqueoCajaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DetalleArqueoCajaView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#DetalleArqueoCajaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.DetalleArqueoCajaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Muestra el detalle de un arqueo ya registrado, para consulta posterior (Criterio 3).</p>
+<p>Solo el cajero que lo registró puede consultarlo: mismo alcance que el
+resto de las funciones de caja, donde cada cajero ve únicamente lo suyo.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.DetalleArqueoCajaView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#DetalleArqueoCajaView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.DetalleArqueoCajaView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra fecha, hora, cajero y los montos contados frente a los del sistema.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.DetalleArqueoCajaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#DetalleArqueoCajaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.DetalleArqueoCajaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede consultar el detalle de un arqueo.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.HistorialArqueosCajaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">HistorialArqueosCajaView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#HistorialArqueosCajaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.HistorialArqueosCajaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Lista los arqueos ya registrados por el cajero, para consulta posterior (Criterio 3).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.HistorialArqueosCajaView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#HistorialArqueosCajaView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.HistorialArqueosCajaView.get" title="Link to this definition"></a></dt>
+<dd><p>Lista los arqueos del cajero, del más reciente al más antiguo.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.HistorialArqueosCajaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#HistorialArqueosCajaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.HistorialArqueosCajaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede consultar su historial de arqueos.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.views.HistorialCajasView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">HistorialCajasView</span></span><a class="reference internal" href="../_modules/apps/caja/views.html#HistorialCajasView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.HistorialCajasView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Lista las cajas del cajero, abiertas y cerradas, con su balance final por moneda.</p>
+<p>Implementa el Criterio 4 de «Cierre de Caja»: una caja ya cerrada queda
+disponible para consulta posterior, con su período (<code class="docutils literal notranslate"><span class="pre">abierta_en</span></code>/
+<code class="docutils literal notranslate"><span class="pre">cerrada_en</span></code>) y su balance final por moneda (<code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code>,
+estable desde el cierre porque ninguna vista vuelve a escribir sobre una
+caja «Cerrada»). Esta pantalla es de solo lectura, igual que el resto
+del historial de caja: no ofrece ninguna acción para modificar las
+operaciones de una caja ya registrada.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.HistorialCajasView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#HistorialCajasView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.HistorialCajasView.get" title="Link to this definition"></a></dt>
+<dd><p>Lista las cajas del cajero, de la más reciente a la más antigua, con su saldo por moneda.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.views.HistorialCajasView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/views.html#HistorialCajasView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.views.HistorialCajasView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo el rol cajero puede consultar su historial de cajas.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.caja.urls.html" class="btn btn-neutral float-left" title="apps.caja.urls module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.clientes.html" class="btn btn-neutral float-right" title="apps.clientes package" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

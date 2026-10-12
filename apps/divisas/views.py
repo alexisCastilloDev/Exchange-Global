@@ -11,6 +11,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
@@ -36,6 +37,7 @@ from apps.divisas.models import (
     ConfiguracionVigencia,
     Cotizacion,
     Divisa,
+    NotificacionTasa,
     Pago,
     PagoRechazadoError,
     monto_a_pagar,
@@ -1613,3 +1615,80 @@ class DivisaHistorialBajasView(AdminDivisasMixin, ListView):
         context['titulo'] = 'Historial de bajas de divisas'
         context['volver_url'] = reverse_lazy('divisas:lista_divisas')
         return context
+
+
+class NotificacionesClienteMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Restringe las pantallas de notificaciones de tasas a usuarios clientes.
+
+    Las notificaciones de cambio de tasa (HU GE-51) están dirigidas a
+    usuarios clientes, así que se exige el rol ``cliente`` en la sesión de
+    Keycloak, el mismo criterio con el que se muestra el indicador de no
+    leídas (ver ``apps.divisas.context_processors.notificaciones_context``).
+    Además, cada vista filtra siempre por ``request.user``: nadie puede ver
+    ni modificar notificaciones ajenas.
+    """
+
+    def test_func(self):
+        """Comprueba que el usuario tenga el rol de cliente."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cliente' in roles
+
+
+class MisNotificacionesView(NotificacionesClienteMixin, ListView):
+    """Lista las notificaciones de cambio de tasa del usuario autenticado.
+
+    Criterio de aceptación 4 de GE-51: las notificaciones se muestran
+    ordenadas de la más reciente a la más antigua. Cada una muestra la
+    divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;
+    las no leídas ofrecen la acción de marcarlas como leídas (ver
+    ``MarcarNotificacionLeidaView``).
+    """
+
+    template_name = 'divisas/mis_notificaciones.html'
+    context_object_name = 'notificaciones'
+    paginate_by = 20
+
+    def get_queryset(self):
+        """Devuelve solo las notificaciones propias, de la más nueva a la más vieja."""
+        return (
+            NotificacionTasa.objects.filter(usuario=self.request.user)
+            .select_related('divisa')
+            .order_by('-creada_en', '-pk')
+        )
+
+
+class MarcarNotificacionLeidaView(NotificacionesClienteMixin, View):
+    """Marca como leída una notificación de cambio de tasa propia.
+
+    Criterio de aceptación 6 de GE-51: al marcarla, su estado cambia a
+    leída y deja de contarse en el indicador de no leídas. Solo acepta
+    POST (es una acción que modifica datos, protegida por CSRF) y responde
+    404 si la notificación no existe o pertenece a otro usuario, sin
+    revelar cuál de los dos casos es.
+    """
+
+    http_method_names = ['post']
+
+    def post(self, request, pk):
+        """Marca la notificación como leída y vuelve a la página de origen.
+
+        Args:
+            request (HttpRequest): La request actual.
+            pk (int): Identificador de la notificación.
+
+        Returns:
+            HttpResponseRedirect: A la URL indicada en ``next`` si es segura
+            (por ejemplo, para conservar la página del listado), o al
+            listado de notificaciones en caso contrario.
+        """
+        notificacion = get_object_or_404(NotificacionTasa, pk=pk, usuario=request.user)
+        notificacion.marcar_como_leida()
+
+        destino = request.POST.get('next')
+        if destino and url_has_allowed_host_and_scheme(
+            destino,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(destino)
+        return redirect('divisas:mis_notificaciones')

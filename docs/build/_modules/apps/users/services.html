@@ -45,9 +45,26 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -76,6 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -83,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
@@ -148,6 +167,28 @@
     <span class="n">KeycloakAdmin</span> <span class="o">=</span> <span class="kc">None</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_url_con_barra_final</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Garantiza que una URL termine en "/".</span>
+
+<span class="sd">    ``python-keycloak`` arma cada endpoint de la Admin API con</span>
+<span class="sd">    ``urllib.parse.urljoin(server_url, path)``. Esa función, si</span>
+<span class="sd">    ``server_url`` no termina en "/", trata el último tramo como un</span>
+<span class="sd">    "archivo" y lo **descarta** en vez de agregarle el ``path``:</span>
+<span class="sd">    ``urljoin('https://host/auth', 'admin/realms/x')`` da</span>
+<span class="sd">    ``'https://host/admin/realms/x'`` (perdiendo ``/auth``), mientras que</span>
+<span class="sd">    ``urljoin('https://host/auth/', 'admin/realms/x')`` da el resultado</span>
+<span class="sd">    correcto. En desarrollo, ``KEYCLOAK_SERVER_URL`` suele ser</span>
+<span class="sd">    ``http://localhost:8080`` (sin ningún tramo de path propio), así que el</span>
+<span class="sd">    problema no se nota ahí; en producción, donde Keycloak corre con</span>
+<span class="sd">    ``--http-relative-path /auth`` (ver ``deploy/aws/docker-compose.yml``),</span>
+<span class="sd">    un ``KEYCLOAK_SERVER_URL`` sin la barra final rompe silenciosamente</span>
+<span class="sd">    *todas* las llamadas a la Admin API (consultar o asignar roles,</span>
+<span class="sd">    sincronizar usuarios, etc.), aunque el login normal siga funcionando</span>
+<span class="sd">    (esas URLs se arman a mano en ``settings``, no con ``urljoin``).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">url</span> <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span> <span class="k">else</span> <span class="n">url</span> <span class="o">+</span> <span class="s1">'/'</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_obtener_keycloak_admin</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">"""Construye un cliente administrativo configurado para el realm."""</span>
     <span class="k">if</span> <span class="n">KeycloakAdmin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -155,7 +196,7 @@
             <span class="s1">'La integración de Keycloak no está disponible. Verifica la dependencia python-keycloak y la configuración del realm.'</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">KeycloakAdmin</span><span class="p">(</span>
-        <span class="n">server_url</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">KEYCLOAK_SERVER_URL</span><span class="p">,</span>
+        <span class="n">server_url</span><span class="o">=</span><span class="n">_url_con_barra_final</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">KEYCLOAK_SERVER_URL</span><span class="p">),</span>
         <span class="n">realm_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">KEYCLOAK_REALM</span><span class="p">,</span>
         <span class="n">client_id</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">KEYCLOAK_CLIENT_ID</span><span class="p">,</span>
         <span class="n">client_secret_key</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">KEYCLOAK_CLIENT_SECRET</span><span class="p">,</span>

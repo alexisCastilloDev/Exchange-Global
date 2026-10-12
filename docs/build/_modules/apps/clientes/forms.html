@@ -45,9 +45,26 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -76,6 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -83,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
@@ -344,13 +363,53 @@
 <span class="c1"># FORMULARIOS PARA GE-19: Gestión de métodos de pago</span>
 <span class="c1"># ==============================================================================</span>
 
+<div class="viewcode-block" id="AgregarTarjetaStripeForm">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.AgregarTarjetaStripeForm">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AgregarTarjetaStripeForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pide el nombre del titular antes de ir a Stripe a capturar la tarjeta.</span>
+
+<span class="sd">    Es deliberadamente mínimo: el número de tarjeta nunca pasa por este</span>
+<span class="sd">    formulario ni por ningún campo de Global Exchange — lo captura Stripe</span>
+<span class="sd">    directamente en su propia página (ver</span>
+<span class="sd">    ``apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView``). El</span>
+<span class="sd">    nombre del titular es el único dato propio que hace falta pedir antes</span>
+<span class="sd">    de salir hacia Stripe, porque la entidad financiera y los últimos 4</span>
+<span class="sd">    dígitos los va a devolver Stripe recién al confirmar.</span>
+<span class="sd">    """</span>
+
+    <span class="n">nombre_titular</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">'Nombre del Titular'</span><span class="p">,</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
+    <span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="MetodoPagoForm">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MetodoPagoForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Formulario para la creación y edición de métodos de pago del cliente.</span>
-<span class="sd">    Realiza validaciones condicionales de acuerdo al tipo de medio de pago seleccionado.</span>
+<span class="sd">    Formulario para registrar un método de pago manual del cliente (transferencia o billetera).</span>
+
+<span class="sd">    Solo se usa para crear: los métodos de pago ya no se editan, solo se</span>
+<span class="sd">    eliminan y se vuelven a crear si hace falta cambiar algo (ver</span>
+<span class="sd">    ``apps.clientes.views.metodo_pago_delete``). Tampoco ofrece "Tarjeta de</span>
+<span class="sd">    Débito/Crédito" como opción: desde la HU "Pago con tarjeta vía Stripe",</span>
+<span class="sd">    una tarjeta se agrega exclusivamente a través de Stripe (ver</span>
+<span class="sd">    ``IniciarAgregarTarjetaStripeView`` en ``apps.divisas.pagos_stripe``),</span>
+<span class="sd">    que es quien conoce el número real y nunca lo entrega a este</span>
+<span class="sd">    formulario.</span>
 <span class="sd">    """</span>
+
+<div class="viewcode-block" id="MetodoPagoForm.__init__">
+<a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.__init__">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Quita "Tarjeta" de las opciones: esa alta pasa siempre por Stripe."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'tipo_medio'</span><span class="p">]</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">choice</span> <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_MEDIO_CHOICES</span> <span class="k">if</span> <span class="n">choice</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span>
+        <span class="p">]</span></div>
+
 
 <div class="viewcode-block" id="MetodoPagoForm.Meta">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.Meta">[documentos]</a>
@@ -363,7 +422,6 @@
             <span class="s1">'entidad_financiera'</span><span class="p">,</span>
             <span class="s1">'numero_cuenta'</span><span class="p">,</span>
             <span class="s1">'tipo_cuenta'</span><span class="p">,</span>
-            <span class="s1">'numero_tarjeta'</span><span class="p">,</span>  <span class="c1"># Se reemplaza 'ultimos_4_digitos' por 'numero_tarjeta'</span>
             <span class="s1">'es_predeterminado'</span>
         <span class="p">]</span>
         <span class="n">widgets</span> <span class="o">=</span> <span class="p">{</span>
@@ -372,13 +430,6 @@
             <span class="s1">'entidad_financiera'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
             <span class="s1">'numero_cuenta'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">}),</span>
             <span class="s1">'tipo_cuenta'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-select'</span><span class="p">}),</span>
-            <span class="s1">'numero_tarjeta'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">TextInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span>
-                <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-control'</span><span class="p">,</span>
-                <span class="s1">'maxlength'</span><span class="p">:</span> <span class="s1">'19'</span><span class="p">,</span>
-                <span class="s1">'minlength'</span><span class="p">:</span> <span class="s1">'13'</span><span class="p">,</span>
-                <span class="s1">'placeholder'</span><span class="p">:</span> <span class="s1">'Ej. 4532123456789012'</span><span class="p">,</span>
-                <span class="s1">'inputmode'</span><span class="p">:</span> <span class="s1">'numeric'</span>
-            <span class="p">}),</span>
             <span class="s1">'es_predeterminado'</span><span class="p">:</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxInput</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">'class'</span><span class="p">:</span> <span class="s1">'form-check-input'</span><span class="p">}),</span>
         <span class="p">}</span></div>
 
@@ -386,26 +437,17 @@
 <div class="viewcode-block" id="MetodoPagoForm.clean">
 <a class="viewcode-back" href="../../../reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.clean">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Valida que se ingresen los campos obligatorios correspondientes a cada tipo de pago (Criterio 2).</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Valida los campos obligatorios de una transferencia bancaria (Criterio 2)."""</span>
         <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
         <span class="n">tipo_medio</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo_medio'</span><span class="p">)</span>
         <span class="n">numero_cuenta</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'numero_cuenta'</span><span class="p">)</span>
         <span class="n">tipo_cuenta</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo_cuenta'</span><span class="p">)</span>
-        <span class="n">numero_tarjeta</span> <span class="o">=</span> <span class="n">cleaned_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'numero_tarjeta'</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">tipo_medio</span> <span class="o">==</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TRANSFERENCIA</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">numero_cuenta</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'numero_cuenta'</span><span class="p">,</span> <span class="s1">'El número de cuenta es obligatorio para transferencias bancarias.'</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">tipo_cuenta</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'tipo_cuenta'</span><span class="p">,</span> <span class="s1">'Debe seleccionar el tipo de cuenta.'</span><span class="p">)</span>
-
-        <span class="k">elif</span> <span class="n">tipo_medio</span> <span class="o">==</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">numero_tarjeta</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'numero_tarjeta'</span><span class="p">,</span> <span class="s1">'Debe ingresar el número de la tarjeta.'</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">numero_tarjeta</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">13</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">numero_tarjeta</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">19</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="s1">'numero_tarjeta'</span><span class="p">,</span> <span class="s1">'Debe ingresar un número de tarjeta válido (entre 13 y 19 dígitos numéricos).'</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">cleaned_data</span></div>
 </div>

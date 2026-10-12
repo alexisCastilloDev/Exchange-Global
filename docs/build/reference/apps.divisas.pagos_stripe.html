@@ -1,0 +1,442 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.pagos_stripe module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.divisas.urls module" href="apps.divisas.urls.html" />
+    <link rel="prev" title="apps.divisas.models module" href="apps.divisas.models.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.divisas.html">apps.divisas package</a></li>
+      <li class="breadcrumb-item active">apps.divisas.pagos_stripe module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apps-divisas-pagos-stripe-module">
+<h1>apps.divisas.pagos_stripe module<a class="headerlink" href="#apps-divisas-pagos-stripe-module" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">IniciarPagoStripeOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#IniciarPagoStripeOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_IniciarPagoStripeBaseView</span></code></p>
+<p>Inicia el pago con tarjeta de una compra o venta propia ya «Confirmada».</p>
+<p>No tiene ningún botón propio en la UI: a ella redirige automáticamente
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.PagarTransaccionOperacionView.post</span></code> cuando el
+método de pago elegido en el formulario de pago normal es de tipo
+«tarjeta» (<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TARJETA</span></code>), en vez de registrar el pago de
+forma manual.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion" title="apps.divisas.models.CalculoOperacion"><code class="xref py py-class docutils literal notranslate"><span class="pre">CalculoOperacion</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView.tipo_transaccion">
+<span class="sig-name descname"><span class="pre">tipo_transaccion</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'operacion'</span></span><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView.tipo_transaccion" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView.url_detalle">
+<span class="sig-name descname"><span class="pre">url_detalle</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas:detalle_transaccion_operacion'</span></span><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView.url_detalle" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarPagoStripeCambioView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">IniciarPagoStripeCambioView</span></span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#IniciarPagoStripeCambioView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarPagoStripeCambioView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_IniciarPagoStripeBaseView</span></code></p>
+<p>Inicia el pago con tarjeta de un cambio entre divisas propio ya «Confirmado».</p>
+<p>Ver <code class="docutils literal notranslate"><span class="pre">IniciarPagoStripeOperacionView</span></code>: mismo criterio, al que redirige
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.PagarTransaccionCambioView.post</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarPagoStripeCambioView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarPagoStripeCambioView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion" title="apps.divisas.models.CalculoTriangulacion"><code class="xref py py-class docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarPagoStripeCambioView.tipo_transaccion">
+<span class="sig-name descname"><span class="pre">tipo_transaccion</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cambio'</span></span><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarPagoStripeCambioView.tipo_transaccion" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarPagoStripeCambioView.url_detalle">
+<span class="sig-name descname"><span class="pre">url_detalle</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas:detalle_transaccion_cambio'</span></span><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarPagoStripeCambioView.url_detalle" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">IniciarAgregarTarjetaStripeView</span></span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#IniciarAgregarTarjetaStripeView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Pide el nombre del titular y redirige a Stripe a capturar una tarjeta nueva.</p>
+<p>El número de tarjeta nunca llega a esta vista ni a ningún campo de
+Global Exchange: lo captura Stripe en su propia página, mediante una
+sesión de Checkout en modo <code class="docutils literal notranslate"><span class="pre">&quot;setup&quot;</span></code> (guarda una tarjeta sin cobrar
+nada). <code class="docutils literal notranslate"><span class="pre">confirmar_tarjeta_stripe_view</span></code> es quien, al volver de Stripe,
+recién ahí crea el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> con la referencia que devuelve Stripe.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#IniciarAgregarTarjetaStripeView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario mínimo (nombre del titular) previo a Stripe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#IniciarAgregarTarjetaStripeView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.post" title="Link to this definition"></a></dt>
+<dd><p>Crea la sesión de Stripe (modo «setup») y redirige a completarla ahí.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Redirección a Stripe si todo sale bien; de vuelta
+al formulario si hay errores de validación, o al listado de
+métodos de pago si Stripe no respondió (criterio 6, aplicado
+acá al alta de la tarjeta en vez de a un pago).</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#IniciarAgregarTarjetaStripeView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite agregar una tarjeta solo a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.confirmar_tarjeta_stripe_view">
+<span class="sig-name descname"><span class="pre">confirmar_tarjeta_stripe_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#confirmar_tarjeta_stripe_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe.confirmar_tarjeta_stripe_view" title="Link to this definition"></a></dt>
+<dd><p>Confirma la tarjeta capturada por Stripe y la guarda como <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code>.</p>
+<p>Es el <code class="docutils literal notranslate"><span class="pre">success_url</span></code> de <code class="docutils literal notranslate"><span class="pre">IniciarAgregarTarjetaStripeView</span></code>: Stripe
+vuelve acá con <code class="docutils literal notranslate"><span class="pre">?session_id=...</span></code> después de que el cliente completó
+el formulario de tarjeta en su propia página.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Redirección al listado de métodos de pago, con un
+mensaje de éxito o de error según corresponda.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>HttpResponse</p>
+</dd>
+<dt class="field-odd">Muestra<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Http404</strong> – Si la sesión de Stripe no corresponde al <code class="docutils literal notranslate"><span class="pre">Customer</span></code> del</p></li>
+<li><p><strong>cliente activo</strong><strong> (</strong><strong>no hay nada legítimo que hacer con una sesión</strong> – </p></li>
+<li><p><strong>ajena</strong><strong>)</strong><strong>.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe.stripe_webhook_view">
+<span class="sig-name descname"><span class="pre">stripe_webhook_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#stripe_webhook_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe.stripe_webhook_view" title="Link to this definition"></a></dt>
+<dd><p>Recibe los webhooks de Stripe y confirma, de ser el caso, un pago con tarjeta.</p>
+<p>Es el único lugar donde una notificación de Stripe se traduce en un
+pago real. Queda exento de CSRF porque lo llama Stripe, no un
+navegador con sesión de Django, y en cambio su seguridad depende por
+completo de la verificación de firma de <code class="docutils literal notranslate"><span class="pre">stripe.Webhook.construct_event</span></code>
+(criterio 3).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>200 si el evento se procesó (incluso si no requería
+ninguna acción), 400 si la firma no es válida o el método no es
+POST.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe._moneda_de_liquidacion">
+<span class="sig-name descname"><span class="pre">_moneda_de_liquidacion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#_moneda_de_liquidacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe._moneda_de_liquidacion" title="Link to this definition"></a></dt>
+<dd><p>Devuelve el código ISO de la moneda en la que se cobra la transacción.</p>
+<p>Delegado en <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.moneda_a_pagar</span></code>: una compra/venta
+siempre se cobra en PYG; un cambio entre divisas se cobra en su divisa
+de <strong>origen</strong> (lo que el cliente entrega), no en la de destino (lo que
+recibe a cambio) — ver <code class="docutils literal notranslate"><span class="pre">monto_a_pagar</span></code> para el porqué.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe._monto_en_unidad_minima_stripe">
+<span class="sig-name descname"><span class="pre">_monto_en_unidad_minima_stripe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">monto</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">codigo_moneda</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#_monto_en_unidad_minima_stripe"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe._monto_en_unidad_minima_stripe" title="Link to this definition"></a></dt>
+<dd><p>Convierte un monto decimal a la unidad entera que espera Stripe.</p>
+<p>Stripe siempre recibe un entero: la cantidad de centavos para la
+mayoría de las monedas, o el monto tal cual para las «sin decimales»
+(<code class="docutils literal notranslate"><span class="pre">MONEDAS_SIN_DECIMALES_STRIPE</span></code>). Tratar a PYG como si tuviera
+centavos cobraría, por error, 100 veces el monto real.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe._obtener_o_crear_cliente_stripe">
+<span class="sig-name descname"><span class="pre">_obtener_o_crear_cliente_stripe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cliente</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#_obtener_o_crear_cliente_stripe"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe._obtener_o_crear_cliente_stripe" title="Link to this definition"></a></dt>
+<dd><p>Devuelve el <code class="docutils literal notranslate"><span class="pre">Customer</span></code> de Stripe de este cliente, creándolo si falta.</p>
+<p>Es lo que permite reutilizar una tarjeta entre pagos sin guardar nunca
+el número real en esta base: la tarjeta se guarda del lado de Stripe,
+contra este <code class="docutils literal notranslate"><span class="pre">Customer</span></code>, nunca contra un <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> local.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cliente</strong> (<a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.Cliente" title="apps.clientes.models.Cliente"><em>apps.clientes.models.Cliente</em></a>) – El cliente que va a pagar.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El id del <code class="docutils literal notranslate"><span class="pre">Customer</span></code> de Stripe (<code class="docutils literal notranslate"><span class="pre">cliente.stripe_customer_id</span></code>,
+recién creado si todavía no existía).</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe._resolver_metodo_pago_tarjeta">
+<span class="sig-name descname"><span class="pre">_resolver_metodo_pago_tarjeta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cliente</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metodo_pago_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#_resolver_metodo_pago_tarjeta"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe._resolver_metodo_pago_tarjeta" title="Link to this definition"></a></dt>
+<dd><p>Busca el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> de tarjeta elegido, con su referencia de Stripe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cliente</strong> (<a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.Cliente" title="apps.clientes.models.Cliente"><em>apps.clientes.models.Cliente</em></a>) – El cliente que va a pagar.</p></li>
+<li><p><strong>metodo_pago_id</strong> – El <code class="docutils literal notranslate"><span class="pre">pk</span></code> recibido en <code class="docutils literal notranslate"><span class="pre">?metodo_pago=</span></code>, tal como lo
+elige el cliente en el formulario de pago de siempre (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.PagarTransaccionOperacionView.post</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El método, si existe, es
+del cliente, es de tipo tarjeta y está vinculado a Stripe con una
+referencia; <code class="docutils literal notranslate"><span class="pre">None</span></code> en cualquier otro caso (no se puede cobrar con
+algo que no sabemos identificar en Stripe).</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.MetodoPago" title="apps.clientes.models.MetodoPago">apps.clientes.models.MetodoPago</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe._a_dict">
+<span class="sig-name descname"><span class="pre">_a_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stripe_obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#_a_dict"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe._a_dict" title="Link to this definition"></a></dt>
+<dd><p>Convierte un objeto de Stripe a un dict plano (recursivamente).</p>
+<p>El SDK de Stripe devuelve <code class="docutils literal notranslate"><span class="pre">StripeObject</span></code> en vez de <code class="docutils literal notranslate"><span class="pre">dict</span></code>: no
+tienen <code class="docutils literal notranslate"><span class="pre">.get()</span></code> ni son iterables directamente (llamarlos así tira
+<code class="docutils literal notranslate"><span class="pre">AttributeError</span></code>/<code class="docutils literal notranslate"><span class="pre">TypeError</span></code>), hay que pedirles <code class="docutils literal notranslate"><span class="pre">.to_dict()</span></code>
+explícitamente. Un dict ya plano (como los que arman los tests, o un
+valor <code class="docutils literal notranslate"><span class="pre">None</span></code>) se devuelve tal cual, sin tocarlo.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.pagos_stripe._configuracion_solo_tarjeta">
+<span class="sig-name descname"><span class="pre">_configuracion_solo_tarjeta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/pagos_stripe.html#_configuracion_solo_tarjeta"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.pagos_stripe._configuracion_solo_tarjeta" title="Link to this definition"></a></dt>
+<dd><p>Devuelve el id de una <code class="docutils literal notranslate"><span class="pre">PaymentMethodConfiguration</span></code> que solo habilita tarjeta.</p>
+<p>Stripe ya no deja restringir los medios de pago de una sesión de
+Checkout con <code class="docutils literal notranslate"><span class="pre">payment_method_types</span></code> (lo retiró de la API, ver
+docstring del módulo): sin esa restricción, Checkout ofrece cualquier
+medio habilitado en la cuenta, típicamente también «Link» (el
+autocompletado propio de Stripe), que Checkout muestra de forma muy
+prominente. Si el cliente lo elige en vez de una tarjeta, el
+<code class="docutils literal notranslate"><span class="pre">PaymentMethod</span></code> resultante es de tipo <code class="docutils literal notranslate"><span class="pre">&quot;link&quot;</span></code>, no <code class="docutils literal notranslate"><span class="pre">&quot;card&quot;</span></code>, y no
+tiene los datos (marca, últimos 4 dígitos) que esta HU necesita
+guardar.</p>
+<p>En vez de eso, se usa una <code class="docutils literal notranslate"><span class="pre">PaymentMethodConfiguration</span></code> propia (con
+tarjeta prendida y Link apagado) y se la referencia por
+<code class="docutils literal notranslate"><span class="pre">payment_method_configuration</span></code> al crear la sesión. Se reutiliza la
+misma configuración entre llamadas (identificada por su nombre, cacheado
+en este proceso) en vez de crear una nueva en cada pago.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>El id de la <code class="docutils literal notranslate"><span class="pre">PaymentMethodConfiguration</span></code> a usar.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.divisas.models.html" class="btn btn-neutral float-left" title="apps.divisas.models module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.urls.html" class="btn btn-neutral float-right" title="apps.divisas.urls module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

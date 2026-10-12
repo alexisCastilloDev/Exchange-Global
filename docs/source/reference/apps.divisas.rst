@@ -7,6 +7,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   apps.divisas.context_processors
    apps.divisas.forms
    apps.divisas.models
    apps.divisas.pagos_stripe

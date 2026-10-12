@@ -45,9 +45,26 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -76,6 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -83,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
@@ -264,6 +283,19 @@
 
     <span class="n">fecha_registro</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
 
+    <span class="n">stripe_customer_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'ID de cliente en Stripe'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'Lo asigna Stripe la primera vez que este cliente paga con '</span>
+            <span class="s1">'tarjeta (ver apps.divisas.pagos_stripe). Permite reutilizar la '</span>
+            <span class="s1">'tarjeta guardada en pagos siguientes sin pedirla de nuevo ni '</span>
+            <span class="s1">'guardar nunca el número real en esta base.'</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
     <span class="c1"># MANAGERS</span>
     <span class="n">objects</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span>
     <span class="n">activos</span> <span class="o">=</span> <span class="n">ClienteActiveManager</span><span class="p">()</span>
@@ -280,6 +312,23 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">primer_usuario</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Retorna el usuario titular o el primer usuario de la relación M2M."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">usuarios</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nombre_completo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve solo el nombre del cliente, sin identificador ni estado.</span>
+
+<span class="sd">        A diferencia de ``__str__`` (pensado para listados administrativos,</span>
+<span class="sd">        donde conviene ver el identificador y el estado de un vistazo), este</span>
+<span class="sd">        campo es para precargar un nombre en un formulario de cara al propio</span>
+<span class="sd">        cliente — p. ej. el titular al agregar una tarjeta vía Stripe</span>
+<span class="sd">        (``apps.divisas.pagos_stripe``) — donde ese identificador/estado no</span>
+<span class="sd">        pinta nada.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tipo_cliente</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">TIPO_JURIDICA</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">razon_social</span> <span class="ow">or</span> <span class="s1">''</span>
+        <span class="n">nombre_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nombre</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nombre</span> <span class="k">else</span> <span class="s1">''</span>
+        <span class="n">apellido_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apellido</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">apellido</span> <span class="k">else</span> <span class="s1">''</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">nombre_str</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">apellido_str</span><span class="si">}</span><span class="s1">'</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Devuelve una descripción legible del cliente y su estado."""</span>
@@ -304,6 +353,17 @@
 
 <span class="sd">    Permite almacenar cuentas bancarias, tarjetas o billeteras digitales asociadas</span>
 <span class="sd">    a un cliente para la realización de operaciones cambiarias.</span>
+
+<span class="sd">    ``proveedor_externo``/``referencia_externa`` identifican, cuando</span>
+<span class="sd">    corresponde, la integración real que respalda este método: para una</span>
+<span class="sd">    tarjeta (HU "Pago con tarjeta vía Stripe", ver</span>
+<span class="sd">    ``apps.divisas.pagos_stripe``), ``referencia_externa`` es el id de un</span>
+<span class="sd">    ``PaymentMethod`` de Stripe, nunca el número real de la tarjeta — por</span>
+<span class="sd">    eso ``numero_tarjeta`` guarda, para esos métodos, solo los últimos 4</span>
+<span class="sd">    dígitos que devuelve Stripe, no el número completo. Estos dos campos</span>
+<span class="sd">    quedan genéricos (no específicos de Stripe) a propósito, pensados para</span>
+<span class="sd">    que una futura integración con SIPAP pueda identificar del mismo modo</span>
+<span class="sd">    una cuenta bancaria real sin guardar sus datos completos acá.</span>
 <span class="sd">    """</span>
 
     <span class="n">TIPO_TRANSFERENCIA</span> <span class="o">=</span> <span class="s1">'TRANSFERENCIA'</span>
@@ -319,6 +379,14 @@
     <span class="n">TIPO_CUENTA_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="s1">'AHORRO'</span><span class="p">,</span> <span class="s1">'Caja de Ahorro'</span><span class="p">),</span>
         <span class="p">(</span><span class="s1">'CORRIENTE'</span><span class="p">,</span> <span class="s1">'Cuenta Corriente'</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">PROVEEDOR_STRIPE</span> <span class="o">=</span> <span class="s1">'STRIPE'</span>
+    <span class="n">PROVEEDOR_SIPAP</span> <span class="o">=</span> <span class="s1">'SIPAP'</span>
+
+    <span class="n">PROVEEDOR_EXTERNO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">PROVEEDOR_STRIPE</span><span class="p">,</span> <span class="s1">'Stripe'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">PROVEEDOR_SIPAP</span><span class="p">,</span> <span class="s1">'SIPAP'</span><span class="p">),</span>
     <span class="p">]</span>
 
     <span class="c1"># Anclado al perfil de Cliente activo, no al usuario que autentica: así</span>
@@ -356,11 +424,35 @@
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tipo de Cuenta'</span>
     <span class="p">)</span>
-    <span class="n">ultimos_4_digitos</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
-        <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">numero_tarjeta</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">19</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Últimos 4 dígitos'</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Número de Tarjeta'</span>
+    <span class="p">)</span>
+    <span class="n">proveedor_externo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">PROVEEDOR_EXTERNO_CHOICES</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Proveedor externo'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'Integración real que respalda este método (Stripe para '</span>
+            <span class="s1">'tarjetas; SIPAP, a futuro, para cuentas bancarias). Vacío '</span>
+            <span class="s1">'para un método sin ninguna integración real detrás.'</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">referencia_externa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Referencia externa'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'Id que usa el proveedor externo para este método (p. ej. un '</span>
+            <span class="s1">'PaymentMethod de Stripe). Nunca es el número real de la '</span>
+            <span class="s1">'tarjeta o cuenta: esa información vive solo del lado del '</span>
+            <span class="s1">'proveedor.'</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">es_predeterminado</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>

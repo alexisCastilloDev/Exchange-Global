@@ -246,6 +246,22 @@ a {
 .ge-usuario-actual:hover {
     background: var(--ge-paper);
 }
+
+/* Indicador de notificaciones de tasas no leídas (GE-51) */
+.ge-notificaciones {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    color: var(--ge-text);
+    text-decoration: none;
+}
+.ge-notificaciones:hover {
+    background: var(--ge-paper);
+    color: var(--ge-text);
+}
 .ge-avatar {
     width: 34px;
     height: 34px;

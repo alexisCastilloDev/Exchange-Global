@@ -1,0 +1,101 @@
+<!--
+Notificaciones de cambio de tasas del usuario cliente (HU GE-51), de la más reciente a la más antigua.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_no_leidas
+(este último lo aporta apps.divisas.context_processors.notificaciones_context).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Mis notificaciones - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-bell"></i> Tasas de cambio</span>
+        <h1>Mis notificaciones</h1>
+        <p>
+            Avisos sobre cambios en las tasas de compra y venta.
+            {% if notificaciones_no_leidas %}
+                Tenés <strong>{{ notificaciones_no_leidas }}</strong> sin leer.
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Divisa</th>
+                    <th>Tipo de tasa</th>
+                    <th>Tasa anterior</th>
+                    <th>Tasa nueva</th>
+                    <th>Variación</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notificacion in notificaciones %}
+                <tr class="{% if not notificacion.leida %}fw-semibold{% endif %}" data-notificacion="{{ notificacion.pk }}">
+                    <td>{{ notificacion.creada_en|date:"d/m/Y H:i" }}</td>
+                    <td>{{ notificacion.divisa.codigo }}</td>
+                    <td>{{ notificacion.get_tipo_tasa_display }}</td>
+                    <td class="ge-num">{{ notificacion.tasa_anterior|floatformat:2 }}</td>
+                    <td class="ge-num">{{ notificacion.tasa_nueva|floatformat:2 }}</td>
+                    <td class="ge-num">
+                        {% if notificacion.subio %}
+                            <span class="text-success"><i class="bi bi-arrow-up-right"></i> +{{ notificacion.variacion|floatformat:2 }}</span>
+                        {% else %}
+                            <span class="text-danger"><i class="bi bi-arrow-down-right"></i> {{ notificacion.variacion|floatformat:2 }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if notificacion.leida %}
+                            <span class="text-muted">Leída</span>
+                        {% else %}
+                            <span class="badge text-bg-warning">No leída</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if not notificacion.leida %}
+                        <form method="post" action="{% url 'divisas:marcar_notificacion_leida' notificacion.pk %}" class="mb-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Marcar como leída</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">Todavía no tenés notificaciones.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación de notificaciones">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}
