@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.urls import path, include
 from global_exchange.views import documentacion, home, panel_protegido, perfil
 from apps.authentication.views import CustomOIDCLogoutView, CustomOIDCCallbackView
+from apps.divisas.pagos_stripe import stripe_webhook_view
+from apps.divisas.pagos_sipap import sipap_webhook_view
 from apps.clientes import views as clientes_views
 from apps.clientes.views import (
     PanelAdminView,
@@ -22,6 +24,12 @@ urlpatterns = [
     path('perfil/', perfil, name='perfil'),
     path('docs/', documentacion, name='documentacion'),
     path('docs/<path:path>', documentacion, name='documentacion_archivo'),
+    # Fuera del namespace "divisas": lo llama Stripe directamente, con una
+    # URL fija que se configura una sola vez en el dashboard de Stripe.
+    path('webhooks/stripe/', stripe_webhook_view, name='stripe_webhook'),
+    # Misma idea para SIPAP, con su propia verificación de firma (ver
+    # apps.divisas.pagos_sipap).
+    path('webhooks/sipap/', sipap_webhook_view, name='sipap_webhook'),
     # Enrutado directo a la vista real (antes apuntaba a un stub vacío
     # en global_exchange.views mientras PanelAdminView, con la lógica
     # de filtros de GE-8/GE-63, no estaba registrada en ningún lado).
@@ -42,10 +50,10 @@ urlpatterns = [
     path('clientes/cambiar/<int:cliente_id>/', clientes_views.cambiar_cliente_view, name='cambiar_cliente'),
     path('clientes/metodos-pago/', clientes_views.metodo_pago_list, name='metodo_pago_list'),
     path('clientes/metodos-pago/nuevo/', clientes_views.metodo_pago_create, name='metodo_pago_create'),
-    path('clientes/metodos-pago/<int:pk>/editar/', clientes_views.metodo_pago_update, name='metodo_pago_update'),
     path('clientes/metodos-pago/<int:pk>/eliminar/', clientes_views.metodo_pago_delete, name='metodo_pago_delete'),
     path('clientes/metodos-pago/<int:pk>/predeterminado/', clientes_views.metodo_pago_set_default, name='metodo_pago_set_default'),
 
     path('clientes/', include('apps.clientes.urls')),
     path('divisas/', include('apps.divisas.urls')),   # <- esta línea es la que rescatás de GE-18/20
+    path('caja/', include('apps.caja.urls')),
 ]

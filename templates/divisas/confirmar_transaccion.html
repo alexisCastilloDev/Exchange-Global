@@ -5,6 +5,7 @@ Bloques definidos: title, content.
 Contexto esperado: transaccion.
 -->
 {% extends 'base.html' %}
+{% load l10n %}
 
 {% block title %}Confirmar operación - Global Exchange{% endblock %}
 
@@ -48,6 +49,9 @@ Contexto esperado: transaccion.
                 </div>
             {% elif transaccion.estado == 'CONFIRMADA' %}
                 <div class="operation-expiry mt-3"><i class="bi bi-check2-circle me-1"></i> Confirmada el {{ transaccion.confirmado_en|date:'d/m/Y H:i:s' }}.</div>
+                <a href="{% url 'divisas:pagar_transaccion' transaccion.pk %}" class="btn btn-primary mt-3"><i class="bi bi-credit-card me-1"></i> Pagar</a>
+            {% elif transaccion.estado == 'PAGADA' %}
+                <div class="operation-expiry mt-3"><i class="bi bi-check2-circle me-1"></i> Esta operación ya fue pagada.</div>
             {% elif transaccion.estado == 'CANCELADA' %}
                 <div class="operation-expiry mt-3"><i class="bi bi-x-circle me-1"></i> Esta operación fue cancelada.</div>
             {% elif transaccion.estado == 'CANCELADA_COTIZACION' %}
@@ -55,8 +59,8 @@ Contexto esperado: transaccion.
                 <form method="post" action="{% url 'divisas:operar' transaccion.tipo|lower %}" class="mt-3">
                     {% csrf_token %}
                     <input type="hidden" name="tipo" value="{{ transaccion.tipo }}">
-                    <input type="hidden" name="divisa" value="{{ transaccion.divisa_id }}">
-                    <input type="hidden" name="monto" value="{{ transaccion.monto_origen }}">
+                    <input type="hidden" name="divisa" value="{{ transaccion.divisa_id|unlocalize }}">
+                    <input type="hidden" name="monto" value="{{ transaccion.monto_origen|unlocalize }}">
                     <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-repeat me-1"></i> Recalcular</button>
                 </form>
             {% elif transaccion.estado == 'VENCIDA' %}

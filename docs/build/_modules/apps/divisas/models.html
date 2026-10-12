@@ -45,11 +45,22 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -78,6 +89,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -85,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
@@ -144,10 +157,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrityError</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span> <span class="n">transaction</span> <span class="k">as</span> <span class="n">db_transaction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span><span class="p">,</span> <span class="n">MetodoPago</span>
 
 <div class="viewcode-block" id="Divisa">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Divisa">[documentos]</a>
@@ -237,12 +250,18 @@
 <span class="sd">    ``ConfirmarTransaccionOperacionView``), el cliente revisa el resumen</span>
 <span class="sd">    completo y decide si la confirma (si la tasa vigente no cambió, pasa a</span>
 <span class="sd">    "Confirmada" y se registra ``confirmado_en``) o la cancela manualmente</span>
-<span class="sd">    (pasa a "Cancelada" y no se procesa más). Si el cliente nunca vuelve a</span>
-<span class="sd">    esa pantalla (por ejemplo, cierra la pestaña) y se cumple ``vence_en``</span>
-<span class="sd">    sin que la transacción se haya confirmado ni cancelado, se considera</span>
-<span class="sd">    "Vencida": ``estado_efectivo`` refleja esto de inmediato para quien la</span>
-<span class="sd">    consulte, aunque el campo ``estado`` recién se actualice en la base de</span>
-<span class="sd">    datos la próxima vez que alguien con permiso visite esa transacción.</span>
+<span class="sd">    (pasa a "Cancelada" y no se procesa más). Si al intentar confirmarla la</span>
+<span class="sd">    tasa vigente ya cambió respecto de ``tasa_aplicada`` (ver</span>
+<span class="sd">    ``tasa_vigente_cambio``), la confirmación se rechaza y la transacción se</span>
+<span class="sd">    cancela automáticamente como "Cancelada por cambio de cotización", un</span>
+<span class="sd">    estado distinto de la cancelación manual para que el historial pueda</span>
+<span class="sd">    diferenciarlas; el cliente puede recalcular con la tasa nueva desde esa</span>
+<span class="sd">    misma pantalla. Si el cliente nunca vuelve a esa pantalla (por ejemplo,</span>
+<span class="sd">    cierra la pestaña) y se cumple ``vence_en`` sin que la transacción se</span>
+<span class="sd">    haya confirmado ni cancelado, se considera "Vencida": ``estado_efectivo``</span>
+<span class="sd">    refleja esto de inmediato para quien la consulte, aunque el campo</span>
+<span class="sd">    ``estado`` recién se actualice en la base de datos la próxima vez que</span>
+<span class="sd">    alguien con permiso visite esa transacción.</span>
 <span class="sd">    """</span>
 
     <span class="n">TIPO_COMPRA</span> <span class="o">=</span> <span class="s1">'COMPRA'</span>
@@ -256,11 +275,15 @@
     <span class="n">ESTADO_CONFIRMADA</span> <span class="o">=</span> <span class="s1">'CONFIRMADA'</span>
     <span class="n">ESTADO_CANCELADA</span> <span class="o">=</span> <span class="s1">'CANCELADA'</span>
     <span class="n">ESTADO_VENCIDA</span> <span class="o">=</span> <span class="s1">'VENCIDA'</span>
+    <span class="n">ESTADO_CANCELADA_COTIZACION</span> <span class="o">=</span> <span class="s1">'CANCELADA_COTIZACION'</span>
+    <span class="n">ESTADO_PAGADA</span> <span class="o">=</span> <span class="s1">'PAGADA'</span>
     <span class="n">ESTADO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span> <span class="s1">'Pendiente de confirmación'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">,</span> <span class="s1">'Confirmada'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_CANCELADA</span><span class="p">,</span> <span class="s1">'Cancelada'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_VENCIDA</span><span class="p">,</span> <span class="s1">'Vencida'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CANCELADA_COTIZACION</span><span class="p">,</span> <span class="s1">'Cancelada por cambio de cotización'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_PAGADA</span><span class="p">,</span> <span class="s1">'Pagada'</span><span class="p">),</span>
     <span class="p">]</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -500,8 +523,13 @@
 <span class="sd">    ``ConfirmarTransaccionCambioView``), el cliente revisa el resumen completo</span>
 <span class="sd">    y decide si lo confirma (si las tasas vigentes no cambiaron, pasa a</span>
 <span class="sd">    "Confirmada" y se registra ``confirmado_en``) o lo cancela manualmente</span>
-<span class="sd">    (pasa a "Cancelada"). Si el cliente nunca vuelve a esa pantalla y se</span>
-<span class="sd">    cumple ``vence_en`` sin resolución, se considera "Vencida" (ver</span>
+<span class="sd">    (pasa a "Cancelada"). Si al intentar confirmarlo alguna de las tasas</span>
+<span class="sd">    vigentes ya cambió (ver ``tasas_vigentes_cambiaron``), la confirmación se</span>
+<span class="sd">    rechaza y el cambio se cancela automáticamente como "Cancelada por</span>
+<span class="sd">    cambio de cotización", distinguible de la cancelación manual en el</span>
+<span class="sd">    historial; el cliente puede recalcular con las tasas nuevas desde esa</span>
+<span class="sd">    misma pantalla. Si el cliente nunca vuelve a esa pantalla y se cumple</span>
+<span class="sd">    ``vence_en`` sin resolución, se considera "Vencida" (ver</span>
 <span class="sd">    ``estado_efectivo``). Así aparece en el historial de transacciones junto</span>
 <span class="sd">    con las compras y ventas. ``TIPO_DISPLAY`` es el nombre del tipo de</span>
 <span class="sd">    operación que muestra el historial.</span>
@@ -513,11 +541,15 @@
     <span class="n">ESTADO_CONFIRMADA</span> <span class="o">=</span> <span class="s1">'CONFIRMADA'</span>
     <span class="n">ESTADO_CANCELADA</span> <span class="o">=</span> <span class="s1">'CANCELADA'</span>
     <span class="n">ESTADO_VENCIDA</span> <span class="o">=</span> <span class="s1">'VENCIDA'</span>
+    <span class="n">ESTADO_CANCELADA_COTIZACION</span> <span class="o">=</span> <span class="s1">'CANCELADA_COTIZACION'</span>
+    <span class="n">ESTADO_PAGADA</span> <span class="o">=</span> <span class="s1">'PAGADA'</span>
     <span class="n">ESTADO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span> <span class="s1">'Pendiente de confirmación'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">,</span> <span class="s1">'Confirmada'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_CANCELADA</span><span class="p">,</span> <span class="s1">'Cancelada'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_VENCIDA</span><span class="p">,</span> <span class="s1">'Vencida'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CANCELADA_COTIZACION</span><span class="p">,</span> <span class="s1">'Cancelada por cambio de cotización'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_PAGADA</span><span class="p">,</span> <span class="s1">'Pagada'</span><span class="p">),</span>
     <span class="p">]</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -621,6 +653,493 @@
             <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_compra_aplicada</span>
             <span class="ow">or</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_venta_aplicada</span>
         <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="monto_a_pagar">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.monto_a_pagar">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve lo que el cliente entrega de verdad para esta transacción.</span>
+
+<span class="sd">    Una compra o venta (``CalculoOperacion``) liquida siempre en PYG:</span>
+<span class="sd">    ``monto_final`` ya es ese valor, lo que el cliente paga (compra) o</span>
+<span class="sd">    recibe (venta) en guaraníes. Un cambio entre divisas</span>
+<span class="sd">    (``CalculoTriangulacion``) usa PYG solo como paso intermedio de la</span>
+<span class="sd">    triangulación: lo que el cliente entrega de verdad es</span>
+<span class="sd">    ``monto_origen``, en su propia divisa de origen. ``monto_final`` ahí</span>
+<span class="sd">    es lo que el cliente *recibe* a cambio, no lo que paga — por eso no</span>
+<span class="sd">    sirve como "monto a cobrar" para un cambio, aunque sí lo sea para una</span>
+<span class="sd">    compra/venta.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_origen</span>
+    <span class="k">return</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_final</span></div>
+
+
+
+<div class="viewcode-block" id="moneda_a_pagar">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.moneda_a_pagar">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">moneda_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve el código de la moneda en la que el cliente paga esta transacción.</span>
+
+<span class="sd">    Ver ``monto_a_pagar``: una compra/venta siempre se paga en PYG; un</span>
+<span class="sd">    cambio se paga en su divisa de origen, no en la de destino.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_origen</span>
+    <span class="k">return</span> <span class="s1">'PYG'</span></div>
+
+
+
+<div class="viewcode-block" id="PagoRechazadoError">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.PagoRechazadoError">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PagoRechazadoError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Señala que un pago no puede registrarse para una transacción dada.</span>
+
+<span class="sd">    La cubren, por ejemplo, una transacción que no está "Confirmada", una</span>
+<span class="sd">    que ya tiene un pago exitoso, o la ausencia de una transacción válida</span>
+<span class="sd">    (ver ``Pago.registrar_pago``). Las vistas la capturan para mostrar el</span>
+<span class="sd">    mensaje al usuario en vez de dejarla propagarse como error 500.</span>
+<span class="sd">    """</span></div>
+
+
+
+<div class="viewcode-block" id="Pago">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Pago">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Pago</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra el pago de una única transacción ya "Confirmada".</span>
+
+<span class="sd">    Implementa la HU "Asociación de pagos a transacciones" (GE-25), pensada</span>
+<span class="sd">    explícitamente como base de dos HU de pago real que ya están</span>
+<span class="sd">    implementadas sobre esta misma base: pago con tarjeta vía Stripe</span>
+<span class="sd">    (``apps.divisas.pagos_stripe``) y pago por transferencia vía SIPAP</span>
+<span class="sd">    (``apps.divisas.pagos_sipap``). Por eso ``medio_pago``, ``proveedor`` e</span>
+<span class="sd">    ``identificador_externo`` son genéricos en vez de modelar un único</span>
+<span class="sd">    medio: cada integración (verificación de firma incluida, que no es</span>
+<span class="sd">    responsabilidad de este modelo) arma esos mismos datos a partir de su</span>
+<span class="sd">    propio webhook y llama a ``registrar_pago`` (o, si el monto confirmado</span>
+<span class="sd">    no coincide con el esperado, a ``registrar_pago_observado``), los</span>
+<span class="sd">    únicos puntos de entrada para tocar una transacción por un pago.</span>
+
+<span class="sd">    Puede asociarse tanto a una compra/venta (``calculo_operacion``) como a</span>
+<span class="sd">    un cambio entre divisas (``calculo_triangulacion``): exactamente una de</span>
+<span class="sd">    las dos, nunca ambas ni ninguna (ver ``clean``). Cada una es un</span>
+<span class="sd">    ``OneToOneField``, así que la base de datos garantiza por sí sola que</span>
+<span class="sd">    una transacción no puede tener más de un pago, sin importar el medio</span>
+<span class="sd">    con el que se intente el segundo.</span>
+<span class="sd">    """</span>
+
+    <span class="n">PROVEEDOR_MANUAL</span> <span class="o">=</span> <span class="s1">'MANUAL'</span>
+
+    <span class="n">calculo_operacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">CalculoOperacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'pago'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Compra o venta pagada'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">calculo_triangulacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">CalculoTriangulacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'pago'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cambio de divisas pagado'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">metodo_pago</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">MetodoPago</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'pagos'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Método de pago guardado utilizado'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">medio_pago</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_MEDIO_CHOICES</span><span class="p">)</span>
+    <span class="n">proveedor</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'Quién confirmó el pago: MANUAL (esta HU), o un proveedor real como STRIPE/SIPAP.'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">identificador_externo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'Identificador del pago para ese proveedor (p. ej. el id de un PaymentIntent de Stripe).'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">observado</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Observado'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'El proveedor confirmó un pago, pero por un monto distinto '</span>
+            <span class="s1">'del esperado (ver `diferencia`): queda registrado para '</span>
+            <span class="s1">'revisión manual, sin marcar la transacción como "Pagada".'</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">diferencia</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
+        <span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
+        <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Diferencia (monto recibido − monto esperado)'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'Solo tiene valor cuando `observado` es verdadero.'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">creado_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define etiquetas administrativas y la invariante de idempotencia."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Pago'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Pagos'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-creado_en'</span><span class="p">]</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'proveedor'</span><span class="p">,</span> <span class="s1">'identificador_externo'</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">'pago_unico_por_proveedor_e_identificador'</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Identifica el pago por su proveedor e identificador externo."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'Pago </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">proveedor</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">identificador_externo</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">monto</span><span class="si">}</span><span class="s1">)'</span>
+
+<div class="viewcode-block" id="Pago.clean">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Pago.clean">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida que el pago pertenezca a exactamente una transacción."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+        <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_operacion_id</span><span class="p">)</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_triangulacion_id</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Un pago debe pertenecer a exactamente una transacción.'</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transaccion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve la compra/venta o el cambio al que pertenece este pago."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculo_operacion</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculo_triangulacion</span>
+
+<div class="viewcode-block" id="Pago.registrar_pago">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago">[documentos]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">registrar_pago</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">medio_pago</span><span class="p">,</span> <span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="n">metodo_pago</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Registra, de forma idempotente, el pago exitoso de una transacción.</span>
+
+<span class="sd">        Es el único punto de entrada para marcar una transacción como</span>
+<span class="sd">        "Pagada": tanto el flujo manual de esta HU como, más adelante, los</span>
+<span class="sd">        webhooks de Stripe y SIPAP deben construir sus propios datos</span>
+<span class="sd">        (medio, proveedor, identificador externo, monto) y llamar acá, en</span>
+<span class="sd">        vez de tocar ``transaccion.estado`` directamente.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``</span>
+<span class="sd">                ya existente.</span>
+<span class="sd">            medio_pago (str): Uno de ``MetodoPago.TIPO_MEDIO_CHOICES``.</span>
+<span class="sd">            proveedor (str): Quién confirma el pago (``PROVEEDOR_MANUAL`` o</span>
+<span class="sd">                un proveedor real).</span>
+<span class="sd">            identificador_externo (str): Identificador del pago para ese</span>
+<span class="sd">                proveedor. Junto con ``proveedor``, es la clave de</span>
+<span class="sd">                idempotencia: una segunda llamada con el mismo par no crea</span>
+<span class="sd">                un segundo pago ni vuelve a tocar la transacción.</span>
+<span class="sd">            monto (Decimal): Monto efectivamente pagado.</span>
+<span class="sd">            metodo_pago: El ``MetodoPago`` guardado del cliente que se usó,</span>
+<span class="sd">                si corresponde.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[Pago, bool]: El pago (nuevo o preexistente) y si se creó</span>
+<span class="sd">            recién en esta llamada.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            PagoRechazadoError: Si no hay una transacción válida, si no</span>
+<span class="sd">                está en estado "Confirmada" (por ejemplo porque está</span>
+<span class="sd">                pendiente, vencida, cancelada, o ya "Pagada"), siempre que</span>
+<span class="sd">                no se trate de una repetición idempotente del mismo pago</span>
+<span class="sd">                ya registrado.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">transaccion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'No hay una transacción válida para registrar el pago.'</span><span class="p">)</span>
+
+        <span class="n">pago_existente</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">pago_existente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pago_existente</span><span class="p">,</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="o">==</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'La transacción ya fue pagada.'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="o">!=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span>
+                <span class="s1">'La transacción debe estar "Confirmada" para poder registrar un pago.'</span>
+            <span class="p">)</span>
+
+        <span class="n">campo_transaccion</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">'calculo_operacion'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'calculo_triangulacion'</span>
+        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">db_transaction</span><span class="o">.</span><span class="n">atomic</span><span class="p">():</span>
+                <span class="n">pago</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="n">medio_pago</span><span class="o">=</span><span class="n">medio_pago</span><span class="p">,</span>
+                    <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span>
+                    <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+                    <span class="n">monto</span><span class="o">=</span><span class="n">monto</span><span class="p">,</span>
+                    <span class="n">metodo_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="p">,</span>
+                    <span class="o">**</span><span class="p">{</span><span class="n">campo_transaccion</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">},</span>
+                <span class="p">)</span>
+                <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span>
+                <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">IntegrityError</span><span class="p">:</span>
+            <span class="c1"># Carrera entre dos llamadas simultáneas: o bien la otra ya</span>
+            <span class="c1"># registró este mismo pago (mismo proveedor+identificador, caso</span>
+            <span class="c1"># idempotente), o bien ya le ganó de mano con un pago distinto a</span>
+            <span class="c1"># la misma transacción (el OneToOneField es lo que lo impide "por</span>
+            <span class="c1"># cualquier medio", sin importar si el identificador difiere).</span>
+            <span class="n">pago_existente</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pago_existente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pago_existente</span><span class="p">,</span> <span class="kc">False</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'La transacción ya fue pagada.'</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">return</span> <span class="n">pago</span><span class="p">,</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="Pago.registrar_pago_observado">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago_observado">[documentos]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">registrar_pago_observado</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">medio_pago</span><span class="p">,</span> <span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="n">diferencia</span><span class="p">,</span> <span class="n">metodo_pago</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Registra, de forma idempotente, un pago cuyo monto no coincide con el esperado.</span>
+
+<span class="sd">        Pensado para SIPAP (``apps.divisas.pagos_sipap``): a diferencia de</span>
+<span class="sd">        Stripe, donde el monto que se cobra lo fija el propio sistema, una</span>
+<span class="sd">        transferencia bancaria la hace el cliente a mano, así que el banco</span>
+<span class="sd">        puede confirmar un monto distinto del que correspondía. En ese</span>
+<span class="sd">        caso no corresponde marcar la transacción como "Pagada" — el pago</span>
+<span class="sd">        queda igual registrado (``observado=True``, con la ``diferencia``)</span>
+<span class="sd">        para que alguien lo revise, pero la transacción sigue "Confirmada"</span>
+<span class="sd">        y el cliente puede reintentar el pago.</span>
+
+<span class="sd">        Misma idempotencia que ``registrar_pago`` por</span>
+<span class="sd">        ``(proveedor, identificador_externo)``: repetir la misma</span>
+<span class="sd">        confirmación no crea un segundo registro.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``</span>
+<span class="sd">                ya existente.</span>
+<span class="sd">            medio_pago (str): Uno de ``MetodoPago.TIPO_MEDIO_CHOICES``.</span>
+<span class="sd">            proveedor (str): Quién confirma el pago.</span>
+<span class="sd">            identificador_externo (str): Identificador del pago para ese</span>
+<span class="sd">                proveedor; junto con ``proveedor``, la clave de</span>
+<span class="sd">                idempotencia.</span>
+<span class="sd">            monto (Decimal): Monto que el proveedor confirmó haber</span>
+<span class="sd">                recibido (no necesariamente el esperado).</span>
+<span class="sd">            diferencia (Decimal): ``monto`` menos el monto que se esperaba</span>
+<span class="sd">                recibir; se guarda con signo, para saber de un vistazo si</span>
+<span class="sd">                sobró o faltó plata.</span>
+<span class="sd">            metodo_pago: El ``MetodoPago`` guardado del cliente que se usó,</span>
+<span class="sd">                si corresponde.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[Pago, bool]: El pago (nuevo o preexistente) y si se creó</span>
+<span class="sd">            recién en esta llamada.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            PagoRechazadoError: Mismos casos que ``registrar_pago`` (sin</span>
+<span class="sd">                transacción válida, ya pagada, o no "Confirmada"), salvo</span>
+<span class="sd">                que sea una repetición idempotente del mismo pago.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">transaccion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'No hay una transacción válida para registrar el pago.'</span><span class="p">)</span>
+
+        <span class="n">pago_existente</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">pago_existente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pago_existente</span><span class="p">,</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="o">==</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'La transacción ya fue pagada.'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="o">!=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span>
+                <span class="s1">'La transacción debe estar "Confirmada" para poder registrar un pago.'</span>
+            <span class="p">)</span>
+
+        <span class="n">campo_transaccion</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">'calculo_operacion'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'calculo_triangulacion'</span>
+        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pago</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">medio_pago</span><span class="o">=</span><span class="n">medio_pago</span><span class="p">,</span>
+                <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span>
+                <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+                <span class="n">monto</span><span class="o">=</span><span class="n">monto</span><span class="p">,</span>
+                <span class="n">observado</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">diferencia</span><span class="o">=</span><span class="n">diferencia</span><span class="p">,</span>
+                <span class="n">metodo_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="p">,</span>
+                <span class="o">**</span><span class="p">{</span><span class="n">campo_transaccion</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">},</span>
+            <span class="p">)</span>
+            <span class="c1"># Deliberadamente no se toca transaccion.estado: un pago</span>
+            <span class="c1"># observado no confirma la transacción, queda pendiente de</span>
+            <span class="c1"># revisión (criterio 3 de "Pago por transferencia vía SIPAP").</span>
+        <span class="k">except</span> <span class="n">IntegrityError</span><span class="p">:</span>
+            <span class="n">pago_existente</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pago_existente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pago_existente</span><span class="p">,</span> <span class="kc">False</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'La transacción ya fue pagada.'</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">return</span> <span class="n">pago</span><span class="p">,</span> <span class="kc">True</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SolicitudPagoSipap">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SolicitudPagoSipap</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Solicitud de pago por transferencia bancaria vía SIPAP de una transacción "Confirmada".</span>
+
+<span class="sd">    Implementa la HU "Pago por transferencia bancaria vía SIPAP". A</span>
+<span class="sd">    diferencia de Stripe (donde el cobro es inmediato, por API o en una</span>
+<span class="sd">    página de pago), una transferencia bancaria real tarda: el cliente</span>
+<span class="sd">    tiene que salir del sistema, transferir desde su banco, y recién</span>
+<span class="sd">    después llega la confirmación. Por eso esta HU necesita algo que</span>
+<span class="sd">    ``apps.divisas.pagos_stripe`` no necesitó — un registro propio de "este</span>
+<span class="sd">    pago está pendiente, con esta referencia, hasta esta fecha" — que</span>
+<span class="sd">    ``apps.divisas.pagos_sipap`` crea al iniciar el pago</span>
+<span class="sd">    (``IniciarPagoSipapOperacionView``/``IniciarPagoSipapCambioView``) y</span>
+<span class="sd">    actualiza al llegar la confirmación (``sipap_webhook_view``).</span>
+
+<span class="sd">    Igual que ``Pago``, se asocia a una compra/venta o a un cambio entre</span>
+<span class="sd">    divisas, exactamente uno de los dos (ver ``clean``), con un</span>
+<span class="sd">    ``OneToOneField`` en cada caso: no pueden coexistir dos solicitudes</span>
+<span class="sd">    para la misma transacción (si la primera vence o es rechazada, se</span>
+<span class="sd">    reutiliza la misma fila en vez de crear otra — ver</span>
+<span class="sd">    ``apps.divisas.pagos_sipap._obtener_o_crear_solicitud``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">ESTADO_PENDIENTE</span> <span class="o">=</span> <span class="s1">'PENDIENTE'</span>
+    <span class="n">ESTADO_ACREDITADA</span> <span class="o">=</span> <span class="s1">'ACREDITADA'</span>
+    <span class="n">ESTADO_OBSERVADA</span> <span class="o">=</span> <span class="s1">'OBSERVADA'</span>
+    <span class="n">ESTADO_RECHAZADA</span> <span class="o">=</span> <span class="s1">'RECHAZADA'</span>
+    <span class="n">ESTADO_VENCIDA</span> <span class="o">=</span> <span class="s1">'VENCIDA'</span>
+    <span class="n">ESTADO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span> <span class="s1">'Pendiente'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_ACREDITADA</span><span class="p">,</span> <span class="s1">'Acreditada'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_OBSERVADA</span><span class="p">,</span> <span class="s1">'Observada'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_RECHAZADA</span><span class="p">,</span> <span class="s1">'Rechazada'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_VENCIDA</span><span class="p">,</span> <span class="s1">'Vencida'</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">calculo_operacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">CalculoOperacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'solicitud_sipap'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Compra o venta a pagar'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">calculo_triangulacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">CalculoTriangulacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'solicitud_sipap'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cambio de divisas a pagar'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">pago</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">Pago</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'solicitud_sipap'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Pago resultante (exitoso u observado)'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">referencia</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
+        <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Referencia única'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'El cliente la usa como concepto/referencia al transferir; SIPAP la devuelve en la confirmación.'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Monto esperado'</span><span class="p">)</span>
+    <span class="n">moneda</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Moneda esperada'</span><span class="p">)</span>
+    <span class="n">medio_pago</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">(</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TRANSFERENCIA</span><span class="p">,</span> <span class="s1">'Transferencia Bancaria'</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_BILLETERA</span><span class="p">,</span> <span class="s1">'Billetera Digital'</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TRANSFERENCIA</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Medio de pago'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'Transferencia bancaria o billetera digital: ambas se resuelven con sipap-sim, pero se muestran distinto en el historial de pagos.'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">metodo_pago</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">MetodoPago</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'solicitudes_sipap'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Método de pago elegido'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'La cuenta bancaria o billetera guardada que el cliente eligió '</span>
+            <span class="s1">'para pagar; su número y CI/RUC se le mandan a sipap-sim para '</span>
+            <span class="s1">'que la "banca en línea" la reconozca directamente, en vez de '</span>
+            <span class="s1">'ofrecer todas las cuentas del sistema para elegir.'</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">estado</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">ESTADO_CHOICES</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">ESTADO_PENDIENTE</span><span class="p">)</span>
+    <span class="n">banco_origen</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Banco de origen'</span><span class="p">)</span>
+    <span class="n">id_externo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'ID de la transferencia en SIPAP'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'El id que devuelve sipap-sim al crear la solicitud de cobro.'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">link_pago</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Link de pago'</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'La "banca en línea" de sipap-sim a la que se redirige al cliente para completar la transferencia.'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">creado_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">vence_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">()</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define etiquetas administrativas y el orden por defecto."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Solicitud de pago SIPAP'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Solicitudes de pago SIPAP'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-creado_en'</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Identifica la solicitud por su referencia y su estado."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'Solicitud SIPAP </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">referencia</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">()</span><span class="si">}</span><span class="s1">)'</span>
+
+<div class="viewcode-block" id="SolicitudPagoSipap.clean">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.clean">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida que la solicitud pertenezca a exactamente una transacción."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+        <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_operacion_id</span><span class="p">)</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_triangulacion_id</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Una solicitud debe pertenecer a exactamente una transacción.'</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transaccion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve la compra/venta o el cambio al que pertenece esta solicitud."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculo_operacion</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculo_triangulacion</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">esta_vencida</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Indica si la solicitud ya superó su plazo sin resolverse."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_PENDIENTE</span> <span class="ow">and</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vence_en</span>
+
+<div class="viewcode-block" id="SolicitudPagoSipap.marcar_vencida_si_corresponde">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.marcar_vencida_si_corresponde">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marcar_vencida_si_corresponde</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Persiste el paso a "Vencida" si la solicitud pendiente ya venció.</span>
+
+<span class="sd">        Mismo patrón perezoso que ``CalculoOperacion.marcar_vencida_si_corresponde``:</span>
+<span class="sd">        nada expira en segundo plano, se resuelve la próxima vez que</span>
+<span class="sd">        alguien visita la pantalla de pago o el webhook la procesa.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: ``True`` si la solicitud quedó "Vencida" recién ahora.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">esta_vencida</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_VENCIDA</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+</div>
 
 </pre></div>
 

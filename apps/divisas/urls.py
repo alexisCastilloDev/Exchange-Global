@@ -24,6 +24,18 @@ from .views import (
     MiHistorialTransaccionesView,
     DetalleTransaccionOperacionView,
     DetalleTransaccionCambioView,
+    PagarTransaccionOperacionView,
+    PagarTransaccionCambioView,
+    MisNotificacionesView,
+    MarcarNotificacionLeidaView,
+)
+from .pagos_stripe import (
+    IniciarPagoStripeOperacionView,
+    IniciarPagoStripeCambioView,
+)
+from .pagos_sipap import (
+    IniciarPagoSipapOperacionView,
+    IniciarPagoSipapCambioView,
 )
 """
 Configuración de URLs para la aplicación de divisas.
@@ -42,12 +54,42 @@ urlpatterns = [
         ConfirmarTransaccionOperacionView.as_view(),
         name='confirmar_transaccion',
     ),
+    path(
+        'operar/transaccion/<uuid:pk>/pagar/',
+        PagarTransaccionOperacionView.as_view(),
+        name='pagar_transaccion',
+    ),
+    path(
+        'operar/transaccion/<uuid:pk>/pagar/stripe/',
+        IniciarPagoStripeOperacionView.as_view(),
+        name='pagar_transaccion_stripe',
+    ),
+    path(
+        'operar/transaccion/<uuid:pk>/pagar/sipap/',
+        IniciarPagoSipapOperacionView.as_view(),
+        name='pagar_transaccion_sipap',
+    ),
     path('triangulacion/', TriangulacionOperacionView.as_view(), name='triangulacion'),
     path('triangulacion/confirmar/', confirmar_triangulacion_view, name='confirmar_triangulacion'),
     path(
         'triangulacion/transaccion/<uuid:pk>/',
         ConfirmarTransaccionCambioView.as_view(),
         name='confirmar_transaccion_cambio',
+    ),
+    path(
+        'triangulacion/transaccion/<uuid:pk>/pagar/',
+        PagarTransaccionCambioView.as_view(),
+        name='pagar_transaccion_cambio',
+    ),
+    path(
+        'triangulacion/transaccion/<uuid:pk>/pagar/stripe/',
+        IniciarPagoStripeCambioView.as_view(),
+        name='pagar_transaccion_cambio_stripe',
+    ),
+    path(
+        'triangulacion/transaccion/<uuid:pk>/pagar/sipap/',
+        IniciarPagoSipapCambioView.as_view(),
+        name='pagar_transaccion_cambio_sipap',
     ),
     path('cotizaciones/<int:divisa_id>/actualizar/', ActualizarCotizacionView.as_view(), name='actualizar_cotizacion'),
     path('cotizaciones/<int:divisa_id>/historial/', HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),
@@ -62,6 +104,12 @@ urlpatterns = [
         'transacciones/mias/cambio/<uuid:pk>/',
         DetalleTransaccionCambioView.as_view(),
         name='detalle_transaccion_cambio',
+    ),
+    path('notificaciones/', MisNotificacionesView.as_view(), name='mis_notificaciones'),
+    path(
+        'notificaciones/<int:pk>/leida/',
+        MarcarNotificacionLeidaView.as_view(),
+        name='marcar_notificacion_leida',
     ),
     path('comisiones/', ConfiguracionComisionListView.as_view(), name='comisiones'),
     path('comisiones/<str:segmento>/editar/', ActualizarComisionView.as_view(), name='actualizar_comision'),

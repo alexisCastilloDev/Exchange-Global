@@ -1,0 +1,155 @@
+<!--
+Panel del cajero: muestra la caja abierta, su saldo inicial y actual por
+moneda, los accesos para registrar operaciones de ventanilla y movimientos
+extraordinarios, y el historial reciente de cada uno por separado.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: caja (None si no tiene ninguna abierta), saldos_actuales
+(lista de tuplas (divisa, saldo)), operaciones (últimas operaciones de
+ventanilla de la caja), movimientos_extraordinarios (últimos ingresos/egresos
+extraordinarios de la caja).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Mi caja - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-cash-stack"></i> Caja</span>
+        <h1>Mi caja</h1>
+        <p>Saldo actual por moneda, operaciones de ventanilla y movimientos extraordinarios de tu turno.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if not caja %}
+        <a href="{% url 'caja:abrir' %}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Abrir caja</a>
+        {% else %}
+        <a href="{% url 'caja:registrar_operacion' 'compra' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-down-circle me-1"></i> Comprar divisas
+        </a>
+        <a href="{% url 'caja:registrar_operacion' 'venta' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-up-circle me-1"></i> Vender divisas
+        </a>
+        <a href="{% url 'caja:registrar_movimiento_extraordinario' 'ingreso' %}" class="btn btn-outline-success">
+            <i class="bi bi-plus-circle me-1"></i> Ingreso extraordinario
+        </a>
+        <a href="{% url 'caja:registrar_movimiento_extraordinario' 'egreso' %}" class="btn btn-outline-danger">
+            <i class="bi bi-dash-circle me-1"></i> Egreso extraordinario
+        </a>
+        <a href="{% url 'caja:iniciar_arqueo' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-clipboard-check me-1"></i> Arqueo de caja
+        </a>
+        <a href="{% url 'caja:historial_arqueos' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history me-1"></i> Historial de arqueos
+        </a>
+        <a href="{% url 'caja:cerrar' %}" class="btn btn-outline-dark">
+            <i class="bi bi-door-closed me-1"></i> Cerrar caja
+        </a>
+        {% endif %}
+        <a href="{% url 'caja:historial_cajas' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-archive me-1"></i> Historial de cajas
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+        <div class="ge-card">
+            {% if caja %}
+                <div class="ge-card__header mb-3">
+                    <h2>Caja abierta</h2>
+                    <span class="badge-activo">{{ caja.get_estado_display }}</span>
+                </div>
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Abierta el: </span><strong class="operation-summary__value">{{ caja.abierta_en|date:"d/m/Y H:i" }}</strong></div>
+                </div>
+                <h3 class="mt-4" style="font-size:15px;">Saldo actual por moneda</h3>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Divisa</th>
+                                <th>Saldo actual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for divisa, saldo in saldos_actuales %}
+                            <tr>
+                                <td>{{ divisa.codigo }}</td>
+                                <td class="ge-num">{{ saldo|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mt-4" style="font-size:15px;">Últimas operaciones de ventanilla</h3>
+                {% if operaciones %}
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Divisa</th>
+                                <th>Monto divisa</th>
+                                <th>Monto guaraníes</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for operacion in operaciones %}
+                            <tr>
+                                <td>{{ operacion.get_tipo_display }}</td>
+                                <td>{{ operacion.divisa.codigo }}</td>
+                                <td class="ge-num">{{ operacion.monto_divisa|floatformat:2 }}</td>
+                                <td class="ge-num">{{ operacion.monto_pyg|floatformat:2 }}</td>
+                                <td>{{ operacion.creado_en|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="ge-empty-state">Todavía no registraste ninguna operación de ventanilla en este turno.</div>
+                {% endif %}
+
+                <h3 class="mt-4" style="font-size:15px;">Últimos movimientos extraordinarios</h3>
+                <p class="text-muted" style="font-size:13px;">
+                    Ingresos y egresos que no provienen de una operación cambiaria: se muestran
+                    aparte para distinguirlos de las compras y ventas de divisas.
+                </p>
+                {% if movimientos_extraordinarios %}
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Divisa</th>
+                                <th>Monto</th>
+                                <th>Motivo</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movimiento in movimientos_extraordinarios %}
+                            <tr>
+                                <td>{{ movimiento.get_tipo_display }}</td>
+                                <td>{{ movimiento.divisa.codigo }}</td>
+                                <td class="ge-num">{{ movimiento.monto|floatformat:2 }}</td>
+                                <td>{{ movimiento.motivo }}</td>
+                                <td>{{ movimiento.creado_en|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="ge-empty-state">Todavía no registraste ningún movimiento extraordinario en este turno.</div>
+                {% endif %}
+            {% else %}
+                <div class="ge-empty-state">Todavía no tenés una caja abierta.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

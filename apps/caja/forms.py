@@ -1,0 +1,254 @@
+"""Formularios para la apertura de caja y las operaciones de ventanilla."""
+
+from decimal import Decimal
+
+from django import forms
+
+from apps.divisas.models import Divisa
+
+
+class AperturaCajaForm(forms.Form):
+    """Pide el saldo inicial de cada divisa cotizada para abrir una caja.
+
+    Genera dinámicamente un campo ``saldo_<divisa.pk>`` por cada divisa
+    activa que tiene una cotización vigente (PYG siempre cuenta como
+    cotizada, con tasa 1:1, igual que en el resto del sistema), para que el
+    cajero registre cuánto tiene de cada una al empezar su turno
+    (Criterio 1). Un saldo en cero es válido para una divisa que el cajero
+    no va a manejar en este turno (Criterio 3); lo que se rechaza es un
+    monto negativo o que no sea un número.
+
+    Las divisas activas que todavía no tienen ninguna cotización cargada no
+    reciben un campo: no tiene sentido contar un saldo inicial en una
+    moneda que el sistema no puede valuar todavía. Quedan disponibles en
+    ``self.divisas_sin_cotizar`` para que la vista/plantilla avise que hace
+    falta que un analista cambiario o un administrador las cotice antes de
+    poder manejarlas en una caja.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """Agrega un campo de saldo por cada divisa activa ya cotizada."""
+        super().__init__(*args, **kwargs)
+        self.divisas = []
+        self.divisas_sin_cotizar = []
+        for divisa in Divisa.objects.filter(activa=True).order_by('codigo'):
+            if not divisa.es_base and divisa.ultima_cotizacion is None:
+                self.divisas_sin_cotizar.append(divisa)
+                continue
+            self.divisas.append(divisa)
+        for divisa in self.divisas:
+            self.fields[self.nombre_campo(divisa)] = forms.DecimalField(
+                label=f'Saldo inicial en {divisa.codigo}',
+                min_value=Decimal('0'),
+                max_digits=18,
+                decimal_places=2,
+                initial=Decimal('0.00'),
+                error_messages={
+                    'required': 'El saldo inicial es obligatorio.',
+                    'invalid': 'Ingresá un monto válido.',
+                    'min_value': 'El saldo inicial no puede ser negativo.',
+                },
+            )
+
+    @staticmethod
+    def nombre_campo(divisa):
+        """Nombre del campo del formulario para el saldo inicial de una divisa."""
+        return f'saldo_{divisa.pk}'
+
+    def saldos_por_divisa(self):
+        """Devuelve ``{Divisa: Decimal}`` con los montos ya validados.
+
+        Solo debe llamarse después de confirmar ``is_valid()``.
+        """
+        return {
+            divisa: self.cleaned_data[self.nombre_campo(divisa)]
+            for divisa in self.divisas
+        }
+
+
+class OperacionVentanillaForm(forms.Form):
+    """Valida la divisa y el monto de una compra o venta de divisas en ventanilla.
+
+    Mismo criterio de validación que ``apps.divisas.forms.CalculoOperacionForm``
+    usa para el flujo online del cliente: rechaza un monto negativo, en cero
+    o no numérico, con mensajes en español. PYG no se ofrece como divisa
+    operable (es la moneda contra la que siempre se opera, nunca la que se
+    compra o vende), y tampoco una divisa sin cotización vigente, porque no
+    hay con qué calcular la tasa aplicada.
+    """
+
+    divisa = forms.ChoiceField(
+        label='Divisa',
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        error_messages={
+            'required': 'Debe seleccionar una divisa.',
+            'invalid_choice': (
+                'La divisa seleccionada está inactiva, no tiene cotización'
+                ' vigente o no está disponible.'
+            ),
+        },
+    )
+    monto = forms.DecimalField(
+        label='Monto en divisa',
+        min_value=Decimal('0.01'),
+        max_digits=18,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'class': 'form-control'}),
+        error_messages={
+            'required': 'Debe ingresar un monto.',
+            'invalid': 'El monto debe ser un número válido.',
+            'min_value': 'El monto debe ser mayor que cero.',
+            'max_digits': 'El monto supera la cantidad de dígitos permitida.',
+            'max_decimal_places': 'El monto admite como máximo 2 decimales.',
+            'max_whole_digits': 'El monto supera la cantidad de dígitos permitida.',
+        },
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Carga como opciones las divisas activas y con cotización vigente, sin PYG."""
+        super().__init__(*args, **kwargs)
+        self.divisas = [
+            divisa
+            for divisa in Divisa.objects.filter(activa=True).exclude(codigo='PYG').order_by('codigo')
+            if divisa.ultima_cotizacion is not None
+        ]
+        self.fields['divisa'].choices = [('', 'Seleccionar divisa')] + [
+            (str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})') for divisa in self.divisas
+        ]
+
+    def divisa_seleccionada(self):
+        """Devuelve la ``Divisa`` ya validada. Solo debe llamarse tras confirmar ``is_valid()``."""
+        pk = self.cleaned_data['divisa']
+        return next(divisa for divisa in self.divisas if str(divisa.pk) == pk)
+
+
+class MovimientoExtraordinarioForm(forms.Form):
+    """Valida la divisa, el monto y el motivo de un movimiento extraordinario de caja.
+
+    A diferencia de ``OperacionVentanillaForm``, no excluye PYG ni ninguna
+    divisa sin cotización vigente: un movimiento extraordinario no calcula
+    ninguna tasa (no es una compra ni una venta de divisas), así que puede
+    registrarse en cualquier divisa activa, incluida PYG, tenga o no
+    cotización cargada — ``Caja.saldo_actual`` tampoco depende de una tasa
+    para calcular el saldo de una moneda. El ``motivo`` es obligatorio
+    (Criterio 3): se rechaza vacío o compuesto solo de espacios, mismo
+    criterio que ``apps.authentication.forms.CausaBajaForm`` usa para la
+    causa de una baja lógica.
+    """
+
+    divisa = forms.ChoiceField(
+        label='Divisa',
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        error_messages={
+            'required': 'Debe seleccionar una divisa.',
+            'invalid_choice': 'La divisa seleccionada está inactiva o no está disponible.',
+        },
+    )
+    monto = forms.DecimalField(
+        label='Monto',
+        min_value=Decimal('0.01'),
+        max_digits=18,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'class': 'form-control'}),
+        error_messages={
+            'required': 'Debe ingresar un monto.',
+            'invalid': 'El monto debe ser un número válido.',
+            'min_value': 'El monto debe ser mayor que cero.',
+            'max_digits': 'El monto supera la cantidad de dígitos permitida.',
+            'max_decimal_places': 'El monto admite como máximo 2 decimales.',
+            'max_whole_digits': 'El monto supera la cantidad de dígitos permitida.',
+        },
+    )
+    motivo = forms.CharField(
+        label='Motivo',
+        max_length=1000,
+        widget=forms.Textarea(
+            attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Indicá el motivo del movimiento.',
+            }
+        ),
+        error_messages={'required': 'Debe indicar el motivo del movimiento.'},
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Carga como opciones todas las divisas activas, PYG incluido."""
+        super().__init__(*args, **kwargs)
+        self.divisas = list(Divisa.objects.filter(activa=True).order_by('codigo'))
+        self.fields['divisa'].choices = [('', 'Seleccionar divisa')] + [
+            (str(divisa.pk), f'{divisa.nombre} ({divisa.codigo})') for divisa in self.divisas
+        ]
+
+    def clean_motivo(self):
+        """Rechaza un motivo vacío después de quitar espacios exteriores."""
+        motivo = self.cleaned_data['motivo'].strip()
+        if not motivo:
+            raise forms.ValidationError('Debe indicar el motivo del movimiento.')
+        return motivo
+
+    def divisa_seleccionada(self):
+        """Devuelve la ``Divisa`` ya validada. Solo debe llamarse tras confirmar ``is_valid()``."""
+        pk = self.cleaned_data['divisa']
+        return next(divisa for divisa in self.divisas if str(divisa.pk) == pk)
+
+
+class ArqueoCajaForm(forms.Form):
+    """Pide el monto físico contado de cada divisa cotizada para registrar un arqueo.
+
+    Genera dinámicamente un campo ``contado_<divisa.pk>`` por cada divisa
+    activa que tiene una cotización vigente (PYG siempre cuenta como
+    cotizada, con tasa 1:1, igual que ``AperturaCajaForm`` usa para el saldo
+    inicial): el cajero cuenta a mano cuánto tiene físicamente de cada una.
+    Un monto en cero es válido (no tiene nada físico de esa moneda en este
+    momento); lo que se rechaza es un monto negativo o que no sea un número.
+
+    Las divisas activas que todavía no tienen ninguna cotización cargada no
+    reciben un campo: sin una tasa vigente, el saldo que el sistema calcula
+    para esa moneda (``Caja.saldo_actual``) no se puede comparar contra nada
+    confiable, así que no tiene sentido pedirle al cajero que la cuente en
+    este arqueo. Quedan disponibles en ``self.divisas_sin_cotizar`` para que
+    la vista/plantilla avise que hace falta cotizarlas antes de poder
+    incluirlas.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """Agrega un campo de monto contado por cada divisa activa ya cotizada."""
+        super().__init__(*args, **kwargs)
+        self.divisas = []
+        self.divisas_sin_cotizar = []
+        for divisa in Divisa.objects.filter(activa=True).order_by('codigo'):
+            if divisa.codigo != 'PYG' and divisa.ultima_cotizacion is None:
+                self.divisas_sin_cotizar.append(divisa)
+                continue
+            self.divisas.append(divisa)
+        for divisa in self.divisas:
+            self.fields[self.nombre_campo(divisa)] = forms.DecimalField(
+                label=f'Monto contado en {divisa.codigo}',
+                min_value=Decimal('0'),
+                max_digits=18,
+                decimal_places=2,
+                initial=Decimal('0.00'),
+                error_messages={
+                    'required': 'El monto contado es obligatorio.',
+                    'invalid': 'Ingresá un monto válido.',
+                    'min_value': 'El monto contado no puede ser negativo.',
+                },
+            )
+
+    @staticmethod
+    def nombre_campo(divisa):
+        """Nombre del campo del formulario para el monto contado de una divisa."""
+        return f'contado_{divisa.pk}'
+
+    def montos_por_divisa(self):
+        """Devuelve ``{Divisa: Decimal}`` con los montos ya validados.
+
+        Solo debe llamarse después de confirmar ``is_valid()``.
+        """
+        return {
+            divisa: self.cleaned_data[self.nombre_campo(divisa)]
+            for divisa in self.divisas
+        }

@@ -48,10 +48,27 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -80,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -87,6 +105,7 @@
 <li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4 current"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
@@ -144,6 +163,36 @@
   <section id="module-apps.clientes.forms">
 <span id="apps-clientes-forms-module"></span><h1>apps.clientes.forms module<a class="headerlink" href="#module-apps.clientes.forms" title="Link to this heading"></a></h1>
 <p>Módulo de formularios para la aplicación de Clientes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.forms.AgregarTarjetaStripeForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AgregarTarjetaStripeForm</span></span><a class="reference internal" href="../_modules/apps/clientes/forms.html#AgregarTarjetaStripeForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.AgregarTarjetaStripeForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
+<p>Pide el nombre del titular antes de ir a Stripe a capturar la tarjeta.</p>
+<p>Es deliberadamente mínimo: el número de tarjeta nunca pasa por este
+formulario ni por ningún campo de Global Exchange — lo captura Stripe
+directamente en su propia página (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView</span></code>). El
+nombre del titular es el único dato propio que hace falta pedir antes
+de salir hacia Stripe, porque la entidad financiera y los últimos 4
+dígitos los va a devolver Stripe recién al confirmar.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.forms.AgregarTarjetaStripeForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'nombre_titular':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.AgregarTarjetaStripeForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.forms.AgregarTarjetaStripeForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'nombre_titular':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.AgregarTarjetaStripeForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.clientes.forms.AgregarTarjetaStripeForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.clientes.forms.AgregarTarjetaStripeForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.clientes.forms.AsociarUsuarioClienteForm">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AsociarUsuarioClienteForm</span></span><a class="reference internal" href="../_modules/apps/clientes/forms.html#AsociarUsuarioClienteForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.AsociarUsuarioClienteForm" title="Link to this definition"></a></dt>
@@ -270,8 +319,22 @@
 <dt class="sig sig-object py" id="apps.clientes.forms.MetodoPagoForm">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MetodoPagoForm</span></span><a class="reference internal" href="../_modules/apps/clientes/forms.html#MetodoPagoForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelForm</span></code></p>
-<p>Formulario para la creación y edición de métodos de pago del cliente.
-Realiza validaciones condicionales de acuerdo al tipo de medio de pago seleccionado.</p>
+<p>Formulario para registrar un método de pago manual del cliente (transferencia o billetera).</p>
+<p>Solo se usa para crear: los métodos de pago ya no se editan, solo se
+eliminan y se vuelven a crear si hace falta cambiar algo (ver
+<code class="docutils literal notranslate"><span class="pre">apps.clientes.views.metodo_pago_delete</span></code>). Tampoco ofrece «Tarjeta de
+Débito/Crédito» como opción: desde la HU «Pago con tarjeta vía Stripe»,
+una tarjeta se agrega exclusivamente a través de Stripe (ver
+<code class="docutils literal notranslate"><span class="pre">IniciarAgregarTarjetaStripeView</span></code> en <code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code>),
+que es quien conoce el número real y nunca lo entrega a este
+formulario.</p>
+<p>El cliente no escribe el nombre del titular ni el banco/billetera: los
+completa <code class="docutils literal notranslate"><span class="pre">clean()</span></code> a partir de lo que confirma sipap-sim
+(<code class="docutils literal notranslate"><span class="pre">apps.clientes.validacion_sipap.validar_cuenta</span></code>), igual que
+cualquier flujo real de vinculación de cuenta (no le creemos al
+usuario que una cuenta es suya solo porque lo escribió). Por eso esos
+dos campos del modelo no están en <code class="docutils literal notranslate"><span class="pre">Meta.fields</span></code>: no hay nada que el
+formulario le pida tipear al cliente para completarlos.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.clientes.forms.MetodoPagoForm.Meta">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../_modules/apps/clientes/forms.html#MetodoPagoForm.Meta"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.Meta" title="Link to this definition"></a></dt>
@@ -279,7 +342,7 @@ Realiza validaciones condicionales de acuerdo al tipo de medio de pago seleccion
 <p>Define los campos, etiquetas y widgets del método de pago.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.forms.MetodoPagoForm.Meta.fields">
-<span class="sig-name descname"><span class="pre">fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['tipo_medio',</span> <span class="pre">'nombre_titular',</span> <span class="pre">'entidad_financiera',</span> <span class="pre">'numero_cuenta',</span> <span class="pre">'tipo_cuenta',</span> <span class="pre">'numero_tarjeta',</span> <span class="pre">'es_predeterminado']</span></span><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.Meta.fields" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['tipo_medio',</span> <span class="pre">'numero_cuenta',</span> <span class="pre">'documento_titular',</span> <span class="pre">'tipo_cuenta',</span> <span class="pre">'es_predeterminado']</span></span><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.Meta.fields" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -290,20 +353,34 @@ Realiza validaciones condicionales de acuerdo al tipo de medio de pago seleccion
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.forms.MetodoPagoForm.Meta.widgets">
-<span class="sig-name descname"><span class="pre">widgets</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'entidad_financiera':</span> <span class="pre">&lt;django.forms.widgets.TextInput</span> <span class="pre">object&gt;,</span> <span class="pre">'es_predeterminado':</span> <span class="pre">&lt;django.forms.widgets.CheckboxInput</span> <span class="pre">object&gt;,</span> <span class="pre">'nombre_titular':</span> <span class="pre">&lt;django.forms.widgets.TextInput</span> <span class="pre">object&gt;,</span> <span class="pre">'numero_cuenta':</span> <span class="pre">&lt;django.forms.widgets.TextInput</span> <span class="pre">object&gt;,</span> <span class="pre">'numero_tarjeta':</span> <span class="pre">&lt;django.forms.widgets.TextInput</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_cuenta':</span> <span class="pre">&lt;django.forms.widgets.Select</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_medio':</span> <span class="pre">&lt;django.forms.widgets.Select</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.Meta.widgets" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">widgets</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'documento_titular':</span> <span class="pre">&lt;django.forms.widgets.TextInput</span> <span class="pre">object&gt;,</span> <span class="pre">'es_predeterminado':</span> <span class="pre">&lt;django.forms.widgets.CheckboxInput</span> <span class="pre">object&gt;,</span> <span class="pre">'numero_cuenta':</span> <span class="pre">&lt;django.forms.widgets.TextInput</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_cuenta':</span> <span class="pre">&lt;django.forms.widgets.Select</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_medio':</span> <span class="pre">&lt;django.forms.widgets.Select</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.Meta.widgets" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.forms.MetodoPagoForm.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/forms.html#MetodoPagoForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.__init__" title="Link to this definition"></a></dt>
+<dd><p>Quita «Tarjeta» de las opciones: esa alta pasa siempre por Stripe.</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.clientes.forms.MetodoPagoForm.base_fields">
-<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'entidad_financiera':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'es_predeterminado':</span> <span class="pre">&lt;django.forms.fields.BooleanField</span> <span class="pre">object&gt;,</span> <span class="pre">'nombre_titular':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'numero_cuenta':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'numero_tarjeta':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_cuenta':</span> <span class="pre">&lt;django.forms.fields.TypedChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_medio':</span> <span class="pre">&lt;django.forms.fields.TypedChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.base_fields" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'documento_titular':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'es_predeterminado':</span> <span class="pre">&lt;django.forms.fields.BooleanField</span> <span class="pre">object&gt;,</span> <span class="pre">'numero_cuenta':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_cuenta':</span> <span class="pre">&lt;django.forms.fields.TypedChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_medio':</span> <span class="pre">&lt;django.forms.fields.TypedChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.base_fields" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.clientes.forms.MetodoPagoForm.clean">
 <span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/forms.html#MetodoPagoForm.clean"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.clean" title="Link to this definition"></a></dt>
-<dd><p>Valida que se ingresen los campos obligatorios correspondientes a cada tipo de pago (Criterio 2).</p>
+<dd><p>Valida los datos obligatorios y confirma la cuenta contra sipap-sim (criterios 1 y 2).</p>
+<p>Una transferencia o billetera necesita número de cuenta y CI/RUC
+del titular (además, solo para transferencia, el tipo de cuenta);
+con esos dos datos, se consulta a sipap-sim
+(<code class="docutils literal notranslate"><span class="pre">validar_cuenta</span></code>) para confirmar que la cuenta exista y sea de
+ese titular — si no, se rechaza el alta, igual que lo haría un
+banco real con una cuenta inventada. Si sipap-sim no responde, se
+rechaza también (no hay forma de confirmar nada sin él), en vez
+de guardar un método de pago sin verificar.</p>
 </dd></dl>
 
 <dl class="py attribute">

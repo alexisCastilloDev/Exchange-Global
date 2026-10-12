@@ -22,7 +22,7 @@
     <link rel="index" title="Índice" href="../genindex.html" />
     <link rel="search" title="Búsqueda" href="../search.html" />
     <link rel="next" title="apps.divisas.models module" href="apps.divisas.models.html" />
-    <link rel="prev" title="apps.divisas package" href="apps.divisas.html" /> 
+    <link rel="prev" title="apps.divisas.context_processors module" href="apps.divisas.context_processors.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -48,11 +48,27 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -81,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -88,6 +105,7 @@
 <li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4 current"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
@@ -326,6 +344,41 @@ transacción.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">PagarTransaccionForm</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#PagarTransaccionForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
+<p>Elige con qué método de pago guardado se paga una transacción confirmada.</p>
+<p>Es deliberadamente simple: solo pide un <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> ya existente del
+cliente activo (<code class="docutils literal notranslate"><span class="pre">apps.clientes.models.MetodoPago</span></code>, de GE-19). El medio
+de pago efectivo (<code class="docutils literal notranslate"><span class="pre">Pago.medio_pago</span></code>) se deriva de
+<code class="docutils literal notranslate"><span class="pre">metodo_pago.tipo_medio</span></code> en la vista; este formulario no decide nada
+de proveedor, identificador externo ni monto, que son responsabilidad de
+<code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#PagarTransaccionForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.__init__" title="Link to this definition"></a></dt>
+<dd><p>Restringe las opciones a los métodos de pago del cliente activo.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'metodo_pago':</span> <span class="pre">&lt;django.forms.models.ModelChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'metodo_pago':</span> <span class="pre">&lt;django.forms.models.ModelChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.forms.SimulacionDivisasForm">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SimulacionDivisasForm</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#SimulacionDivisasForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.SimulacionDivisasForm" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
@@ -460,6 +513,13 @@ transacción.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaForm</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelForm</span></code></p>
 <p>Valida los datos básicos de una divisa administrable.</p>
+<p>PYG queda fuera de este catálogo a propósito: es la moneda base del
+sistema (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.moneda_a_pagar</span></code>), implícita en
+cualquier operación, y nunca algo que un administrador deba poder
+crear, editar ni dar de baja desde acá. La fila que la representa en
+la base (necesaria para otros módulos, como la apertura de caja) la
+asegura una migración de datos (<code class="docutils literal notranslate"><span class="pre">0017_asegurar_divisa_pyg</span></code>), no
+este formulario.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.forms.DivisaForm.Meta">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm.Meta"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm.Meta" title="Link to this definition"></a></dt>
@@ -486,7 +546,7 @@ transacción.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.forms.DivisaForm.clean_codigo">
 <span class="sig-name descname"><span class="pre">clean_codigo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm.clean_codigo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm.clean_codigo" title="Link to this definition"></a></dt>
-<dd><p>Normaliza el código ISO y controla que no esté duplicado.</p>
+<dd><p>Normaliza el código ISO, rechaza PYG y controla que no esté duplicado.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -577,7 +637,7 @@ transacción.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
-        <a href="apps.divisas.html" class="btn btn-neutral float-left" title="apps.divisas package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.context_processors.html" class="btn btn-neutral float-left" title="apps.divisas.context_processors module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
         <a href="apps.divisas.models.html" class="btn btn-neutral float-right" title="apps.divisas.models module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

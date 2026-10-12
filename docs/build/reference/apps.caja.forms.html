@@ -1,0 +1,399 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.caja.forms module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.caja.models module" href="apps.caja.models.html" />
+    <link rel="prev" title="apps.caja package" href="apps.caja.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.caja.html">apps.caja package</a></li>
+      <li class="breadcrumb-item active">apps.caja.forms module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apps-caja-forms-module">
+<h1>apps.caja.forms module<a class="headerlink" href="#apps-caja-forms-module" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.forms.AperturaCajaForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AperturaCajaForm</span></span><a class="reference internal" href="../_modules/apps/caja/forms.html#AperturaCajaForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.AperturaCajaForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
+<p>Pide el saldo inicial de cada divisa cotizada para abrir una caja.</p>
+<p>Genera dinámicamente un campo <code class="docutils literal notranslate"><span class="pre">saldo_&lt;divisa.pk&gt;</span></code> por cada divisa
+activa que tiene una cotización vigente (PYG siempre cuenta como
+cotizada, con tasa 1:1, igual que en el resto del sistema), para que el
+cajero registre cuánto tiene de cada una al empezar su turno
+(Criterio 1). Un saldo en cero es válido para una divisa que el cajero
+no va a manejar en este turno (Criterio 3); lo que se rechaza es un
+monto negativo o que no sea un número.</p>
+<p>Las divisas activas que todavía no tienen ninguna cotización cargada no
+reciben un campo: no tiene sentido contar un saldo inicial en una
+moneda que el sistema no puede valuar todavía. Quedan disponibles en
+<code class="docutils literal notranslate"><span class="pre">self.divisas_sin_cotizar</span></code> para que la vista/plantilla avise que hace
+falta que un analista cambiario o un administrador las cotice antes de
+poder manejarlas en una caja.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.AperturaCajaForm.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#AperturaCajaForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.AperturaCajaForm.__init__" title="Link to this definition"></a></dt>
+<dd><p>Agrega un campo de saldo por cada divisa activa ya cotizada.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.forms.AperturaCajaForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#apps.caja.forms.AperturaCajaForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.forms.AperturaCajaForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#apps.caja.forms.AperturaCajaForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.caja.forms.AperturaCajaForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.caja.forms.AperturaCajaForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.AperturaCajaForm.nombre_campo">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">nombre_campo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">divisa</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#AperturaCajaForm.nombre_campo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.AperturaCajaForm.nombre_campo" title="Link to this definition"></a></dt>
+<dd><p>Nombre del campo del formulario para el saldo inicial de una divisa.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.AperturaCajaForm.saldos_por_divisa">
+<span class="sig-name descname"><span class="pre">saldos_por_divisa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#AperturaCajaForm.saldos_por_divisa"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.AperturaCajaForm.saldos_por_divisa" title="Link to this definition"></a></dt>
+<dd><p>Devuelve <code class="docutils literal notranslate"><span class="pre">{Divisa:</span> <span class="pre">Decimal}</span></code> con los montos ya validados.</p>
+<p>Solo debe llamarse después de confirmar <code class="docutils literal notranslate"><span class="pre">is_valid()</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">OperacionVentanillaForm</span></span><a class="reference internal" href="../_modules/apps/caja/forms.html#OperacionVentanillaForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
+<p>Valida la divisa y el monto de una compra o venta de divisas en ventanilla.</p>
+<p>Mismo criterio de validación que <code class="docutils literal notranslate"><span class="pre">apps.divisas.forms.CalculoOperacionForm</span></code>
+usa para el flujo online del cliente: rechaza un monto negativo, en cero
+o no numérico, con mensajes en español. PYG no se ofrece como divisa
+operable (es la moneda contra la que siempre se opera, nunca la que se
+compra o vende), y tampoco una divisa sin cotización vigente, porque no
+hay con qué calcular la tasa aplicada.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#OperacionVentanillaForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.__init__" title="Link to this definition"></a></dt>
+<dd><p>Carga como opciones las divisas activas y con cotización vigente, sin PYG.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'divisa':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'divisa':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm.divisa_seleccionada">
+<span class="sig-name descname"><span class="pre">divisa_seleccionada</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#OperacionVentanillaForm.divisa_seleccionada"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.divisa_seleccionada" title="Link to this definition"></a></dt>
+<dd><p>Devuelve la <code class="docutils literal notranslate"><span class="pre">Divisa</span></code> ya validada. Solo debe llamarse tras confirmar <code class="docutils literal notranslate"><span class="pre">is_valid()</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.forms.MovimientoExtraordinarioForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MovimientoExtraordinarioForm</span></span><a class="reference internal" href="../_modules/apps/caja/forms.html#MovimientoExtraordinarioForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.MovimientoExtraordinarioForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
+<p>Valida la divisa, el monto y el motivo de un movimiento extraordinario de caja.</p>
+<p>A diferencia de <code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm</span></code>, no excluye PYG ni ninguna
+divisa sin cotización vigente: un movimiento extraordinario no calcula
+ninguna tasa (no es una compra ni una venta de divisas), así que puede
+registrarse en cualquier divisa activa, incluida PYG, tenga o no
+cotización cargada — <code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> tampoco depende de una tasa
+para calcular el saldo de una moneda. El <code class="docutils literal notranslate"><span class="pre">motivo</span></code> es obligatorio
+(Criterio 3): se rechaza vacío o compuesto solo de espacios, mismo
+criterio que <code class="docutils literal notranslate"><span class="pre">apps.authentication.forms.CausaBajaForm</span></code> usa para la
+causa de una baja lógica.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.MovimientoExtraordinarioForm.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#MovimientoExtraordinarioForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.MovimientoExtraordinarioForm.__init__" title="Link to this definition"></a></dt>
+<dd><p>Carga como opciones todas las divisas activas, PYG incluido.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.forms.MovimientoExtraordinarioForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'divisa':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;,</span> <span class="pre">'motivo':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.caja.forms.MovimientoExtraordinarioForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.MovimientoExtraordinarioForm.clean_motivo">
+<span class="sig-name descname"><span class="pre">clean_motivo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#MovimientoExtraordinarioForm.clean_motivo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.MovimientoExtraordinarioForm.clean_motivo" title="Link to this definition"></a></dt>
+<dd><p>Rechaza un motivo vacío después de quitar espacios exteriores.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.forms.MovimientoExtraordinarioForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'divisa':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;,</span> <span class="pre">'motivo':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.caja.forms.MovimientoExtraordinarioForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.MovimientoExtraordinarioForm.divisa_seleccionada">
+<span class="sig-name descname"><span class="pre">divisa_seleccionada</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#MovimientoExtraordinarioForm.divisa_seleccionada"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.MovimientoExtraordinarioForm.divisa_seleccionada" title="Link to this definition"></a></dt>
+<dd><p>Devuelve la <code class="docutils literal notranslate"><span class="pre">Divisa</span></code> ya validada. Solo debe llamarse tras confirmar <code class="docutils literal notranslate"><span class="pre">is_valid()</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.caja.forms.MovimientoExtraordinarioForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.caja.forms.MovimientoExtraordinarioForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.forms.ArqueoCajaForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ArqueoCajaForm</span></span><a class="reference internal" href="../_modules/apps/caja/forms.html#ArqueoCajaForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.ArqueoCajaForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
+<p>Pide el monto físico contado de cada divisa cotizada para registrar un arqueo.</p>
+<p>Genera dinámicamente un campo <code class="docutils literal notranslate"><span class="pre">contado_&lt;divisa.pk&gt;</span></code> por cada divisa
+activa que tiene una cotización vigente (PYG siempre cuenta como
+cotizada, con tasa 1:1, igual que <code class="docutils literal notranslate"><span class="pre">AperturaCajaForm</span></code> usa para el saldo
+inicial): el cajero cuenta a mano cuánto tiene físicamente de cada una.
+Un monto en cero es válido (no tiene nada físico de esa moneda en este
+momento); lo que se rechaza es un monto negativo o que no sea un número.</p>
+<p>Las divisas activas que todavía no tienen ninguna cotización cargada no
+reciben un campo: sin una tasa vigente, el saldo que el sistema calcula
+para esa moneda (<code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code>) no se puede comparar contra nada
+confiable, así que no tiene sentido pedirle al cajero que la cuente en
+este arqueo. Quedan disponibles en <code class="docutils literal notranslate"><span class="pre">self.divisas_sin_cotizar</span></code> para que
+la vista/plantilla avise que hace falta cotizarlas antes de poder
+incluirlas.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.ArqueoCajaForm.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#ArqueoCajaForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.ArqueoCajaForm.__init__" title="Link to this definition"></a></dt>
+<dd><p>Agrega un campo de monto contado por cada divisa activa ya cotizada.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.forms.ArqueoCajaForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#apps.caja.forms.ArqueoCajaForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.forms.ArqueoCajaForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#apps.caja.forms.ArqueoCajaForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.caja.forms.ArqueoCajaForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.caja.forms.ArqueoCajaForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.ArqueoCajaForm.montos_por_divisa">
+<span class="sig-name descname"><span class="pre">montos_por_divisa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#ArqueoCajaForm.montos_por_divisa"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.ArqueoCajaForm.montos_por_divisa" title="Link to this definition"></a></dt>
+<dd><p>Devuelve <code class="docutils literal notranslate"><span class="pre">{Divisa:</span> <span class="pre">Decimal}</span></code> con los montos ya validados.</p>
+<p>Solo debe llamarse después de confirmar <code class="docutils literal notranslate"><span class="pre">is_valid()</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.forms.ArqueoCajaForm.nombre_campo">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">nombre_campo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">divisa</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#ArqueoCajaForm.nombre_campo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.ArqueoCajaForm.nombre_campo" title="Link to this definition"></a></dt>
+<dd><p>Nombre del campo del formulario para el monto contado de una divisa.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.caja.html" class="btn btn-neutral float-left" title="apps.caja package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.caja.models.html" class="btn btn-neutral float-right" title="apps.caja.models module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

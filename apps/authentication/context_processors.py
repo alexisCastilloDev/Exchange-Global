@@ -20,6 +20,7 @@ def permisos_ui_context(request):
             'puede_ver_usuarios': False,
             'puede_ver_roles': False,
             'puede_ver_historial_propio': False,
+            'puede_ver_caja': False,
         }
 
     roles = request.session.get('keycloak_roles', [])
@@ -36,6 +37,7 @@ def permisos_ui_context(request):
         and not es_admin
     )
     puede_configurar_comisiones = es_admin or 'analista_cambiario' in roles
+    puede_ver_caja = 'cajero' in roles
 
     return {
         'keycloak_roles': roles,
@@ -50,4 +52,5 @@ def permisos_ui_context(request):
         'puede_actualizar_tasas': puede_actualizar_tasas,
         'puede_ver_tasas': puede_ver_tasas,
         'puede_configurar_comisiones': puede_configurar_comisiones,
+        'puede_ver_caja': puede_ver_caja,
     }

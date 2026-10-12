@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>SIPAP (simulado) · Transferencia {{ transferencia.get_estado_display }}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 480px; margin: 40px auto; color: #222; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Transferencia {{ transferencia.get_estado_display|lower }}</h1>
+    <p>Referencia: {{ transferencia.referencia }}</p>
+    <p>Podés cerrar esta ventana y volver a Global Exchange.</p>
+</body>
+</html>

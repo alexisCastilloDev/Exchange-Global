@@ -3,6 +3,7 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.shortcuts import resolve_url
 from django.test import TestCase
 from django.urls import reverse
@@ -10,6 +11,7 @@ from django.utils import timezone
 
 from apps.authentication.models import HistorialBaja
 from apps.divisas.models import Cotizacion, Divisa
+from tests.utils_formato import formato
 
 
 @pytest.mark.django_db
@@ -87,13 +89,34 @@ class TasasVigentesTest(TestCase):
         self.assertIn(self.eur, divisas_en_contexto)
         self.assertNotIn(self.ars, divisas_en_contexto, 'La divisa inactiva ARS no debería estar en el contexto.')
 
+    def test_pyg_no_aparece_en_tasas_vigentes_ni_se_puede_actualizar_por_url_directa(self):
+        """PYG es la moneda base: no tiene cotización propia que mostrar ni actualizar."""
+        pyg = Divisa.objects.get(codigo='PYG')
+        self._login_analista_con_sesion()
+
+        response = self.client.get(self.url)
+        self.assertNotIn(pyg, response.context['divisas'])
+
+        response = self.client.get(
+            reverse('divisas:actualizar_cotizacion', kwargs={'divisa_id': pyg.pk}), follow=True,
+        )
+        self.assertContains(response, 'no tiene una cotización para actualizar')
+        self.assertEqual(response.redirect_chain[-1][0], reverse('divisas:tasas_vigentes'))
+
+        response = self.client.post(
+            reverse('divisas:actualizar_cotizacion', kwargs={'divisa_id': pyg.pk}),
+            {'tasa_compra': '1', 'tasa_venta': '1'}, follow=True,
+        )
+        self.assertContains(response, 'no tiene una cotización para actualizar')
+        self.assertFalse(Cotizacion.objects.filter(divisa=pyg).exists())
+
     def test_ca1_y_ca3_muestra_tasas_y_fecha(self):
         """Muestra tasas actuales y fecha de actualización."""
         self._login_analista_con_sesion()
         response = self.client.get(self.url)
 
-        self.assertContains(response, '7300.50')
-        self.assertContains(response, '7400.00')
+        self.assertContains(response, formato(7300.50))
+        self.assertContains(response, formato(7400.00))
         self.assertContains(response, 'USD')
         self.assertContains(
             response,
@@ -139,17 +162,81 @@ class AdministracionDivisasTest(TestCase):
         session.save()
 
     def test_admin_registra_divisa_activa_con_datos_obligatorios(self):
-        """Registra una divisa activa con datos válidos."""
+        """Registra una divisa activa con datos válidos.
+
+        Usa JPY como ejemplo en vez de PYG: PYG ya existe de antemano (la
+        migración de datos ``apps.divisas.0014_crear_divisa_pyg`` la
+        garantiza como moneda local/base del sistema), así que intentar
+        crearla de nuevo acá chocaría con la unicidad del código ISO — y
+        el propósito de este test no depende de qué divisa se use.
+        """
+        response = self.client.post(
+            reverse('divisas:crear_divisa'),
+            {'codigo': 'JPY', 'nombre': 'Yen', 'simbolo': '¥'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        divisa = Divisa.objects.get(codigo='JPY')
+        self.assertEqual(divisa.nombre, 'Yen')
+        self.assertEqual(divisa.simbolo, '¥')
+        self.assertTrue(divisa.activa)
+
+    def test_rechaza_crear_una_divisa_con_codigo_pyg(self):
+        """PYG es la divisa base del sistema: no se puede crear desde el catálogo."""
         response = self.client.post(
             reverse('divisas:crear_divisa'),
             {'codigo': 'PYG', 'nombre': 'Guaraní', 'simbolo': '₲'},
         )
 
-        self.assertEqual(response.status_code, 302)
-        divisa = Divisa.objects.get(codigo='PYG')
-        self.assertEqual(divisa.nombre, 'Guaraní')
-        self.assertEqual(divisa.simbolo, '₲')
-        self.assertTrue(divisa.activa)
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(
+            response.context['form'],
+            'codigo',
+            'PYG es la divisa base del sistema: no se gestiona desde este catálogo.',
+        )
+
+    def test_no_permite_editar_la_divisa_pyg(self):
+        """La pantalla de edición de PYG ni se muestra: redirige con un error."""
+        pyg = Divisa.objects.get(codigo='PYG')
+
+        response = self.client.get(
+            reverse('divisas:editar_divisa', kwargs={'pk': pyg.pk}), follow=True,
+        )
+
+        self.assertContains(response, 'no se puede editar')
+        self.assertEqual(response.redirect_chain[-1][0], reverse('divisas:lista_divisas'))
+
+        response = self.client.post(
+            reverse('divisas:editar_divisa', kwargs={'pk': pyg.pk}),
+            {'codigo': 'PYG', 'nombre': 'Otro nombre', 'simbolo': '₲'},
+            follow=True,
+        )
+        pyg.refresh_from_db()
+        self.assertEqual(pyg.nombre, 'Guaraní')
+
+    def test_no_permite_dar_de_baja_la_divisa_pyg(self):
+        """PYG tiene que seguir siempre activa: no se puede dar de baja."""
+        pyg = Divisa.objects.get(codigo='PYG')
+
+        response = self.client.post(
+            reverse('divisas:baja_divisa', kwargs={'pk': pyg.pk}),
+            {'causa': 'Intento de baja'},
+            follow=True,
+        )
+
+        self.assertContains(response, 'no se puede dar de baja')
+        pyg.refresh_from_db()
+        self.assertTrue(pyg.activa)
+
+    def test_listado_no_muestra_acciones_de_editar_o_dar_de_baja_para_pyg(self):
+        """El catálogo marca a PYG como protegida, sin botones de editar ni dar de baja."""
+        pyg = Divisa.objects.get(codigo='PYG')
+
+        response = self.client.get(reverse('divisas:lista_divisas'))
+
+        self.assertContains(response, 'Divisa base del sistema')
+        self.assertNotContains(response, reverse('divisas:editar_divisa', kwargs={'pk': pyg.pk}))
+        self.assertNotContains(response, reverse('divisas:baja_divisa', kwargs={'pk': pyg.pk}))
 
     def test_registro_rechaza_codigo_iso_duplicado(self):
         """Rechaza códigos ISO ya existentes."""
@@ -246,6 +333,70 @@ class AdministracionDivisasTest(TestCase):
 
 
 @pytest.mark.django_db
+class DivisaPygProtegidaEnElModeloTest(TestCase):
+    """Verifica que PYG quede protegida a nivel de modelo, no solo en las vistas.
+
+    Se identifica siempre por ``codigo`` (``Divisa.CODIGO_BASE``), nunca
+    por su clave primaria: un id autoincremental no es el mismo en todas
+    las instalaciones, pero "PYG" sí.
+    """
+
+    def test_es_base_identifica_pyg_por_codigo(self):
+        """``es_base`` es verdadero solo para la fila con codigo='PYG'."""
+        pyg = Divisa.objects.get(codigo='PYG')
+        usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+
+        self.assertTrue(pyg.es_base)
+        self.assertFalse(usd.es_base)
+
+    def test_guardar_pyg_con_otros_datos_los_fuerza_a_los_canonicos(self):
+        """Cualquier intento de cambiarle nombre, símbolo o estado a PYG no tiene efecto."""
+        pyg = Divisa.objects.get(codigo='PYG')
+
+        pyg.nombre = 'Otro nombre'
+        pyg.simbolo = '$$$'
+        pyg.activa = False
+        pyg.save()
+
+        pyg.refresh_from_db()
+        self.assertEqual(pyg.nombre, Divisa.NOMBRE_BASE)
+        self.assertEqual(pyg.simbolo, Divisa.SIMBOLO_BASE)
+        self.assertTrue(pyg.activa)
+
+    def test_no_se_le_puede_cambiar_el_codigo_a_pyg(self):
+        """Intentar renombrar el código de PYG se rechaza, no se guarda en silencio."""
+        pyg = Divisa.objects.get(codigo='PYG')
+        pyg.codigo = 'ZZZ'
+
+        with self.assertRaises(ValidationError):
+            pyg.save()
+
+        self.assertTrue(Divisa.objects.filter(codigo='PYG').exists())
+        self.assertFalse(Divisa.objects.filter(codigo='ZZZ').exists())
+
+    def test_no_se_puede_eliminar_pyg(self):
+        """Borrar PYG se rechaza: el sistema la necesita siempre presente."""
+        pyg = Divisa.objects.get(codigo='PYG')
+
+        with self.assertRaises(ValidationError):
+            pyg.delete()
+
+        self.assertTrue(Divisa.objects.filter(codigo='PYG').exists())
+
+    def test_otras_divisas_se_guardan_y_eliminan_sin_restricciones(self):
+        """La protección es exclusiva de PYG: cualquier otra divisa funciona como siempre."""
+        usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+
+        usd.nombre = 'Dólar estadounidense'
+        usd.save()
+        usd.refresh_from_db()
+        self.assertEqual(usd.nombre, 'Dólar estadounidense')
+
+        usd.delete()
+        self.assertFalse(Divisa.objects.filter(codigo='USD').exists())
+
+
+@pytest.mark.django_db
 class ActualizacionCotizacionesTest(TestCase):
     """Verifica actualización y trazabilidad de cotizaciones."""
     def setUp(self):
@@ -335,8 +486,8 @@ class ActualizacionCotizacionesTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context['cotizaciones']), [segunda, primera])
-        self.assertContains(response, '7300.00')
-        self.assertContains(response, '7000.00')
+        self.assertContains(response, formato(7300))
+        self.assertContains(response, formato(7000))
 
     def test_usuario_sin_rol_no_puede_actualizar(self):
         """Deniega actualización a usuarios sin rol autorizado."""
@@ -364,7 +515,7 @@ class ConsultaTasasClienteTest(TestCase):
         response = self.client.get(reverse('divisas:tasas_vigentes'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Tasas actuales')
-        self.assertContains(response, '7800.00')
+        self.assertContains(response, formato(7800))
         self.assertNotContains(
             response,
             reverse('divisas:actualizar_cotizacion', kwargs={'divisa_id': divisa.pk}),
@@ -397,7 +548,7 @@ class SimuladorDivisasTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Monto final')
-        self.assertContains(response, '747400.00')
+        self.assertContains(response, formato(747400.00))
 
     def test_simulacion_venta_usa_tasa_compra_y_resta_comision(self):
         """Simula una venta aplicando la tasa de compra y descontando la comisión."""
@@ -407,7 +558,7 @@ class SimuladorDivisasTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '722700.00')
+        self.assertContains(response, formato(722700.00))
 
     def test_simulacion_cambio_triangula_por_pyg_con_comision(self):
         """Simula un cambio entre divisas triangulando por PYG."""
@@ -423,7 +574,7 @@ class SimuladorDivisasTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Tasa cruzada implícita')
-        self.assertContains(response, '89.22')
+        self.assertContains(response, formato(89.22))
 
     def test_simulacion_incluye_placeholder_para_no_repetir_divisa(self):
         """Incluye la opción 'Seleccionar divisa' para no preseleccionar ninguna."""

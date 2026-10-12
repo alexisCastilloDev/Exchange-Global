@@ -5,6 +5,7 @@ Bloques definidos: title, content.
 Contexto esperado: clientes.
 -->
 {% extends 'base.html' %}
+{% load l10n %}
 
 {% block title %}Seleccionar cliente - Global Exchange{% endblock %}
 
@@ -22,7 +23,7 @@ Contexto esperado: clientes.
         <div class="list-group mb-4">
             {% for cliente in clientes %}
             <label class="list-group-item d-flex gap-3">
-                <input class="form-check-input flex-shrink-0" type="radio" name="cliente_id" value="{{ cliente.pk }}" required>
+                <input class="form-check-input flex-shrink-0" type="radio" name="cliente_id" value="{{ cliente.pk|unlocalize }}" required>
                 <span>
                     <strong>
                         {% if cliente.tipo_cliente == 'JURIDICA' %}

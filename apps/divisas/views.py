@@ -11,12 +11,13 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from apps.authentication.forms import CausaBajaForm
 from apps.authentication.models import HistorialBaja
-from apps.clientes.models import Cliente
+from apps.clientes.models import Cliente, MetodoPago
 from apps.divisas.forms import (
     CalculoOperacionForm,
     ConfiguracionComisionForm,
@@ -25,6 +26,7 @@ from apps.divisas.forms import (
     ConfirmarTriangulacionForm,
     CotizacionForm,
     DivisaForm,
+    PagarTransaccionForm,
     SimulacionDivisasForm,
     TriangulacionForm,
 )
@@ -35,12 +37,108 @@ from apps.divisas.models import (
     ConfiguracionVigencia,
     Cotizacion,
     Divisa,
+    NotificacionTasa,
 )
+
+
+def _puede_pagarse(transaccion):
+    """Indica si una transacción está en condiciones de iniciar un pago.
+
+    Ver ``Pago.registrar_pago``: solo una transacción "Confirmada" puede
+    pagarse. Se usa tanto para decidir si mostrar el formulario de pago
+    como, al enviarlo, para rechazarlo con el mismo criterio sin depender
+    únicamente de la validación que hace el propio ``registrar_pago``.
+    """
+    return transaccion.estado_efectivo == transaccion.ESTADO_CONFIRMADA
+
+
+def _avisar_resultado_pago_stripe(request):
+    """Informa, en la pantalla de detalle, el desenlace de un pago con tarjeta.
+
+    ``IniciarPagoStripeOperacionView``/``IniciarPagoStripeCambioView``
+    (ver ``apps.divisas.pagos_stripe``) traen de vuelta al cliente a esta
+    misma pantalla con ``?pago=iniciado`` o ``?pago=cancelado`` en la URL,
+    según haya completado el pago en Stripe o lo haya abandonado. En
+    ningún caso se tocó la transacción desde esta vista: un pago exitoso
+    recién se confirma de forma asíncrona cuando llega el webhook de
+    Stripe (criterio 2), así que el aviso de "iniciado" es deliberadamente
+    tentativo en vez de afirmar que ya está pagada.
+    """
+    resultado = request.GET.get('pago')
+    if resultado == 'iniciado':
+        messages.info(
+            request,
+            'Tu pago con tarjeta fue recibido por Stripe y se está confirmando. '
+            'El estado se actualiza automáticamente apenas Stripe lo confirme.',
+        )
+    elif resultado == 'cancelado':
+        messages.warning(
+            request,
+            'Cancelaste el pago con tarjeta en Stripe. La transacción sigue "Confirmada" y podés reintentarlo cuando quieras.',
+        )
+
+
+def _resolver_transaccion_propia(request, model, pk, url_fallback='divisas:mis_transacciones'):
+    """Recupera una transacción propia, o indica por qué no se puede continuar.
+
+    Usada por las pantallas de "Confirmar importe" (implícito, antes de
+    crear la transacción), "Confirmar operación" y "Pagar": todas dependen
+    de que la transacción pertenezca al cliente activo del momento. Si el
+    cliente activo cambia (por ejemplo, en otra pestaña) mientras una de
+    estas pantallas sigue abierta con una transacción del cliente
+    *anterior*, no corresponde mostrarle al usuario una página de error de
+    Django — sigue siendo su cuenta, solo cambió de contexto — así que se
+    distinguen dos casos:
+
+    - La transacción no tiene ninguna relación con el usuario autenticado
+      (no es de ninguno de sus clientes): es un intento de acceso a una
+      transacción ajena de verdad. Se sigue respondiendo 404, sin filtrar
+      por cliente en la consulta inicial, para no revelar si el registro
+      existe.
+    - La transacción es de un cliente propio del usuario, pero no es el
+      cliente activo en este momento: no hay nada que ocultar, así que se
+      informa con un mensaje y se redirige, en vez de 404.
+
+    Args:
+        request (HttpRequest): La request actual, con ``cliente_activo``
+            ya resuelto por el middleware.
+        model: ``CalculoOperacion`` o ``CalculoTriangulacion``.
+        pk: La clave primaria de la transacción.
+        url_fallback (str): A dónde redirigir cuando la transacción es de
+            otro cliente propio (no cuando es ajena: ahí no se llega a
+            redirigir, se responde 404 directamente). Debe ser un nombre de
+            URL sin parámetros obligatorios, porque acá no hay ningún ``pk``
+            válido al que enviar (justamente el de esta transacción es el
+            que no corresponde al cliente activo).
+
+    Returns:
+        tuple: ``(transaccion, None)`` si corresponde al cliente activo, o
+        ``(None, HttpResponse)`` con la redirección que hay que devolver.
+
+    Raises:
+        Http404: Si la transacción no existe, o si no pertenece a ningún
+            cliente asociado al usuario autenticado.
+    """
+    transaccion = get_object_or_404(model, pk=pk)
+    if not request.user.clientes.filter(pk=transaccion.cliente_id).exists():
+        raise Http404('La transacción solicitada no existe.')
+
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
+        messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
+        return None, redirect('home')
+    if transaccion.cliente_id != cliente_activo.id:
+        messages.error(
+            request,
+            'Esta transacción no corresponde al cliente activo. Cambiá de cliente para continuar.',
+        )
+        return None, redirect(url_fallback)
+    return transaccion, None
 
 
 def _obtener_cotizacion_operacion(divisa):
     """Obtiene la cotización vigente de una divisa o la tasa unitaria de PYG."""
-    if divisa.codigo == 'PYG':
+    if divisa.es_base:
         return Decimal('1.00'), None
     cotizacion = divisa.ultima_cotizacion
     if not cotizacion:
@@ -147,12 +245,27 @@ class TasasVigentesListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def get_queryset(self):
         """
         Criterio de Aceptación 4: Las divisas inactivas no se muestran.
+
+        Tampoco PYG: es la moneda base del sistema (1:1 implícito, sin
+        cotización propia que cargar ni actualizar; garantizada en el
+        catálogo por las migraciones de datos
+        ``apps.divisas.0014_crear_divisa_pyg`` y
+        ``apps.divisas.0017_asegurar_divisa_pyg``), no una divisa
+        operable más en esta pantalla, igual que ya la excluyen los
+        selectores de divisa operable (``DivisaSelect``/``CalculoOperacionForm``).
         """
-        return Divisa.objects.filter(activa=True)
+        return Divisa.objects.filter(activa=True).exclude(codigo=Divisa.CODIGO_BASE)
 
 
 class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    """Permite a roles autorizados registrar una nueva cotización."""
+    """Permite a roles autorizados registrar una nueva cotización.
+
+    PYG queda afuera: no tiene una cotización propia que cargar (ver
+    ``TasasVigentesListView``). Se bloquea en ``get``/``post`` —en vez de
+    dejar que ``get_object`` levante un 404 crudo— para avisarle a quien
+    entre por una URL directa con un mensaje claro, no con una página de
+    error de Django.
+    """
     model = Cotizacion
     form_class = CotizacionForm
     template_name = 'divisas/cotizacion_form.html'
@@ -164,10 +277,26 @@ class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
         roles = self.request.session.get('keycloak_roles', [])
         return bool({'admin', 'analista_cambiario'} & set(roles))
 
+    def _bloquear_si_es_pyg(self, request):
+        """Devuelve una redirección si la divisa objetivo es PYG, o ``None`` si no."""
+        divisa = get_object_or_404(Divisa, pk=self.kwargs['divisa_id'])
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no tiene una cotización para actualizar.')
+            return redirect('divisas:tasas_vigentes')
+        return None
+
+    def get(self, request, *args, **kwargs):
+        """Bloquea el acceso a la pantalla de actualización de PYG."""
+        return self._bloquear_si_es_pyg(request) or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Bloquea el guardado directo (sin pasar por la pantalla) sobre PYG."""
+        return self._bloquear_si_es_pyg(request) or super().post(request, *args, **kwargs)
+
     def get_object(self, queryset=None):
         """Construye una cotización nueva para la divisa solicitada."""
         divisa = get_object_or_404(
-            Divisa,
+            Divisa.objects.exclude(codigo=Divisa.CODIGO_BASE),
             pk=self.kwargs['divisa_id'],
             activa=True,
         )
@@ -456,12 +585,11 @@ class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, V
         )
 
     def get(self, request, *args, **kwargs):
-        """Recupera la transacción del cliente activo o responde 404, y la muestra."""
-        cliente_activo = getattr(request, 'cliente_activo', None)
-        if cliente_activo is None:
-            messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
-            return redirect('home')
-        transaccion = get_object_or_404(CalculoOperacion, pk=kwargs['pk'], cliente=cliente_activo)
+        """Recupera la transacción propia, o informa por qué no se puede continuar."""
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
+        _avisar_resultado_pago_stripe(request)
         return render(request, 'divisas/detalle_transaccion_operacion.html', {'transaccion': transaccion})
 
 
@@ -486,13 +614,158 @@ class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View
         )
 
     def get(self, request, *args, **kwargs):
-        """Recupera el cambio del cliente activo o responde 404, y lo muestra."""
-        cliente_activo = getattr(request, 'cliente_activo', None)
-        if cliente_activo is None:
-            messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
-            return redirect('home')
-        transaccion = get_object_or_404(CalculoTriangulacion, pk=kwargs['pk'], cliente=cliente_activo)
+        """Recupera el cambio propio, o informa por qué no se puede continuar."""
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
+        _avisar_resultado_pago_stripe(request)
         return render(request, 'divisas/detalle_transaccion_cambio.html', {'transaccion': transaccion})
+
+
+class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Permite pagar una compra o venta propia ya "Confirmada".
+
+    Implementa la HU "Asociación de pagos a transacciones" (GE-25): el
+    cliente elige uno de sus métodos de pago guardados
+    (``apps.clientes.models.MetodoPago``). Esta vista nunca registra el
+    pago ella misma: si el método es de tipo "tarjeta", redirige a
+    ``apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView`` (HU "Pago
+    con tarjeta vía Stripe"); si es "transferencia" o "billetera", a
+    ``apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView`` (HU "Pago
+    por transferencia bancaria vía SIPAP" — sipap-sim simula
+    indistintamente bancos y billeteras digitales, así que ambos tipos
+    comparten el mismo flujo).
+    """
+
+    def test_func(self):
+        """Permite pagar solo a los roles que pueden operar."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Muestra el formulario de pago, o por qué todavía no se puede pagar."""
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
+        transaccion.marcar_vencida_si_corresponde()
+        form = PagarTransaccionForm(cliente=transaccion.cliente) if _puede_pagarse(transaccion) else None
+        return render(request, 'divisas/pagar_transaccion.html', {'transaccion': transaccion, 'form': form})
+
+    def post(self, request, *args, **kwargs):
+        """Registra el pago con el método elegido, o inicia el cobro con Stripe.
+
+        Args:
+            request (HttpRequest): Solicitud POST con el campo ``metodo_pago``.
+
+        Returns:
+            HttpResponse: Redirección a Stripe si el método es "tarjeta", o
+            al detalle de la transacción con el resultado en cualquier otro
+            caso.
+        """
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
+        transaccion.marcar_vencida_si_corresponde()
+
+        if not _puede_pagarse(transaccion):
+            if transaccion.estado_efectivo == CalculoOperacion.ESTADO_PAGADA:
+                messages.error(request, 'Esta transacción ya fue pagada.')
+            else:
+                messages.error(request, 'Esta transacción no está en condiciones de pagarse.')
+            return redirect('divisas:detalle_transaccion_operacion', pk=transaccion.pk)
+
+        form = PagarTransaccionForm(request.POST, cliente=transaccion.cliente)
+        if not form.is_valid():
+            return render(request, 'divisas/pagar_transaccion.html', {'transaccion': transaccion, 'form': form})
+
+        metodo_pago = form.cleaned_data['metodo_pago']
+        if metodo_pago.tipo_medio == MetodoPago.TIPO_TARJETA:
+            # Un método guardado de tipo "tarjeta" se cobra vía Stripe, no
+            # de forma manual: en vez de registrar el pago acá, se redirige
+            # a cobrar con esa tarjeta puntual (ver
+            # apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView).
+            url = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': transaccion.pk})
+            return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+        # Transferencia o billetera digital: ambas se pagan vía SIPAP, no
+        # de forma manual (sipap-sim simula indistintamente bancos y
+        # billeteras). Se redirige a generar la solicitud de pago (ver
+        # apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView),
+        # pasando con qué cuenta puntual, igual que con una tarjeta.
+        url = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': transaccion.pk})
+        return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+
+
+class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Permite pagar un cambio entre divisas propio ya "Confirmado".
+
+    Ver ``PagarTransaccionOperacionView``: mismo flujo y mismas HU futuras
+    como base, aplicado a ``CalculoTriangulacion`` en vez de a una compra o
+    venta. Una diferencia importante: lo que el cliente paga es
+    ``monto_origen`` (``apps.divisas.models.monto_a_pagar``), en su divisa
+    de origen, no ``monto_final`` — eso es lo que recibe a cambio, no lo
+    que entrega.
+    """
+
+    def test_func(self):
+        """Permite pagar solo a los roles que pueden operar."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Muestra el formulario de pago, o por qué todavía no se puede pagar."""
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
+        transaccion.marcar_vencida_si_corresponde()
+        form = PagarTransaccionForm(cliente=transaccion.cliente) if _puede_pagarse(transaccion) else None
+        return render(request, 'divisas/pagar_transaccion_cambio.html', {'transaccion': transaccion, 'form': form})
+
+    def post(self, request, *args, **kwargs):
+        """Registra el pago con el método elegido, o inicia el cobro con Stripe.
+
+        Args:
+            request (HttpRequest): Solicitud POST con el campo ``metodo_pago``.
+
+        Returns:
+            HttpResponse: Redirección a Stripe si el método es "tarjeta", o
+            al detalle del cambio con el resultado en cualquier otro caso.
+        """
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
+        transaccion.marcar_vencida_si_corresponde()
+
+        if not _puede_pagarse(transaccion):
+            if transaccion.estado_efectivo == CalculoTriangulacion.ESTADO_PAGADA:
+                messages.error(request, 'Esta transacción ya fue pagada.')
+            else:
+                messages.error(request, 'Esta transacción no está en condiciones de pagarse.')
+            return redirect('divisas:detalle_transaccion_cambio', pk=transaccion.pk)
+
+        form = PagarTransaccionForm(request.POST, cliente=transaccion.cliente)
+        if not form.is_valid():
+            return render(
+                request, 'divisas/pagar_transaccion_cambio.html', {'transaccion': transaccion, 'form': form}
+            )
+
+        metodo_pago = form.cleaned_data['metodo_pago']
+        if metodo_pago.tipo_medio == MetodoPago.TIPO_TARJETA:
+            # Ver PagarTransaccionOperacionView.post: un método de tipo
+            # "tarjeta" se cobra vía Stripe, no de forma manual.
+            url = reverse('divisas:pagar_transaccion_cambio_stripe', kwargs={'pk': transaccion.pk})
+            return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+        # Ver PagarTransaccionOperacionView.post: transferencia o
+        # billetera digital, ambas se pagan vía SIPAP.
+        url = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': transaccion.pk})
+        return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
 
 
 class ConfiguracionComisionListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -854,18 +1127,18 @@ class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, Vi
             and self.request.user.clientes.filter(is_active=True).exists()
         )
 
-    def get_object(self):
-        """Recupera el cambio del usuario autenticado o responde 404."""
-        return get_object_or_404(CalculoTriangulacion, pk=self.kwargs['pk'], usuario=self.request.user)
-
     def get(self, request, *args, **kwargs):
         """Muestra el resumen completo del cambio pendiente.
 
         Si el tiempo para confirmarlo ya venció (por ejemplo, el cliente
         cerró la pestaña sin decidir nada), lo marca "Vencida" en este mismo
-        acceso, antes de mostrarlo.
+        acceso, antes de mostrarlo. Si el cliente activo cambió desde que se
+        abrió esta pantalla, informa que el cambio no corresponde en vez de
+        mostrarlo (ver ``_resolver_transaccion_propia``).
         """
-        transaccion = self.get_object()
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
         transaccion.marcar_vencida_si_corresponde()
         return render(request, 'divisas/confirmar_transaccion_cambio.html', {'transaccion': transaccion})
 
@@ -877,7 +1150,9 @@ class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, Vi
         así, bloquea la acción en vez de procesarla. Al confirmar, si alguna
         tasa vigente ya no coincide con la usada al calcular, el cambio se
         cancela automáticamente como "Cancelada por cambio de cotización" en
-        vez de confirmarse.
+        vez de confirmarse. Si el cliente activo cambió desde que se abrió
+        esta pantalla, informa que el cambio no corresponde en vez de
+        procesar la acción.
 
         Args:
             request (HttpRequest): Solicitud POST con el campo ``accion``
@@ -886,7 +1161,9 @@ class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, Vi
         Returns:
             HttpResponse: Redirección a la misma pantalla con el resultado.
         """
-        transaccion = self.get_object()
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
         transaccion.marcar_vencida_si_corresponde()
         if transaccion.estado != CalculoTriangulacion.ESTADO_PENDIENTE:
             if transaccion.estado == CalculoTriangulacion.ESTADO_VENCIDA:
@@ -1038,18 +1315,18 @@ class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin,
             and self.request.user.clientes.filter(is_active=True).exists()
         )
 
-    def get_object(self):
-        """Recupera la transacción del usuario autenticado o responde 404."""
-        return get_object_or_404(CalculoOperacion, pk=self.kwargs['pk'], usuario=self.request.user)
-
     def get(self, request, *args, **kwargs):
         """Muestra el resumen completo de la transacción pendiente.
 
         Si el tiempo para confirmarla ya venció (por ejemplo, el cliente
         cerró la pestaña sin decidir nada), la marca "Vencida" en este mismo
-        acceso, antes de mostrarla.
+        acceso, antes de mostrarla. Si el cliente activo cambió desde que se
+        abrió esta pantalla, informa que la transacción no corresponde en
+        vez de mostrarla (ver ``_resolver_transaccion_propia``).
         """
-        transaccion = self.get_object()
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
         transaccion.marcar_vencida_si_corresponde()
         return render(request, 'divisas/confirmar_transaccion.html', {'transaccion': transaccion})
 
@@ -1061,7 +1338,9 @@ class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin,
         así, bloquea la acción en vez de procesarla. Al confirmar, si la tasa
         vigente ya no coincide con la usada al calcular, la transacción se
         cancela automáticamente como "Cancelada por cambio de cotización" en
-        vez de confirmarse.
+        vez de confirmarse. Si el cliente activo cambió desde que se abrió
+        esta pantalla, informa que la transacción no corresponde en vez de
+        procesar la acción.
 
         Args:
             request (HttpRequest): Solicitud POST con el campo ``accion``
@@ -1070,7 +1349,9 @@ class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin,
         Returns:
             HttpResponse: Redirección a la misma pantalla con el resultado.
         """
-        transaccion = self.get_object()
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
         transaccion.marcar_vencida_si_corresponde()
         if transaccion.estado != CalculoOperacion.ESTADO_PENDIENTE:
             if transaccion.estado == CalculoOperacion.ESTADO_VENCIDA:
@@ -1256,19 +1537,51 @@ class DivisaCreateView(AdminDivisasMixin, CreateView):
 
 
 class DivisaUpdateView(AdminDivisasMixin, UpdateView):
-    """Permite editar los datos de una divisa existente."""
+    """Permite editar los datos de una divisa existente.
+
+    PYG queda afuera: es la moneda base del sistema, implícita en
+    cualquier operación, y no algo que un administrador pueda editar
+    desde este catálogo (ver ``apps.divisas.forms.DivisaForm``). Se
+    bloquea también acá —en ``get``/``post``, después de que
+    ``AdminDivisasMixin`` ya comprobó el rol— para no mostrarle siquiera
+    la pantalla de edición, en vez de confiar solo en que el formulario
+    la rechace al guardar.
+    """
     model = Divisa
     form_class = DivisaForm
     template_name = 'divisas/divisa_form.html'
     success_url = reverse_lazy('divisas:lista_divisas')
 
+    def _bloquear_si_es_pyg(self, request):
+        """Devuelve una redirección si la divisa objetivo es PYG, o ``None`` si no."""
+        if self.get_object().es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede editar.')
+            return redirect('divisas:lista_divisas')
+        return None
+
+    def get(self, request, *args, **kwargs):
+        """Bloquea el acceso a la pantalla de edición de PYG."""
+        return self._bloquear_si_es_pyg(request) or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Bloquea el guardado directo (sin pasar por el formulario) sobre PYG."""
+        return self._bloquear_si_es_pyg(request) or super().post(request, *args, **kwargs)
+
 
 class DivisaSoftDeleteView(AdminDivisasMixin, View):
-    """Confirma y ejecuta la baja lógica de una divisa."""
+    """Confirma y ejecuta la baja lógica de una divisa.
+
+    PYG no se puede dar de baja: es la divisa base del sistema y tiene
+    que seguir siempre activa (otros módulos, como la apertura de caja,
+    dependen de eso).
+    """
 
     def get(self, request, pk, *args, **kwargs):
         """Muestra el formulario de confirmación de baja."""
         divisa = get_object_or_404(Divisa, pk=pk)
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede dar de baja.')
+            return redirect('divisas:lista_divisas')
         return render(
             request,
             'bajas/confirmar_baja.html',
@@ -1283,6 +1596,9 @@ class DivisaSoftDeleteView(AdminDivisasMixin, View):
     def post(self, request, pk, *args, **kwargs):
         """Valida la causa y registra la baja lógica de la divisa."""
         divisa = get_object_or_404(Divisa, pk=pk)
+        if divisa.es_base:
+            messages.error(request, 'PYG es la divisa base del sistema: no se puede dar de baja.')
+            return redirect('divisas:lista_divisas')
         form = CausaBajaForm(request.POST)
         if not form.is_valid():
             return render(
@@ -1329,3 +1645,80 @@ class DivisaHistorialBajasView(AdminDivisasMixin, ListView):
         context['titulo'] = 'Historial de bajas de divisas'
         context['volver_url'] = reverse_lazy('divisas:lista_divisas')
         return context
+
+
+class NotificacionesClienteMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Restringe las pantallas de notificaciones de tasas a usuarios clientes.
+
+    Las notificaciones de cambio de tasa (HU GE-51) están dirigidas a
+    usuarios clientes, así que se exige el rol ``cliente`` en la sesión de
+    Keycloak, el mismo criterio con el que se muestra el indicador de no
+    leídas (ver ``apps.divisas.context_processors.notificaciones_context``).
+    Además, cada vista filtra siempre por ``request.user``: nadie puede ver
+    ni modificar notificaciones ajenas.
+    """
+
+    def test_func(self):
+        """Comprueba que el usuario tenga el rol de cliente."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cliente' in roles
+
+
+class MisNotificacionesView(NotificacionesClienteMixin, ListView):
+    """Lista las notificaciones de cambio de tasa del usuario autenticado.
+
+    Criterio de aceptación 4 de GE-51: las notificaciones se muestran
+    ordenadas de la más reciente a la más antigua. Cada una muestra la
+    divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;
+    las no leídas ofrecen la acción de marcarlas como leídas (ver
+    ``MarcarNotificacionLeidaView``).
+    """
+
+    template_name = 'divisas/mis_notificaciones.html'
+    context_object_name = 'notificaciones'
+    paginate_by = 20
+
+    def get_queryset(self):
+        """Devuelve solo las notificaciones propias, de la más nueva a la más vieja."""
+        return (
+            NotificacionTasa.objects.filter(usuario=self.request.user)
+            .select_related('divisa')
+            .order_by('-creada_en', '-pk')
+        )
+
+
+class MarcarNotificacionLeidaView(NotificacionesClienteMixin, View):
+    """Marca como leída una notificación de cambio de tasa propia.
+
+    Criterio de aceptación 6 de GE-51: al marcarla, su estado cambia a
+    leída y deja de contarse en el indicador de no leídas. Solo acepta
+    POST (es una acción que modifica datos, protegida por CSRF) y responde
+    404 si la notificación no existe o pertenece a otro usuario, sin
+    revelar cuál de los dos casos es.
+    """
+
+    http_method_names = ['post']
+
+    def post(self, request, pk):
+        """Marca la notificación como leída y vuelve a la página de origen.
+
+        Args:
+            request (HttpRequest): La request actual.
+            pk (int): Identificador de la notificación.
+
+        Returns:
+            HttpResponseRedirect: A la URL indicada en ``next`` si es segura
+            (por ejemplo, para conservar la página del listado), o al
+            listado de notificaciones en caso contrario.
+        """
+        notificacion = get_object_or_404(NotificacionTasa, pk=pk, usuario=request.user)
+        notificacion.marcar_como_leida()
+
+        destino = request.POST.get('next')
+        if destino and url_has_allowed_host_and_scheme(
+            destino,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(destino)
+        return redirect('divisas:mis_notificaciones')

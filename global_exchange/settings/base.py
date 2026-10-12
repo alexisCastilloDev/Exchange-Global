@@ -25,8 +25,9 @@ INSTALLED_APPS = [
     
     'apps.divisas',
     'apps.users',
-    'apps.authentication', 
-    'apps.clientes',       
+    'apps.authentication',
+    'apps.clientes',
+    'apps.caja',
 ]
 
 MIDDLEWARE = [
@@ -55,6 +56,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'apps.clientes.context_processors.cliente_activo_context',
                 'apps.authentication.context_processors.permisos_ui_context',
+                'apps.divisas.context_processors.notificaciones_context',
             ],
         },
     },
@@ -75,6 +77,17 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'America/Asuncion'
 USE_I18N = True
 USE_TZ = True
+
+# Separador de miles en todos los números que se muestran en pantalla
+# (montos, tasas, comisiones, etc.): "." para miles y "," para decimales,
+# igual que en Paraguay/Argentina. Django no trae ese formato para el
+# locale "en-us" (usa "," de miles y "." de decimales), así que se
+# sobreescribe puntualmente con un módulo de formato propio en
+# global_exchange/formats/en_US/formats.py, sin tocar LANGUAGE_CODE ni,
+# por lo tanto, los mensajes de validación en inglés que el resto del
+# proyecto ya reemplaza a mano por mensajes en español.
+USE_THOUSAND_SEPARATOR = True
+FORMAT_MODULE_PATH = ['global_exchange.formats']
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -115,13 +128,42 @@ OIDC_OP_AUTHORIZATION_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect
 OIDC_OP_TOKEN_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/token'
 OIDC_OP_USER_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/userinfo'
 OIDC_OP_JWKS_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/certs'
+OIDC_OP_LOGOUT_ENDPOINT = f'{_keycloak_realm_url}/protocol/openid-connect/logout'
 
 OIDC_RP_SIGN_ALGO = 'RS256'
 OIDC_RP_SCOPES = 'openid email profile roles'
+# Guarda el id_token en la sesión para mandarlo como id_token_hint al
+# cerrar sesión: así Keycloak termina también su sesión SSO.
+OIDC_STORE_ID_TOKEN = True
+# Sin la opción "Mantener la sesión iniciada", la sesión de Django termina al
+# cerrar el navegador, igual que la de Keycloak.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # A dónde redirige después de login/logout exitoso
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# --- Stripe (pago con tarjeta) ---
+# Con default='' el proyecto sigue arrancando en desarrollo sin tener
+# cuenta de Stripe configurada; sin una clave real, iniciar un pago con
+# tarjeta falla igual que un corte de comunicación real (ver
+# apps.divisas.pagos_stripe), así que no hace falta un valor de mentira.
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
+
+# --- SIPAP (pago por transferencia bancaria y billeteras digitales) ---
+# SIPAP es el sistema de pagos interbancario del Banco Central del
+# Paraguay: no tiene un sandbox público al que este proyecto académico
+# pueda conectarse, así que lo simula "sipap-sim" (ver sipap_sim/), un
+# proyecto Django independiente que corre en su propio contenedor y con
+# su propia base. Global Exchange le habla solo por HTTP, sin compartir
+# código: estas tres variables son todo lo que necesita conocer de él.
+SIPAP_BASE_URL = env('SIPAP_BASE_URL', default='')
+SIPAP_API_KEY = env('SIPAP_API_KEY', default='')
+SIPAP_WEBHOOK_SECRET = env('SIPAP_WEBHOOK_SECRET', default='')
+# Tiempo que el cliente tiene para completar la transferencia antes de
+# que la solicitud se considere "Vencida" (criterio 5).
+SIPAP_SOLICITUD_VIGENCIA_SEGUNDOS = 3600
 
 # Parámetros del cálculo previo de operaciones cambiarias.
 COMISION_OPERACION_PORCENTAJE = Decimal('1.00')

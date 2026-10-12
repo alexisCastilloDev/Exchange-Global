@@ -1,9 +1,14 @@
 """Pruebas del flujo OIDC y del backend de autenticación."""
 
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.contrib.sessions.backends.db import SessionStore
+from django.test import RequestFactory
 
 # Importa tu backend personalizado (ajusta la ruta según la estructura de tu proyecto)
 from apps.authentication.backends import KeycloakOIDCAuthenticationBackend
@@ -35,6 +40,34 @@ def test_custom_logout_redirects_to_keycloak(client):
     response = client.get(reverse('oidc_logout'))
     assert response.status_code == 302
     assert 'post_logout_redirect_uri' in response.url
+
+
+def test_logout_returns_to_login_screen(client):
+    """CA5: Después de cerrar sesión, Keycloak devuelve al usuario a la pantalla de login."""
+    response = client.get(reverse('oidc_logout'))
+    params = parse_qs(urlparse(response.url).query)
+    assert params['post_logout_redirect_uri'] == ['http://testserver/oidc/authenticate/']
+
+
+@pytest.mark.django_db
+def test_logout_sends_id_token_hint(client):
+    """CA5: El id_token guardado se envía para cerrar también la sesión SSO de Keycloak."""
+    user = User.objects.create_user(username='salida', password='x')
+    client.force_login(user)
+    session = client.session
+    session['oidc_id_token'] = 'token-de-prueba'
+    session.save()
+
+    response = client.post(reverse('oidc_logout'))
+
+    params = parse_qs(urlparse(response.url).query)
+    assert params['id_token_hint'] == ['token-de-prueba']
+    assert '_auth_user_id' not in client.session
+
+
+def test_id_token_is_stored_in_session(settings):
+    """CA5: Sin OIDC_STORE_ID_TOKEN no habría id_token_hint al cerrar sesión."""
+    assert settings.OIDC_STORE_ID_TOKEN is True
 
 
 def test_protected_route_redirects_unauthenticated_user(client):
@@ -175,22 +208,82 @@ def test_update_user_claims_reemplaza_roles_previos_en_sesion(backend, rf):
 
 
 @pytest.mark.django_db
-def test_login_de_analista_redirige_a_gestion_de_divisas(rf):
-    """El callback de Keycloak lleva al analista a su pantalla operativa."""
-    request = rf.get('/oidc/callback/')
-    request.session = {'keycloak_roles': ['analista_cambiario']}
-    request.user = User.objects.create_user(
-        username='analista-login',
-        email='analista-login@test.com',
-    )
+def test_login_siempre_redirige_a_inicio_sin_importar_el_rol(rf):
+    """El callback de Keycloak lleva a "Inicio" sin importar el rol (admin, analista, cliente)."""
+    for roles in (['analista_cambiario'], ['admin'], ['cliente'], []):
+        request = rf.get('/oidc/callback/')
+        request.session = SessionStore()
+        request.session['keycloak_roles'] = roles
+        request.user = User.objects.create_user(
+            username=f'login-{"-".join(roles) or "sin-rol"}',
+            email=f'login-{"-".join(roles) or "sin-rol"}@test.com',
+            is_staff='admin' in roles,
+        )
+        callback = CustomOIDCCallbackView()
+        callback.request = request
+
+        with patch(
+            'mozilla_django_oidc.views.OIDCAuthenticationCallbackView.login_success',
+            return_value=None,
+        ):
+            response = callback.login_success()
+
+        assert response.status_code == 302
+        assert response.url == reverse('home')
+
+
+# ============================================================================
+# 4. LOGIN RECHAZADO Y USUARIOS LOCALES INACTIVOS
+# ============================================================================
+
+@pytest.mark.django_db
+def test_login_en_keycloak_reactiva_usuario_local_inactivo(backend, rf):
+    """Un registro local inactivo (resto viejo) se reactiva si Keycloak autenticó al usuario."""
+    request = rf.get('/')
+    request.session = {}
+    user = User.objects.create_user(username='vuelve', email='vuelve@example.com', is_active=False)
+
+    backend.update_user_claims(user, {'email': 'vuelve@example.com', 'realm_access': {'roles': []}}, request=request)
+    user.refresh_from_db()
+
+    assert user.is_active is True
+
+
+@pytest.mark.django_db
+def test_login_rechazado_cierra_tambien_la_sesion_de_keycloak(client, settings):
+    """Si Django rechaza el login, Keycloak cierra su sesión para que no quede en bucle."""
+    session = client.session
+    session['oidc_id_token'] = 'token-rechazado'
+    session.save()
+    request = RequestFactory().get('/oidc/callback/')
+    request.session = client.session
+    request._messages = FallbackStorage(request)
     callback = CustomOIDCCallbackView()
     callback.request = request
 
-    with patch(
-        'mozilla_django_oidc.views.OIDCAuthenticationCallbackView.login_success',
-        return_value=None,
-    ):
-        response = callback.login_success()
+    response = callback.login_failure()
 
-    assert response.status_code == 302
-    assert response.url == reverse('divisas:tasas_vigentes')
+    url = urlparse(response.url)
+    params = parse_qs(url.query)
+    assert response.url.startswith(settings.OIDC_OP_LOGOUT_ENDPOINT)
+    assert params['id_token_hint'] == ['token-rechazado']
+    assert params['post_logout_redirect_uri'] == ['http://testserver/']
+    assert 'oidc_id_token' not in request.session
+    assert any('No se pudo iniciar sesión' in str(m) for m in get_messages(request))
+
+
+def test_login_rechazado_sin_token_vuelve_al_inicio(rf):
+    """Sin id_token (por ejemplo, un state vencido) no hay sesión de Keycloak que cerrar."""
+    request = rf.get('/oidc/callback/')
+    request.session = {}
+    callback = CustomOIDCCallbackView()
+    callback.request = request
+
+    response = callback.login_failure()
+
+    assert response.url == '/'
+
+
+def test_sesion_termina_al_cerrar_el_navegador(settings):
+    """Sin "Mantener la sesión iniciada", la sesión no sobrevive al cierre del navegador."""
+    assert settings.SESSION_EXPIRE_AT_BROWSER_CLOSE is True

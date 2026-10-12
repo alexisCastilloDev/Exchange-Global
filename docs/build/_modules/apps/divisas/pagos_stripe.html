@@ -1,0 +1,906 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.pagos_stripe &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.divisas.pagos_stripe</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.divisas.pagos_stripe</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Pago con tarjeta de crédito/débito vía Stripe.</span>
+
+<span class="sd">Implementa la HU "Pago con tarjeta vía Stripe", pensada explícitamente como</span>
+<span class="sd">continuación de la HU "Asociación de pagos a transacciones" (GE-25, ver</span>
+<span class="sd">``apps.divisas.models.Pago``). Ninguna de las vistas de este módulo toca</span>
+<span class="sd">``transaccion.estado`` directamente: todas pasan, como cualquier otro medio</span>
+<span class="sd">de pago, por ``Pago.registrar_pago``, que sigue siendo el único punto de</span>
+<span class="sd">escritura.</span>
+
+<span class="sd">Una tarjeta se agrega como un ``MetodoPago`` más (GE-19), con dos campos</span>
+<span class="sd">genéricos que la vinculan a Stripe sin guardar nunca el número real:</span>
+<span class="sd">``proveedor_externo`` (``MetodoPago.PROVEEDOR_STRIPE``) y</span>
+<span class="sd">``referencia_externa`` (el id de un ``PaymentMethod`` de Stripe). El alta</span>
+<span class="sd">pasa por ``IniciarAgregarTarjetaStripeView``/``confirmar_tarjeta_stripe_view``</span>
+<span class="sd">(capturan la tarjeta en la propia página de Stripe, vía un ``SetupIntent``,</span>
+<span class="sd">y crean el ``MetodoPago`` recién al confirmar); el formulario manual de</span>
+<span class="sd">GE-19 (``apps.clientes.forms.MetodoPagoForm``) deja de ofrecer "Tarjeta"</span>
+<span class="sd">como opción para forzar que toda tarjeta nueva pase por ahí.</span>
+
+<span class="sd">Al pagar, el cliente elige ese mismo ``MetodoPago`` en el formulario de</span>
+<span class="sd">pago de siempre; si es de tipo tarjeta, se cobra directo por API con la</span>
+<span class="sd">``referencia_externa`` guardada (``PaymentIntent`` ``off_session=True``) —</span>
+<span class="sd">sin mostrar ninguna página de Stripe. Si ese cobro directo falla (rechazo o</span>
+<span class="sd">porque el banco exige una autenticación adicional, 3-D Secure/SCA), se cae</span>
+<span class="sd">a una sesión de `Stripe Checkout &lt;https://stripe.com/docs/payments/checkout&gt;`_</span>
+<span class="sd">para que el cliente confirme ahí, con esa misma tarjeta preseleccionada</span>
+<span class="sd">(``customer=...``).</span>
+
+<span class="sd">Diseño elegido para cada criterio de aceptación:</span>
+
+<span class="sd">- Criterio 1 (monto exacto, no modificable): tanto la sesión de Checkout</span>
+<span class="sd">  como el ``PaymentIntent`` del cobro directo se crean con</span>
+<span class="sd">  ``apps.divisas.models.monto_a_pagar`` tomado del servidor (``monto_final``</span>
+<span class="sd">  para una compra/venta; para un cambio, ``monto_origen`` — lo que el</span>
+<span class="sd">  cliente entrega, no lo que recibe, ver el docstring de esa función); el</span>
+<span class="sd">  cliente nunca tiene un campo para escribir un monto.</span>
+<span class="sd">- Criterio 2 (confirmación del pago): para Checkout, ``stripe_webhook_view``</span>
+<span class="sd">  procesa ``checkout.session.completed`` con ``payment_status == "paid"``</span>
+<span class="sd">  y llama a ``Pago.registrar_pago``; para el cobro directo, la propia</span>
+<span class="sd">  respuesta síncrona del ``PaymentIntent`` (``status == "succeeded"``) es</span>
+<span class="sd">  la confirmación, sin esperar ningún webhook. En ambos casos el medio</span>
+<span class="sd">  queda como ``MetodoPago.TIPO_TARJETA`` y el identificador externo es un</span>
+<span class="sd">  id de Stripe.</span>
+<span class="sd">- Criterio 3 (firma inválida): ``stripe.Webhook.construct_event`` valida la</span>
+<span class="sd">  firma antes de mirar el contenido; si falla, se responde 400 sin tocar</span>
+<span class="sd">  ninguna transacción.</span>
+<span class="sd">- Criterio 4 (pago rechazado): con Checkout, un rechazo de tarjeta ocurre</span>
+<span class="sd">  *dentro* de la página hospedada por Stripe (que ya le muestra al cliente</span>
+<span class="sd">  el motivo y le permite reintentar sin salir de ahí, sin generar ningún</span>
+<span class="sd">  webhook porque la sesión nunca se completó). Con el cobro directo de una</span>
+<span class="sd">  tarjeta guardada, un rechazo se captura como ``stripe.error.CardError``:</span>
+<span class="sd">  se informa con un mensaje claro y se cae al camino de Checkout para</span>
+<span class="sd">  reintentar. En ningún caso se toca la transacción.</span>
+<span class="sd">- Criterio 5 (abandono/cancelación): ``cancel_url`` vuelve a la pantalla de</span>
+<span class="sd">  detalle de la transacción con un aviso; como el webhook nunca se disparó,</span>
+<span class="sd">  la transacción sigue "Confirmada" y el botón de pago sigue disponible.</span>
+<span class="sd">- Criterio 6 (Stripe no responde): toda llamada a la API de Stripe</span>
+<span class="sd">  (crear/consultar el ``Customer``, crear el ``PaymentIntent`` o la sesión</span>
+<span class="sd">  de Checkout) está envuelta en un ``try/except stripe.error.StripeError``</span>
+<span class="sd">  (cubre ``APIConnectionError`` y cualquier otro error de comunicación); si</span>
+<span class="sd">  falla, se informa el problema sin tocar la transacción.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROUND_HALF_UP</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">stripe</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">HttpResponse</span><span class="p">,</span> <span class="n">HttpResponseBadRequest</span><span class="p">,</span> <span class="n">HttpResponseNotAllowed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">View</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.decorators.csrf</span><span class="w"> </span><span class="kn">import</span> <span class="n">csrf_exempt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgregarTarjetaStripeForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetodoPago</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CalculoOperacion</span><span class="p">,</span>
+    <span class="n">CalculoTriangulacion</span><span class="p">,</span>
+    <span class="n">Pago</span><span class="p">,</span>
+    <span class="n">PagoRechazadoError</span><span class="p">,</span>
+    <span class="n">moneda_a_pagar</span><span class="p">,</span>
+    <span class="n">monto_a_pagar</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">_puede_pagarse</span><span class="p">,</span> <span class="n">_resolver_transaccion_propia</span>
+
+<span class="n">PROVEEDOR_STRIPE</span> <span class="o">=</span> <span class="s1">'STRIPE'</span>
+
+<span class="c1"># Monedas para las que Stripe no usa centavos: el monto se manda tal cual,</span>
+<span class="c1"># en vez de multiplicado por 100. PYG (la moneda de liquidación de toda</span>
+<span class="c1"># compra/venta, ver `_moneda_de_liquidacion`) es "sin decimales" en Stripe,</span>
+<span class="c1"># así que es la que más importa acá; el resto de la lista es la que publica</span>
+<span class="c1"># Stripe en su documentación, por si en el futuro se habilita un cambio que</span>
+<span class="c1"># liquide en una de ellas.</span>
+<span class="n">MONEDAS_SIN_DECIMALES_STRIPE</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span>
+    <span class="s1">'BIF'</span><span class="p">,</span> <span class="s1">'CLP'</span><span class="p">,</span> <span class="s1">'DJF'</span><span class="p">,</span> <span class="s1">'GNF'</span><span class="p">,</span> <span class="s1">'JPY'</span><span class="p">,</span> <span class="s1">'KMF'</span><span class="p">,</span> <span class="s1">'KRW'</span><span class="p">,</span> <span class="s1">'MGA'</span><span class="p">,</span> <span class="s1">'PYG'</span><span class="p">,</span> <span class="s1">'RWF'</span><span class="p">,</span>
+    <span class="s1">'UGX'</span><span class="p">,</span> <span class="s1">'VND'</span><span class="p">,</span> <span class="s1">'VUV'</span><span class="p">,</span> <span class="s1">'XAF'</span><span class="p">,</span> <span class="s1">'XOF'</span><span class="p">,</span> <span class="s1">'XPF'</span><span class="p">,</span>
+<span class="p">})</span>
+
+
+<div class="viewcode-block" id="_moneda_de_liquidacion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._moneda_de_liquidacion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_moneda_de_liquidacion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve el código ISO de la moneda en la que se cobra la transacción.</span>
+
+<span class="sd">    Delegado en ``apps.divisas.models.moneda_a_pagar``: una compra/venta</span>
+<span class="sd">    siempre se cobra en PYG; un cambio entre divisas se cobra en su divisa</span>
+<span class="sd">    de **origen** (lo que el cliente entrega), no en la de destino (lo que</span>
+<span class="sd">    recibe a cambio) — ver ``monto_a_pagar`` para el porqué.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">moneda_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_monto_en_unidad_minima_stripe">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._monto_en_unidad_minima_stripe">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_monto_en_unidad_minima_stripe</span><span class="p">(</span><span class="n">monto</span><span class="p">,</span> <span class="n">codigo_moneda</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convierte un monto decimal a la unidad entera que espera Stripe.</span>
+
+<span class="sd">    Stripe siempre recibe un entero: la cantidad de centavos para la</span>
+<span class="sd">    mayoría de las monedas, o el monto tal cual para las "sin decimales"</span>
+<span class="sd">    (``MONEDAS_SIN_DECIMALES_STRIPE``). Tratar a PYG como si tuviera</span>
+<span class="sd">    centavos cobraría, por error, 100 veces el monto real.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">codigo_moneda</span> <span class="ow">in</span> <span class="n">MONEDAS_SIN_DECIMALES_STRIPE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">monto</span><span class="o">.</span><span class="n">to_integral_value</span><span class="p">(</span><span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="n">monto</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">to_integral_value</span><span class="p">(</span><span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_url_absoluta</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">nombre_url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Arma una URL absoluta (con esquema y dominio) para Stripe.</span>
+
+<span class="sd">    ``success_url``/``cancel_url`` los visita el navegador del cliente</span>
+<span class="sd">    después de pasar por Stripe, así que no pueden ser rutas relativas.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">build_absolute_uri</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="n">nombre_url</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="_a_dict">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._a_dict">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_a_dict</span><span class="p">(</span><span class="n">stripe_obj</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convierte un objeto de Stripe a un dict plano (recursivamente).</span>
+
+<span class="sd">    El SDK de Stripe devuelve ``StripeObject`` en vez de ``dict``: no</span>
+<span class="sd">    tienen ``.get()`` ni son iterables directamente (llamarlos así tira</span>
+<span class="sd">    ``AttributeError``/``TypeError``), hay que pedirles ``.to_dict()``</span>
+<span class="sd">    explícitamente. Un dict ya plano (como los que arman los tests, o un</span>
+<span class="sd">    valor ``None``) se devuelve tal cual, sin tocarlo.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">stripe_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">to_dict</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">stripe_obj</span><span class="p">,</span> <span class="s1">'to_dict'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">to_dict</span><span class="p">()</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">to_dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">stripe_obj</span></div>
+
+
+
+<div class="viewcode-block" id="_obtener_o_crear_cliente_stripe">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._obtener_o_crear_cliente_stripe">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_obtener_o_crear_cliente_stripe</span><span class="p">(</span><span class="n">cliente</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve el ``Customer`` de Stripe de este cliente, creándolo si falta.</span>
+
+<span class="sd">    Es lo que permite reutilizar una tarjeta entre pagos sin guardar nunca</span>
+<span class="sd">    el número real en esta base: la tarjeta se guarda del lado de Stripe,</span>
+<span class="sd">    contra este ``Customer``, nunca contra un ``MetodoPago`` local.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cliente (apps.clientes.models.Cliente): El cliente que va a pagar.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: El id del ``Customer`` de Stripe (``cliente.stripe_customer_id``,</span>
+<span class="sd">        recién creado si todavía no existía).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">cliente</span><span class="o">.</span><span class="n">stripe_customer_id</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cliente</span><span class="o">.</span><span class="n">stripe_customer_id</span>
+
+    <span class="n">customer</span> <span class="o">=</span> <span class="n">stripe</span><span class="o">.</span><span class="n">Customer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">cliente</span><span class="p">),</span>
+        <span class="n">email</span><span class="o">=</span><span class="n">cliente</span><span class="o">.</span><span class="n">email</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">'cliente_id'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">cliente</span><span class="o">.</span><span class="n">pk</span><span class="p">)},</span>
+    <span class="p">)</span>
+    <span class="n">cliente</span><span class="o">.</span><span class="n">stripe_customer_id</span> <span class="o">=</span> <span class="n">customer</span><span class="o">.</span><span class="n">id</span>
+    <span class="n">cliente</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'stripe_customer_id'</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">customer</span><span class="o">.</span><span class="n">id</span></div>
+
+
+
+<span class="n">_configuracion_solo_tarjeta_cache</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'id'</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="_configuracion_solo_tarjeta">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._configuracion_solo_tarjeta">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_configuracion_solo_tarjeta</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Devuelve el id de una ``PaymentMethodConfiguration`` que solo habilita tarjeta.</span>
+
+<span class="sd">    Stripe ya no deja restringir los medios de pago de una sesión de</span>
+<span class="sd">    Checkout con ``payment_method_types`` (lo retiró de la API, ver</span>
+<span class="sd">    docstring del módulo): sin esa restricción, Checkout ofrece cualquier</span>
+<span class="sd">    medio habilitado en la cuenta, típicamente también "Link" (el</span>
+<span class="sd">    autocompletado propio de Stripe), que Checkout muestra de forma muy</span>
+<span class="sd">    prominente. Si el cliente lo elige en vez de una tarjeta, el</span>
+<span class="sd">    ``PaymentMethod`` resultante es de tipo ``"link"``, no ``"card"``, y no</span>
+<span class="sd">    tiene los datos (marca, últimos 4 dígitos) que esta HU necesita</span>
+<span class="sd">    guardar.</span>
+
+<span class="sd">    En vez de eso, se usa una ``PaymentMethodConfiguration`` propia (con</span>
+<span class="sd">    tarjeta prendida y Link apagado) y se la referencia por</span>
+<span class="sd">    ``payment_method_configuration`` al crear la sesión. Se reutiliza la</span>
+<span class="sd">    misma configuración entre llamadas (identificada por su nombre, cacheado</span>
+<span class="sd">    en este proceso) en vez de crear una nueva en cada pago.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: El id de la ``PaymentMethodConfiguration`` a usar.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">_configuracion_solo_tarjeta_cache</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">_configuracion_solo_tarjeta_cache</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span>
+
+    <span class="n">nombre</span> <span class="o">=</span> <span class="s1">'Global Exchange - solo tarjeta'</span>
+    <span class="k">for</span> <span class="n">configuracion</span> <span class="ow">in</span> <span class="n">stripe</span><span class="o">.</span><span class="n">PaymentMethodConfiguration</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">configuracion</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">nombre</span><span class="p">:</span>
+            <span class="n">_configuracion_solo_tarjeta_cache</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">configuracion</span><span class="o">.</span><span class="n">id</span>
+            <span class="k">return</span> <span class="n">configuracion</span><span class="o">.</span><span class="n">id</span>
+
+    <span class="n">nueva</span> <span class="o">=</span> <span class="n">stripe</span><span class="o">.</span><span class="n">PaymentMethodConfiguration</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">nombre</span><span class="p">,</span>
+        <span class="n">card</span><span class="o">=</span><span class="p">{</span><span class="s1">'display_preference'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'preference'</span><span class="p">:</span> <span class="s1">'on'</span><span class="p">}},</span>
+        <span class="n">link</span><span class="o">=</span><span class="p">{</span><span class="s1">'display_preference'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'preference'</span><span class="p">:</span> <span class="s1">'off'</span><span class="p">}},</span>
+    <span class="p">)</span>
+    <span class="n">_configuracion_solo_tarjeta_cache</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">nueva</span><span class="o">.</span><span class="n">id</span>
+    <span class="k">return</span> <span class="n">nueva</span><span class="o">.</span><span class="n">id</span></div>
+
+
+
+<div class="viewcode-block" id="_resolver_metodo_pago_tarjeta">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._resolver_metodo_pago_tarjeta">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolver_metodo_pago_tarjeta</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="n">metodo_pago_id</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Busca el ``MetodoPago`` de tarjeta elegido, con su referencia de Stripe.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cliente (apps.clientes.models.Cliente): El cliente que va a pagar.</span>
+<span class="sd">        metodo_pago_id: El ``pk`` recibido en ``?metodo_pago=``, tal como lo</span>
+<span class="sd">            elige el cliente en el formulario de pago de siempre (ver</span>
+<span class="sd">            ``apps.divisas.views.PagarTransaccionOperacionView.post``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        apps.clientes.models.MetodoPago | None: El método, si existe, es</span>
+<span class="sd">        del cliente, es de tipo tarjeta y está vinculado a Stripe con una</span>
+<span class="sd">        referencia; ``None`` en cualquier otro caso (no se puede cobrar con</span>
+<span class="sd">        algo que no sabemos identificar en Stripe).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="n">pk</span><span class="o">=</span><span class="n">metodo_pago_id</span><span class="p">,</span>
+        <span class="n">cliente</span><span class="o">=</span><span class="n">cliente</span><span class="p">,</span>
+        <span class="n">tipo_medio</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">,</span>
+        <span class="n">proveedor_externo</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">PROVEEDOR_STRIPE</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">referencia_externa__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">referencia_externa</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_IniciarPagoStripeBaseView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Base común para iniciar el pago con tarjeta de una transacción propia.</span>
+
+<span class="sd">    Las subclases (``IniciarPagoStripeOperacionView`` e</span>
+<span class="sd">    ``IniciarPagoStripeCambioView``) solo fijan ``model`` (la clase de la</span>
+<span class="sd">    transacción), ``tipo_transaccion`` (el valor que viaja en los metadatos</span>
+<span class="sd">    de la sesión de Stripe para que el webhook sepa a cuál transacción</span>
+<span class="sd">    corresponde) y ``url_detalle`` (adónde volver en cualquier desenlace).</span>
+<span class="sd">    """</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">tipo_transaccion</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">url_detalle</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Permite iniciar el pago solo a los roles que pueden operar."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Cobra directo con la tarjeta elegida, o cae a Stripe si hace falta confirmarla ahí.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección al detalle de la transacción (si el</span>
+<span class="sd">            cobro directo salió bien, o si no se puede pagar todavía, o si</span>
+<span class="sd">            no se eligió una tarjeta guardada válida, o si Stripe no</span>
+<span class="sd">            respondió — criterio 6), o a la página de pago de Stripe (para</span>
+<span class="sd">            confirmar ahí un cobro directo que no se pudo completar solo).</span>
+<span class="sd">        """</span>
+        <span class="n">transaccion</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="n">_resolver_transaccion_propia</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'pk'</span><span class="p">],</span> <span class="n">url_fallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">marcar_vencida_si_corresponde</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_puede_pagarse</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Esta transacción ya fue pagada.'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Esta transacción no está en condiciones de pagarse.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">metodo_pago</span> <span class="o">=</span> <span class="n">_resolver_metodo_pago_tarjeta</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'metodo_pago'</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">metodo_pago</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Elegí una tarjeta guardada para pagar con Stripe.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">moneda</span> <span class="o">=</span> <span class="n">_moneda_de_liquidacion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+        <span class="n">stripe</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">STRIPE_SECRET_KEY</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">customer_id</span> <span class="o">=</span> <span class="n">_obtener_o_crear_cliente_stripe</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">stripe</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">StripeError</span><span class="p">:</span>
+            <span class="c1"># Criterio 6: Stripe no respondió o la conexión falló. No se</span>
+            <span class="c1"># toca la transacción, que sigue "Confirmada" tal como estaba.</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'No se pudo conectar con Stripe para iniciar el pago. Intentá nuevamente en unos minutos.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">resultado</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cobrar_con_tarjeta_guardada</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">customer_id</span><span class="p">,</span> <span class="n">metodo_pago</span><span class="o">.</span><span class="n">referencia_externa</span><span class="p">,</span> <span class="n">moneda</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">resultado</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">resultado</span>
+        <span class="c1"># El cobro directo no se pudo completar solo (rechazo o</span>
+        <span class="c1"># autenticación adicional exigida por el banco): se cae al flujo</span>
+        <span class="c1"># de Checkout de abajo para que el cliente lo confirme ahí, con la</span>
+        <span class="c1"># misma tarjeta ya preseleccionada.</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sesion</span> <span class="o">=</span> <span class="n">stripe</span><span class="o">.</span><span class="n">checkout</span><span class="o">.</span><span class="n">Session</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s1">'payment'</span><span class="p">,</span>
+                <span class="n">customer</span><span class="o">=</span><span class="n">customer_id</span><span class="p">,</span>
+                <span class="n">payment_method_configuration</span><span class="o">=</span><span class="n">_configuracion_solo_tarjeta</span><span class="p">(),</span>
+                <span class="n">line_items</span><span class="o">=</span><span class="p">[{</span>
+                    <span class="s1">'price_data'</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s1">'currency'</span><span class="p">:</span> <span class="n">moneda</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                        <span class="s1">'unit_amount'</span><span class="p">:</span> <span class="n">_monto_en_unidad_minima_stripe</span><span class="p">(</span><span class="n">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">moneda</span><span class="p">),</span>
+                        <span class="s1">'product_data'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'name'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Transacción </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">'</span><span class="p">},</span>
+                    <span class="p">},</span>
+                    <span class="s1">'quantity'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">}],</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s1">'tipo_transaccion'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tipo_transaccion</span><span class="p">,</span>
+                    <span class="s1">'transaccion_id'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                <span class="p">},</span>
+                <span class="n">success_url</span><span class="o">=</span><span class="n">_url_absoluta</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'?pago=iniciado'</span><span class="p">,</span>
+                <span class="n">cancel_url</span><span class="o">=</span><span class="n">_url_absoluta</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'?pago=cancelado'</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">stripe</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">StripeError</span><span class="p">:</span>
+            <span class="c1"># Criterio 6: Stripe no respondió o la conexión falló. No se</span>
+            <span class="c1"># toca la transacción, que sigue "Confirmada" tal como estaba.</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'No se pudo conectar con Stripe para iniciar el pago. Intentá nuevamente en unos minutos.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">sesion</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cobrar_con_tarjeta_guardada</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">customer_id</span><span class="p">,</span> <span class="n">metodo_guardado</span><span class="p">,</span> <span class="n">moneda</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Intenta cobrar directo, sin que el cliente vea ninguna página de Stripe.</span>
+
+<span class="sd">        Usa una ``idempotency_key`` fija por transacción: si esta vista se</span>
+<span class="sd">        llama dos veces para la misma transacción (doble clic, el usuario</span>
+<span class="sd">        vuelve atrás y refresca), Stripe devuelve el mismo ``PaymentIntent``</span>
+<span class="sd">        ya creado en vez de cobrar la tarjeta una segunda vez.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse | None: La redirección final si el cobro directo</span>
+<span class="sd">            se resolvió (con éxito o con un rechazo definitivo), o ``None``</span>
+<span class="sd">            si hay que caer al flujo de Checkout para que el cliente lo</span>
+<span class="sd">            confirme ahí.</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">intent</span> <span class="o">=</span> <span class="n">stripe</span><span class="o">.</span><span class="n">PaymentIntent</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">amount</span><span class="o">=</span><span class="n">_monto_en_unidad_minima_stripe</span><span class="p">(</span><span class="n">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">moneda</span><span class="p">),</span>
+                <span class="n">currency</span><span class="o">=</span><span class="n">moneda</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                <span class="n">customer</span><span class="o">=</span><span class="n">customer_id</span><span class="p">,</span>
+                <span class="n">payment_method</span><span class="o">=</span><span class="n">metodo_guardado</span><span class="p">,</span>
+                <span class="n">off_session</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">confirm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s1">'tipo_transaccion'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tipo_transaccion</span><span class="p">,</span>
+                    <span class="s1">'transaccion_id'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                <span class="p">},</span>
+                <span class="n">idempotency_key</span><span class="o">=</span><span class="sa">f</span><span class="s1">'ge22-pago-directo-</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">stripe</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">CardError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="c1"># Criterio 4: la tarjeta guardada fue rechazada (o el banco</span>
+            <span class="c1"># exige una autenticación adicional que no se puede resolver</span>
+            <span class="c1"># sin que el cliente esté presente). No se toca la</span>
+            <span class="c1"># transacción; se cae a Checkout para que confirme ahí.</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'No se pudo cobrar automáticamente con tu tarjeta guardada '</span>
+                <span class="sa">f</span><span class="s1">'(</span><span class="si">{</span><span class="n">error</span><span class="o">.</span><span class="n">user_message</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s2">"fue rechazada"</span><span class="si">}</span><span class="s1">). Confirmá el pago para reintentar.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="n">stripe</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">StripeError</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'No se pudo conectar con Stripe para iniciar el pago. Intentá nuevamente en unos minutos.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">intent</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s1">'succeeded'</span><span class="p">:</span>
+            <span class="c1"># Por ejemplo, "requires_action" (3-D Secure/SCA): no se puede</span>
+            <span class="c1"># resolver sin el cliente presente. Se cae a Checkout.</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Pago</span><span class="o">.</span><span class="n">registrar_pago</span><span class="p">(</span>
+                <span class="n">transaccion</span><span class="p">,</span>
+                <span class="n">medio_pago</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">,</span>
+                <span class="n">proveedor</span><span class="o">=</span><span class="n">PROVEEDOR_STRIPE</span><span class="p">,</span>
+                <span class="n">identificador_externo</span><span class="o">=</span><span class="n">intent</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="n">monto</span><span class="o">=</span><span class="n">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">PagoRechazadoError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El pago con tu tarjeta guardada se realizó correctamente.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="IniciarPagoStripeOperacionView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IniciarPagoStripeOperacionView</span><span class="p">(</span><span class="n">_IniciarPagoStripeBaseView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Inicia el pago con tarjeta de una compra o venta propia ya "Confirmada".</span>
+
+<span class="sd">    No tiene ningún botón propio en la UI: a ella redirige automáticamente</span>
+<span class="sd">    ``apps.divisas.views.PagarTransaccionOperacionView.post`` cuando el</span>
+<span class="sd">    método de pago elegido en el formulario de pago normal es de tipo</span>
+<span class="sd">    "tarjeta" (``MetodoPago.TIPO_TARJETA``), en vez de registrar el pago de</span>
+<span class="sd">    forma manual.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">CalculoOperacion</span>
+    <span class="n">tipo_transaccion</span> <span class="o">=</span> <span class="s1">'operacion'</span>
+    <span class="n">url_detalle</span> <span class="o">=</span> <span class="s1">'divisas:detalle_transaccion_operacion'</span></div>
+
+
+
+<div class="viewcode-block" id="IniciarPagoStripeCambioView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarPagoStripeCambioView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IniciarPagoStripeCambioView</span><span class="p">(</span><span class="n">_IniciarPagoStripeBaseView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Inicia el pago con tarjeta de un cambio entre divisas propio ya "Confirmado".</span>
+
+<span class="sd">    Ver ``IniciarPagoStripeOperacionView``: mismo criterio, al que redirige</span>
+<span class="sd">    ``apps.divisas.views.PagarTransaccionCambioView.post``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">CalculoTriangulacion</span>
+    <span class="n">tipo_transaccion</span> <span class="o">=</span> <span class="s1">'cambio'</span>
+    <span class="n">url_detalle</span> <span class="o">=</span> <span class="s1">'divisas:detalle_transaccion_cambio'</span></div>
+
+
+
+<div class="viewcode-block" id="IniciarAgregarTarjetaStripeView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IniciarAgregarTarjetaStripeView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pide el nombre del titular y redirige a Stripe a capturar una tarjeta nueva.</span>
+
+<span class="sd">    El número de tarjeta nunca llega a esta vista ni a ningún campo de</span>
+<span class="sd">    Global Exchange: lo captura Stripe en su propia página, mediante una</span>
+<span class="sd">    sesión de Checkout en modo ``"setup"`` (guarda una tarjeta sin cobrar</span>
+<span class="sd">    nada). ``confirmar_tarjeta_stripe_view`` es quien, al volver de Stripe,</span>
+<span class="sd">    recién ahí crea el ``MetodoPago`` con la referencia que devuelve Stripe.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="IniciarAgregarTarjetaStripeView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Permite agregar una tarjeta solo a los roles que pueden operar."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IniciarAgregarTarjetaStripeView.get">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el formulario mínimo (nombre del titular) previo a Stripe."""</span>
+        <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés un cliente activo seleccionado.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">AgregarTarjetaStripeForm</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="p">{</span><span class="s1">'nombre_titular'</span><span class="p">:</span> <span class="n">cliente_activo</span><span class="o">.</span><span class="n">nombre_completo</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'clientes/agregar_tarjeta_stripe.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="IniciarAgregarTarjetaStripeView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Crea la sesión de Stripe (modo "setup") y redirige a completarla ahí.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección a Stripe si todo sale bien; de vuelta</span>
+<span class="sd">            al formulario si hay errores de validación, o al listado de</span>
+<span class="sd">            métodos de pago si Stripe no respondió (criterio 6, aplicado</span>
+<span class="sd">            acá al alta de la tarjeta en vez de a un pago).</span>
+<span class="sd">        """</span>
+        <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés un cliente activo seleccionado.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">AgregarTarjetaStripeForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'clientes/agregar_tarjeta_stripe.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">})</span>
+
+        <span class="n">stripe</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">STRIPE_SECRET_KEY</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">customer_id</span> <span class="o">=</span> <span class="n">_obtener_o_crear_cliente_stripe</span><span class="p">(</span><span class="n">cliente_activo</span><span class="p">)</span>
+            <span class="n">sesion</span> <span class="o">=</span> <span class="n">stripe</span><span class="o">.</span><span class="n">checkout</span><span class="o">.</span><span class="n">Session</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s1">'setup'</span><span class="p">,</span>
+                <span class="n">customer</span><span class="o">=</span><span class="n">customer_id</span><span class="p">,</span>
+                <span class="n">payment_method_configuration</span><span class="o">=</span><span class="n">_configuracion_solo_tarjeta</span><span class="p">(),</span>
+                <span class="c1"># Stripe exige una moneda incluso en modo "setup" (no cobra</span>
+                <span class="c1"># nada; solo la usa para decidir qué métodos ofrecer), así</span>
+                <span class="c1"># que se manda la de liquidación por defecto del sistema.</span>
+                <span class="n">currency</span><span class="o">=</span><span class="s1">'pyg'</span><span class="p">,</span>
+                <span class="n">setup_intent_data</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s1">'metadata'</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s1">'cliente_id'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">cliente_activo</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                        <span class="s1">'nombre_titular'</span><span class="p">:</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'nombre_titular'</span><span class="p">],</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+                <span class="n">success_url</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">_url_absoluta</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'clientes:confirmar_tarjeta_stripe'</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'?session_id=</span><span class="si">{CHECKOUT_SESSION_ID}</span><span class="s1">'</span>
+                <span class="p">),</span>
+                <span class="n">cancel_url</span><span class="o">=</span><span class="n">_url_absoluta</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'clientes:metodo_pago_list'</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">stripe</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">StripeError</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'No se pudo conectar con Stripe para agregar la tarjeta. Intentá nuevamente en unos minutos.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">sesion</span><span class="o">.</span><span class="n">url</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="confirmar_tarjeta_stripe_view">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.confirmar_tarjeta_stripe_view">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">confirmar_tarjeta_stripe_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Confirma la tarjeta capturada por Stripe y la guarda como ``MetodoPago``.</span>
+
+<span class="sd">    Es el ``success_url`` de ``IniciarAgregarTarjetaStripeView``: Stripe</span>
+<span class="sd">    vuelve acá con ``?session_id=...`` después de que el cliente completó</span>
+<span class="sd">    el formulario de tarjeta en su propia página.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HttpResponse: Redirección al listado de métodos de pago, con un</span>
+<span class="sd">        mensaje de éxito o de error según corresponda.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Http404: Si la sesión de Stripe no corresponde al ``Customer`` del</span>
+<span class="sd">        cliente activo (no hay nada legítimo que hacer con una sesión</span>
+<span class="sd">        ajena).</span>
+<span class="sd">    """</span>
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés un cliente activo seleccionado.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="n">session_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'session_id'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">session_id</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No se recibió la confirmación de Stripe.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="n">stripe</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">STRIPE_SECRET_KEY</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sesion</span> <span class="o">=</span> <span class="n">stripe</span><span class="o">.</span><span class="n">checkout</span><span class="o">.</span><span class="n">Session</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">session_id</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="p">[</span><span class="s1">'setup_intent'</span><span class="p">])</span>
+        <span class="n">customer_id</span> <span class="o">=</span> <span class="n">_obtener_o_crear_cliente_stripe</span><span class="p">(</span><span class="n">cliente_activo</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">stripe</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">StripeError</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No se pudo confirmar la tarjeta con Stripe. Intentá nuevamente.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sesion</span><span class="o">.</span><span class="n">customer</span> <span class="o">!=</span> <span class="n">customer_id</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'Sesión de Stripe inválida.'</span><span class="p">)</span>
+
+    <span class="n">setup_intent</span> <span class="o">=</span> <span class="n">sesion</span><span class="o">.</span><span class="n">setup_intent</span>
+    <span class="k">if</span> <span class="n">setup_intent</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">setup_intent</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s1">'succeeded'</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">setup_intent</span><span class="o">.</span><span class="n">payment_method</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No se pudo confirmar la tarjeta con Stripe.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="n">pm_id</span> <span class="o">=</span> <span class="n">setup_intent</span><span class="o">.</span><span class="n">payment_method</span>
+    <span class="k">if</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">proveedor_externo</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">PROVEEDOR_STRIPE</span><span class="p">,</span> <span class="n">referencia_externa</span><span class="o">=</span><span class="n">pm_id</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="c1"># Confirmación repetida de la misma tarjeta (p. ej. el cliente</span>
+        <span class="c1"># refrescó esta página): no se duplica el MetodoPago.</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Esa tarjeta ya estaba guardada.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">metodo_stripe</span> <span class="o">=</span> <span class="n">stripe</span><span class="o">.</span><span class="n">PaymentMethod</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">pm_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">stripe</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">StripeError</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No se pudo recuperar los datos de la tarjeta desde Stripe.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="n">card</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">metodo_stripe</span><span class="p">,</span> <span class="s1">'card'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">card</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Defensa adicional a _configuracion_solo_tarjeta: si por lo que</span>
+        <span class="c1"># sea Stripe guardó un medio que no es una tarjeta (p. ej. Link),</span>
+        <span class="c1"># no hay datos de tarjeta que guardar. No se crea ningún MetodoPago.</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span>
+            <span class="s1">'Lo que guardaste en Stripe no fue una tarjeta '</span>
+            <span class="sa">f</span><span class="s1">'(</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">metodo_stripe</span><span class="p">,</span><span class="w"> </span><span class="s2">"type"</span><span class="p">,</span><span class="w"> </span><span class="s2">"desconocido"</span><span class="p">)</span><span class="si">}</span><span class="s1">). Reintentá y elegí pagar con tarjeta.'</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
+
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">_a_dict</span><span class="p">(</span><span class="n">setup_intent</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+    <span class="n">MetodoPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">,</span>
+        <span class="n">tipo_medio</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">,</span>
+        <span class="n">nombre_titular</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'nombre_titular'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cliente_activo</span><span class="o">.</span><span class="n">nombre_completo</span><span class="p">,</span>
+        <span class="n">entidad_financiera</span><span class="o">=</span><span class="n">card</span><span class="o">.</span><span class="n">brand</span><span class="o">.</span><span class="n">title</span><span class="p">(),</span>
+        <span class="n">numero_tarjeta</span><span class="o">=</span><span class="n">card</span><span class="o">.</span><span class="n">last4</span><span class="p">,</span>
+        <span class="n">proveedor_externo</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">PROVEEDOR_STRIPE</span><span class="p">,</span>
+        <span class="n">referencia_externa</span><span class="o">=</span><span class="n">pm_id</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Tarjeta agregada correctamente.'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_procesar_sesion_completada</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra el pago si Stripe confirma que la sesión de Checkout fue cobrada.</span>
+
+<span class="sd">    ``payment_status`` puede quedar en "unpaid" para medios de pago</span>
+<span class="sd">    asincrónicos todavía no acreditados: ahí no corresponde registrar nada</span>
+<span class="sd">    todavía (y, por lo tanto, no se modifica la transacción).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        session: El objeto ``checkout.session`` que manda Stripe en el</span>
+<span class="sd">            evento ``checkout.session.completed`` (un ``StripeObject`` real</span>
+<span class="sd">            en producción; un dict plano en los tests). Se convierte con</span>
+<span class="sd">            ``_a_dict`` apenas entra, porque ``StripeObject`` no tiene</span>
+<span class="sd">            ``.get()``.</span>
+<span class="sd">    """</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="n">_a_dict</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'payment_status'</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">'paid'</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">_a_dict</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'metadata'</span><span class="p">))</span>
+    <span class="n">tipo_transaccion</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo_transaccion'</span><span class="p">)</span>
+    <span class="n">transaccion_id</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'transaccion_id'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tipo_transaccion</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">transaccion_id</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">CalculoOperacion</span> <span class="k">if</span> <span class="n">tipo_transaccion</span> <span class="o">==</span> <span class="s1">'operacion'</span> <span class="k">else</span> <span class="n">CalculoTriangulacion</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">transaccion</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">transaccion_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">model</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">identificador_externo</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'payment_intent'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'id'</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">Pago</span><span class="o">.</span><span class="n">registrar_pago</span><span class="p">(</span>
+            <span class="n">transaccion</span><span class="p">,</span>
+            <span class="n">medio_pago</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">,</span>
+            <span class="n">proveedor</span><span class="o">=</span><span class="n">PROVEEDOR_STRIPE</span><span class="p">,</span>
+            <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+            <span class="n">monto</span><span class="o">=</span><span class="n">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="n">PagoRechazadoError</span><span class="p">:</span>
+        <span class="c1"># La transacción ya no está en condiciones de pagarse con este</span>
+        <span class="c1"># pago (por ejemplo, un reintento de Stripe del mismo evento que</span>
+        <span class="c1"># llega después de que otro camino ya la marcó "Pagada"). No hay</span>
+        <span class="c1"># nada más que hacer: registrar_pago ya es idempotente por</span>
+        <span class="c1"># (proveedor, identificador_externo) para el caso normal de un</span>
+        <span class="c1"># webhook reenviado.</span>
+        <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="stripe_webhook_view">
+<a class="viewcode-back" href="../../../reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.stripe_webhook_view">[documentos]</a>
+<span class="nd">@csrf_exempt</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">stripe_webhook_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Recibe los webhooks de Stripe y confirma, de ser el caso, un pago con tarjeta.</span>
+
+<span class="sd">    Es el único lugar donde una notificación de Stripe se traduce en un</span>
+<span class="sd">    pago real. Queda exento de CSRF porque lo llama Stripe, no un</span>
+<span class="sd">    navegador con sesión de Django, y en cambio su seguridad depende por</span>
+<span class="sd">    completo de la verificación de firma de ``stripe.Webhook.construct_event``</span>
+<span class="sd">    (criterio 3).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HttpResponse: 200 si el evento se procesó (incluso si no requería</span>
+<span class="sd">        ninguna acción), 400 si la firma no es válida o el método no es</span>
+<span class="sd">        POST.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s1">'POST'</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponseNotAllowed</span><span class="p">([</span><span class="s1">'POST'</span><span class="p">])</span>
+
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">body</span>
+    <span class="n">firma</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'HTTP_STRIPE_SIGNATURE'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">evento</span> <span class="o">=</span> <span class="n">stripe</span><span class="o">.</span><span class="n">Webhook</span><span class="o">.</span><span class="n">construct_event</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">firma</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">STRIPE_WEBHOOK_SECRET</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">stripe</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">SignatureVerificationError</span><span class="p">):</span>
+        <span class="c1"># Criterio 3: firma inválida. Se rechaza sin tocar ninguna</span>
+        <span class="c1"># transacción y sin procesar el contenido del payload.</span>
+        <span class="k">return</span> <span class="n">HttpResponseBadRequest</span><span class="p">(</span><span class="s1">'Firma inválida.'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">evento</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'checkout.session.completed'</span><span class="p">:</span>
+        <span class="n">_procesar_sesion_completada</span><span class="p">(</span><span class="n">evento</span><span class="p">[</span><span class="s1">'data'</span><span class="p">][</span><span class="s1">'object'</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

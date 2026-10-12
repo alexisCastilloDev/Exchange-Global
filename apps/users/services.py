@@ -10,6 +10,28 @@ except ImportError:  # pragma: no cover
     KeycloakAdmin = None
 
 
+def _url_con_barra_final(url):
+    """Garantiza que una URL termine en "/".
+
+    ``python-keycloak`` arma cada endpoint de la Admin API con
+    ``urllib.parse.urljoin(server_url, path)``. Esa función, si
+    ``server_url`` no termina en "/", trata el último tramo como un
+    "archivo" y lo **descarta** en vez de agregarle el ``path``:
+    ``urljoin('https://host/auth', 'admin/realms/x')`` da
+    ``'https://host/admin/realms/x'`` (perdiendo ``/auth``), mientras que
+    ``urljoin('https://host/auth/', 'admin/realms/x')`` da el resultado
+    correcto. En desarrollo, ``KEYCLOAK_SERVER_URL`` suele ser
+    ``http://localhost:8080`` (sin ningún tramo de path propio), así que el
+    problema no se nota ahí; en producción, donde Keycloak corre con
+    ``--http-relative-path /auth`` (ver ``deploy/aws/docker-compose.yml``),
+    un ``KEYCLOAK_SERVER_URL`` sin la barra final rompe silenciosamente
+    *todas* las llamadas a la Admin API (consultar o asignar roles,
+    sincronizar usuarios, etc.), aunque el login normal siga funcionando
+    (esas URLs se arman a mano en ``settings``, no con ``urljoin``).
+    """
+    return url if url.endswith('/') else url + '/'
+
+
 def _obtener_keycloak_admin():
     """Construye un cliente administrativo configurado para el realm."""
     if KeycloakAdmin is None:
@@ -17,7 +39,7 @@ def _obtener_keycloak_admin():
             'La integración de Keycloak no está disponible. Verifica la dependencia python-keycloak y la configuración del realm.'
         )
     return KeycloakAdmin(
-        server_url=settings.KEYCLOAK_SERVER_URL,
+        server_url=_url_con_barra_final(settings.KEYCLOAK_SERVER_URL),
         realm_name=settings.KEYCLOAK_REALM,
         client_id=settings.KEYCLOAK_CLIENT_ID,
         client_secret_key=settings.KEYCLOAK_CLIENT_SECRET,

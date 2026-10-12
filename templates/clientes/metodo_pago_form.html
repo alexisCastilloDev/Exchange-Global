@@ -1,5 +1,5 @@
 <!--
-Formulario de creación o edición de un método de pago.
+Formulario para registrar una transferencia o billetera (solo alta; una tarjeta se agrega vía Stripe).
 Hereda de: base.html.
 Bloques definidos: title, content.
 Contexto esperado: titulo y form.
@@ -17,6 +17,10 @@ Contexto esperado: titulo y form.
 </div>
 
 <div class="ge-card ge-payment-form">
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>
+  {% endif %}
+
   <form method="post">
     {% csrf_token %}
 
@@ -27,43 +31,31 @@ Contexto esperado: titulo y form.
       {{ form.tipo_medio }}
       {% if form.tipo_medio.errors %}<div class="text-danger small">{{ form.tipo_medio.errors.0 }}</div>{% endif %}
       </div>
-
-      <div class="mb-3">
-      <label for="{{ form.nombre_titular.id_for_label }}" class="form-label">Nombre del Titular</label>
-      {{ form.nombre_titular }}
-      {% if form.nombre_titular.errors %}<div class="text-danger small">{{ form.nombre_titular.errors.0 }}</div>{% endif %}
-      </div>
-
-      <div class="mb-3">
-      <label for="{{ form.entidad_financiera.id_for_label }}" class="form-label">Entidad Financiera / Banco</label>
-      {{ form.entidad_financiera }}
-      {% if form.entidad_financiera.errors %}<div class="text-danger small">{{ form.entidad_financiera.errors.0 }}</div>{% endif %}
-      </div>
     </div>
 
-    <div id="campo-transferencia" class="ge-form-section">
+    <div id="campo-cuenta" class="ge-form-section">
       <span class="ge-eyebrow">Datos de la cuenta</span>
+      <p class="text-muted small">
+        Verificamos estos datos contra el banco o la billetera antes de guardar el método: el titular
+        y la entidad se completan solos a partir de la cuenta, no hace falta escribirlos.
+      </p>
+
       <div class="mb-3">
-        <label for="{{ form.numero_cuenta.id_for_label }}" class="form-label">Número de Cuenta</label>
+        <label for="{{ form.numero_cuenta.id_for_label }}" class="form-label">Número de Cuenta / Billetera</label>
         {{ form.numero_cuenta }}
         {% if form.numero_cuenta.errors %}<div class="text-danger small">{{ form.numero_cuenta.errors.0 }}</div>{% endif %}
       </div>
 
       <div class="mb-3">
+        <label for="{{ form.documento_titular.id_for_label }}" class="form-label">CI o RUC del Titular</label>
+        {{ form.documento_titular }}
+        {% if form.documento_titular.errors %}<div class="text-danger small">{{ form.documento_titular.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div id="campo-tipo-cuenta" class="mb-3">
         <label for="{{ form.tipo_cuenta.id_for_label }}" class="form-label">Tipo de Cuenta</label>
         {{ form.tipo_cuenta }}
         {% if form.tipo_cuenta.errors %}<div class="text-danger small">{{ form.tipo_cuenta.errors.0 }}</div>{% endif %}
-      </div>
-    </div>
-
-    <div id="campo-tarjeta" class="ge-form-section">
-      <span class="ge-eyebrow">Datos de la tarjeta</span>
-      <div class="mb-3">
-        <label for="{{ form.numero_tarjeta.id_for_label }}" class="form-label">Número de tarjeta</label>
-        {{ form.numero_tarjeta }}
-        {% if form.numero_tarjeta.errors %}
-          <div class="text-danger small">{{ form.numero_tarjeta.errors.0 }}</div>
-        {% endif %}
       </div>
     </div>
 
@@ -81,24 +73,14 @@ Contexto esperado: titulo y form.
   </form>
 </div>
 
-<!-- Dinámica visual sencilla con JS -->
+<!-- Dinámica visual sencilla con JS: el tipo de cuenta (ahorro/corriente) solo aplica a transferencias. -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const tipoMedio = document.getElementById('id_tipo_medio');
-    const campoTransferencia = document.getElementById('campo-transferencia');
-    const campoTarjeta = document.getElementById('campo-tarjeta');
+    const campoTipoCuenta = document.getElementById('campo-tipo-cuenta');
 
     function toggleFields() {
-      if (tipoMedio.value === 'TRANSFERENCIA') {
-        campoTransferencia.style.display = 'block';
-        campoTarjeta.style.display = 'none';
-      } else if (tipoMedio.value === 'TARJETA') {
-        campoTransferencia.style.display = 'none';
-        campoTarjeta.style.display = 'block';
-      } else {
-        campoTransferencia.style.display = 'none';
-        campoTarjeta.style.display = 'none';
-      }
+      campoTipoCuenta.style.display = tipoMedio.value === 'TRANSFERENCIA' ? 'block' : 'none';
     }
 
     tipoMedio.addEventListener('change', toggleFields);

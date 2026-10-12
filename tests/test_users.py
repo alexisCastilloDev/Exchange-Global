@@ -2,10 +2,12 @@
 
 from unittest.mock import patch
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
 from apps.authentication.models import HistorialBaja
+from apps.users.services import _obtener_keycloak_admin, _url_con_barra_final
 
 User = get_user_model()
 
@@ -114,4 +116,42 @@ def test_baja_usuario_registra_causa_y_auditoria(mock_keycloak, client, admin_us
         first_name='Carlos',
         last_name='',
         is_active=False
+    )
+
+
+@pytest.mark.parametrize('entrada,esperado', [
+    ('https://dominio.com/auth', 'https://dominio.com/auth/'),
+    ('https://dominio.com/auth/', 'https://dominio.com/auth/'),
+    ('http://localhost:8080', 'http://localhost:8080/'),
+])
+def test_url_con_barra_final_normaliza_la_url(entrada, esperado):
+    """La URL del servidor de Keycloak siempre debe terminar en "/".
+
+    Sin la barra final, ``python-keycloak`` descarta con ``urljoin`` el
+    último tramo del path (por ejemplo "/auth") al armar cada endpoint de
+    la Admin API, lo que rompe en producción (donde Keycloak corre con
+    ``--http-relative-path /auth``) aunque en desarrollo no se note (ahí
+    ``KEYCLOAK_SERVER_URL`` no tiene ningún tramo de path propio que perder).
+    """
+    assert _url_con_barra_final(entrada) == esperado
+
+
+@pytest.mark.django_db
+@patch('apps.users.services.KeycloakAdmin')
+@override_settings(
+    KEYCLOAK_SERVER_URL='https://dominio.com/auth',
+    KEYCLOAK_REALM='global-exchange',
+    KEYCLOAK_CLIENT_ID='cliente-test',
+    KEYCLOAK_CLIENT_SECRET='secreto-test',
+)
+def test_obtener_keycloak_admin_le_agrega_la_barra_final_al_server_url(mock_keycloak_admin_cls):
+    """El cliente administrativo se construye con la URL ya normalizada."""
+    _obtener_keycloak_admin()
+
+    mock_keycloak_admin_cls.assert_called_once_with(
+        server_url='https://dominio.com/auth/',
+        realm_name='global-exchange',
+        client_id='cliente-test',
+        client_secret_key='secreto-test',
+        verify=True,
     )

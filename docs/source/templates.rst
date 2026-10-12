@@ -128,6 +128,14 @@ Divisas
    :language: html
    :lines: 1-7
 
+.. literalinclude:: ../../templates/divisas/pagar_transaccion.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/divisas/pagar_transaccion_cambio.html
+   :language: html
+   :lines: 1-7
+
 .. literalinclude:: ../../templates/divisas/simulacion_divisas.html
    :language: html
    :lines: 1-7
@@ -173,6 +181,49 @@ Divisas
    :lines: 1-7
 
 .. literalinclude:: ../../templates/divisas/detalle_transaccion_cambio.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/divisas/mis_notificaciones.html
+   :language: html
+   :lines: 1-7
+
+Caja
+----
+
+.. literalinclude:: ../../templates/caja/abrir_caja.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/caja/cerrar_caja.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/caja/panel_caja.html
+   :language: html
+   :lines: 1-11
+
+.. literalinclude:: ../../templates/caja/operacion_ventanilla.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/caja/movimiento_extraordinario.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/caja/arqueo_form.html
+   :language: html
+   :lines: 1-6
+
+.. literalinclude:: ../../templates/caja/arqueo_detalle.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/caja/arqueo_historial.html
+   :language: html
+   :lines: 1-6
+
+.. literalinclude:: ../../templates/caja/historial_cajas.html
    :language: html
    :lines: 1-7
 

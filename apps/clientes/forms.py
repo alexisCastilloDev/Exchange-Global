@@ -6,6 +6,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 # Se agregó MetodoPago a la importación existente
 from apps.clientes.models import Cliente, MetodoPago
+from apps.clientes.validacion_sipap import SipapComunicacionError, validar_cuenta
 
 User = get_user_model()
 
@@ -170,60 +171,120 @@ class AsociarUsuarioClienteForm(forms.Form):
 # FORMULARIOS PARA GE-19: Gestión de métodos de pago
 # ==============================================================================
 
+class AgregarTarjetaStripeForm(forms.Form):
+    """Pide el nombre del titular antes de ir a Stripe a capturar la tarjeta.
+
+    Es deliberadamente mínimo: el número de tarjeta nunca pasa por este
+    formulario ni por ningún campo de Global Exchange — lo captura Stripe
+    directamente en su propia página (ver
+    ``apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView``). El
+    nombre del titular es el único dato propio que hace falta pedir antes
+    de salir hacia Stripe, porque la entidad financiera y los últimos 4
+    dígitos los va a devolver Stripe recién al confirmar.
+    """
+
+    nombre_titular = forms.CharField(
+        max_length=150,
+        label='Nombre del Titular',
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+
+
 class MetodoPagoForm(forms.ModelForm):
     """
-    Formulario para la creación y edición de métodos de pago del cliente.
-    Realiza validaciones condicionales de acuerdo al tipo de medio de pago seleccionado.
+    Formulario para registrar un método de pago manual del cliente (transferencia o billetera).
+
+    Solo se usa para crear: los métodos de pago ya no se editan, solo se
+    eliminan y se vuelven a crear si hace falta cambiar algo (ver
+    ``apps.clientes.views.metodo_pago_delete``). Tampoco ofrece "Tarjeta de
+    Débito/Crédito" como opción: desde la HU "Pago con tarjeta vía Stripe",
+    una tarjeta se agrega exclusivamente a través de Stripe (ver
+    ``IniciarAgregarTarjetaStripeView`` en ``apps.divisas.pagos_stripe``),
+    que es quien conoce el número real y nunca lo entrega a este
+    formulario.
+
+    El cliente no escribe el nombre del titular ni el banco/billetera: los
+    completa ``clean()`` a partir de lo que confirma sipap-sim
+    (``apps.clientes.validacion_sipap.validar_cuenta``), igual que
+    cualquier flujo real de vinculación de cuenta (no le creemos al
+    usuario que una cuenta es suya solo porque lo escribió). Por eso esos
+    dos campos del modelo no están en ``Meta.fields``: no hay nada que el
+    formulario le pida tipear al cliente para completarlos.
     """
+
+    def __init__(self, *args, **kwargs):
+        """Quita "Tarjeta" de las opciones: esa alta pasa siempre por Stripe."""
+        super().__init__(*args, **kwargs)
+        self.fields['tipo_medio'].choices = [
+            choice for choice in MetodoPago.TIPO_MEDIO_CHOICES if choice[0] != MetodoPago.TIPO_TARJETA
+        ]
 
     class Meta:
         """Define los campos, etiquetas y widgets del método de pago."""
         model = MetodoPago
         fields = [
             'tipo_medio',
-            'nombre_titular',
-            'entidad_financiera',
             'numero_cuenta',
+            'documento_titular',
             'tipo_cuenta',
-            'numero_tarjeta',  # Se reemplaza 'ultimos_4_digitos' por 'numero_tarjeta'
             'es_predeterminado'
         ]
         widgets = {
             'tipo_medio': forms.Select(attrs={'class': 'form-select', 'id': 'id_tipo_medio'}),
-            'nombre_titular': forms.TextInput(attrs={'class': 'form-control'}),
-            'entidad_financiera': forms.TextInput(attrs={'class': 'form-control'}),
-            'numero_cuenta': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_cuenta': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de cuenta o de billetera'}),
+            'documento_titular': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CI o RUC del titular'}),
             'tipo_cuenta': forms.Select(attrs={'class': 'form-select'}),
-            'numero_tarjeta': forms.TextInput(attrs={
-                'class': 'form-control',
-                'maxlength': '19',
-                'minlength': '13',
-                'placeholder': 'Ej. 4532123456789012',
-                'inputmode': 'numeric'
-            }),
             'es_predeterminado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean(self):
-        """
-        Valida que se ingresen los campos obligatorios correspondientes a cada tipo de pago (Criterio 2).
+        """Valida los datos obligatorios y confirma la cuenta contra sipap-sim (criterios 1 y 2).
+
+        Una transferencia o billetera necesita número de cuenta y CI/RUC
+        del titular (además, solo para transferencia, el tipo de cuenta);
+        con esos dos datos, se consulta a sipap-sim
+        (``validar_cuenta``) para confirmar que la cuenta exista y sea de
+        ese titular — si no, se rechaza el alta, igual que lo haría un
+        banco real con una cuenta inventada. Si sipap-sim no responde, se
+        rechaza también (no hay forma de confirmar nada sin él), en vez
+        de guardar un método de pago sin verificar.
         """
         cleaned_data = super().clean()
         tipo_medio = cleaned_data.get('tipo_medio')
         numero_cuenta = cleaned_data.get('numero_cuenta')
+        documento_titular = cleaned_data.get('documento_titular')
         tipo_cuenta = cleaned_data.get('tipo_cuenta')
-        numero_tarjeta = cleaned_data.get('numero_tarjeta')
 
-        if tipo_medio == MetodoPago.TIPO_TRANSFERENCIA:
-            if not numero_cuenta:
-                self.add_error('numero_cuenta', 'El número de cuenta es obligatorio para transferencias bancarias.')
-            if not tipo_cuenta:
-                self.add_error('tipo_cuenta', 'Debe seleccionar el tipo de cuenta.')
+        if tipo_medio not in (MetodoPago.TIPO_TRANSFERENCIA, MetodoPago.TIPO_BILLETERA):
+            return cleaned_data
 
-        elif tipo_medio == MetodoPago.TIPO_TARJETA:
-            if not numero_tarjeta:
-                self.add_error('numero_tarjeta', 'Debe ingresar el número de la tarjeta.')
-            elif not numero_tarjeta.isdigit() or not (13 <= len(numero_tarjeta) <= 19):
-                self.add_error('numero_tarjeta', 'Debe ingresar un número de tarjeta válido (entre 13 y 19 dígitos numéricos).')
+        if not numero_cuenta:
+            self.add_error('numero_cuenta', 'El número de cuenta es obligatorio.')
+        if not documento_titular:
+            self.add_error('documento_titular', 'El CI o RUC del titular es obligatorio.')
+        if tipo_medio == MetodoPago.TIPO_TRANSFERENCIA and not tipo_cuenta:
+            self.add_error('tipo_cuenta', 'Debe seleccionar el tipo de cuenta.')
+
+        if not numero_cuenta or not documento_titular:
+            return cleaned_data
+
+        try:
+            resultado = validar_cuenta(numero_cuenta, documento_titular)
+        except SipapComunicacionError:
+            self.add_error(
+                None,
+                'No se pudo verificar la cuenta en este momento. Intentá nuevamente en unos minutos.',
+            )
+        else:
+            if not resultado.get('valida'):
+                self.add_error(
+                    'numero_cuenta',
+                    'No encontramos ninguna cuenta con ese número y ese documento. Verificá los datos.',
+                )
+            else:
+                # El titular y el banco/billetera los confirma sipap-sim,
+                # no lo que haya escrito el cliente.
+                self.instance.nombre_titular = resultado['titular']
+                self.instance.entidad_financiera = resultado['proveedor']
 
         return cleaned_data

@@ -1,0 +1,41 @@
+<!--
+Paso previo a agregar una tarjeta: pide el nombre del titular y redirige a
+la página de pago de Stripe, donde se captura el número real.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: form.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Agregar tarjeta - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+  <div>
+    <h1>Agregar tarjeta</h1>
+    <p>El número de tarjeta se ingresa en la página segura de Stripe, nunca acá.</p>
+  </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+  <div class="col-lg-6">
+    <div class="ge-card ge-payment-form">
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="{{ form.nombre_titular.id_for_label }}" class="form-label">{{ form.nombre_titular.label }}</label>
+          {{ form.nombre_titular }}
+          {% if form.nombre_titular.errors %}
+            <div class="text-danger small mt-1">{{ form.nombre_titular.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="ge-form-actions d-flex justify-content-end gap-2">
+          <a href="{% url 'clientes:metodo_pago_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-shield-lock me-1"></i>Continuar en Stripe</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

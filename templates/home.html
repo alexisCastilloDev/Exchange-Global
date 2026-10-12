@@ -103,6 +103,15 @@ Contexto esperado: user, cliente_activo y permisos de UI.
             </div>
         </a>
     </div>
+    <div class="col-md-4">
+        <a href="{% url 'documentacion' %}" class="text-decoration-none" target="_blank" rel="noopener">
+            <div class="ge-card h-100">
+                <i class="bi bi-book" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Documentación</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá la documentación técnica del sistema.</p>
+            </div>
+        </a>
+    </div>
     {% endif %}
     {% if puede_ver_usuarios %}
     <div class="col-md-4">
@@ -166,6 +175,17 @@ Contexto esperado: user, cliente_activo y permisos de UI.
         </a>
     </div>
     {% endif %}
+    {% if puede_ver_historial_propio %}
+    <div class="col-md-4">
+        <a href="{% url 'divisas:mis_transacciones' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-clock-history" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Mi historial de transacciones</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá tus propias compras, ventas y cambios de divisas.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
     {% if puede_ver_divisas or puede_ver_tasas %}
     <div class="col-md-4">
         <a href="{% url 'divisas:simulacion_divisas' %}" class="text-decoration-none">
@@ -193,6 +213,17 @@ Contexto esperado: user, cliente_activo y permisos de UI.
                 <i class="bi bi-clock-history" style="font-size: 22px; color: var(--ge-brass);"></i>
                 <h2 style="font-size:16px; margin: 10px 0 4px;">Historial de transacciones</h2>
                 <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá las operaciones de compra y venta de los clientes.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_ver_caja %}
+    <div class="col-md-4">
+        <a href="{% url 'caja:panel' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-cash-stack" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Mi caja</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Abrí tu caja o consultá el saldo inicial del turno.</p>
             </div>
         </a>
     </div>

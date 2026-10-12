@@ -48,11 +48,27 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -81,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -88,6 +105,7 @@
 <li class="toctree-l2"><a class="reference internal" href="reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.users.html">apps.users package</a></li>
@@ -147,6 +165,8 @@
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">apps.authentication</span></code>: integración OIDC con Keycloak, roles de sesión,
 filtros de plantillas y auditoría de bajas.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">apps.caja</span></code>: apertura de caja, saldo inicial por moneda, operaciones de
+ventanilla (compra y venta de divisas en efectivo) y arqueo de un cajero.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">apps.clientes</span></code>: perfiles de clientes, selección del cliente activo,
 asociaciones de usuarios y métodos de pago.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">apps.divisas</span></code>: catálogo de divisas, cotizaciones, historial y simulación.</p></li>
@@ -155,6 +175,25 @@ de Keycloak.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">global_exchange</span></code>: configuración, URLs y vistas generales del proyecto.</p></li>
 </ul>
 </section>
+<section id="formato-numerico">
+<h2>Formato numérico<a class="headerlink" href="#formato-numerico" title="Link to this heading"></a></h2>
+<p>Todos los montos, tasas y comisiones que se muestran en pantalla usan «.»
+como separador de miles y «,» como separador decimal (por ejemplo
+<code class="docutils literal notranslate"><span class="pre">747.400,00</span></code>), la convención paraguaya/argentina. Se logra con
+<code class="docutils literal notranslate"><span class="pre">USE_THOUSAND_SEPARATOR</span> <span class="pre">=</span> <span class="pre">True</span></code> más un módulo de formato propio
+(<code class="docutils literal notranslate"><span class="pre">global_exchange/formats/en_US/formats.py</span></code>, referenciado desde
+<code class="docutils literal notranslate"><span class="pre">FORMAT_MODULE_PATH</span></code>) que sobreescribe, solo para los separadores
+numéricos, lo que Django trae por defecto para <code class="docutils literal notranslate"><span class="pre">LANGUAGE_CODE</span> <span class="pre">=</span> <span class="pre">'en-us'</span></code>
+— sin cambiar ese <code class="docutils literal notranslate"><span class="pre">LANGUAGE_CODE</span></code> ni, por lo tanto, los mensajes de
+validación en inglés que el resto del proyecto ya reemplaza a mano por
+mensajes en español.</p>
+<p>Los campos ocultos que viajan entre pasos (por ejemplo <code class="docutils literal notranslate"><span class="pre">monto</span></code>,
+<code class="docutils literal notranslate"><span class="pre">cotizacion_id</span></code> o <code class="docutils literal notranslate"><span class="pre">vence_en_timestamp</span></code> en los formularios de «Calcular
+importe» y «Confirmar operación») se renderizan con el filtro
+<code class="docutils literal notranslate"><span class="pre">|unlocalize</span></code> (<code class="docutils literal notranslate"><span class="pre">{%</span> <span class="pre">load</span> <span class="pre">l10n</span> <span class="pre">%}</span></code>) para que sigan llegando sin
+separadores: esos valores no se muestran, se vuelven a parsear en el
+servidor, y un separador de miles los rompería.</p>
+</section>
 <section id="flujo-de-autenticacion">
 <h2>Flujo de autenticación<a class="headerlink" href="#flujo-de-autenticacion" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
@@ -162,8 +201,27 @@ de Keycloak.</p></li>
 <li><p>El backend valida las claims y extrae los roles de negocio.</p></li>
 <li><p>Los roles efectivos se guardan en <code class="docutils literal notranslate"><span class="pre">request.session['keycloak_roles']</span></code>.</p></li>
 <li><p>Las vistas comprueban la sesión mediante decoradores o mixins de Django.</p></li>
-<li><p>El callback redirige al usuario hacia el panel apropiado según su rol.</p></li>
+<li><p>El callback (<code class="docutils literal notranslate"><span class="pre">apps.authentication.views.CustomOIDCCallbackView.login_success</span></code>)
+redirige siempre a «Inicio» (<code class="docutils literal notranslate"><span class="pre">home</span></code>), sin importar el rol: cada pantalla de
+inicio ya muestra únicamente los accesos que corresponden al rol del usuario.</p></li>
 </ol>
+</section>
+<section id="administracion-de-usuarios-y-roles-via-keycloak">
+<h2>Administración de usuarios y roles vía Keycloak<a class="headerlink" href="#administracion-de-usuarios-y-roles-via-keycloak" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">apps.users.services</span></code> administra usuarios y realm roles contra la Admin API de
+Keycloak (sincronizar usuarios, consultar o asignar roles): todo vía
+<code class="docutils literal notranslate"><span class="pre">python-keycloak</span></code>, sin persistir roles en <code class="docutils literal notranslate"><span class="pre">auth.Group</span></code>/<code class="docutils literal notranslate"><span class="pre">auth.Permission</span></code> de
+Django. Para que esas llamadas funcionen, <code class="docutils literal notranslate"><span class="pre">settings.KEYCLOAK_SERVER_URL</span></code> debe
+terminar en <code class="docutils literal notranslate"><span class="pre">/</span></code> si Keycloak corre bajo un path propio (por ejemplo
+<code class="docutils literal notranslate"><span class="pre">--http-relative-path</span> <span class="pre">/auth</span></code>, como en producción): <code class="docutils literal notranslate"><span class="pre">python-keycloak</span></code> arma cada
+endpoint con <code class="docutils literal notranslate"><span class="pre">urllib.parse.urljoin(server_url,</span> <span class="pre">path)</span></code>, que <strong>descarta</strong> el
+último tramo del path si <code class="docutils literal notranslate"><span class="pre">server_url</span></code> no termina en «/» (<code class="docutils literal notranslate"><span class="pre">urljoin('.../auth',</span>
+<span class="pre">'admin/realms/x')</span></code> da <code class="docutils literal notranslate"><span class="pre">'.../admin/realms/x'</span></code>, perdiendo <code class="docutils literal notranslate"><span class="pre">/auth</span></code>). En
+desarrollo esto no se nota porque <code class="docutils literal notranslate"><span class="pre">KEYCLOAK_SERVER_URL</span></code> ahí no tiene ningún
+tramo de path propio. <code class="docutils literal notranslate"><span class="pre">apps.users.services._obtener_keycloak_admin</span></code> ya
+normaliza la URL para que esto no dependa de cómo se escriba la variable de
+entorno, pero el valor configurado en <code class="docutils literal notranslate"><span class="pre">.env</span></code> conviene dejarlo con la barra
+final igual, para que coincida con lo que el código termina usando realmente.</p>
 </section>
 <section id="flujo-operativo-de-divisas">
 <h2>Flujo operativo de divisas<a class="headerlink" href="#flujo-operativo-de-divisas" title="Link to this heading"></a></h2>
@@ -217,8 +275,413 @@ destino; el Paso 3 lo resuelve
 transacciones (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.HistorialTransaccionesView</span></code>), con tipo,
 estado, usuario, cliente, divisa, monto, tasa aplicada, comisión e importe
 final.</p>
+<p>Un cliente, en cambio, consulta únicamente las transacciones registradas a
+nombre de su propio cliente activo (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.MiHistorialTransaccionesView</span></code>,
+en <code class="docutils literal notranslate"><span class="pre">/divisas/transacciones/mias/</span></code>), con la misma información por fila
+(tipo, divisa, monto, tasa aplicada, estado y fecha, además de comisión e
+importe final) y paginado de a 20. Admite filtrar el listado por rango de
+fechas de creación (<code class="docutils literal notranslate"><span class="pre">fecha_desde</span></code>/<code class="docutils literal notranslate"><span class="pre">fecha_hasta</span></code>) y por estado, comparando
+siempre contra el estado <em>efectivo</em> de cada transacción (ver
+<code class="docutils literal notranslate"><span class="pre">CalculoOperacion.estado_efectivo</span></code>), no solo el persistido; sin
+transacciones que mostrar, indica un mensaje en vez de dejar la tabla vacía
+sin explicación. Desde cada fila se accede al detalle completo de esa
+transacción (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.DetalleTransaccionOperacionView</span></code> para
+compra/venta, <code class="docutils literal notranslate"><span class="pre">apps.divisas.views.DetalleTransaccionCambioView</span></code> para un
+cambio entre divisas): a diferencia de las pantallas de confirmación
+(<code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionOperacionView</span></code>/<code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionCambioView</span></code>),
+el detalle del historial es de solo consulta y no ofrece ninguna acción para
+confirmar, cancelar ni reprocesar la transacción, sin importar su estado.</p>
 <p>El simulador de conversión ofrece los mismos tres modos (compra, venta,
 cambio) sin persistir el resultado ni exigir confirmación.</p>
+<p>Las pantallas de «Confirmar operación» (Paso 3), «Pagar» y el detalle de una
+transacción propia dependen de que esta pertenezca al <strong>cliente activo</strong>
+del momento. Si el cliente activo cambia (por ejemplo, en otra pestaña)
+mientras una de esas pantallas quedó abierta con una transacción del
+cliente <em>anterior</em>, <code class="docutils literal notranslate"><span class="pre">apps.divisas.views._resolver_transaccion_propia</span></code>
+distingue dos casos: si la transacción no tiene ninguna relación con el
+usuario autenticado, sigue respondiendo 404 (acceso a una transacción
+realmente ajena); si es de otro cliente propio del mismo usuario, en vez de
+un error de Django informa con un mensaje («Esta transacción no corresponde
+al cliente activo…») y redirige, ya que no hay nada que ocultarle al
+propio usuario sobre su otra transacción.</p>
+</section>
+<section id="notificaciones-de-cambio-de-tasas">
+<h2>Notificaciones de cambio de tasas<a class="headerlink" href="#notificaciones-de-cambio-de-tasas" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Notificaciones sobre tasas de cambio» (GE-51). Cada vez
+que se guarda una nueva cotización de una divisa (por ejemplo desde
+<code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView</span></code>), <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.Cotizacion.save</span></code> la
+compara con la última cotización que esa divisa tenía hasta ese momento:</p>
+<ul class="simple">
+<li><p>Por cada tasa (compra o venta) cuyo valor <strong>cambió</strong>, se crea una
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.NotificacionTasa</span></code> para cada usuario cliente, con la
+divisa, el tipo de tasa, la tasa anterior y la nueva. Si cambian ambas,
+cada usuario recibe dos notificaciones, una por tipo.</p></li>
+<li><p>Si la tasa se guarda con el <strong>mismo valor</strong> (<code class="docutils literal notranslate"><span class="pre">7300</span></code> y <code class="docutils literal notranslate"><span class="pre">7300.00</span></code> se
+consideran iguales), no se genera ninguna notificación; la cotización igual
+queda en el historial.</p></li>
+<li><p>La primera cotización de una divisa no notifica: no hay tasa anterior con
+la que comparar.</p></li>
+</ul>
+<p>La cotización y sus notificaciones se guardan en una única transacción de
+base de datos. Como el rol <code class="docutils literal notranslate"><span class="pre">cliente</span></code> vive solo en la sesión de Keycloak,
+para elegir los destinatarios se considera «usuario cliente» a todo usuario
+activo asociado a al menos un <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> activo, ya sea como usuario
+asociado o como titular (<code class="docutils literal notranslate"><span class="pre">NotificacionTasa.usuarios_clientes</span></code>).</p>
+<p>Un usuario con el rol <code class="docutils literal notranslate"><span class="pre">cliente</span></code> consulta sus notificaciones en
+<code class="docutils literal notranslate"><span class="pre">/divisas/notificaciones/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.MisNotificacionesView</span></code>),
+de la más reciente a la más antigua y paginadas de a 20, y puede marcar
+cada una como leída (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.MarcarNotificacionLeidaView</span></code>,
+solo POST; las notificaciones ajenas responden 404). En la barra superior
+de todas las pantallas, una campana muestra la cantidad de notificaciones
+no leídas, calculada por el context processor
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.context_processors.notificaciones_context</span></code>; al marcar una
+como leída deja de contarse.</p>
+</section>
+<section id="pago-de-una-transaccion-confirmada">
+<h2>Pago de una transacción confirmada<a class="headerlink" href="#pago-de-una-transaccion-confirmada" title="Link to this heading"></a></h2>
+<p>Una vez que una transacción (compra/venta o cambio) está «Confirmada», el
+cliente puede pagarla desde <code class="docutils literal notranslate"><span class="pre">apps.divisas.views.PagarTransaccionOperacionView</span></code>
+o <code class="docutils literal notranslate"><span class="pre">PagarTransaccionCambioView</span></code>, eligiendo uno de sus métodos de pago ya
+guardados (<code class="docutils literal notranslate"><span class="pre">apps.clientes.models.MetodoPago</span></code>, de la HU «Métodos de pago»).
+El monto a pagar es siempre el que calcula el sistema (<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.monto_a_pagar</span></code>);
+el cliente no puede modificarlo. Para una compra/venta es <code class="docutils literal notranslate"><span class="pre">monto_final</span></code>, en
+PYG; para un cambio entre divisas es <code class="docutils literal notranslate"><span class="pre">monto_origen</span></code>, en la divisa de
+origen — lo que el cliente entrega, no <code class="docutils literal notranslate"><span class="pre">monto_final</span></code> (lo que recibe a
+cambio): ver el docstring de <code class="docutils literal notranslate"><span class="pre">monto_a_pagar</span></code> para el porqué. Hay un único botón «Pagar»: si el método
+elegido es de tipo «tarjeta» (<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TARJETA</span></code>), la vista
+redirige a cobrar con Stripe (ver <a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a> más abajo);
+si es «transferencia» o «billetera» (<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TRANSFERENCIA</span></code>/
+<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_BILLETERA</span></code>), redirige en cambio a generar una solicitud
+de pago SIPAP (ver <a class="reference internal" href="#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a> más abajo)
+— sipap-sim, que simula SIPAP, simula indistintamente bancos y billeteras
+digitales, así que ambos tipos de método comparten el mismo flujo. Esta
+vista nunca registra el pago ella misma: el registro siempre llega
+después, por una confirmación asíncrona (el webhook de Stripe o el de
+sipap-sim).</p>
+<p>El registro del pago pasa siempre por
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.Pago.registrar_pago</span></code>, pensado como punto de entrada
+único e idempotente, al que llegan por igual las confirmaciones de Stripe
+y de sipap-sim:</p>
+<ul class="simple">
+<li><p>Asocia el pago a una única transacción (<code class="docutils literal notranslate"><span class="pre">calculo_operacion</span></code> o
+<code class="docutils literal notranslate"><span class="pre">calculo_triangulacion</span></code>, nunca ambas), con el medio de pago, el
+proveedor, un identificador externo, el monto y la fecha.</p></li>
+<li><p>Si la transacción no está «Confirmada» (está pendiente, vencida,
+cancelada o ya «Pagada»), rechaza el pago con
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.PagoRechazadoError</span></code> en vez de crear nada.</p></li>
+<li><p>Si ya tiene un pago exitoso, rechaza cualquier otro intento —
+<code class="docutils literal notranslate"><span class="pre">calculo_operacion</span></code>/<code class="docutils literal notranslate"><span class="pre">calculo_triangulacion</span></code> son <code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code>, así
+que la base de datos lo garantiza sin importar el medio del segundo
+intento.</p></li>
+<li><p>Si llega más de una vez la misma confirmación (mismo <code class="docutils literal notranslate"><span class="pre">proveedor</span></code> e
+<code class="docutils literal notranslate"><span class="pre">identificador_externo</span></code>, la clave de idempotencia, con una restricción
+<code class="docutils literal notranslate"><span class="pre">UniqueConstraint</span></code> en la base), devuelve el pago ya existente sin crear
+un segundo registro ni volver a tocar la transacción.</p></li>
+<li><p>Al registrarse un pago exitoso, la transacción pasa a «Pagada».</p></li>
+</ul>
+<p>Esta HU («Asociación de pagos a transacciones») se diseñó, a propósito,
+como la base de dos HU de pago real, ya implementadas sobre esta misma
+base: pago con tarjeta vía Stripe (ver <a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a> más
+abajo) y pago por transferencia o billetera vía SIPAP (ver <a class="reference internal" href="#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por
+transferencia bancaria o billetera digital vía SIPAP</a> más abajo). Ambas se integran como webhooks de su
+proveedor (con su propia verificación de firma, que no es responsabilidad
+de <code class="docutils literal notranslate"><span class="pre">Pago</span></code>) que arman los mismos datos genéricos (medio, proveedor,
+identificador externo, monto) a partir de su propio payload y llaman a
+<code class="docutils literal notranslate"><span class="pre">registrar_pago</span></code> — o, si el monto confirmado no coincide con el
+esperado (solo le pasa a SIPAP: Stripe nunca cobra un monto distinto del
+que el propio sistema le pidió), a <code class="docutils literal notranslate"><span class="pre">registrar_pago_observado</span></code> — en vez
+de duplicar esta lógica. <code class="docutils literal notranslate"><span class="pre">Pago.PROVEEDOR_MANUAL</span></code> sigue existiendo como
+valor válido de <code class="docutils literal notranslate"><span class="pre">proveedor</span></code> (por si alguna vez hace falta registrar un
+pago a mano, por ejemplo desde el admin), pero ya no lo usa ningún flujo
+accesible desde la UI del cliente: tarjeta, transferencia y billetera se
+resuelven siempre por confirmación asíncrona.</p>
+<p>Tanto el detalle de una compra/venta como el de un cambio entre divisas
+(<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code>/<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionCambioView</span></code>)
+muestran el pago asociado (medio, monto, fecha e identificador) o,
+si todavía no se registró ninguno, un mensaje indicándolo en vez de dejar
+la sección vacía sin explicación.</p>
+</section>
+<section id="pago-con-tarjeta-via-stripe">
+<h2>Pago con tarjeta vía Stripe<a class="headerlink" href="#pago-con-tarjeta-via-stripe" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Pago con tarjeta vía Stripe» (<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code>),
+la primera de las dos HU futuras para las que GE-25 se diseñó como base (ver
+sección anterior). Una tarjeta es, a todos los efectos de la UI, un
+<code class="docutils literal notranslate"><span class="pre">apps.clientes.models.MetodoPago</span></code> más (HU «Métodos de pago», GE-19): no
+agrega ningún botón nuevo a la pantalla de pago de una transacción «Confirmada»
+(<code class="docutils literal notranslate"><span class="pre">pagar_transaccion.html</span></code>/<code class="docutils literal notranslate"><span class="pre">pagar_transaccion_cambio.html</span></code>), el cliente
+sigue viendo un único botón «Pagar», y es la propia vista
+(<code class="docutils literal notranslate"><span class="pre">PagarTransaccionOperacionView</span></code>/<code class="docutils literal notranslate"><span class="pre">PagarTransaccionCambioView</span></code>) la que
+decide qué hacer según el tipo del método de pago elegido. Si es de tipo
+«tarjeta» (<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TARJETA</span></code>), en vez de registrar el pago en el
+momento redirige a cobrar con esa tarjeta puntual vía Stripe (pasando su
+<code class="docutils literal notranslate"><span class="pre">pk</span></code> como <code class="docutils literal notranslate"><span class="pre">?metodo_pago=</span></code>); si es «transferencia» o «billetera»,
+redirige en cambio a SIPAP (ver más abajo). El flujo de Stripe tiene dos
+mitades independientes:</p>
+<ol class="arabic simple">
+<li><p><strong>Cobrar</strong> (<code class="docutils literal notranslate"><span class="pre">IniciarPagoStripeOperacionView</span></code>/
+<code class="docutils literal notranslate"><span class="pre">IniciarPagoStripeCambioView</span></code>, en <code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code>).
+Resuelve el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> elegido (<code class="docutils literal notranslate"><span class="pre">_resolver_metodo_pago_tarjeta</span></code>):
+tiene que ser del cliente, de tipo tarjeta y tener una
+<code class="docutils literal notranslate"><span class="pre">referencia_externa</span></code> de Stripe; si no, se pide elegir una tarjeta
+guardada válida, sin llamar a Stripe para nada. Con esa referencia y el
+<code class="docutils literal notranslate"><span class="pre">Customer</span></code> de Stripe del cliente (<code class="docutils literal notranslate"><span class="pre">_obtener_o_crear_cliente_stripe</span></code>,
+ver más abajo), cobra directo por API con un <code class="docutils literal notranslate"><span class="pre">PaymentIntent</span></code>
+<code class="docutils literal notranslate"><span class="pre">off_session=True,</span> <span class="pre">confirm=True</span></code> — sin mostrar ninguna página de
+Stripe — por el monto exacto que devuelve <code class="docutils literal notranslate"><span class="pre">monto_a_pagar</span></code> (criterio 1;
+nunca editable por el cliente): en PYG para una compra/venta, o en la
+divisa de <strong>origen</strong> para un cambio (<code class="docutils literal notranslate"><span class="pre">_moneda_de_liquidacion</span></code>, que
+delega en <code class="docutils literal notranslate"><span class="pre">moneda_a_pagar</span></code>), convertida a la unidad que espera Stripe
+con <code class="docutils literal notranslate"><span class="pre">_monto_en_unidad_minima_stripe</span></code>, sin centavos para PYG. Si el banco la rechaza
+(<code class="docutils literal notranslate"><span class="pre">stripe.error.CardError</span></code>, criterio 4) o exige una autenticación
+adicional (3-D Secure/SCA, <code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">==</span> <span class="pre">&quot;requires_action&quot;</span></code>), cae a una
+sesión de <a class="reference external" href="https://stripe.com/docs/payments/checkout">Stripe Checkout</a>
+(<code class="docutils literal notranslate"><span class="pre">customer=...</span></code>, para que esa misma tarjeta aparezca preseleccionada)
+para que el cliente confirme ahí. En cualquiera de los dos casos, si
+Stripe no responde o la conexión falla (<code class="docutils literal notranslate"><span class="pre">stripe.error.StripeError</span></code>),
+se informa el problema sin tocar la transacción (criterio 6); si el
+cliente abandona o cancela el pago en la página de Stripe, vuelve al
+detalle de la transacción con un aviso, también sin que nada se haya
+tocado (criterio 5).</p></li>
+<li><p><strong>Confirmar el pago.</strong> Para el cobro directo, la propia respuesta
+síncrona del <code class="docutils literal notranslate"><span class="pre">PaymentIntent</span></code> (<code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">==</span> <span class="pre">&quot;succeeded&quot;</span></code>) es la
+confirmación: no hace falta esperar ningún webhook. Para el camino de
+Checkout (solo cuando el cobro directo no alcanzó), confirma
+<code class="docutils literal notranslate"><span class="pre">stripe_webhook_view</span></code> (expuesta en <code class="docutils literal notranslate"><span class="pre">/webhooks/stripe/</span></code> fuera de
+cualquier namespace de la aplicación, porque la URL la configura una
+vez el dashboard de Stripe): valida la firma con
+<code class="docutils literal notranslate"><span class="pre">stripe.Webhook.construct_event</span></code> antes de mirar el contenido; si no
+es válida, la rechaza con un 400 sin tocar ninguna transacción
+(criterio 3). Si la firma es válida y el evento es
+<code class="docutils literal notranslate"><span class="pre">checkout.session.completed</span></code> con <code class="docutils literal notranslate"><span class="pre">payment_status</span> <span class="pre">==</span> <span class="pre">&quot;paid&quot;</span></code>, llama
+a <code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code> con el identificador de Stripe (el
+<code class="docutils literal notranslate"><span class="pre">payment_intent</span></code>) y <code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TARJETA</span></code> (criterio 2).
+Cualquier otro evento, o una sesión todavía no cobrada, no modifica
+nada.</p></li>
+</ol>
+<section id="que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">
+<h3>Qué paga y qué recibe el cliente en un cambio entre divisas<a class="headerlink" href="#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas" title="Link to this heading"></a></h3>
+<p>En un cambio (<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>, ver <code class="docutils literal notranslate"><span class="pre">_calcular_triangulacion</span></code>),
+el cliente entrega una divisa (origen) y recibe otra (destino); la
+triangulación por PYG es solo un paso de cálculo interno, no algo que el
+cliente vea como un pago en guaraníes. Por ejemplo, para «Cambio de
+EUR a USD» con un monto de 500,00 EUR: el cliente <strong>entrega 500,00 EUR</strong>
+(<code class="docutils literal notranslate"><span class="pre">monto_origen</span></code>, en <code class="docutils literal notranslate"><span class="pre">codigo_divisa_origen</span></code>) y, neto de la comisión,
+<strong>recibe 559,16 USD</strong> (<code class="docutils literal notranslate"><span class="pre">monto_final</span></code>, en <code class="docutils literal notranslate"><span class="pre">codigo_divisa_destino</span></code>). Lo
+que cobra Stripe (y lo que queda registrado en <code class="docutils literal notranslate"><span class="pre">Pago.monto</span></code>, sea cual
+sea el medio) es siempre lo que el cliente entrega — <code class="docutils literal notranslate"><span class="pre">monto_origen</span></code>, en
+<code class="docutils literal notranslate"><span class="pre">codigo_divisa_origen</span></code> — nunca <code class="docutils literal notranslate"><span class="pre">monto_final</span></code>: cobrarle al cliente lo
+que va a recibir, en la moneda que va a recibir, no tendría sentido como
+pago de un cambio.</p>
+</section>
+<section id="tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">
+<h3>Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe<a class="headerlink" href="#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe" title="Link to this heading"></a></h3>
+<p>Una tarjeta se agrega desde el mismo listado de métodos de pago
+(<code class="docutils literal notranslate"><span class="pre">clientes:metodo_pago_list</span></code>, botón «Agregar tarjeta»), pero <strong>no</strong> a
+través del formulario manual de GE-19
+(<code class="docutils literal notranslate"><span class="pre">apps.clientes.forms.MetodoPagoForm</span></code>, que desde esta HU dejó de ofrecer
+«Tarjeta» como opción): el número de tarjeta nunca pasa por un campo de
+Global Exchange ni se guarda en esta base. El alta tiene también dos
+mitades:</p>
+<ol class="arabic simple">
+<li><p><strong>Iniciar</strong> (<code class="docutils literal notranslate"><span class="pre">IniciarAgregarTarjetaStripeView</span></code>). Pide solo el nombre
+del titular (<code class="docutils literal notranslate"><span class="pre">apps.clientes.forms.AgregarTarjetaStripeForm</span></code>),
+precargado con <code class="docutils literal notranslate"><span class="pre">Cliente.nombre_completo</span></code> (solo el nombre, a
+diferencia de <code class="docutils literal notranslate"><span class="pre">Cliente.__str__</span></code> que agrega el identificador y el
+estado entre paréntesis — útil en un listado administrativo, pero no
+acá, de cara al propio cliente) y crea una sesión de Stripe Checkout en
+modo <code class="docutils literal notranslate"><span class="pre">&quot;setup&quot;</span></code> (guarda una tarjeta sin cobrar nada), asociada al
+<code class="docutils literal notranslate"><span class="pre">Customer</span></code> de Stripe del cliente, con el nombre del titular en los
+metadatos del <code class="docutils literal notranslate"><span class="pre">SetupIntent</span></code> para recuperarlo al confirmar.</p></li>
+<li><p><strong>Confirmar</strong> (<code class="docutils literal notranslate"><span class="pre">confirmar_tarjeta_stripe_view</span></code>, el <code class="docutils literal notranslate"><span class="pre">success_url</span></code> de
+la sesión anterior). Recupera la sesión y su <code class="docutils literal notranslate"><span class="pre">SetupIntent</span></code>; si la
+sesión no corresponde al <code class="docutils literal notranslate"><span class="pre">Customer</span></code> de este cliente, responde 404 (no
+hay nada legítimo que hacer con una sesión ajena). Si el <code class="docutils literal notranslate"><span class="pre">SetupIntent</span></code>
+llegó a <code class="docutils literal notranslate"><span class="pre">&quot;succeeded&quot;</span></code>, consulta el <code class="docutils literal notranslate"><span class="pre">PaymentMethod</span></code> que generó
+(<code class="docutils literal notranslate"><span class="pre">stripe.PaymentMethod.retrieve</span></code>) y recién ahí crea el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code>:
+<code class="docutils literal notranslate"><span class="pre">tipo_medio=TARJETA</span></code>, <code class="docutils literal notranslate"><span class="pre">proveedor_externo=STRIPE</span></code>,
+<code class="docutils literal notranslate"><span class="pre">referencia_externa</span></code> (el id del <code class="docutils literal notranslate"><span class="pre">PaymentMethod</span></code>), y, solo para
+mostrarlo en el listado, la marca (<code class="docutils literal notranslate"><span class="pre">entidad_financiera</span></code>) y los
+últimos 4 dígitos (<code class="docutils literal notranslate"><span class="pre">numero_tarjeta</span></code>) que devuelve Stripe — nunca el
+número completo, que Stripe jamás entrega. Confirmar la misma sesión
+dos veces (el cliente refresca la página de vuelta) no duplica el
+método: se detecta por <code class="docutils literal notranslate"><span class="pre">referencia_externa</span></code> ya existente.</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">proveedor_externo</span></code>/<code class="docutils literal notranslate"><span class="pre">referencia_externa</span></code> son campos genéricos de
+<code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> (no específicos de Stripe) a propósito. En la práctica, la
+HU «Pago por transferencia bancaria vía SIPAP» (ver más abajo) terminó sin
+necesitarlos: a diferencia de una tarjeta, donde Stripe «verifica» un
+<code class="docutils literal notranslate"><span class="pre">PaymentMethod</span></code> concreto al guardarlo, una transferencia no se liga a
+una cuenta bancaria guardada del cliente, sino a una
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.SolicitudPagoSipap</span></code> por transacción, identificada
+por su propia referencia — el banco que SIPAP informa al confirmar ni
+siquiera tiene por qué coincidir con los datos de algún <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code>
+guardado. Estos dos campos quedan igual disponibles para una extensión
+futura que sí los necesite.</p>
+<p>Ningún método de pago se edita: <code class="docutils literal notranslate"><span class="pre">apps.clientes.views</span></code> ya no tiene una
+vista de edición, <code class="docutils literal notranslate"><span class="pre">apps.clientes.forms.MetodoPagoForm</span></code> solo se usa para
+crear una transferencia o billetera, y <code class="docutils literal notranslate"><span class="pre">metodo_pago_list.html</span></code> ofrece
+únicamente «Eliminar» junto a cada método. Para cambiar cualquier dato, el
+flujo es eliminar el método y crear uno nuevo; para una tarjeta de Stripe,
+eso además evita el problema de «editar» datos que en realidad viven del
+lado de Stripe (marca, últimos 4 dígitos) y no tendría sentido escribir a
+mano.</p>
+<p>Al pagar, cobrar directo con el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> elegido usa una
+<code class="docutils literal notranslate"><span class="pre">idempotency_key</span></code> fija por transacción
+(<code class="docutils literal notranslate"><span class="pre">f'ge22-pago-directo-{transaccion.pk}'</span></code>): si la vista se llama dos veces
+para la misma transacción (doble clic, el cliente vuelve atrás y refresca),
+Stripe devuelve el mismo <code class="docutils literal notranslate"><span class="pre">PaymentIntent</span></code> ya creado en vez de cobrar la
+tarjeta una segunda vez — el mismo problema que la clave de idempotencia
+<code class="docutils literal notranslate"><span class="pre">(proveedor,</span> <span class="pre">identificador_externo)</span></code> de <code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code> resuelve
+para el resto de los medios de pago, pero un paso antes, porque acá la
+vista misma es la que ejecuta el cobro (no solo lo registra).</p>
+<p>La sesión de Checkout se crea <strong>sin</strong> pasar <code class="docutils literal notranslate"><span class="pre">payment_method_types</span></code>: Stripe
+retiró ese parámetro de <code class="docutils literal notranslate"><span class="pre">checkout.Session.create</span></code> (ahora los métodos de
+pago aceptados se configuran desde el Dashboard de Stripe, no desde el
+código) y volver a agregarlo rompe la creación de la sesión con un
+<code class="docutils literal notranslate"><span class="pre">InvalidRequestError</span></code> en cualquier cuenta nueva. Sin ninguna restricción,
+Checkout ofrece cualquier medio habilitado en la cuenta — típicamente
+también «Link» (el autocompletado propio de Stripe), mostrado de forma muy
+prominente —, y si el cliente lo elige en vez de una tarjeta, el
+<code class="docutils literal notranslate"><span class="pre">PaymentMethod</span></code> resultante es de tipo <code class="docutils literal notranslate"><span class="pre">&quot;link&quot;</span></code>, sin los datos de
+tarjeta que esta HU necesita guardar. En su lugar, ambas sesiones de
+Checkout (el alta de una tarjeta y el fallback de pago) se crean con
+<code class="docutils literal notranslate"><span class="pre">payment_method_configuration=_configuracion_solo_tarjeta()</span></code>: una
+<code class="docutils literal notranslate"><span class="pre">PaymentMethodConfiguration</span></code> propia, creada (o reutilizada, cacheada en
+el proceso) con tarjeta prendida y Link apagado, así Checkout nunca
+ofrece otra cosa. Como defensa adicional, <code class="docutils literal notranslate"><span class="pre">confirmar_tarjeta_stripe_view</span></code>
+revisa que el <code class="docutils literal notranslate"><span class="pre">PaymentMethod</span></code> devuelto tenga de verdad el atributo
+<code class="docutils literal notranslate"><span class="pre">card</span></code> antes de leerlo, y si no, informa el problema sin crear nada en
+vez de romper con un <code class="docutils literal notranslate"><span class="pre">AttributeError</span></code>.</p>
+<p>Los objetos que devuelve el SDK de Stripe (<code class="docutils literal notranslate"><span class="pre">StripeObject</span></code>: una sesión de
+Checkout, un <code class="docutils literal notranslate"><span class="pre">SetupIntent</span></code>, el evento de un webhook) <strong>no</strong> son dicts en
+esta versión del SDK: no tienen <code class="docutils literal notranslate"><span class="pre">.get()</span></code> ni son iterables, aunque sí
+soportan <code class="docutils literal notranslate"><span class="pre">objeto['clave']</span></code> y <code class="docutils literal notranslate"><span class="pre">objeto.clave</span></code>. Por eso
+<code class="docutils literal notranslate"><span class="pre">_procesar_sesion_completada</span></code> y <code class="docutils literal notranslate"><span class="pre">confirmar_tarjeta_stripe_view</span></code> pasan
+cualquier <code class="docutils literal notranslate"><span class="pre">metadata</span></code>/sesión por <code class="docutils literal notranslate"><span class="pre">_a_dict</span></code> (que llama a
+<code class="docutils literal notranslate"><span class="pre">.to_dict()</span></code>, recursivo) antes de usar <code class="docutils literal notranslate"><span class="pre">.get()</span></code> sobre ellos — omitir
+ese paso tira <code class="docutils literal notranslate"><span class="pre">AttributeError:</span> <span class="pre">'get'</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">dict</span> <span class="pre">method,</span> <span class="pre">but</span> <span class="pre">a</span> <span class="pre">StripeObject</span>
+<span class="pre">is</span> <span class="pre">not</span> <span class="pre">a</span> <span class="pre">dict</span></code> en cuanto se usa contra Stripe de verdad, algo que un mock
+armado con un dict plano o un <code class="docutils literal notranslate"><span class="pre">SimpleNamespace</span></code> no detecta (los tests de
+este módulo usan, a propósito, <code class="docutils literal notranslate"><span class="pre">StripeObject</span></code> reales para cubrir este
+caso).</p>
+<p>Ni la vista de inicio, ni el cobro directo, ni el webhook tocan
+<code class="docutils literal notranslate"><span class="pre">transaccion.estado</span></code> directamente: los tres construyen los mismos datos
+genéricos (medio, proveedor «STRIPE», identificador externo, monto) y
+llaman a <code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code>, igual que ya hace el flujo manual de
+GE-25. Esto también resuelve la idempotencia ante un webhook reenviado por
+Stripe (algo que Stripe hace activamente si no recibe un 200 a tiempo): la
+segunda llamada con el mismo <code class="docutils literal notranslate"><span class="pre">(proveedor,</span> <span class="pre">identificador_externo)</span></code> devuelve
+el pago ya existente sin duplicar nada.</p>
+<p><code class="docutils literal notranslate"><span class="pre">STRIPE_SECRET_KEY</span></code> y <code class="docutils literal notranslate"><span class="pre">STRIPE_WEBHOOK_SECRET</span></code> (ver <code class="docutils literal notranslate"><span class="pre">.env.example</span></code>) son
+opcionales en desarrollo (<code class="docutils literal notranslate"><span class="pre">default=''</span></code>): sin una cuenta de Stripe
+configurada, iniciar un pago con tarjeta simplemente falla con el mismo
+mensaje de «no se pudo conectar con Stripe» que un corte de comunicación
+real, sin impedir trabajar en el resto del sistema.</p>
+</section>
+</section>
+<section id="pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">
+<h2>Pago por transferencia bancaria o billetera digital vía SIPAP<a class="headerlink" href="#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Pago por transferencia bancaria vía SIPAP»
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_sipap</span></code>), la segunda de las dos HU de pago real para
+las que GE-25 se diseñó como base, extendida para simular también
+billeteras digitales. SIPAP es el sistema de pagos interbancario del
+Banco Central del Paraguay: no existe un sandbox público al que un
+proyecto académico pueda conectarse, así que se lo simula con
+<strong>sipap-sim</strong> (<code class="docutils literal notranslate"><span class="pre">sipap_sim/</span></code>, en la raíz del repositorio), un proyecto
+Django independiente —propio <code class="docutils literal notranslate"><span class="pre">manage.py</span></code>, propios settings, propia
+base de datos— con el que Global Exchange se comunica solo por HTTP
+(<code class="docutils literal notranslate"><span class="pre">settings.SIPAP_BASE_URL</span></code>/<code class="docutils literal notranslate"><span class="pre">SIPAP_API_KEY</span></code>), nunca compartiendo
+código. <code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_sipap</span></code> define su propio esquema de webhook
+(firma HMAC-SHA256 con un secreto propio, <code class="docutils literal notranslate"><span class="pre">SIPAP_WEBHOOK_SECRET</span></code>) en
+vez de depender de un SDK oficial como el de Stripe, porque SIPAP no
+publica uno; si alguna vez se integra con el sistema real del BCP, solo
+hace falta apuntar <code class="docutils literal notranslate"><span class="pre">SIPAP_BASE_URL</span></code> a él y, si el contrato HTTP
+cambiara, ajustar este módulo.</p>
+<p>Igual que con una tarjeta, si el método elegido en el formulario de pago
+de siempre es de tipo «transferencia» o «billetera»
+(<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_TRANSFERENCIA</span></code>/<code class="docutils literal notranslate"><span class="pre">MetodoPago.TIPO_BILLETERA</span></code> — ambos
+comparten el mismo flujo, porque sipap-sim simula indistintamente bancos
+y billeteras digitales), la vista redirige en vez de registrar el pago
+ahí mismo — pero a diferencia de Stripe, una transferencia no es
+inmediata: el cliente sale del sistema (se lo redirige a la «banca en
+línea» simulada de sipap-sim), aprueba o rechaza ahí, y la confirmación
+llega después por webhook. Por eso hace falta un registro propio de
+«pago pendiente» que Stripe no necesitó: <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.SolicitudPagoSipap</span></code>,
+con sus propios estados («Pendiente», «Acreditada», «Observada»,
+«Rechazada», «Vencida»), un <code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code> con la transacción (nunca
+dos solicitudes para la misma) y los datos de la llamada a sipap-sim
+(<code class="docutils literal notranslate"><span class="pre">id_externo</span></code>, <code class="docutils literal notranslate"><span class="pre">link_pago</span></code>, <code class="docutils literal notranslate"><span class="pre">medio_pago</span></code> para recordar si fue
+transferencia o billetera, y <code class="docutils literal notranslate"><span class="pre">metodo_pago</span></code> — el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> guardado
+que el cliente elige en el formulario de pago, igual que con Stripe —
+para que sipap-sim reconozca exactamente con qué cuenta se paga).</p>
+<ol class="arabic simple">
+<li><p><strong>Iniciar el pago</strong> (<code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapOperacionView</span></code>/
+<code class="docutils literal notranslate"><span class="pre">IniciarPagoSipapCambioView</span></code>). <code class="docutils literal notranslate"><span class="pre">_resolver_metodo_pago_sipap</span></code> busca
+el <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> elegido en <code class="docutils literal notranslate"><span class="pre">?metodo_pago=</span></code> (mismo patrón que
+<code class="docutils literal notranslate"><span class="pre">_resolver_metodo_pago_tarjeta</span></code> de Stripe): tiene que ser del
+cliente, de tipo transferencia o billetera, y tener cuenta y CI/RUC
+completos (siempre los tiene, porque se validaron contra sipap-sim al
+registrarlo — HU «Métodos de pago»); si no hay ninguno válido, se
+pide elegir uno sin llamar a sipap-sim para nada. Con ese método,
+<code class="docutils literal notranslate"><span class="pre">_obtener_o_crear_solicitud</span></code> busca si ya existe una solicitud para
+esta transacción: si no hay ninguna, crea una con el monto exacto que
+calcula el sistema (<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.monto_a_pagar</span></code>/<code class="docutils literal notranslate"><span class="pre">moneda_a_pagar</span></code>
+— la misma fuente de verdad que usa Stripe, nunca editable por el
+cliente) y una referencia única (<code class="docutils literal notranslate"><span class="pre">_generar_referencia</span></code>), y le pide a
+sipap-sim que genere el link de pago, mandándole también el número de
+cuenta y el documento del método elegido
+(<code class="docutils literal notranslate"><span class="pre">_crear_solicitud_cobro_en_sipap</span></code>, <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/solicitudes-cobro/</span></code>);
+si ya hay una «Rechazada» o «Vencida», la reinicia con una referencia y
+un link nuevos en vez de crear una segunda (criterio 5, «reintentar»);
+si ya hay una «Observada» (ver criterio 3 más abajo), no se reinicia
+sola — hace falta que alguien la revise primero. Con todo resuelto, la
+vista redirige al cliente al <code class="docutils literal notranslate"><span class="pre">link_pago</span></code> que devolvió sipap-sim: su
+«banca en línea» simulada, que ya reconoce esa cuenta puntual (no
+ofrece elegir entre todas las del sistema) y muestra su saldo
+disponible antes de aprobar o rechazar (criterio 1).</p></li>
+<li><p><strong>Confirmar el pago</strong> (<code class="docutils literal notranslate"><span class="pre">sipap_webhook_view</span></code>, expuesta en
+<code class="docutils literal notranslate"><span class="pre">/webhooks/sipap/</span></code> fuera de cualquier namespace de la aplicación).
+Valida la firma con <code class="docutils literal notranslate"><span class="pre">_firma_valida</span></code> antes de mirar el contenido; si
+no coincide, responde 400 sin tocar ninguna transacción (criterio 4).
+Con una firma válida, busca la <code class="docutils literal notranslate"><span class="pre">SolicitudPagoSipap</span></code> por la
+referencia del payload (una referencia desconocida se ignora sin
+romper nada) y, si está «Pendiente»:</p>
+<ul class="simple">
+<li><p>Un evento <code class="docutils literal notranslate"><span class="pre">&quot;rechazada&quot;</span></code> la deja en ese estado, sin crear ningún
+<code class="docutils literal notranslate"><span class="pre">Pago</span></code> (criterio 5).</p></li>
+<li><p>Un evento <code class="docutils literal notranslate"><span class="pre">&quot;acreditada&quot;</span></code> con el monto exacto llama a
+<code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code> con el identificador de la operación SIPAP,
+el banco (o billetera) de origen y el <code class="docutils literal notranslate"><span class="pre">medio_pago</span></code> que eligió el
+cliente al iniciar el pago (criterio 2): la transacción pasa a
+«Pagada», igual que con cualquier otro medio.</p></li>
+<li><p>Un evento <code class="docutils literal notranslate"><span class="pre">&quot;acreditada&quot;</span></code> con un monto <strong>distinto</strong> del esperado
+llama en cambio a <code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago_observado</span></code>, con la
+diferencia (<code class="docutils literal notranslate"><span class="pre">monto</span> <span class="pre">recibido</span> <span class="pre">-</span> <span class="pre">monto</span> <span class="pre">esperado</span></code>, con signo): queda
+un <code class="docutils literal notranslate"><span class="pre">Pago</span></code> con <code class="docutils literal notranslate"><span class="pre">observado=True</span></code> para revisión manual, pero la
+transacción <strong>no</strong> pasa a «Pagada» (criterio 3). La «banca en
+línea» de sipap-sim no deja elegir un monto distinto del solicitado
+(acredita siempre el pedido, igual que Stripe); este caso queda
+para cuando la confirmación reporte un monto distinto por otro
+motivo, y está cubierto por los tests del webhook
+(<code class="docutils literal notranslate"><span class="pre">tests/test_pagos_sipap.py</span></code>) aunque no se pueda disparar desde
+la pantalla de sipap-sim.</p></li>
+</ul>
+</li>
+</ol>
+<p>Si nunca llega ninguna confirmación, la solicitud no expira en segundo
+plano: <code class="docutils literal notranslate"><span class="pre">marcar_vencida_si_corresponde</span></code> la pasa perezosamente a «Vencida»
+la próxima vez que el cliente visita la pantalla de pago (mismo patrón
+que <code class="docutils literal notranslate"><span class="pre">CalculoOperacion.marcar_vencida_si_corresponde</span></code>), después de
+<code class="docutils literal notranslate"><span class="pre">settings.SIPAP_SOLICITUD_VIGENCIA_SEGUNDOS</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SIPAP_BASE_URL</span></code>, <code class="docutils literal notranslate"><span class="pre">SIPAP_API_KEY</span></code> y <code class="docutils literal notranslate"><span class="pre">SIPAP_WEBHOOK_SECRET</span></code> (ver
+<code class="docutils literal notranslate"><span class="pre">.env.example</span></code>) son todo lo que Global Exchange necesita saber de
+sipap-sim. Un timeout, una conexión rechazada (el contenedor de
+sipap-sim apagado) o una respuesta de error (<code class="docutils literal notranslate"><span class="pre">SIM_MODO_FALLA=error</span></code> del
+lado del simulador, pensado justo para poder probar esto) en
+<code class="docutils literal notranslate"><span class="pre">_crear_solicitud_cobro_en_sipap</span></code> se traducen en <code class="docutils literal notranslate"><span class="pre">SipapComunicacionError</span></code>
+sin tocar la transacción, igual que un corte de comunicación real
+(criterio 6). Ver <code class="docutils literal notranslate"><span class="pre">sipap_sim/README.md</span></code> para cómo correr el simulador
+en desarrollo y qué datos de prueba trae cargados.</p>
 </section>
 <section id="venta-de-divisas">
 <h2>Venta de divisas<a class="headerlink" href="#venta-de-divisas" title="Link to this heading"></a></h2>
@@ -283,6 +746,208 @@ de la comisión, acá no participa <code class="docutils literal notranslate"><s
 </ol>
 <p>Ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.ConfiguracionVigencia.vigencia_calculo_segundos</span></code> y
 <code class="docutils literal notranslate"><span class="pre">vigencia_confirmacion_segundos</span></code>.</p>
+</section>
+<section id="apertura-de-caja">
+<h2>Apertura de caja<a class="headerlink" href="#apertura-de-caja" title="Link to this heading"></a></h2>
+<p>Un usuario con rol <code class="docutils literal notranslate"><span class="pre">cajero</span></code> abre su caja en <code class="docutils literal notranslate"><span class="pre">/caja/abrir/</span></code>
+(<code class="docutils literal notranslate"><span class="pre">apps.caja.views.AbrirCajaView</span></code>), registrando el saldo inicial de cada
+divisa activa del sistema, incluido PYG (su existencia en el catálogo está
+garantizada por la migración de datos <code class="docutils literal notranslate"><span class="pre">apps.divisas.0014_crear_divisa_pyg</span></code>,
+ver <a class="reference internal" href="#operaciones-en-ventanilla">Operaciones en ventanilla</a>): <code class="docutils literal notranslate"><span class="pre">apps.caja.forms.AperturaCajaForm</span></code>
+genera un campo por divisa en vez de
+pedirle al cajero que elija cuáles va a manejar, así que un saldo en cero
+simplemente significa que no maneja esa moneda en el turno. Al confirmar,
+se crea una <code class="docutils literal notranslate"><span class="pre">apps.caja.models.Caja</span></code> en estado «Abierta» —asociada al
+cajero y a la fecha y hora de apertura— junto con un
+<code class="docutils literal notranslate"><span class="pre">apps.caja.models.SaldoInicialCaja</span></code> por cada divisa.</p>
+<p>Un cajero no puede tener dos cajas «Abierta» al mismo tiempo: además de la
+validación en la vista, <code class="docutils literal notranslate"><span class="pre">Caja.Meta.constraints</span></code> agrega una restricción
+única parcial en la base de datos (solo entre filas con
+<code class="docutils literal notranslate"><span class="pre">estado='ABIERTA'</span></code>) para que ni una carrera entre dos pestañas pueda
+crear una segunda. El panel del cajero (<code class="docutils literal notranslate"><span class="pre">/caja/</span></code>,
+<code class="docutils literal notranslate"><span class="pre">apps.caja.views.PanelCajaView</span></code>) muestra la caja abierta, o la invitación
+a abrir una si todavía no tiene ninguna; al momento de abrir, antes de
+registrar cualquier operación, el saldo que muestra ese panel coincide con
+el saldo inicial recién contado (ver <a class="reference internal" href="#operaciones-en-ventanilla">Operaciones en ventanilla</a> para cómo
+cambia a partir de ahí).</p>
+<p>El arqueo y el cierre de la caja (ver <a class="reference internal" href="#arqueo-de-caja">Arqueo de caja</a> y <a class="reference internal" href="#cierre-de-caja">Cierre de caja</a>
+más abajo) ya están implementados. El acceso a cualquier función de caja
+está restringido al rol <code class="docutils literal notranslate"><span class="pre">cajero</span></code> exclusivamente (sin excepción para
+administración ni análisis cambiario, a diferencia de otras pantallas de
+este sistema).</p>
+</section>
+<section id="operaciones-en-ventanilla">
+<h2>Operaciones en ventanilla<a class="headerlink" href="#operaciones-en-ventanilla" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Gestión de operaciones en ventanilla»: con la caja ya
+abierta, el cajero registra en <code class="docutils literal notranslate"><span class="pre">/caja/operaciones/compra/</span></code> o
+<code class="docutils literal notranslate"><span class="pre">/caja/operaciones/venta/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.RegistrarOperacionVentanillaView</span></code>)
+una compra o venta de divisas en efectivo con un cliente de mostrador, usando
+<code class="docutils literal notranslate"><span class="pre">apps.caja.forms.OperacionVentanillaForm</span></code> para validar la divisa (activa,
+cotizada, nunca PYG) y el monto (mayor que cero, numérico).</p>
+<p>El cálculo de tasa y comisión <strong>reutiliza</strong> la misma función que ya usa el
+flujo online del cliente, <code class="docutils literal notranslate"><span class="pre">apps.divisas.views._calcular_importe_operacion</span></code>
+(ver <a class="reference internal" href="#flujo-operativo-de-divisas">Flujo operativo de divisas</a>), en vez de duplicar esa lógica. La única
+particularidad es que <code class="docutils literal notranslate"><span class="pre">apps.caja.models.OperacionVentanilla.TIPO_COMPRA</span></code> y
+<code class="docutils literal notranslate"><span class="pre">TIPO_VENTA</span></code> están escritos desde la perspectiva de la casa de cambio, al
+revés de <code class="docutils literal notranslate"><span class="pre">CalculoOperacion.TIPO_COMPRA</span></code>/<code class="docutils literal notranslate"><span class="pre">TIPO_VENTA</span></code> (escritos desde la
+perspectiva del cliente):</p>
+<ul class="simple">
+<li><p><strong>Compra</strong> (la casa le compra divisa al cliente): equivale a una «Venta»
+para <code class="docutils literal notranslate"><span class="pre">_calcular_importe_operacion</span></code>. El cliente entrega la divisa
+(ingresa a la caja) y el cajero entrega guaraníes (egresa).</p></li>
+<li><p><strong>Venta</strong> (la casa le vende divisa al cliente): equivale a una «Compra»
+para <code class="docutils literal notranslate"><span class="pre">_calcular_importe_operacion</span></code>. El cliente entrega guaraníes
+(ingresa) y el cajero entrega la divisa (egresa).</p></li>
+</ul>
+<p>Esta inversión está documentada explícitamente en el docstring de
+<code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> porque es, a propósito, lo contrario de lo que el
+nombre sugiere a primera vista.</p>
+<p>El saldo de la caja <strong>no se guarda como un campo mutable</strong>: <code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code>
+lo deriva, de forma perezosa, del saldo inicial (<code class="docutils literal notranslate"><span class="pre">SaldoInicialCaja</span></code>) más los
+ingresos y menos los egresos de esa moneda en las operaciones ya registradas,
+siguiendo el mismo patrón de estado computado que <code class="docutils literal notranslate"><span class="pre">estado_efectivo</span></code>/
+<code class="docutils literal notranslate"><span class="pre">ultima_cotizacion</span></code> usan en el resto del sistema. Antes de registrar la
+operación, la vista verifica que la caja tenga saldo suficiente de la moneda
+que el cajero debe entregar —la divisa en una venta, guaraníes en una
+compra— y, si no alcanza, la rechaza informando el saldo disponible y el
+monto necesario, sin crear nada.</p>
+<p>Sin una caja abierta, tanto el formulario como el registro se rechazan,
+redirigiendo a abrir una primero. Al guardarse, la operación queda vinculada
+a la caja activa y al cajero (<code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.caja</span></code>/<code class="docutils literal notranslate"><span class="pre">cajero</span></code>), con
+la tasa, la comisión y los montos de ambas monedas (<code class="docutils literal notranslate"><span class="pre">monto_divisa</span></code>,
+<code class="docutils literal notranslate"><span class="pre">monto_pyg</span></code>). El panel del cajero (<code class="docutils literal notranslate"><span class="pre">/caja/</span></code>) muestra el saldo actual por
+moneda y las últimas operaciones registradas en el turno.</p>
+<p>Una compra necesita, además, poder valuar guaraníes contra una <code class="docutils literal notranslate"><span class="pre">Divisa</span></code> de
+código <code class="docutils literal notranslate"><span class="pre">PYG</span></code> real del catálogo. PYG es la moneda local/base del sistema —se
+cotiza y liquida todo contra ella, nunca se la ofrece como una divisa
+operable más (<code class="docutils literal notranslate"><span class="pre">DivisaSelect</span></code>/<code class="docutils literal notranslate"><span class="pre">CalculoOperacionForm</span></code>/
+<code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm</span></code> la excluyen explícitamente)—, así que su
+existencia <strong>no</strong> depende de que un administrador la dé de alta a mano desde
+«Divisas → Nueva divisa» como si fuera una divisa extranjera: la migración de
+datos <code class="docutils literal notranslate"><span class="pre">apps.divisas.0014_crear_divisa_pyg</span></code> la garantiza en el catálogo desde
+el primer <code class="docutils literal notranslate"><span class="pre">migrate</span></code>. Por el mismo motivo, <code class="docutils literal notranslate"><span class="pre">TasasVigentesListView</span></code> la
+excluye de la pantalla de tasas vigentes (nunca tiene una cotización propia
+que mostrar ahí). Una venta no tiene esta dependencia: solo entrega la divisa
+extranjera, nunca necesita resolver la fila de PYG.</p>
+</section>
+<section id="movimientos-extraordinarios-de-caja">
+<h2>Movimientos extraordinarios de caja<a class="headerlink" href="#movimientos-extraordinarios-de-caja" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Gestión de movimientos extraordinarios de Caja»: con la caja
+ya abierta, el cajero registra en <code class="docutils literal notranslate"><span class="pre">/caja/movimientos/ingreso/</span></code> o
+<code class="docutils literal notranslate"><span class="pre">/caja/movimientos/egreso/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.RegistrarMovimientoExtraordinarioView</span></code>)
+un ingreso o egreso de efectivo que <strong>no</strong> proviene de una compra o venta de
+divisas —por ejemplo, un refuerzo de caja o un pago de gastos de oficina—,
+usando <code class="docutils literal notranslate"><span class="pre">apps.caja.forms.MovimientoExtraordinarioForm</span></code> para validar la
+divisa, el monto (mayor que cero, numérico) y el motivo.</p>
+<p>A diferencia de <code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm</span></code> (ver <a class="reference internal" href="#operaciones-en-ventanilla">Operaciones en
+ventanilla</a>), este formulario no excluye PYG ni ninguna divisa sin
+cotización vigente: un movimiento extraordinario no calcula ninguna tasa ni
+comisión, así que puede registrarse en cualquier divisa activa del sistema.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> suma los ingresos y resta los egresos extraordinarios
+de cada moneda exactamente igual que ya hace con las operaciones de
+ventanilla (Criterio 1), de modo que ambos tipos de movimiento conviven en el
+mismo saldo derivado. Antes de registrar un egreso, la vista verifica que la
+caja tenga saldo suficiente de esa divisa y, si no alcanza, lo rechaza
+informando el saldo disponible y el monto necesario, sin crear nada
+(Criterio 2); un ingreso, en cambio, nunca se rechaza por saldo. El motivo es
+obligatorio: un valor vacío o compuesto solo de espacios se rechaza con el
+mismo criterio que <code class="docutils literal notranslate"><span class="pre">apps.authentication.forms.CausaBajaForm</span></code> usa para la
+causa de una baja lógica (Criterio 3).</p>
+<p>Sin una caja abierta, tanto el formulario como el registro se rechazan,
+redirigiendo a abrir una primero, igual que el resto de las funciones de
+caja. Al guardarse, el movimiento queda vinculado a la caja activa y al
+cajero (<code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.caja</span></code>/<code class="docutils literal notranslate"><span class="pre">cajero</span></code>), con el tipo, la
+divisa, el monto y el motivo. En el panel del cajero (<code class="docutils literal notranslate"><span class="pre">/caja/</span></code>), los
+movimientos extraordinarios se muestran en su propia tabla («Últimos
+movimientos extraordinarios»), separada de «Últimas operaciones de
+ventanilla», para que nunca se confundan con una operación cambiaria en
+ningún listado o reporte de la caja (Criterio 4).</p>
+</section>
+<section id="arqueo-de-caja">
+<h2>Arqueo de caja<a class="headerlink" href="#arqueo-de-caja" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Arqueo de Caja»: con la caja ya abierta, el cajero inicia
+un arqueo en <code class="docutils literal notranslate"><span class="pre">/caja/arqueo/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.IniciarArqueoCajaView</span></code>),
+contando físicamente cuánto tiene de cada divisa activa <strong>ya cotizada</strong>
+(incluido PYG, siempre cotizado con tasa 1:1) — mismo criterio exacto que
+<code class="docutils literal notranslate"><span class="pre">AperturaCajaForm</span></code> usa para el saldo inicial, hasta reutilizar el mismo
+mensaje de aviso (<code class="docutils literal notranslate"><span class="pre">apps.caja.views._avisar_divisas_sin_cotizar</span></code>):
+<code class="docutils literal notranslate"><span class="pre">apps.caja.forms.ArqueoCajaForm</span></code> genera un campo <code class="docutils literal notranslate"><span class="pre">contado_&lt;divisa.pk&gt;</span></code>
+por cada divisa cotizada, y deja <strong>fuera</strong> cualquier divisa activa sin
+ninguna cotización vigente. Sin una tasa de referencia no hay forma
+confiable de interpretar esa moneda en un arqueo, así que ni siquiera se
+ofrece el campo para contarla — a diferencia de la ventanilla (donde una
+divisa sin cotizar simplemente no se puede operar), acá se trata igual que
+en la apertura de caja, incluido el mensaje pidiendo que un analista
+cambiario o un administrador la cotice primero.</p>
+<p>Al enviar el formulario, por cada divisa cotizada el sistema congela en un
+<code class="docutils literal notranslate"><span class="pre">apps.caja.models.DetalleArqueoCaja</span></code> tanto lo contado como
+<code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> en ese instante, y calcula la diferencia entre ambos
+(Criterio 1): positiva es un sobrante, negativa un faltante, cero significa
+que coinciden exactamente.</p>
+<p>Una diferencia distinta de cero en cualquier divisa <strong>nunca</strong> rechaza el
+arqueo ni bloquea la caja: se guarda igual, sin impedir que el cajero sigua
+operando con compras, ventas u otro arqueo después (Criterio 2). No hay
+ninguna validación de «la diferencia no puede ser distinta de cero» en
+<code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm</span></code> — lo único que rechaza es un monto negativo o no numérico,
+igual que el resto de los formularios de caja.</p>
+<p>Cada <code class="docutils literal notranslate"><span class="pre">apps.caja.models.ArqueoCaja</span></code> queda asociado a la caja y al cajero que
+lo registró, con la fecha y hora (<code class="docutils literal notranslate"><span class="pre">creado_en</span></code>) y, por cada divisa, el
+monto contado y el saldo del sistema en ese momento (Criterio 3). Ambos
+valores quedan <strong>congelados</strong> en <code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja</span></code>: no se recalculan
+después, así que un arqueo viejo sigue mostrando el saldo que el sistema
+tenía en ese instante aunque <code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> haya cambiado desde
+entonces con operaciones nuevas. Queda disponible para consulta posterior en
+<code class="docutils literal notranslate"><span class="pre">apps.caja.views.DetalleArqueoCajaView</span></code> (<code class="docutils literal notranslate"><span class="pre">/caja/arqueo/&lt;uuid&gt;/</span></code>) y en el
+listado <code class="docutils literal notranslate"><span class="pre">apps.caja.views.HistorialArqueosCajaView</span></code>
+(<code class="docutils literal notranslate"><span class="pre">/caja/arqueo/historial/</span></code>), ambos restringidos al cajero que lo registró
+— el mismo alcance que el resto de las funciones de caja, donde cada cajero
+ve únicamente lo suyo.</p>
+</section>
+<section id="cierre-de-caja">
+<h2>Cierre de caja<a class="headerlink" href="#cierre-de-caja" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Cierre de Caja»: con la caja ya abierta, el cajero inicia
+el cierre en <code class="docutils literal notranslate"><span class="pre">/caja/cerrar/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.CerrarCajaView</span></code>), que
+muestra primero un resumen completo del turno (Criterio 1) — por cada
+moneda contada al abrir, el saldo inicial y el saldo final
+(<code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code>, que ya incluye lo registrado en ventanilla y en
+movimientos extraordinarios), más el detalle de las operaciones de
+ventanilla, los movimientos extraordinarios y los arqueos realizados en el
+turno — antes de pedir la confirmación.</p>
+<p>Si el turno no tiene ningún arqueo registrado, el resumen muestra una
+advertencia y agrega una casilla de confirmación explícita; sin marcarla,
+el cierre se rechaza (Criterio 3). Al confirmar, <code class="docutils literal notranslate"><span class="pre">Caja.cerrar</span></code> persiste
+la transición a «Cerrada» fijando <code class="docutils literal notranslate"><span class="pre">cerrada_en</span></code> con la fecha y hora
+actuales (Criterio 2).</p>
+<p>Ninguna de las vistas de registro de este módulo necesitó ningún cambio
+para dejar de aceptar operaciones sobre una caja cerrada: <code class="docutils literal notranslate"><span class="pre">AbrirCajaView</span></code>,
+<code class="docutils literal notranslate"><span class="pre">RegistrarOperacionVentanillaView</span></code>, <code class="docutils literal notranslate"><span class="pre">RegistrarMovimientoExtraordinarioView</span></code>
+e <code class="docutils literal notranslate"><span class="pre">IniciarArqueoCajaView</span></code> ya resolvían «la caja abierta del cajero»
+filtrando por <code class="docutils literal notranslate"><span class="pre">estado=Caja.ESTADO_ABIERTA</span></code> desde que existen; una vez
+cerrada, esa misma consulta deja de encontrarla y cada una redirige con su
+mensaje habitual de que hace falta una caja abierta. Por el mismo motivo,
+una caja cerrada queda, en los hechos, inmutable: como nada puede volver a
+escribirle una fila nueva, su <code class="docutils literal notranslate"><span class="pre">saldo_actual</span></code> ya no cambia, así que no fue
+necesario «congelar» el balance final en ningún campo aparte (a diferencia
+de <code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja</span></code>, que sí necesita congelarlo porque la caja sigue
+operando después de cada arqueo).</p>
+<p>Una vez cerrada, el cajero puede abrir un turno nuevo sin que la
+restricción única de <code class="docutils literal notranslate"><span class="pre">Caja.Meta.constraints</span></code> lo bloquee (esa restricción
+solo exige unicidad entre cajas «Abierta», nunca entre una «Cerrada» y una
+nueva). El listado <code class="docutils literal notranslate"><span class="pre">apps.caja.views.HistorialCajasView</span></code>
+(<code class="docutils literal notranslate"><span class="pre">/caja/historial/</span></code>) muestra todas las cajas del cajero, abiertas y
+cerradas, con el período en que cada una estuvo abierta y su balance por
+moneda (Criterio 4); es una pantalla de solo lectura, sin ninguna acción
+para modificar lo ya registrado.</p>
+</section>
+<section id="acceso-a-esta-documentacion-desde-el-sistema">
+<h2>Acceso a esta documentación desde el sistema<a class="headerlink" href="#acceso-a-esta-documentacion-desde-el-sistema" title="Link to this heading"></a></h2>
+<p>Esta documentación (una vez compilada en <code class="docutils literal notranslate"><span class="pre">docs/build/</span></code>) también se sirve dentro
+de la propia aplicación en <code class="docutils literal notranslate"><span class="pre">/docs/</span></code> (<code class="docutils literal notranslate"><span class="pre">global_exchange.views.documentacion</span></code>),
+con un enlace «Documentación» en el sidebar, dentro de la sección
+«Administración». El acceso es exclusivo de administración (rol <code class="docutils literal notranslate"><span class="pre">admin</span></code> en
+sesión, o <code class="docutils literal notranslate"><span class="pre">is_staff</span></code>/<code class="docutils literal notranslate"><span class="pre">is_superuser</span></code>) para no exponer detalles internos de
+implementación a clientes ni a roles operativos; cualquier otro usuario
+autenticado recibe 403, y uno sin sesión es redirigido al login.</p>
 </section>
 <section id="como-leer-la-referencia">
 <h2>Cómo leer la referencia<a class="headerlink" href="#como-leer-la-referencia" title="Link to this heading"></a></h2>

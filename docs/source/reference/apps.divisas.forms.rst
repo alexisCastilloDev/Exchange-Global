@@ -17,6 +17,10 @@ apps.divisas.forms module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.forms.PagarTransaccionForm
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.forms.SimulacionDivisasForm
    :members:
    :show-inheritance:
