@@ -1,0 +1,913 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.caja.views &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.caja.views</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.caja.views</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Vistas para la apertura, consulta, operaciones de ventanilla, movimientos extraordinarios y arqueo de la caja de un cajero."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrityError</span><span class="p">,</span> <span class="n">transaction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">Http404</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">View</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.caja.forms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AperturaCajaForm</span><span class="p">,</span>
+    <span class="n">ArqueoCajaForm</span><span class="p">,</span>
+    <span class="n">MovimientoExtraordinarioForm</span><span class="p">,</span>
+    <span class="n">OperacionVentanillaForm</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.caja.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArqueoCaja</span><span class="p">,</span>
+    <span class="n">Caja</span><span class="p">,</span>
+    <span class="n">DetalleArqueoCaja</span><span class="p">,</span>
+    <span class="n">MovimientoExtraordinario</span><span class="p">,</span>
+    <span class="n">OperacionVentanilla</span><span class="p">,</span>
+    <span class="n">SaldoInicialCaja</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalculoOperacion</span><span class="p">,</span> <span class="n">Divisa</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">_calcular_importe_operacion</span>
+
+
+<div class="viewcode-block" id="_avisar_divisas_sin_cotizar">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views._avisar_divisas_sin_cotizar">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_avisar_divisas_sin_cotizar</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">form</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Informa qué divisas activas no se pueden incluir por falta de cotización.</span>
+
+<span class="sd">    Usada tanto por ``AperturaCajaForm`` (saldo inicial) como por</span>
+<span class="sd">    ``ArqueoCajaForm`` (monto contado): ninguna de las dos HU es, en sí</span>
+<span class="sd">    misma, sobre cotizaciones, pero una divisa sin ninguna cotización</span>
+<span class="sd">    vigente no se puede valuar — dejar que el cajero le cuente un monto</span>
+<span class="sd">    igual sería un dato que ningún otro cálculo del sistema (cambio,</span>
+<span class="sd">    saldo actual, arqueo) podría usar de forma confiable.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">divisas_sin_cotizar</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">codigos</span> <span class="o">=</span> <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span> <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="n">form</span><span class="o">.</span><span class="n">divisas_sin_cotizar</span><span class="p">)</span>
+    <span class="n">messages</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+        <span class="n">request</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">'Hace falta cotizar </span><span class="si">{</span><span class="n">codigos</span><span class="si">}</span><span class="s1"> antes de poder manejarla en una caja. '</span>
+        <span class="s1">'Contactate con un analista cambiario o un administrador.'</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AbrirCajaView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.AbrirCajaView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AbrirCajaView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Permite a un cajero abrir su caja registrando el saldo inicial por moneda.</span>
+
+<span class="sd">    Implementa la HU "Apertura de Caja". Si el cajero ya tiene una caja en</span>
+<span class="sd">    estado "Abierta", rechaza la acción y lo manda a su panel en vez de</span>
+<span class="sd">    mostrar el formulario (Criterio 2); la vista solo construye la</span>
+<span class="sd">    transacción con los datos ya validados por ``AperturaCajaForm``</span>
+<span class="sd">    (Criterio 3: un monto negativo o no numérico no llega a crear nada).</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="AbrirCajaView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.AbrirCajaView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede abrir una caja (Criterio 5)."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+<div class="viewcode-block" id="AbrirCajaView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.AbrirCajaView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el formulario de apertura, o por qué no se puede abrir otra."""</span>
+        <span class="n">caja_abierta</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">estado</span><span class="o">=</span><span class="n">Caja</span><span class="o">.</span><span class="n">ESTADO_ABIERTA</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">caja_abierta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Ya tenés una caja abierta. Cerrala antes de abrir otra.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:panel'</span><span class="p">)</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">AperturaCajaForm</span><span class="p">()</span>
+        <span class="n">_avisar_divisas_sin_cotizar</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">form</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/abrir_caja.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="AbrirCajaView.post">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.AbrirCajaView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida el saldo inicial de cada divisa y crea la caja "Abierta".</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST con un campo</span>
+<span class="sd">                ``saldo_&lt;divisa.pk&gt;`` por cada divisa activa.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección al panel de caja, con la caja recién</span>
+<span class="sd">            creada, o el mismo formulario con los errores de validación.</span>
+<span class="sd">        """</span>
+        <span class="n">caja_abierta</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">estado</span><span class="o">=</span><span class="n">Caja</span><span class="o">.</span><span class="n">ESTADO_ABIERTA</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">caja_abierta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Ya tenés una caja abierta. Cerrala antes de abrir otra.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:panel'</span><span class="p">)</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">AperturaCajaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">_avisar_divisas_sin_cotizar</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">form</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/abrir_caja.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">})</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">transaction</span><span class="o">.</span><span class="n">atomic</span><span class="p">():</span>
+                <span class="n">caja</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+                <span class="n">SaldoInicialCaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_create</span><span class="p">([</span>
+                    <span class="n">SaldoInicialCaja</span><span class="p">(</span><span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">,</span> <span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">,</span> <span class="n">monto</span><span class="o">=</span><span class="n">monto</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">divisa</span><span class="p">,</span> <span class="n">monto</span> <span class="ow">in</span> <span class="n">form</span><span class="o">.</span><span class="n">saldos_por_divisa</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">])</span>
+        <span class="k">except</span> <span class="n">IntegrityError</span><span class="p">:</span>
+            <span class="c1"># Carrera entre dos pestañas abriendo caja casi al mismo tiempo:</span>
+            <span class="c1"># la otra ganó y ya existe una "Abierta" (restricción de base</span>
+            <span class="c1"># en Caja.Meta.constraints), así que no es un error real.</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Ya tenés una caja abierta. Cerrala antes de abrir otra.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:panel'</span><span class="p">)</span>
+
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'La caja fue abierta correctamente.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:panel'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CerrarCajaView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.CerrarCajaView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CerrarCajaView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra el resumen del turno y permite confirmar el cierre de la caja abierta del cajero.</span>
+
+<span class="sd">    Implementa la HU "Cierre de Caja". El resumen (Criterio 1) incluye, por</span>
+<span class="sd">    cada moneda contada al abrir, el saldo inicial y el saldo final</span>
+<span class="sd">    (``Caja.saldo_actual``, que ya incluye lo registrado en ventanilla y en</span>
+<span class="sd">    movimientos extraordinarios), más el detalle completo de ambos y de los</span>
+<span class="sd">    arqueos del turno. Sin una caja abierta, no hay nada que cerrar y la</span>
+<span class="sd">    vista redirige al panel. Si el turno no tiene ningún arqueo registrado,</span>
+<span class="sd">    el resumen muestra una advertencia y el cierre solo se procesa si el</span>
+<span class="sd">    cajero marca explícitamente que quiere continuar sin arquear</span>
+<span class="sd">    (Criterio 3); al confirmarse, ``Caja.cerrar`` persiste la transición a</span>
+<span class="sd">    "Cerrada" (Criterio 2).</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="CerrarCajaView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.CerrarCajaView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede cerrar su caja (mismo criterio que el resto de caja)."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la caja abierta del cajero, o la redirección a devolver si no tiene una."""</span>
+        <span class="n">caja</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">estado</span><span class="o">=</span><span class="n">Caja</span><span class="o">.</span><span class="n">ESTADO_ABIERTA</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">caja</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés una caja abierta para cerrar.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:panel'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">caja</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_contexto_resumen</span><span class="p">(</span><span class="n">caja</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construye el resumen del turno: saldo inicial y final por moneda, y lo registrado."""</span>
+        <span class="n">saldos</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">saldo_inicial</span><span class="o">.</span><span class="n">divisa</span><span class="p">,</span> <span class="n">saldo_inicial</span><span class="o">.</span><span class="n">monto</span><span class="p">,</span> <span class="n">caja</span><span class="o">.</span><span class="n">saldo_actual</span><span class="p">(</span><span class="n">saldo_inicial</span><span class="o">.</span><span class="n">divisa</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">saldo_inicial</span> <span class="ow">in</span> <span class="n">caja</span><span class="o">.</span><span class="n">saldos_iniciales</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">,</span>
+            <span class="s1">'saldos'</span><span class="p">:</span> <span class="n">saldos</span><span class="p">,</span>
+            <span class="s1">'operaciones'</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">operaciones</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">),</span>
+            <span class="s1">'movimientos_extraordinarios'</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">movimientos_extraordinarios</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">),</span>
+            <span class="s1">'arqueos'</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">arqueos</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+            <span class="s1">'tiene_arqueos'</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">arqueos</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="CerrarCajaView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.CerrarCajaView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el resumen del turno antes de confirmar el cierre."""</span>
+        <span class="n">caja</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/cerrar_caja.html'</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contexto_resumen</span><span class="p">(</span><span class="n">caja</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CerrarCajaView.post">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.CerrarCajaView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Confirma el cierre, exigiendo confirmación explícita si el turno no tiene arqueos.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST, con ``confirmar_sin_arqueo``</span>
+<span class="sd">                (``'on'``) marcado si el turno no tiene ningún arqueo</span>
+<span class="sd">                registrado y el cajero quiere cerrar igual.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección al panel de caja si el cierre se</span>
+<span class="sd">            procesa, o el mismo resumen con la advertencia si falta</span>
+<span class="sd">            confirmar explícitamente.</span>
+<span class="sd">        """</span>
+        <span class="n">caja</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+
+        <span class="n">contexto</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contexto_resumen</span><span class="p">(</span><span class="n">caja</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">contexto</span><span class="p">[</span><span class="s1">'tiene_arqueos'</span><span class="p">]</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'confirmar_sin_arqueo'</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">'on'</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'Esta caja no tiene ningún arqueo registrado en el turno. Marcá la '</span>
+                <span class="s1">'confirmación si querés cerrarla igual.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/cerrar_caja.html'</span><span class="p">,</span> <span class="n">contexto</span><span class="p">)</span>
+
+        <span class="n">caja</span><span class="o">.</span><span class="n">cerrar</span><span class="p">()</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'La caja fue cerrada correctamente.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:panel'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PanelCajaView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.PanelCajaView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PanelCajaView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra la caja abierta del cajero, con el saldo inicial por moneda.</span>
+
+<span class="sd">    Implementa el Criterio 4 de "Apertura de Caja": tras abrir la caja, el</span>
+<span class="sd">    cajero ve en su panel el saldo inicial tal como lo registró. Si no</span>
+<span class="sd">    tiene ninguna caja abierta, ofrece el acceso para abrir una.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="PanelCajaView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.PanelCajaView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede ver el panel de caja (Criterio 5)."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+<div class="viewcode-block" id="PanelCajaView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.PanelCajaView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra la caja abierta del cajero, con su saldo actual por moneda."""</span>
+        <span class="n">caja</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">estado</span><span class="o">=</span><span class="n">Caja</span><span class="o">.</span><span class="n">ESTADO_ABIERTA</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s1">'saldos_iniciales__divisa'</span><span class="p">,</span> <span class="s1">'operaciones__divisa'</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">saldos_actuales</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">operaciones</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">movimientos_extraordinarios</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">caja</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">divisas</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">)</span>
+            <span class="n">saldos_actuales</span> <span class="o">=</span> <span class="p">[(</span><span class="n">divisa</span><span class="p">,</span> <span class="n">caja</span><span class="o">.</span><span class="n">saldo_actual</span><span class="p">(</span><span class="n">divisa</span><span class="p">))</span> <span class="k">for</span> <span class="n">divisa</span> <span class="ow">in</span> <span class="n">divisas</span><span class="p">]</span>
+            <span class="n">operaciones</span> <span class="o">=</span> <span class="n">caja</span><span class="o">.</span><span class="n">operaciones</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">)[:</span><span class="mi">20</span><span class="p">]</span>
+            <span class="n">movimientos_extraordinarios</span> <span class="o">=</span> <span class="n">caja</span><span class="o">.</span><span class="n">movimientos_extraordinarios</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">)[:</span><span class="mi">20</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span>
+            <span class="s1">'caja/panel_caja.html'</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">,</span>
+                <span class="s1">'saldos_actuales'</span><span class="p">:</span> <span class="n">saldos_actuales</span><span class="p">,</span>
+                <span class="s1">'operaciones'</span><span class="p">:</span> <span class="n">operaciones</span><span class="p">,</span>
+                <span class="s1">'movimientos_extraordinarios'</span><span class="p">:</span> <span class="n">movimientos_extraordinarios</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RegistrarOperacionVentanillaView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RegistrarOperacionVentanillaView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra, para la caja abierta del cajero, una compra o venta de divisas en efectivo.</span>
+
+<span class="sd">    Implementa la HU "Gestión de operaciones en ventanilla": reutiliza el</span>
+<span class="sd">    cálculo de cotización ya existente para el flujo online del cliente</span>
+<span class="sd">    (``apps.divisas.views._calcular_importe_operacion``) en vez de</span>
+<span class="sd">    duplicarlo, pero invirtiendo el tipo que se le pasa — ver</span>
+<span class="sd">    ``apps.caja.models.OperacionVentanilla`` para la explicación completa de</span>
+<span class="sd">    por qué "Compra"/"Venta" significan lo opuesto en una y otra HU. Sin una</span>
+<span class="sd">    caja abierta, rechaza la acción e indica abrir una primero (Criterio 2);</span>
+<span class="sd">    con saldo insuficiente de la moneda que el cajero debe entregar, también</span>
+<span class="sd">    la rechaza e informa el motivo (Criterio 3).</span>
+
+<span class="sd">    Una compra necesita, además, poder valuar guaraníes contra una</span>
+<span class="sd">    ``apps.divisas.models.Divisa`` de código ``PYG``: su existencia está</span>
+<span class="sd">    garantizada por la migración de datos ``apps.divisas.0014_crear_divisa_pyg``</span>
+<span class="sd">    (PYG es la moneda local/base del sistema, no una divisa extranjera que</span>
+<span class="sd">    un administrador deba dar de alta manualmente), así que esta vista no</span>
+<span class="sd">    necesita manejar su ausencia como un caso de error.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="RegistrarOperacionVentanillaView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede registrar operaciones de ventanilla (mismo criterio que el resto de caja)."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_normalizar_tipo</span><span class="p">(</span><span class="n">tipo</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Normaliza el tipo recibido por URL y valida que sea 'compra' o 'venta'.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tipo (str): Tipo indicado en la ruta (por ejemplo ``compra``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: El tipo en mayúsculas, ``COMPRA`` o ``VENTA``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Http404: Si el tipo no corresponde a una operación conocida.</span>
+<span class="sd">        """</span>
+        <span class="n">tipo</span> <span class="o">=</span> <span class="n">tipo</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">tipo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_CHOICES</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'El tipo de operación de ventanilla solicitado no existe.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tipo</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la caja abierta del cajero, o la redirección a devolver si no tiene una.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: ``(caja, None)`` si tiene una caja abierta, o</span>
+<span class="sd">            ``(None, HttpResponse)`` con la redirección que corresponde</span>
+<span class="sd">            devolver en su lugar (Criterio 2).</span>
+<span class="sd">        """</span>
+        <span class="n">caja</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">estado</span><span class="o">=</span><span class="n">Caja</span><span class="o">.</span><span class="n">ESTADO_ABIERTA</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">caja</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'Necesitás abrir una caja antes de registrar una operación de ventanilla.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:abrir'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">caja</span><span class="p">,</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="RegistrarOperacionVentanillaView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el formulario de registro, o por qué no se puede usar todavía."""</span>
+        <span class="n">tipo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalizar_tipo</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">])</span>
+        <span class="n">caja</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">OperacionVentanillaForm</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/operacion_ventanilla.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span> <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="RegistrarOperacionVentanillaView.post">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida el monto, calcula con la cotización vigente y registra la operación.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST con los campos ``divisa``</span>
+<span class="sd">                y ``monto`` (ver ``OperacionVentanillaForm``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección al panel de caja si la operación se</span>
+<span class="sd">            registra correctamente, o el mismo formulario con el error de</span>
+<span class="sd">            validación o de saldo insuficiente.</span>
+<span class="sd">        """</span>
+        <span class="n">tipo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalizar_tipo</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">])</span>
+        <span class="n">caja</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">OperacionVentanillaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/operacion_ventanilla.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span> <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">})</span>
+
+        <span class="n">divisa</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">divisa_seleccionada</span><span class="p">()</span>
+        <span class="n">monto</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span>
+        <span class="n">cotizacion</span> <span class="o">=</span> <span class="n">divisa</span><span class="o">.</span><span class="n">ultima_cotizacion</span>
+
+        <span class="c1"># Invertido a propósito: "Compra" en esta HU (la casa le compra</span>
+        <span class="c1"># divisa al cliente) es lo mismo que "Venta" para</span>
+        <span class="c1"># _calcular_importe_operacion (el cliente le vende divisa a la</span>
+        <span class="c1"># casa), y viceversa. Ver OperacionVentanilla para el detalle.</span>
+        <span class="n">tipo_calculo</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_VENTA</span> <span class="k">if</span> <span class="n">tipo</span> <span class="o">==</span> <span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_COMPRA</span>
+            <span class="k">else</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span>
+        <span class="p">)</span>
+        <span class="n">tasa_aplicada</span><span class="p">,</span> <span class="n">porcentaje</span><span class="p">,</span> <span class="n">comision</span><span class="p">,</span> <span class="n">monto_pyg</span> <span class="o">=</span> <span class="n">_calcular_importe_operacion</span><span class="p">(</span>
+            <span class="n">tipo_calculo</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="n">cotizacion</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">,</span> <span class="n">cotizacion</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Lo que el cajero debe entregar (Criterio 3): la divisa en una</span>
+        <span class="c1"># venta, guaraníes en una compra. PYG es la divisa local/base del</span>
+        <span class="c1"># sistema (ver la migración apps.divisas.0014_crear_divisa_pyg): no</span>
+        <span class="c1"># es una divisa extranjera que un administrador deba dar de alta</span>
+        <span class="c1"># manualmente, así que su fila en el catálogo está garantizada.</span>
+        <span class="k">if</span> <span class="n">tipo</span> <span class="o">==</span> <span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_VENTA</span><span class="p">:</span>
+            <span class="n">divisa_a_entregar</span><span class="p">,</span> <span class="n">monto_a_entregar</span> <span class="o">=</span> <span class="n">divisa</span><span class="p">,</span> <span class="n">monto</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">divisa_a_entregar</span><span class="p">,</span> <span class="n">monto_a_entregar</span> <span class="o">=</span> <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="s1">'PYG'</span><span class="p">),</span> <span class="n">monto_pyg</span>
+
+        <span class="n">saldo_disponible</span> <span class="o">=</span> <span class="n">caja</span><span class="o">.</span><span class="n">saldo_actual</span><span class="p">(</span><span class="n">divisa_a_entregar</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">saldo_disponible</span> <span class="o">&lt;</span> <span class="n">monto_a_entregar</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s1">'Saldo insuficiente de </span><span class="si">{</span><span class="n">divisa_a_entregar</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> en la caja: hay '</span>
+                <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">saldo_disponible</span><span class="si">}</span><span class="s1"> y se necesitan </span><span class="si">{</span><span class="n">monto_a_entregar</span><span class="si">}</span><span class="s1"> para completar la operación.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/operacion_ventanilla.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span> <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">})</span>
+
+        <span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">,</span>
+            <span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+            <span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="p">,</span>
+            <span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">,</span>
+            <span class="n">monto_divisa</span><span class="o">=</span><span class="n">monto</span><span class="p">,</span>
+            <span class="n">tasa_aplicada</span><span class="o">=</span><span class="n">tasa_aplicada</span><span class="p">,</span>
+            <span class="n">comision_porcentaje</span><span class="o">=</span><span class="n">porcentaje</span><span class="p">,</span>
+            <span class="n">comision</span><span class="o">=</span><span class="n">comision</span><span class="p">,</span>
+            <span class="n">monto_pyg</span><span class="o">=</span><span class="n">monto_pyg</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'La operación se registró correctamente y el saldo de la caja fue actualizado.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:panel'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RegistrarMovimientoExtraordinarioView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RegistrarMovimientoExtraordinarioView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra, para la caja abierta del cajero, un ingreso o egreso extraordinario de efectivo.</span>
+
+<span class="sd">    Implementa la HU "Gestión de movimientos extraordinarios de Caja": a</span>
+<span class="sd">    diferencia de ``RegistrarOperacionVentanillaView``, no calcula ninguna</span>
+<span class="sd">    tasa ni comisión — el cajero indica directamente la divisa, el monto y</span>
+<span class="sd">    el motivo del movimiento (ver ``apps.caja.models.MovimientoExtraordinario``).</span>
+<span class="sd">    Sin una caja abierta, rechaza la acción e indica abrir una primero</span>
+<span class="sd">    (mismo criterio que el resto de las funciones de caja); con saldo</span>
+<span class="sd">    insuficiente de la divisa para un egreso, también la rechaza e informa</span>
+<span class="sd">    el motivo (Criterio 2).</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="RegistrarMovimientoExtraordinarioView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede registrar movimientos extraordinarios (mismo criterio que el resto de caja)."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_normalizar_tipo</span><span class="p">(</span><span class="n">tipo</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Normaliza el tipo recibido por URL y valida que sea 'ingreso' o 'egreso'.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tipo (str): Tipo indicado en la ruta (por ejemplo ``ingreso``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: El tipo en mayúsculas, ``INGRESO`` o ``EGRESO``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Http404: Si el tipo no corresponde a un movimiento conocido.</span>
+<span class="sd">        """</span>
+        <span class="n">tipo</span> <span class="o">=</span> <span class="n">tipo</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">tipo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">MovimientoExtraordinario</span><span class="o">.</span><span class="n">TIPO_CHOICES</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'El tipo de movimiento extraordinario solicitado no existe.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tipo</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la caja abierta del cajero, o la redirección a devolver si no tiene una."""</span>
+        <span class="n">caja</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">estado</span><span class="o">=</span><span class="n">Caja</span><span class="o">.</span><span class="n">ESTADO_ABIERTA</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">caja</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span>
+                <span class="s1">'Necesitás abrir una caja antes de registrar un movimiento extraordinario.'</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:abrir'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">caja</span><span class="p">,</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="RegistrarMovimientoExtraordinarioView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el formulario de registro, o por qué no se puede usar todavía."""</span>
+        <span class="n">tipo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalizar_tipo</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">])</span>
+        <span class="n">caja</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MovimientoExtraordinarioForm</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span> <span class="s1">'caja/movimiento_extraordinario.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span> <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RegistrarMovimientoExtraordinarioView.post">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida la divisa, el monto y el motivo, y registra el movimiento si hay saldo suficiente.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST con los campos ``divisa``,</span>
+<span class="sd">                ``monto`` y ``motivo`` (ver ``MovimientoExtraordinarioForm``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección al panel de caja si el movimiento se</span>
+<span class="sd">            registra correctamente, o el mismo formulario con el error de</span>
+<span class="sd">            validación o de saldo insuficiente.</span>
+<span class="sd">        """</span>
+        <span class="n">tipo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalizar_tipo</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">])</span>
+        <span class="n">caja</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MovimientoExtraordinarioForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span> <span class="s1">'caja/movimiento_extraordinario.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span> <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">},</span>
+            <span class="p">)</span>
+
+        <span class="n">divisa</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">divisa_seleccionada</span><span class="p">()</span>
+        <span class="n">monto</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">tipo</span> <span class="o">==</span> <span class="n">MovimientoExtraordinario</span><span class="o">.</span><span class="n">TIPO_EGRESO</span><span class="p">:</span>
+            <span class="n">saldo_disponible</span> <span class="o">=</span> <span class="n">caja</span><span class="o">.</span><span class="n">saldo_actual</span><span class="p">(</span><span class="n">divisa</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">saldo_disponible</span> <span class="o">&lt;</span> <span class="n">monto</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="n">request</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s1">'Saldo insuficiente de </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> en la caja: hay '</span>
+                    <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">saldo_disponible</span><span class="si">}</span><span class="s1"> y se necesitan </span><span class="si">{</span><span class="n">monto</span><span class="si">}</span><span class="s1"> para registrar este egreso.'</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">render</span><span class="p">(</span>
+                    <span class="n">request</span><span class="p">,</span> <span class="s1">'caja/movimiento_extraordinario.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span> <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">},</span>
+                <span class="p">)</span>
+
+        <span class="n">MovimientoExtraordinario</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">,</span>
+            <span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+            <span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="p">,</span>
+            <span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">,</span>
+            <span class="n">monto</span><span class="o">=</span><span class="n">monto</span><span class="p">,</span>
+            <span class="n">motivo</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">'motivo'</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El movimiento extraordinario se registró correctamente.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:panel'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="IniciarArqueoCajaView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.IniciarArqueoCajaView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IniciarArqueoCajaView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra un arqueo, comparando lo que el cajero contó contra el saldo que calcula el sistema.</span>
+
+<span class="sd">    Implementa la HU "Arqueo de Caja". Sin una caja abierta, rechaza la</span>
+<span class="sd">    acción e indica abrir una primero, igual que el resto de las funciones</span>
+<span class="sd">    de caja. El registro nunca se bloquea por una diferencia: cualquier</span>
+<span class="sd">    combinación de sobrantes o faltantes se guarda igual (Criterio 2); la</span>
+<span class="sd">    comparación en sí (Criterio 1) y los datos que quedan disponibles para</span>
+<span class="sd">    consulta posterior (Criterio 3) los resuelve ``apps.caja.models.ArqueoCaja``/</span>
+<span class="sd">    ``DetalleArqueoCaja``. Una divisa activa sin cotización vigente no recibe</span>
+<span class="sd">    campo en ``ArqueoCajaForm``, para no comparar el saldo del sistema contra</span>
+<span class="sd">    un monto contado que no se puede valuar de forma confiable.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="IniciarArqueoCajaView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.IniciarArqueoCajaView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede iniciar un arqueo (mismo criterio que el resto de caja)."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la caja abierta del cajero, o la redirección a devolver si no tiene una."""</span>
+        <span class="n">caja</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">estado</span><span class="o">=</span><span class="n">Caja</span><span class="o">.</span><span class="n">ESTADO_ABIERTA</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">caja</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Necesitás abrir una caja antes de iniciar un arqueo.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:abrir'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">caja</span><span class="p">,</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="IniciarArqueoCajaView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.IniciarArqueoCajaView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el formulario de arqueo, o por qué no se puede usar todavía."""</span>
+        <span class="n">caja</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ArqueoCajaForm</span><span class="p">()</span>
+        <span class="n">_avisar_divisas_sin_cotizar</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">form</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/arqueo_form.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="IniciarArqueoCajaView.post">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.IniciarArqueoCajaView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida los montos contados, compara contra el saldo actual y registra el arqueo.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): Solicitud POST con un campo</span>
+<span class="sd">                ``contado_&lt;divisa.pk&gt;`` por cada divisa activa.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponse: Redirección al detalle del arqueo recién creado,</span>
+<span class="sd">            o el mismo formulario con los errores de validación.</span>
+<span class="sd">        """</span>
+        <span class="n">caja</span><span class="p">,</span> <span class="n">redireccion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caja_abierta_o_redireccion</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">redireccion</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">redireccion</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">ArqueoCajaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="n">_avisar_divisas_sin_cotizar</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">form</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/arqueo_form.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">})</span>
+
+        <span class="k">with</span> <span class="n">transaction</span><span class="o">.</span><span class="n">atomic</span><span class="p">():</span>
+            <span class="n">arqueo</span> <span class="o">=</span> <span class="n">ArqueoCaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">,</span> <span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+            <span class="n">DetalleArqueoCaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_create</span><span class="p">([</span>
+                <span class="n">DetalleArqueoCaja</span><span class="p">(</span>
+                    <span class="n">arqueo</span><span class="o">=</span><span class="n">arqueo</span><span class="p">,</span>
+                    <span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">,</span>
+                    <span class="n">saldo_sistema</span><span class="o">=</span><span class="n">caja</span><span class="o">.</span><span class="n">saldo_actual</span><span class="p">(</span><span class="n">divisa</span><span class="p">),</span>
+                    <span class="n">monto_contado</span><span class="o">=</span><span class="n">monto_contado</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">divisa</span><span class="p">,</span> <span class="n">monto_contado</span> <span class="ow">in</span> <span class="n">form</span><span class="o">.</span><span class="n">montos_por_divisa</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">])</span>
+
+        <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'El arqueo se registró correctamente.'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'caja:detalle_arqueo'</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">arqueo</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DetalleArqueoCajaView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DetalleArqueoCajaView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Muestra el detalle de un arqueo ya registrado, para consulta posterior (Criterio 3).</span>
+
+<span class="sd">    Solo el cajero que lo registró puede consultarlo: mismo alcance que el</span>
+<span class="sd">    resto de las funciones de caja, donde cada cajero ve únicamente lo suyo.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="DetalleArqueoCajaView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede consultar el detalle de un arqueo."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+<div class="viewcode-block" id="DetalleArqueoCajaView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra fecha, hora, cajero y los montos contados frente a los del sistema."""</span>
+        <span class="n">arqueo</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span>
+            <span class="n">ArqueoCaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'caja'</span><span class="p">,</span> <span class="s1">'cajero'</span><span class="p">)</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s1">'detalles__divisa'</span><span class="p">),</span>
+            <span class="n">pk</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'pk'</span><span class="p">],</span> <span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/arqueo_detalle.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'arqueo'</span><span class="p">:</span> <span class="n">arqueo</span><span class="p">})</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HistorialArqueosCajaView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.HistorialArqueosCajaView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HistorialArqueosCajaView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista los arqueos ya registrados por el cajero, para consulta posterior (Criterio 3)."""</span>
+
+<div class="viewcode-block" id="HistorialArqueosCajaView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.HistorialArqueosCajaView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede consultar su historial de arqueos."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+<div class="viewcode-block" id="HistorialArqueosCajaView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.HistorialArqueosCajaView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Lista los arqueos del cajero, del más reciente al más antiguo."""</span>
+        <span class="n">arqueos</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ArqueoCaja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'caja'</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s1">'detalles__divisa'</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/arqueo_historial.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'arqueos'</span><span class="p">:</span> <span class="n">arqueos</span><span class="p">})</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HistorialCajasView">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.HistorialCajasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HistorialCajasView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Lista las cajas del cajero, abiertas y cerradas, con su balance final por moneda.</span>
+
+<span class="sd">    Implementa el Criterio 4 de "Cierre de Caja": una caja ya cerrada queda</span>
+<span class="sd">    disponible para consulta posterior, con su período (``abierta_en``/</span>
+<span class="sd">    ``cerrada_en``) y su balance final por moneda (``Caja.saldo_actual``,</span>
+<span class="sd">    estable desde el cierre porque ninguna vista vuelve a escribir sobre una</span>
+<span class="sd">    caja "Cerrada"). Esta pantalla es de solo lectura, igual que el resto</span>
+<span class="sd">    del historial de caja: no ofrece ninguna acción para modificar las</span>
+<span class="sd">    operaciones de una caja ya registrada.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="HistorialCajasView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.HistorialCajasView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Solo el rol cajero puede consultar su historial de cajas."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span></div>
+
+
+<div class="viewcode-block" id="HistorialCajasView.get">
+<a class="viewcode-back" href="../../../reference/apps.caja.views.html#apps.caja.views.HistorialCajasView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Lista las cajas del cajero, de la más reciente a la más antigua, con su saldo por moneda."""</span>
+        <span class="n">cajas</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s1">'saldos_iniciales__divisa'</span><span class="p">)</span>
+        <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s1">'caja'</span><span class="p">:</span> <span class="n">caja</span><span class="p">,</span>
+                <span class="s1">'saldos'</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="n">saldo_inicial</span><span class="o">.</span><span class="n">divisa</span><span class="p">,</span> <span class="n">caja</span><span class="o">.</span><span class="n">saldo_actual</span><span class="p">(</span><span class="n">saldo_inicial</span><span class="o">.</span><span class="n">divisa</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">saldo_inicial</span> <span class="ow">in</span> <span class="n">caja</span><span class="o">.</span><span class="n">saldos_iniciales</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                <span class="p">],</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">caja</span> <span class="ow">in</span> <span class="n">cajas</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'caja/historial_cajas.html'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'filas'</span><span class="p">:</span> <span class="n">filas</span><span class="p">})</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

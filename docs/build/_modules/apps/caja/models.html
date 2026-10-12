@@ -1,0 +1,606 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.caja.models &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.caja.models</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.caja.models</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Modelos de caja: apertura de turno, saldo inicial y operaciones de ventanilla."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Divisa</span>
+
+
+<div class="viewcode-block" id="Caja">
+<a class="viewcode-back" href="../../../reference/apps.caja.models.html#apps.caja.models.Caja">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Caja</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Representa el turno de caja abierto (o ya cerrado) por un cajero.</span>
+
+<span class="sd">    Implementa la HU "Apertura de Caja": se crea siempre en estado</span>
+<span class="sd">    "Abierta", asociada al cajero que la abre y a la fecha y hora de</span>
+<span class="sd">    apertura (``abierta_en``). El cierre lo implementa la HU "Cierre de</span>
+<span class="sd">    Caja" (ver ``cerrar``): una vez "Cerrada", con ``cerrada_en`` fijado,</span>
+<span class="sd">    ninguna de las vistas de registro de este módulo (ventanilla,</span>
+<span class="sd">    movimientos extraordinarios, arqueo) vuelve a encontrarla, porque todas</span>
+<span class="sd">    resuelven la caja abierta del cajero filtrando por</span>
+<span class="sd">    ``estado=ESTADO_ABIERTA`` — cerrarla alcanza para que dejen de aceptar</span>
+<span class="sd">    nuevas operaciones sobre ella, sin que ninguna necesite un chequeo</span>
+<span class="sd">    adicional. Por eso una caja cerrada queda, en los hechos, inmutable:</span>
+<span class="sd">    como nada puede agregarle una fila nueva, su ``saldo_actual`` ya no</span>
+<span class="sd">    vuelve a cambiar, así que no hace falta "congelarlo" en un campo</span>
+<span class="sd">    aparte para que el historial lo consulte más adelante.</span>
+<span class="sd">    """</span>
+
+    <span class="n">ESTADO_ABIERTA</span> <span class="o">=</span> <span class="s1">'ABIERTA'</span>
+    <span class="n">ESTADO_CERRADA</span> <span class="o">=</span> <span class="s1">'CERRADA'</span>
+    <span class="n">ESTADO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">ESTADO_ABIERTA</span><span class="p">,</span> <span class="s1">'Abierta'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CERRADA</span><span class="p">,</span> <span class="s1">'Cerrada'</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">usuario</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'cajas'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cajero'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">estado</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">ESTADO_CHOICES</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">ESTADO_ABIERTA</span><span class="p">)</span>
+    <span class="n">abierta_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">cerrada_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define el orden y las etiquetas administrativas de las cajas."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Caja'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Cajas'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-abierta_en'</span><span class="p">]</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="c1"># Un mismo cajero no puede tener dos cajas "Abierta" a la vez</span>
+            <span class="c1"># (Criterio 2): refuerza a nivel de base lo que la vista ya</span>
+            <span class="c1"># valida, para que una carrera entre dos pestañas no lo saltee.</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'usuario'</span><span class="p">],</span>
+                <span class="n">condition</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Q</span><span class="p">(</span><span class="n">estado</span><span class="o">=</span><span class="s1">'ABIERTA'</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">'una_sola_caja_abierta_por_cajero'</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Identifica la caja por su cajero y su estado."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'Caja de </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">()</span><span class="si">}</span><span class="s1">)'</span>
+
+<div class="viewcode-block" id="Caja.cerrar">
+<a class="viewcode-back" href="../../../reference/apps.caja.models.html#apps.caja.models.Caja.cerrar">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cerrar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Cierra esta caja: pasa a "Cerrada" y fija la fecha y hora actuales.</span>
+
+<span class="sd">        Implementa el Criterio 2 de "Cierre de Caja". No valida nada por sí</span>
+<span class="sd">        sola (eso lo resuelve ``apps.caja.views.CerrarCajaView`` antes de</span>
+<span class="sd">        llamarla, incluida la confirmación explícita si el turno no tuvo</span>
+<span class="sd">        ningún arqueo); este método solo persiste la transición.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_CERRADA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cerrada_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'cerrada_en'</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="Caja.saldo_actual">
+<a class="viewcode-back" href="../../../reference/apps.caja.models.html#apps.caja.models.Caja.saldo_actual">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">saldo_actual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">divisa</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Calcula el saldo actual de una moneda en esta caja.</span>
+
+<span class="sd">        No se guarda como un campo mutable que haya que mantener</span>
+<span class="sd">        sincronizado en cada operación: se deriva, de forma perezosa, del</span>
+<span class="sd">        saldo inicial registrado al abrir (``SaldoInicialCaja``) más los</span>
+<span class="sd">        ingresos y menos los egresos de esa moneda, tanto en las</span>
+<span class="sd">        operaciones de ventanilla (``OperacionVentanilla``) como en los</span>
+<span class="sd">        movimientos extraordinarios (``MovimientoExtraordinario``) ya</span>
+<span class="sd">        registrados — el mismo patrón de estado computado que ya usan</span>
+<span class="sd">        ``CalculoOperacion.estado_efectivo``/``Divisa.ultima_cotizacion`` en</span>
+<span class="sd">        vez de columnas que haya que ir actualizando a mano.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            divisa (apps.divisas.models.Divisa): La moneda a consultar</span>
+<span class="sd">                (incluye PYG).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            decimal.Decimal: El saldo actual de esa moneda en esta caja.</span>
+<span class="sd">        """</span>
+        <span class="n">saldo_inicial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">saldos_iniciales</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="n">saldo</span> <span class="o">=</span> <span class="n">saldo_inicial</span><span class="o">.</span><span class="n">monto</span> <span class="k">if</span> <span class="n">saldo_inicial</span> <span class="k">else</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span> <span class="o">==</span> <span class="s1">'PYG'</span><span class="p">:</span>
+            <span class="c1"># En una "Venta" (la casa le vende divisa al cliente) el cliente</span>
+            <span class="c1"># entrega guaraníes: ingreso. En una "Compra" (la casa le compra</span>
+            <span class="c1"># divisa al cliente) es el cajero quien entrega guaraníes: egreso.</span>
+            <span class="n">ingresos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operaciones</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">tipo</span><span class="o">=</span><span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_VENTA</span><span class="p">)</span>
+            <span class="n">egresos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operaciones</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">tipo</span><span class="o">=</span><span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_COMPRA</span><span class="p">)</span>
+            <span class="n">campo</span> <span class="o">=</span> <span class="s1">'monto_pyg'</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># En una "Compra" el cliente entrega la divisa: ingreso. En una</span>
+            <span class="c1"># "Venta" es el cajero quien la entrega: egreso.</span>
+            <span class="n">ingresos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operaciones</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">tipo</span><span class="o">=</span><span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_COMPRA</span><span class="p">,</span> <span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">)</span>
+            <span class="n">egresos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operaciones</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">tipo</span><span class="o">=</span><span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_VENTA</span><span class="p">,</span> <span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">)</span>
+            <span class="n">campo</span> <span class="o">=</span> <span class="s1">'monto_divisa'</span>
+
+        <span class="n">total_ingresos</span> <span class="o">=</span> <span class="n">ingresos</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span><span class="n">campo</span><span class="p">))[</span><span class="s1">'total'</span><span class="p">]</span> <span class="ow">or</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)</span>
+        <span class="n">total_egresos</span> <span class="o">=</span> <span class="n">egresos</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span><span class="n">campo</span><span class="p">))[</span><span class="s1">'total'</span><span class="p">]</span> <span class="ow">or</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)</span>
+
+        <span class="n">movimientos_extraordinarios</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">movimientos_extraordinarios</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">)</span>
+        <span class="n">total_ingresos_extra</span> <span class="o">=</span> <span class="n">movimientos_extraordinarios</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">tipo</span><span class="o">=</span><span class="n">MovimientoExtraordinario</span><span class="o">.</span><span class="n">TIPO_INGRESO</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span><span class="s1">'monto'</span><span class="p">))[</span><span class="s1">'total'</span><span class="p">]</span> <span class="ow">or</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)</span>
+        <span class="n">total_egresos_extra</span> <span class="o">=</span> <span class="n">movimientos_extraordinarios</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">tipo</span><span class="o">=</span><span class="n">MovimientoExtraordinario</span><span class="o">.</span><span class="n">TIPO_EGRESO</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span><span class="s1">'monto'</span><span class="p">))[</span><span class="s1">'total'</span><span class="p">]</span> <span class="ow">or</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">saldo</span> <span class="o">+</span> <span class="n">total_ingresos</span> <span class="o">-</span> <span class="n">total_egresos</span> <span class="o">+</span> <span class="n">total_ingresos_extra</span> <span class="o">-</span> <span class="n">total_egresos_extra</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SaldoInicialCaja">
+<a class="viewcode-back" href="../../../reference/apps.caja.models.html#apps.caja.models.SaldoInicialCaja">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SaldoInicialCaja</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Saldo inicial de una moneda puntual, registrado al abrir una caja.</span>
+
+<span class="sd">    Una fila por cada divisa activa que el cajero contó al momento de abrir,</span>
+<span class="sd">    incluido PYG (su existencia en el catálogo está garantizada por la</span>
+<span class="sd">    migración de datos ``apps.divisas.0014_crear_divisa_pyg``, ya que es la</span>
+<span class="sd">    moneda local/base del sistema): el inventario completo de la apertura</span>
+<span class="sd">    es la colección de estas filas asociadas a una ``Caja``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Caja</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'saldos_iniciales'</span><span class="p">)</span>
+    <span class="n">divisa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'+'</span><span class="p">)</span>
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Saldo inicial'</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define etiquetas administrativas y evita duplicar una divisa por caja."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Saldo inicial de caja'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Saldos iniciales de caja'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'divisa__codigo'</span><span class="p">]</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'caja'</span><span class="p">,</span> <span class="s1">'divisa'</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">'saldo_inicial_unico_por_caja_y_divisa'</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra el código de la divisa y el monto registrado."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">monto</span><span class="si">}</span><span class="s1">'</span></div>
+
+
+
+<div class="viewcode-block" id="OperacionVentanilla">
+<a class="viewcode-back" href="../../../reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OperacionVentanilla</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra una compra o venta de divisas en efectivo realizada en ventanilla.</span>
+
+<span class="sd">    Implementa la HU "Gestión de operaciones en ventanilla": reutiliza el</span>
+<span class="sd">    mismo cálculo de cotización que ya usa el flujo online del cliente</span>
+<span class="sd">    (``apps.divisas.views._calcular_importe_operacion``, ver</span>
+<span class="sd">    ``apps.caja.views.RegistrarOperacionVentanillaView``) en vez de</span>
+<span class="sd">    duplicarlo, pero ``TIPO_COMPRA``/``TIPO_VENTA`` acá significan lo</span>
+<span class="sd">    *opuesto* a ``apps.divisas.models.CalculoOperacion.TIPO_COMPRA``/</span>
+<span class="sd">    ``TIPO_VENTA``, que están escritos desde la perspectiva del cliente. En</span>
+<span class="sd">    esta HU los nombres son desde la perspectiva de la casa de cambio:</span>
+
+<span class="sd">    - "Compra": la casa le compra divisa al cliente. El cliente entrega la</span>
+<span class="sd">      divisa (ingresa a la caja) y el cajero entrega guaraníes (egresa).</span>
+<span class="sd">      Equivale a una "Venta" para ``_calcular_importe_operacion``.</span>
+<span class="sd">    - "Venta": la casa le vende divisa al cliente. El cliente entrega</span>
+<span class="sd">      guaraníes (ingresa) y el cajero entrega la divisa (egresa). Equivale</span>
+<span class="sd">      a una "Compra" para ``_calcular_importe_operacion``.</span>
+
+<span class="sd">    Es exactamente la lectura que usa el Criterio 3 de la HU al describir</span>
+<span class="sd">    qué moneda debe entregar el cajero en cada caso ("la divisa en una</span>
+<span class="sd">    venta, guaraníes en una compra").</span>
+<span class="sd">    """</span>
+
+    <span class="n">TIPO_COMPRA</span> <span class="o">=</span> <span class="s1">'COMPRA'</span>
+    <span class="n">TIPO_VENTA</span> <span class="o">=</span> <span class="s1">'VENTA'</span>
+    <span class="n">TIPO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">TIPO_COMPRA</span><span class="p">,</span> <span class="s1">'Compra de divisas (la casa compra)'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">TIPO_VENTA</span><span class="p">,</span> <span class="s1">'Venta de divisas (la casa vende)'</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Caja</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'operaciones'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Caja'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cajero</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'operaciones_ventanilla'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cajero'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">TIPO_CHOICES</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tipo de operación'</span><span class="p">)</span>
+    <span class="n">divisa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Divisa</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'operaciones_ventanilla'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Divisa operada'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">monto_divisa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Monto en divisa'</span><span class="p">)</span>
+    <span class="n">tasa_aplicada</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tasa aplicada'</span><span class="p">)</span>
+    <span class="n">comision_porcentaje</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Comisión (%)'</span><span class="p">)</span>
+    <span class="n">comision</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Comisión'</span><span class="p">)</span>
+    <span class="n">monto_pyg</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Monto en guaraníes'</span><span class="p">)</span>
+    <span class="n">creado_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define el orden y las etiquetas administrativas de las operaciones."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Operación de ventanilla'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Operaciones de ventanilla'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-creado_en'</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Describe el tipo, el monto en divisa y la caja de la operación."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">()</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">monto_divisa</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">caja</span><span class="si">}</span><span class="s1">)'</span></div>
+
+
+
+<div class="viewcode-block" id="MovimientoExtraordinario">
+<a class="viewcode-back" href="../../../reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MovimientoExtraordinario</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra un ingreso o egreso de caja que no proviene de una operación cambiaria.</span>
+
+<span class="sd">    Implementa la HU "Gestión de movimientos extraordinarios de Caja": a</span>
+<span class="sd">    diferencia de ``OperacionVentanilla`` (que siempre representa una</span>
+<span class="sd">    compra o venta de divisas con tasa y comisión calculadas), un</span>
+<span class="sd">    movimiento extraordinario no triangula ninguna cotización — es un</span>
+<span class="sd">    ingreso o egreso de efectivo puntual, con su ``motivo`` como único dato</span>
+<span class="sd">    que lo explica (por ejemplo, un retiro para gastos de oficina, o un</span>
+<span class="sd">    refuerzo de caja). Por eso no excluye PYG ni ninguna divisa sin</span>
+<span class="sd">    cotización vigente como sí hace ``OperacionVentanillaForm``: no hace</span>
+<span class="sd">    falta ninguna tasa para registrar un monto en una moneda puntual.</span>
+
+<span class="sd">    ``Caja.saldo_actual`` suma los ingresos y resta los egresos de este</span>
+<span class="sd">    modelo exactamente igual que ya hace con ``OperacionVentanilla``</span>
+<span class="sd">    (Criterio 1), y ``apps.caja.views.RegistrarMovimientoExtraordinarioView``</span>
+<span class="sd">    rechaza un egreso mayor al saldo disponible de esa moneda (Criterio 2)</span>
+<span class="sd">    con el mismo criterio que ya usa ``RegistrarOperacionVentanillaView``</span>
+<span class="sd">    para una compra o venta. El campo ``motivo`` es obligatorio a nivel de</span>
+<span class="sd">    modelo y de formulario (Criterio 3). En cualquier listado o reporte de</span>
+<span class="sd">    la caja, un movimiento extraordinario se distingue de una operación</span>
+<span class="sd">    cambiaria por aparecer en su propia sección/tabla, nunca mezclado en el</span>
+<span class="sd">    listado de ``OperacionVentanilla`` (Criterio 4; ver</span>
+<span class="sd">    ``apps.caja.views.PanelCajaView`` y la plantilla ``panel_caja.html``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">TIPO_INGRESO</span> <span class="o">=</span> <span class="s1">'INGRESO'</span>
+    <span class="n">TIPO_EGRESO</span> <span class="o">=</span> <span class="s1">'EGRESO'</span>
+    <span class="n">TIPO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">TIPO_INGRESO</span><span class="p">,</span> <span class="s1">'Ingreso extraordinario'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">TIPO_EGRESO</span><span class="p">,</span> <span class="s1">'Egreso extraordinario'</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Caja</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'movimientos_extraordinarios'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Caja'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cajero</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'movimientos_extraordinarios_caja'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cajero'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">TIPO_CHOICES</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tipo de movimiento'</span><span class="p">)</span>
+    <span class="n">divisa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Divisa</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'movimientos_extraordinarios'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Divisa'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Monto'</span><span class="p">)</span>
+    <span class="n">motivo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Motivo'</span><span class="p">)</span>
+    <span class="n">creado_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define el orden y las etiquetas administrativas de los movimientos extraordinarios."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Movimiento extraordinario de caja'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Movimientos extraordinarios de caja'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-creado_en'</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Describe el tipo, el monto y la divisa del movimiento."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">()</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">monto</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">caja</span><span class="si">}</span><span class="s1">)'</span></div>
+
+
+
+<div class="viewcode-block" id="ArqueoCaja">
+<a class="viewcode-back" href="../../../reference/apps.caja.models.html#apps.caja.models.ArqueoCaja">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ArqueoCaja</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra la comparación, en un momento puntual, entre el saldo del sistema y lo contado a mano.</span>
+
+<span class="sd">    Implementa la HU "Arqueo de Caja": el cajero cuenta físicamente cuánto</span>
+<span class="sd">    tiene de cada moneda y el sistema lo compara contra</span>
+<span class="sd">    ``Caja.saldo_actual`` en ese instante (ver</span>
+<span class="sd">    ``apps.caja.views.IniciarArqueoCajaView``). Ambos valores quedan</span>
+<span class="sd">    congelados por divisa en ``DetalleArqueoCaja`` — no se recalculan</span>
+<span class="sd">    después — para que el registro sea fiel a lo que realmente se comparó</span>
+<span class="sd">    ese día, aunque el saldo de la caja siga cambiando con operaciones</span>
+<span class="sd">    posteriores (Criterio 3: "disponible para consulta posterior").</span>
+
+<span class="sd">    Una diferencia distinta de cero en cualquier divisa (sobrante o</span>
+<span class="sd">    faltante) nunca impide registrar el arqueo ni sigue bloqueando la caja</span>
+<span class="sd">    después: solo queda constancia de ella (Criterio 2).</span>
+<span class="sd">    """</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Caja</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'arqueos'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Caja'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cajero</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'arqueos_caja'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cajero'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">creado_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Fecha y hora del arqueo'</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define el orden y las etiquetas administrativas de los arqueos."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Arqueo de caja'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Arqueos de caja'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-creado_en'</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Identifica el arqueo por su caja y la fecha/hora en que se realizó."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'Arqueo de </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">caja</span><span class="si">}</span><span class="s1"> el </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">creado_en</span><span class="si">:</span><span class="s1">%d/%m/%Y %H:%M</span><span class="si">}</span><span class="s1">'</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tiene_diferencias</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Indica si algún detalle de este arqueo tiene una diferencia distinta de cero."""</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">detalle</span><span class="o">.</span><span class="n">diferencia</span> <span class="o">!=</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)</span> <span class="k">for</span> <span class="n">detalle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detalles</span><span class="o">.</span><span class="n">all</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="DetalleArqueoCaja">
+<a class="viewcode-back" href="../../../reference/apps.caja.models.html#apps.caja.models.DetalleArqueoCaja">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DetalleArqueoCaja</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Compara, para una moneda puntual, el saldo del sistema contra lo contado en un arqueo.</span>
+
+<span class="sd">    Una fila por cada divisa activa incluida en un ``ArqueoCaja``.</span>
+<span class="sd">    ``saldo_sistema`` y ``monto_contado`` quedan congelados en el momento</span>
+<span class="sd">    del arqueo; ``diferencia`` se deriva de esos dos valores (positiva:</span>
+<span class="sd">    sobrante; negativa: faltante; cero: coincide exacto), sin necesidad de</span>
+<span class="sd">    guardarla por separado.</span>
+<span class="sd">    """</span>
+
+    <span class="n">arqueo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">ArqueoCaja</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'detalles'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Arqueo'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">divisa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'+'</span><span class="p">)</span>
+    <span class="n">saldo_sistema</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
+        <span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Saldo según el sistema'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">monto_contado</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span>
+        <span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Monto contado físicamente'</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define el orden, las etiquetas administrativas y evita duplicar una divisa por arqueo."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Detalle de arqueo de caja'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Detalles de arqueo de caja'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'divisa__codigo'</span><span class="p">]</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'arqueo'</span><span class="p">,</span> <span class="s1">'divisa'</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">'detalle_arqueo_unico_por_divisa'</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Muestra la divisa, lo contado y el saldo del sistema en ese momento."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">: contado </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">monto_contado</span><span class="si">}</span><span class="s1">, sistema </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">saldo_sistema</span><span class="si">}</span><span class="s1">'</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">diferencia</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Diferencia entre lo contado y el saldo del sistema.</span>
+
+<span class="sd">        Positiva indica un sobrante (hay más de lo que el sistema esperaba);</span>
+<span class="sd">        negativa, un faltante; cero, que coinciden exactamente.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">monto_contado</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">saldo_sistema</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

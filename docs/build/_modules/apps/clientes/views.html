@@ -45,9 +45,26 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -76,6 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -83,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
@@ -139,6 +158,8 @@
 <span></span><span class="sd">"""</span>
 <span class="sd">Módulo de vistas para la aplicación de clientes.</span>
 <span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlparse</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">login_required</span>
@@ -147,7 +168,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Prefetch</span><span class="p">,</span> <span class="n">Q</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.template.response</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemplateResponse</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span><span class="p">,</span> <span class="n">reverse_lazy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resolver404</span><span class="p">,</span> <span class="n">resolve</span><span class="p">,</span> <span class="n">reverse</span><span class="p">,</span> <span class="n">reverse_lazy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.views</span><span class="w"> </span><span class="kn">import</span> <span class="n">View</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.views.decorators.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_POST</span>  <span class="c1"># Agregado para Metodos de Pago</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.views.generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">CreateView</span><span class="p">,</span> <span class="n">DetailView</span><span class="p">,</span> <span class="n">ListView</span><span class="p">,</span> <span class="n">UpdateView</span>
@@ -193,6 +214,48 @@
 
 
 
+<span class="c1"># Pantallas de detalle de un registro ligado al cliente activo (por ejemplo,</span>
+<span class="c1"># el detalle de una transacción del historial de un cliente): si el usuario</span>
+<span class="c1"># cambia de cliente activo estando en una de estas pantallas, el registro de</span>
+<span class="c1"># la URL (identificado por su pk) pertenece al cliente anterior y puede no</span>
+<span class="c1"># existir para el nuevo, lo que rompería el "volver al referer" con un 404.</span>
+<span class="c1"># En su lugar, cambiar de cliente desde ahí redirige al listado indicado.</span>
+<span class="n">DESTINO_AL_CAMBIAR_CLIENTE_DESDE_DETALLE</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'divisas:detalle_transaccion_operacion'</span><span class="p">:</span> <span class="s1">'divisas:mis_transacciones'</span><span class="p">,</span>
+    <span class="s1">'divisas:detalle_transaccion_cambio'</span><span class="p">:</span> <span class="s1">'divisas:mis_transacciones'</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_redireccion_tras_cambiar_cliente</span><span class="p">(</span><span class="n">referer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Resuelve a dónde volver después de cambiar de cliente activo.</span>
+
+<span class="sd">    Por defecto vuelve al ``referer`` tal cual. Si el ``referer`` es una</span>
+<span class="sd">    pantalla de detalle de un registro del cliente anterior (ver</span>
+<span class="sd">    ``DESTINO_AL_CAMBIAR_CLIENTE_DESDE_DETALLE``), vuelve al listado</span>
+<span class="sd">    correspondiente en su lugar, porque ese registro puede no pertenecer al</span>
+<span class="sd">    cliente nuevo.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        referer (str): Valor de la cabecera ``HTTP_REFERER``, o ``None``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: La URL a la que redirigir.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">referer</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">coincidencia</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">urlparse</span><span class="p">(</span><span class="n">referer</span><span class="p">)</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">Resolver404</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">referer</span>
+    <span class="n">nombre_vista</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">coincidencia</span><span class="o">.</span><span class="n">namespace</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="n">coincidencia</span><span class="o">.</span><span class="n">url_name</span><span class="si">}</span><span class="s1">'</span>
+        <span class="k">if</span> <span class="n">coincidencia</span><span class="o">.</span><span class="n">namespace</span>
+        <span class="k">else</span> <span class="n">coincidencia</span><span class="o">.</span><span class="n">url_name</span>
+    <span class="p">)</span>
+    <span class="n">destino</span> <span class="o">=</span> <span class="n">DESTINO_AL_CAMBIAR_CLIENTE_DESDE_DETALLE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">nombre_vista</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span> <span class="k">if</span> <span class="n">destino</span> <span class="k">else</span> <span class="n">referer</span>
+
+
 <div class="viewcode-block" id="cambiar_cliente_view">
 <a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.cambiar_cliente_view">[documentos]</a>
 <span class="nd">@login_required</span>
@@ -209,12 +272,8 @@
 
     <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'Cambiaste al cliente: </span><span class="si">{</span><span class="n">cliente</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
 
-    <span class="c1"># Si hay referer se envía allí, de lo contrario se usa la vista 'home'</span>
     <span class="n">referer</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'HTTP_REFERER'</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">referer</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">referer</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">_redireccion_tras_cambiar_cliente</span><span class="p">(</span><span class="n">referer</span><span class="p">))</span></div>
 
 
 
@@ -638,48 +697,6 @@
         <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Agregar Método de Pago'</span><span class="p">}</span>
     <span class="p">)</span>
     <span class="n">response</span><span class="o">.</span><span class="n">context_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Agregar Método de Pago'</span><span class="p">}</span>
-    <span class="n">response</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">context_data</span>
-    <span class="n">response</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">response</span></div>
-
-
-
-<div class="viewcode-block" id="metodo_pago_update">
-<a class="viewcode-back" href="../../../reference/apps.clientes.views.html#apps.clientes.views.metodo_pago_update">[documentos]</a>
-<span class="nd">@requiere_rol</span><span class="p">(</span><span class="s1">'cliente'</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">metodo_pago_update</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Permite modificar los datos de un método de pago existente del cliente activo (Criterio 4).</span>
-<span class="sd">    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.</span>
-<span class="sd">    """</span>
-    <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
-    <span class="k">if</span> <span class="s1">'admin'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">or</span> <span class="s1">'cliente'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
-        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés permiso para acceder a métodos de pago.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
-
-    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No tenés clientes asociados para gestionar métodos de pago.'</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'home'</span><span class="p">)</span>
-
-    <span class="n">metodo</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">MetodoPago</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">'POST'</span><span class="p">:</span>
-        <span class="n">form</span> <span class="o">=</span> <span class="n">MetodoPagoForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="n">metodo</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
-            <span class="n">form</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Método de pago actualizado correctamente.'</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'clientes:metodo_pago_list'</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Por favor, corrija los errores en el formulario.'</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">form</span> <span class="o">=</span> <span class="n">MetodoPagoForm</span><span class="p">(</span><span class="n">instance</span><span class="o">=</span><span class="n">metodo</span><span class="p">)</span>
-
-    <span class="n">response</span> <span class="o">=</span> <span class="n">TemplateResponse</span><span class="p">(</span>
-        <span class="n">request</span><span class="p">,</span>
-        <span class="s1">'clientes/metodo_pago_form.html'</span><span class="p">,</span>
-        <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Editar Método de Pago'</span><span class="p">}</span>
-    <span class="p">)</span>
-    <span class="n">response</span><span class="o">.</span><span class="n">context_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'form'</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">'titulo'</span><span class="p">:</span> <span class="s1">'Editar Método de Pago'</span><span class="p">}</span>
     <span class="n">response</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">context_data</span>
     <span class="n">response</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">response</span></div>

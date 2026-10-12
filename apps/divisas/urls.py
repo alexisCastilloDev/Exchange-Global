@@ -26,6 +26,8 @@ from .views import (
     DetalleTransaccionCambioView,
     PagarTransaccionOperacionView,
     PagarTransaccionCambioView,
+    MisNotificacionesView,
+    MarcarNotificacionLeidaView,
 )
 from .pagos_stripe import (
     IniciarPagoStripeOperacionView,
@@ -88,6 +90,12 @@ urlpatterns = [
         'transacciones/mias/cambio/<uuid:pk>/',
         DetalleTransaccionCambioView.as_view(),
         name='detalle_transaccion_cambio',
+    ),
+    path('notificaciones/', MisNotificacionesView.as_view(), name='mis_notificaciones'),
+    path(
+        'notificaciones/<int:pk>/leida/',
+        MarcarNotificacionLeidaView.as_view(),
+        name='marcar_notificacion_leida',
     ),
     path('comisiones/', ConfiguracionComisionListView.as_view(), name='comisiones'),
     path('comisiones/<str:segmento>/editar/', ActualizarComisionView.as_view(), name='actualizar_comision'),

@@ -45,9 +45,26 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -76,6 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -83,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
@@ -159,6 +178,8 @@
             <span class="s1">'es_admin'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
             <span class="s1">'puede_ver_usuarios'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
             <span class="s1">'puede_ver_roles'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">'puede_ver_historial_propio'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">'puede_ver_caja'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
@@ -175,6 +196,7 @@
         <span class="ow">and</span> <span class="ow">not</span> <span class="n">es_admin</span>
     <span class="p">)</span>
     <span class="n">puede_configurar_comisiones</span> <span class="o">=</span> <span class="n">es_admin</span> <span class="ow">or</span> <span class="s1">'analista_cambiario'</span> <span class="ow">in</span> <span class="n">roles</span>
+    <span class="n">puede_ver_caja</span> <span class="o">=</span> <span class="s1">'cajero'</span> <span class="ow">in</span> <span class="n">roles</span>
 
     <span class="k">return</span> <span class="p">{</span>
         <span class="s1">'keycloak_roles'</span><span class="p">:</span> <span class="n">roles</span><span class="p">,</span>
@@ -185,9 +207,11 @@
         <span class="s1">'puede_administrar_divisas'</span><span class="p">:</span> <span class="n">es_admin</span><span class="p">,</span>
         <span class="s1">'puede_gestionar_metodos_pago'</span><span class="p">:</span> <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">and</span> <span class="n">tiene_clientes_asociados</span><span class="p">,</span>
         <span class="s1">'puede_operar_divisas'</span><span class="p">:</span> <span class="n">puede_operar_divisas</span><span class="p">,</span>
+        <span class="s1">'puede_ver_historial_propio'</span><span class="p">:</span> <span class="n">puede_operar_divisas</span><span class="p">,</span>
         <span class="s1">'puede_actualizar_tasas'</span><span class="p">:</span> <span class="n">puede_actualizar_tasas</span><span class="p">,</span>
         <span class="s1">'puede_ver_tasas'</span><span class="p">:</span> <span class="n">puede_ver_tasas</span><span class="p">,</span>
         <span class="s1">'puede_configurar_comisiones'</span><span class="p">:</span> <span class="n">puede_configurar_comisiones</span><span class="p">,</span>
+        <span class="s1">'puede_ver_caja'</span><span class="p">:</span> <span class="n">puede_ver_caja</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 </pre></div>

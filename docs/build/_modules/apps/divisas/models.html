@@ -45,11 +45,26 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
 </li>
@@ -78,6 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
 </ul>
 </li>
@@ -85,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
@@ -144,10 +161,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrityError</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span> <span class="n">transaction</span> <span class="k">as</span> <span class="n">db_transaction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span><span class="p">,</span> <span class="n">MetodoPago</span>
 
 <div class="viewcode-block" id="Divisa">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Divisa">[documentos]</a>
@@ -219,7 +236,41 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Retorna la representación de la cotización con su fecha."""</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s2"> - Compra: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasa_compra</span><span class="si">}</span><span class="s2"> / Venta: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasa_venta</span><span class="si">}</span><span class="s2">"</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s2"> - Compra: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasa_compra</span><span class="si">}</span><span class="s2"> / Venta: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasa_venta</span><span class="si">}</span><span class="s2">"</span>
+
+<div class="viewcode-block" id="Cotizacion.save">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.save">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Guarda la cotización y notifica a los clientes si cambió alguna tasa.</span>
+
+<span class="sd">        Implementa la HU "Notificaciones sobre tasas de cambio" (GE-51).</span>
+<span class="sd">        Cada actualización de tasas se registra como una cotización *nueva*</span>
+<span class="sd">        (el historial nunca se pisa, ver ``ActualizarCotizacionView``), así</span>
+<span class="sd">        que "la tasa anterior" es la última cotización de la divisa que ya</span>
+<span class="sd">        existía antes de esta. Solo al crear una cotización se compara contra</span>
+<span class="sd">        esa anterior y, por cada tasa (compra o venta) cuyo valor sea</span>
+<span class="sd">        distinto, se genera una notificación para cada usuario cliente (ver</span>
+<span class="sd">        ``NotificacionTasa.notificar_cambios``). Si la tasa se guarda con el</span>
+<span class="sd">        mismo valor que ya tenía no se notifica nada, y tampoco en la primera</span>
+<span class="sd">        cotización de una divisa, porque no hay una tasa anterior con la que</span>
+<span class="sd">        comparar ni que informar.</span>
+
+<span class="sd">        La cotización y sus notificaciones se guardan en una única</span>
+<span class="sd">        transacción de base de datos: o quedan ambas registradas, o ninguna.</span>
+<span class="sd">        """</span>
+        <span class="n">es_nueva</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+        <span class="n">anterior</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">es_nueva</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa_id</span><span class="p">:</span>
+            <span class="n">anterior</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">Cotizacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">divisa_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa_id</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-fecha_actualizacion'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">with</span> <span class="n">db_transaction</span><span class="o">.</span><span class="n">atomic</span><span class="p">():</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">anterior</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">NotificacionTasa</span><span class="o">.</span><span class="n">notificar_cambios</span><span class="p">(</span><span class="n">anterior</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+</div>
 
 
 
@@ -237,12 +288,18 @@
 <span class="sd">    ``ConfirmarTransaccionOperacionView``), el cliente revisa el resumen</span>
 <span class="sd">    completo y decide si la confirma (si la tasa vigente no cambió, pasa a</span>
 <span class="sd">    "Confirmada" y se registra ``confirmado_en``) o la cancela manualmente</span>
-<span class="sd">    (pasa a "Cancelada" y no se procesa más). Si el cliente nunca vuelve a</span>
-<span class="sd">    esa pantalla (por ejemplo, cierra la pestaña) y se cumple ``vence_en``</span>
-<span class="sd">    sin que la transacción se haya confirmado ni cancelado, se considera</span>
-<span class="sd">    "Vencida": ``estado_efectivo`` refleja esto de inmediato para quien la</span>
-<span class="sd">    consulte, aunque el campo ``estado`` recién se actualice en la base de</span>
-<span class="sd">    datos la próxima vez que alguien con permiso visite esa transacción.</span>
+<span class="sd">    (pasa a "Cancelada" y no se procesa más). Si al intentar confirmarla la</span>
+<span class="sd">    tasa vigente ya cambió respecto de ``tasa_aplicada`` (ver</span>
+<span class="sd">    ``tasa_vigente_cambio``), la confirmación se rechaza y la transacción se</span>
+<span class="sd">    cancela automáticamente como "Cancelada por cambio de cotización", un</span>
+<span class="sd">    estado distinto de la cancelación manual para que el historial pueda</span>
+<span class="sd">    diferenciarlas; el cliente puede recalcular con la tasa nueva desde esa</span>
+<span class="sd">    misma pantalla. Si el cliente nunca vuelve a esa pantalla (por ejemplo,</span>
+<span class="sd">    cierra la pestaña) y se cumple ``vence_en`` sin que la transacción se</span>
+<span class="sd">    haya confirmado ni cancelado, se considera "Vencida": ``estado_efectivo``</span>
+<span class="sd">    refleja esto de inmediato para quien la consulte, aunque el campo</span>
+<span class="sd">    ``estado`` recién se actualice en la base de datos la próxima vez que</span>
+<span class="sd">    alguien con permiso visite esa transacción.</span>
 <span class="sd">    """</span>
 
     <span class="n">TIPO_COMPRA</span> <span class="o">=</span> <span class="s1">'COMPRA'</span>
@@ -256,11 +313,15 @@
     <span class="n">ESTADO_CONFIRMADA</span> <span class="o">=</span> <span class="s1">'CONFIRMADA'</span>
     <span class="n">ESTADO_CANCELADA</span> <span class="o">=</span> <span class="s1">'CANCELADA'</span>
     <span class="n">ESTADO_VENCIDA</span> <span class="o">=</span> <span class="s1">'VENCIDA'</span>
+    <span class="n">ESTADO_CANCELADA_COTIZACION</span> <span class="o">=</span> <span class="s1">'CANCELADA_COTIZACION'</span>
+    <span class="n">ESTADO_PAGADA</span> <span class="o">=</span> <span class="s1">'PAGADA'</span>
     <span class="n">ESTADO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span> <span class="s1">'Pendiente de confirmación'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">,</span> <span class="s1">'Confirmada'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_CANCELADA</span><span class="p">,</span> <span class="s1">'Cancelada'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_VENCIDA</span><span class="p">,</span> <span class="s1">'Vencida'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CANCELADA_COTIZACION</span><span class="p">,</span> <span class="s1">'Cancelada por cambio de cotización'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_PAGADA</span><span class="p">,</span> <span class="s1">'Pagada'</span><span class="p">),</span>
     <span class="p">]</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -500,8 +561,13 @@
 <span class="sd">    ``ConfirmarTransaccionCambioView``), el cliente revisa el resumen completo</span>
 <span class="sd">    y decide si lo confirma (si las tasas vigentes no cambiaron, pasa a</span>
 <span class="sd">    "Confirmada" y se registra ``confirmado_en``) o lo cancela manualmente</span>
-<span class="sd">    (pasa a "Cancelada"). Si el cliente nunca vuelve a esa pantalla y se</span>
-<span class="sd">    cumple ``vence_en`` sin resolución, se considera "Vencida" (ver</span>
+<span class="sd">    (pasa a "Cancelada"). Si al intentar confirmarlo alguna de las tasas</span>
+<span class="sd">    vigentes ya cambió (ver ``tasas_vigentes_cambiaron``), la confirmación se</span>
+<span class="sd">    rechaza y el cambio se cancela automáticamente como "Cancelada por</span>
+<span class="sd">    cambio de cotización", distinguible de la cancelación manual en el</span>
+<span class="sd">    historial; el cliente puede recalcular con las tasas nuevas desde esa</span>
+<span class="sd">    misma pantalla. Si el cliente nunca vuelve a esa pantalla y se cumple</span>
+<span class="sd">    ``vence_en`` sin resolución, se considera "Vencida" (ver</span>
 <span class="sd">    ``estado_efectivo``). Así aparece en el historial de transacciones junto</span>
 <span class="sd">    con las compras y ventas. ``TIPO_DISPLAY`` es el nombre del tipo de</span>
 <span class="sd">    operación que muestra el historial.</span>
@@ -513,11 +579,15 @@
     <span class="n">ESTADO_CONFIRMADA</span> <span class="o">=</span> <span class="s1">'CONFIRMADA'</span>
     <span class="n">ESTADO_CANCELADA</span> <span class="o">=</span> <span class="s1">'CANCELADA'</span>
     <span class="n">ESTADO_VENCIDA</span> <span class="o">=</span> <span class="s1">'VENCIDA'</span>
+    <span class="n">ESTADO_CANCELADA_COTIZACION</span> <span class="o">=</span> <span class="s1">'CANCELADA_COTIZACION'</span>
+    <span class="n">ESTADO_PAGADA</span> <span class="o">=</span> <span class="s1">'PAGADA'</span>
     <span class="n">ESTADO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">ESTADO_PENDIENTE</span><span class="p">,</span> <span class="s1">'Pendiente de confirmación'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">,</span> <span class="s1">'Confirmada'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_CANCELADA</span><span class="p">,</span> <span class="s1">'Cancelada'</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ESTADO_VENCIDA</span><span class="p">,</span> <span class="s1">'Vencida'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_CANCELADA_COTIZACION</span><span class="p">,</span> <span class="s1">'Cancelada por cambio de cotización'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ESTADO_PAGADA</span><span class="p">,</span> <span class="s1">'Pagada'</span><span class="p">),</span>
     <span class="p">]</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -621,6 +691,429 @@
             <span class="n">cotizacion_origen</span><span class="o">.</span><span class="n">tasa_compra</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_compra_aplicada</span>
             <span class="ow">or</span> <span class="n">cotizacion_destino</span><span class="o">.</span><span class="n">tasa_venta</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_venta_aplicada</span>
         <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="monto_a_pagar">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.monto_a_pagar">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve lo que el cliente entrega de verdad para esta transacción.</span>
+
+<span class="sd">    Una compra o venta (``CalculoOperacion``) liquida siempre en PYG:</span>
+<span class="sd">    ``monto_final`` ya es ese valor, lo que el cliente paga (compra) o</span>
+<span class="sd">    recibe (venta) en guaraníes. Un cambio entre divisas</span>
+<span class="sd">    (``CalculoTriangulacion``) usa PYG solo como paso intermedio de la</span>
+<span class="sd">    triangulación: lo que el cliente entrega de verdad es</span>
+<span class="sd">    ``monto_origen``, en su propia divisa de origen. ``monto_final`` ahí</span>
+<span class="sd">    es lo que el cliente *recibe* a cambio, no lo que paga — por eso no</span>
+<span class="sd">    sirve como "monto a cobrar" para un cambio, aunque sí lo sea para una</span>
+<span class="sd">    compra/venta.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_origen</span>
+    <span class="k">return</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_final</span></div>
+
+
+
+<div class="viewcode-block" id="moneda_a_pagar">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.moneda_a_pagar">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">moneda_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve el código de la moneda en la que el cliente paga esta transacción.</span>
+
+<span class="sd">    Ver ``monto_a_pagar``: una compra/venta siempre se paga en PYG; un</span>
+<span class="sd">    cambio se paga en su divisa de origen, no en la de destino.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_origen</span>
+    <span class="k">return</span> <span class="s1">'PYG'</span></div>
+
+
+
+<div class="viewcode-block" id="PagoRechazadoError">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.PagoRechazadoError">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PagoRechazadoError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Señala que un pago no puede registrarse para una transacción dada.</span>
+
+<span class="sd">    La cubren, por ejemplo, una transacción que no está "Confirmada", una</span>
+<span class="sd">    que ya tiene un pago exitoso, o la ausencia de una transacción válida</span>
+<span class="sd">    (ver ``Pago.registrar_pago``). Las vistas la capturan para mostrar el</span>
+<span class="sd">    mensaje al usuario en vez de dejarla propagarse como error 500.</span>
+<span class="sd">    """</span></div>
+
+
+
+<div class="viewcode-block" id="Pago">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Pago">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Pago</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Registra el pago exitoso de una única transacción ya "Confirmada".</span>
+
+<span class="sd">    Implementa la HU "Asociación de pagos a transacciones" (GE-25), pensada</span>
+<span class="sd">    explícitamente como base de dos HU futuras que todavía no existen en</span>
+<span class="sd">    este código: pago con tarjeta vía Stripe y pago por transferencia vía</span>
+<span class="sd">    SIPAP. Por eso ``medio_pago``, ``proveedor`` e ``identificador_externo``</span>
+<span class="sd">    son genéricos en vez de modelar un único medio: cuando esas HU se</span>
+<span class="sd">    implementen, sus webhooks (verificación de firma incluida, que no es</span>
+<span class="sd">    responsabilidad de este modelo) solo necesitan armar esos mismos datos</span>
+<span class="sd">    a partir de su propio payload y llamar a ``registrar_pago``, el único</span>
+<span class="sd">    punto de entrada para marcar una transacción como pagada.</span>
+
+<span class="sd">    Puede asociarse tanto a una compra/venta (``calculo_operacion``) como a</span>
+<span class="sd">    un cambio entre divisas (``calculo_triangulacion``): exactamente una de</span>
+<span class="sd">    las dos, nunca ambas ni ninguna (ver ``clean``). Cada una es un</span>
+<span class="sd">    ``OneToOneField``, así que la base de datos garantiza por sí sola que</span>
+<span class="sd">    una transacción no puede tener más de un pago, sin importar el medio</span>
+<span class="sd">    con el que se intente el segundo.</span>
+<span class="sd">    """</span>
+
+    <span class="n">PROVEEDOR_MANUAL</span> <span class="o">=</span> <span class="s1">'MANUAL'</span>
+
+    <span class="n">calculo_operacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">CalculoOperacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'pago'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Compra o venta pagada'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">calculo_triangulacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">CalculoTriangulacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'pago'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cambio de divisas pagado'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">metodo_pago</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">MetodoPago</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'pagos'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Método de pago guardado utilizado'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">medio_pago</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_MEDIO_CHOICES</span><span class="p">)</span>
+    <span class="n">proveedor</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'Quién confirmó el pago: MANUAL (esta HU), o un proveedor real como STRIPE/SIPAP.'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">identificador_externo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s1">'Identificador del pago para ese proveedor (p. ej. el id de un PaymentIntent de Stripe).'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">creado_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Define etiquetas administrativas y la invariante de idempotencia."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Pago'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Pagos'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-creado_en'</span><span class="p">]</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'proveedor'</span><span class="p">,</span> <span class="s1">'identificador_externo'</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">'pago_unico_por_proveedor_e_identificador'</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Identifica el pago por su proveedor e identificador externo."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'Pago </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">proveedor</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">identificador_externo</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">monto</span><span class="si">}</span><span class="s1">)'</span>
+
+<div class="viewcode-block" id="Pago.clean">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Pago.clean">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida que el pago pertenezca a exactamente una transacción."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+        <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_operacion_id</span><span class="p">)</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_triangulacion_id</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s1">'Un pago debe pertenecer a exactamente una transacción.'</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transaccion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Devuelve la compra/venta o el cambio al que pertenece este pago."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculo_operacion</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculo_triangulacion</span>
+
+<div class="viewcode-block" id="Pago.registrar_pago">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago">[documentos]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">registrar_pago</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">medio_pago</span><span class="p">,</span> <span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="n">metodo_pago</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Registra, de forma idempotente, el pago exitoso de una transacción.</span>
+
+<span class="sd">        Es el único punto de entrada para marcar una transacción como</span>
+<span class="sd">        "Pagada": tanto el flujo manual de esta HU como, más adelante, los</span>
+<span class="sd">        webhooks de Stripe y SIPAP deben construir sus propios datos</span>
+<span class="sd">        (medio, proveedor, identificador externo, monto) y llamar acá, en</span>
+<span class="sd">        vez de tocar ``transaccion.estado`` directamente.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``</span>
+<span class="sd">                ya existente.</span>
+<span class="sd">            medio_pago (str): Uno de ``MetodoPago.TIPO_MEDIO_CHOICES``.</span>
+<span class="sd">            proveedor (str): Quién confirma el pago (``PROVEEDOR_MANUAL`` o</span>
+<span class="sd">                un proveedor real).</span>
+<span class="sd">            identificador_externo (str): Identificador del pago para ese</span>
+<span class="sd">                proveedor. Junto con ``proveedor``, es la clave de</span>
+<span class="sd">                idempotencia: una segunda llamada con el mismo par no crea</span>
+<span class="sd">                un segundo pago ni vuelve a tocar la transacción.</span>
+<span class="sd">            monto (Decimal): Monto efectivamente pagado.</span>
+<span class="sd">            metodo_pago: El ``MetodoPago`` guardado del cliente que se usó,</span>
+<span class="sd">                si corresponde.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[Pago, bool]: El pago (nuevo o preexistente) y si se creó</span>
+<span class="sd">            recién en esta llamada.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            PagoRechazadoError: Si no hay una transacción válida, si no</span>
+<span class="sd">                está en estado "Confirmada" (por ejemplo porque está</span>
+<span class="sd">                pendiente, vencida, cancelada, o ya "Pagada"), siempre que</span>
+<span class="sd">                no se trate de una repetición idempotente del mismo pago</span>
+<span class="sd">                ya registrado.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">transaccion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'No hay una transacción válida para registrar el pago.'</span><span class="p">)</span>
+
+        <span class="n">pago_existente</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">pago_existente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pago_existente</span><span class="p">,</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="o">==</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'La transacción ya fue pagada.'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="o">!=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_CONFIRMADA</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span>
+                <span class="s1">'La transacción debe estar "Confirmada" para poder registrar un pago.'</span>
+            <span class="p">)</span>
+
+        <span class="n">campo_transaccion</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">'calculo_operacion'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'calculo_triangulacion'</span>
+        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">db_transaction</span><span class="o">.</span><span class="n">atomic</span><span class="p">():</span>
+                <span class="n">pago</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="n">medio_pago</span><span class="o">=</span><span class="n">medio_pago</span><span class="p">,</span>
+                    <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span>
+                    <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+                    <span class="n">monto</span><span class="o">=</span><span class="n">monto</span><span class="p">,</span>
+                    <span class="n">metodo_pago</span><span class="o">=</span><span class="n">metodo_pago</span><span class="p">,</span>
+                    <span class="o">**</span><span class="p">{</span><span class="n">campo_transaccion</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">},</span>
+                <span class="p">)</span>
+                <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span>
+                <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">IntegrityError</span><span class="p">:</span>
+            <span class="c1"># Carrera entre dos llamadas simultáneas: o bien la otra ya</span>
+            <span class="c1"># registró este mismo pago (mismo proveedor+identificador, caso</span>
+            <span class="c1"># idempotente), o bien ya le ganó de mano con un pago distinto a</span>
+            <span class="c1"># la misma transacción (el OneToOneField es lo que lo impide "por</span>
+            <span class="c1"># cualquier medio", sin importar si el identificador difiere).</span>
+            <span class="n">pago_existente</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">proveedor</span><span class="o">=</span><span class="n">proveedor</span><span class="p">,</span> <span class="n">identificador_externo</span><span class="o">=</span><span class="n">identificador_externo</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pago_existente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pago_existente</span><span class="p">,</span> <span class="kc">False</span>
+            <span class="k">raise</span> <span class="n">PagoRechazadoError</span><span class="p">(</span><span class="s1">'La transacción ya fue pagada.'</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">return</span> <span class="n">pago</span><span class="p">,</span> <span class="kc">True</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_a_tasa</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Normaliza una tasa a ``Decimal`` con los dos decimales de ``Cotizacion``.</span>
+
+<span class="sd">    Permite comparar sin falsos positivos una tasa recién cargada (que puede</span>
+<span class="sd">    llegar como ``float``, ``int`` o ``str``, por ejemplo ``7400``) con la</span>
+<span class="sd">    guardada en base de datos (``Decimal('7400.00')``).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">valor</span><span class="p">))</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.01'</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="NotificacionTasa">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NotificacionTasa</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Aviso a un usuario cliente de que cambió una tasa de cambio.</span>
+
+<span class="sd">    Implementa la HU "Notificaciones sobre tasas de cambio" (GE-51). Cada</span>
+<span class="sd">    registro informa un único cambio: una divisa, un tipo de tasa (compra o</span>
+<span class="sd">    venta), la tasa anterior y la nueva. Si en una misma actualización</span>
+<span class="sd">    cambian la compra y la venta, cada usuario recibe dos notificaciones,</span>
+<span class="sd">    una por tipo de tasa. Se generan automáticamente al guardar una nueva</span>
+<span class="sd">    ``Cotizacion`` (ver ``Cotizacion.save`` y ``notificar_cambios``).</span>
+
+<span class="sd">    Cada usuario solo ve sus propias notificaciones, de la más reciente a la</span>
+<span class="sd">    más antigua (ver ``MisNotificacionesView``), y puede marcarlas como</span>
+<span class="sd">    leídas (ver ``marcar_como_leida``); las no leídas se cuentan en el</span>
+<span class="sd">    indicador de la barra superior (ver</span>
+<span class="sd">    ``apps.divisas.context_processors.notificaciones_context``).</span>
+
+<span class="sd">    Campos principales:</span>
+
+<span class="sd">    - ``usuario``: usuario cliente destinatario de la notificación.</span>
+<span class="sd">    - ``divisa``: divisa cuya tasa cambió.</span>
+<span class="sd">    - ``cotizacion``: cotización que introdujo el cambio.</span>
+<span class="sd">    - ``tipo_tasa``: ``COMPRA`` o ``VENTA``.</span>
+<span class="sd">    - ``tasa_anterior`` / ``tasa_nueva``: valor de la tasa antes y después del cambio.</span>
+<span class="sd">    - ``creada_en``: momento en que se generó la notificación.</span>
+<span class="sd">    - ``leida`` / ``leida_en``: si el usuario ya la marcó como leída, y cuándo.</span>
+<span class="sd">    """</span>
+
+    <span class="n">TIPO_COMPRA</span> <span class="o">=</span> <span class="s1">'COMPRA'</span>
+    <span class="n">TIPO_VENTA</span> <span class="o">=</span> <span class="s1">'VENTA'</span>
+    <span class="n">TIPO_TASA_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">TIPO_COMPRA</span><span class="p">,</span> <span class="s1">'Compra'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">TIPO_VENTA</span><span class="p">,</span> <span class="s1">'Venta'</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">usuario</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'notificaciones_tasa'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Usuario destinatario'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">divisa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Divisa</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'notificaciones_tasa'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Divisa'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cotizacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Cotizacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'notificaciones'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cotización que generó el cambio'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tipo_tasa</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">TIPO_TASA_CHOICES</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tipo de tasa'</span><span class="p">)</span>
+    <span class="n">tasa_anterior</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tasa anterior'</span><span class="p">)</span>
+    <span class="n">tasa_nueva</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="n">max_digits</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Tasa nueva'</span><span class="p">)</span>
+    <span class="n">creada_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Fecha de notificación'</span><span class="p">)</span>
+    <span class="n">leida</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Leída'</span><span class="p">)</span>
+    <span class="n">leida_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Fecha de lectura'</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Ordena de la más reciente a la más antigua e indexa las no leídas."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Notificación de tasa'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Notificaciones de tasas'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-creada_en'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">]</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'usuario'</span><span class="p">,</span> <span class="s1">'leida'</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">'notif_tasa_usuario_leida_idx'</span><span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resume la notificación con su divisa, tipo de tasa y valores."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tipo_tasa_display</span><span class="p">()</span><span class="si">}</span><span class="s1">: '</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasa_anterior</span><span class="si">}</span><span class="s1"> -&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasa_nueva</span><span class="si">}</span><span class="s1">'</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">variacion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Diferencia entre la tasa nueva y la anterior (negativa si bajó)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_nueva</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasa_anterior</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subio</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Indica si la tasa aumentó respecto de la anterior."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variacion</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mensaje</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Texto legible de la notificación, listo para mostrar al usuario."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'La tasa de </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tipo_tasa_display</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s1"> de </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> '</span>
+            <span class="sa">f</span><span class="s1">'cambió de </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasa_anterior</span><span class="si">}</span><span class="s1"> a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasa_nueva</span><span class="si">}</span><span class="s1">.'</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="NotificacionTasa.marcar_como_leida">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.marcar_como_leida">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marcar_como_leida</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Marca la notificación como leída y registra cuándo.</span>
+
+<span class="sd">        Es idempotente: si ya estaba leída no se vuelve a guardar ni se pisa</span>
+<span class="sd">        la fecha de lectura original.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: ``True`` si la notificación pasó a leída recién ahora.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">leida</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leida</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leida_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'leida'</span><span class="p">,</span> <span class="s1">'leida_en'</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="NotificacionTasa.usuarios_clientes">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuarios_clientes">[documentos]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">usuarios_clientes</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">"""Devuelve los usuarios que deben recibir notificaciones de tasas.</span>
+
+<span class="sd">        El rol ``cliente`` vive solo en la sesión de Keycloak (ver</span>
+<span class="sd">        ``apps.authentication.backends``), así que no puede consultarse para</span>
+<span class="sd">        usuarios que no están conectados. Por eso se considera "usuario</span>
+<span class="sd">        cliente" a todo usuario activo asociado a al menos un ``Cliente``</span>
+<span class="sd">        activo, ya sea como usuario del sistema asociado (``usuarios``) o</span>
+<span class="sd">        como titular (``user``): son justamente los usuarios que pueden</span>
+<span class="sd">        operar en nombre de un cliente.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QuerySet: Usuarios activos, sin repetidos.</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">get_user_model</span><span class="p">()</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">models</span><span class="o">.</span><span class="n">Q</span><span class="p">(</span><span class="n">clientes__is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="o">|</span> <span class="n">models</span><span class="o">.</span><span class="n">Q</span><span class="p">(</span><span class="n">cliente_perfil__is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NotificacionTasa.notificar_cambios">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.notificar_cambios">[documentos]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">notificar_cambios</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">anterior</span><span class="p">,</span> <span class="n">nueva</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Genera las notificaciones por los cambios entre dos cotizaciones.</span>
+
+<span class="sd">        Compara por separado la tasa de compra y la de venta. Por cada una</span>
+<span class="sd">        cuyo valor sea distinto, crea una notificación para cada usuario</span>
+<span class="sd">        cliente (ver ``usuarios_clientes``), con la divisa afectada, el tipo</span>
+<span class="sd">        de tasa, la tasa anterior y la nueva. Si ninguna tasa cambió, no se</span>
+<span class="sd">        crea nada.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            anterior (Cotizacion): Última cotización vigente antes del cambio.</span>
+<span class="sd">            nueva (Cotizacion): Cotización recién guardada.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[NotificacionTasa]: Las notificaciones creadas (vacía si no</span>
+<span class="sd">            hubo cambios o no hay usuarios clientes).</span>
+<span class="sd">        """</span>
+        <span class="n">cambios</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tipo</span><span class="p">,</span> <span class="n">campo</span> <span class="ow">in</span> <span class="p">((</span><span class="bp">cls</span><span class="o">.</span><span class="n">TIPO_COMPRA</span><span class="p">,</span> <span class="s1">'tasa_compra'</span><span class="p">),</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">TIPO_VENTA</span><span class="p">,</span> <span class="s1">'tasa_venta'</span><span class="p">)):</span>
+            <span class="n">valor_anterior</span> <span class="o">=</span> <span class="n">_a_tasa</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">anterior</span><span class="p">,</span> <span class="n">campo</span><span class="p">))</span>
+            <span class="n">valor_nuevo</span> <span class="o">=</span> <span class="n">_a_tasa</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">nueva</span><span class="p">,</span> <span class="n">campo</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">valor_anterior</span> <span class="o">!=</span> <span class="n">valor_nuevo</span><span class="p">:</span>
+                <span class="n">cambios</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tipo</span><span class="p">,</span> <span class="n">valor_anterior</span><span class="p">,</span> <span class="n">valor_nuevo</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cambios</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">notificaciones</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">cls</span><span class="p">(</span>
+                <span class="n">usuario_id</span><span class="o">=</span><span class="n">usuario_id</span><span class="p">,</span>
+                <span class="n">divisa_id</span><span class="o">=</span><span class="n">nueva</span><span class="o">.</span><span class="n">divisa_id</span><span class="p">,</span>
+                <span class="n">cotizacion</span><span class="o">=</span><span class="n">nueva</span><span class="p">,</span>
+                <span class="n">tipo_tasa</span><span class="o">=</span><span class="n">tipo</span><span class="p">,</span>
+                <span class="n">tasa_anterior</span><span class="o">=</span><span class="n">valor_anterior</span><span class="p">,</span>
+                <span class="n">tasa_nueva</span><span class="o">=</span><span class="n">valor_nuevo</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">usuario_id</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">usuarios_clientes</span><span class="p">()</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s1">'pk'</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tipo</span><span class="p">,</span> <span class="n">valor_anterior</span><span class="p">,</span> <span class="n">valor_nuevo</span> <span class="ow">in</span> <span class="n">cambios</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_create</span><span class="p">(</span><span class="n">notificaciones</span><span class="p">)</span></div>
+</div>
 
 </pre></div>
 

@@ -155,6 +155,40 @@ un error de Django informa con un mensaje ("Esta transacción no corresponde
 al cliente activo...") y redirige, ya que no hay nada que ocultarle al
 propio usuario sobre su otra transacción.
 
+Notificaciones de cambio de tasas
+---------------------------------
+
+Implementa la HU "Notificaciones sobre tasas de cambio" (GE-51). Cada vez
+que se guarda una nueva cotización de una divisa (por ejemplo desde
+``ActualizarCotizacionView``), ``apps.divisas.models.Cotizacion.save`` la
+compara con la última cotización que esa divisa tenía hasta ese momento:
+
+* Por cada tasa (compra o venta) cuyo valor **cambió**, se crea una
+  ``apps.divisas.models.NotificacionTasa`` para cada usuario cliente, con la
+  divisa, el tipo de tasa, la tasa anterior y la nueva. Si cambian ambas,
+  cada usuario recibe dos notificaciones, una por tipo.
+* Si la tasa se guarda con el **mismo valor** (``7300`` y ``7300.00`` se
+  consideran iguales), no se genera ninguna notificación; la cotización igual
+  queda en el historial.
+* La primera cotización de una divisa no notifica: no hay tasa anterior con
+  la que comparar.
+
+La cotización y sus notificaciones se guardan en una única transacción de
+base de datos. Como el rol ``cliente`` vive solo en la sesión de Keycloak,
+para elegir los destinatarios se considera "usuario cliente" a todo usuario
+activo asociado a al menos un ``Cliente`` activo, ya sea como usuario
+asociado o como titular (``NotificacionTasa.usuarios_clientes``).
+
+Un usuario con el rol ``cliente`` consulta sus notificaciones en
+``/divisas/notificaciones/`` (``apps.divisas.views.MisNotificacionesView``),
+de la más reciente a la más antigua y paginadas de a 20, y puede marcar
+cada una como leída (``apps.divisas.views.MarcarNotificacionLeidaView``,
+solo POST; las notificaciones ajenas responden 404). En la barra superior
+de todas las pantallas, una campana muestra la cantidad de notificaciones
+no leídas, calculada por el context processor
+``apps.divisas.context_processors.notificaciones_context``; al marcar una
+como leída deja de contarse.
+
 Pago de una transacción confirmada
 -----------------------------------
 
