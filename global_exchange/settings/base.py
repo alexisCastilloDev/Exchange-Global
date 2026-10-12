@@ -56,6 +56,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'apps.clientes.context_processors.cliente_activo_context',
                 'apps.authentication.context_processors.permisos_ui_context',
+                'apps.divisas.context_processors.notificaciones_context',
             ],
         },
     },

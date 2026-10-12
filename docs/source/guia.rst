@@ -8,7 +8,8 @@ Global Exchange es una aplicación Django organizada por dominios funcionales:
 
 * ``apps.authentication``: integración OIDC con Keycloak, roles de sesión,
   filtros de plantillas y auditoría de bajas.
-* ``apps.caja``: apertura de caja y saldo inicial por moneda de un cajero.
+* ``apps.caja``: apertura de caja, saldo inicial por moneda, operaciones de
+  ventanilla (compra y venta de divisas en efectivo) y arqueo de un cajero.
 * ``apps.clientes``: perfiles de clientes, selección del cliente activo,
   asociaciones de usuarios y métodos de pago.
 * ``apps.divisas``: catálogo de divisas, cotizaciones, historial y simulación.
@@ -153,6 +154,40 @@ realmente ajena); si es de otro cliente propio del mismo usuario, en vez de
 un error de Django informa con un mensaje ("Esta transacción no corresponde
 al cliente activo...") y redirige, ya que no hay nada que ocultarle al
 propio usuario sobre su otra transacción.
+
+Notificaciones de cambio de tasas
+---------------------------------
+
+Implementa la HU "Notificaciones sobre tasas de cambio" (GE-51). Cada vez
+que se guarda una nueva cotización de una divisa (por ejemplo desde
+``ActualizarCotizacionView``), ``apps.divisas.models.Cotizacion.save`` la
+compara con la última cotización que esa divisa tenía hasta ese momento:
+
+* Por cada tasa (compra o venta) cuyo valor **cambió**, se crea una
+  ``apps.divisas.models.NotificacionTasa`` para cada usuario cliente, con la
+  divisa, el tipo de tasa, la tasa anterior y la nueva. Si cambian ambas,
+  cada usuario recibe dos notificaciones, una por tipo.
+* Si la tasa se guarda con el **mismo valor** (``7300`` y ``7300.00`` se
+  consideran iguales), no se genera ninguna notificación; la cotización igual
+  queda en el historial.
+* La primera cotización de una divisa no notifica: no hay tasa anterior con
+  la que comparar.
+
+La cotización y sus notificaciones se guardan en una única transacción de
+base de datos. Como el rol ``cliente`` vive solo en la sesión de Keycloak,
+para elegir los destinatarios se considera "usuario cliente" a todo usuario
+activo asociado a al menos un ``Cliente`` activo, ya sea como usuario
+asociado o como titular (``NotificacionTasa.usuarios_clientes``).
+
+Un usuario con el rol ``cliente`` consulta sus notificaciones en
+``/divisas/notificaciones/`` (``apps.divisas.views.MisNotificacionesView``),
+de la más reciente a la más antigua y paginadas de a 20, y puede marcar
+cada una como leída (``apps.divisas.views.MarcarNotificacionLeidaView``,
+solo POST; las notificaciones ajenas responden 404). En la barra superior
+de todas las pantallas, una campana muestra la cantidad de notificaciones
+no leídas, calculada por el context processor
+``apps.divisas.context_processors.notificaciones_context``; al marcar una
+como leída deja de contarse.
 
 Pago de una transacción confirmada
 -----------------------------------
@@ -583,8 +618,10 @@ Apertura de caja
 
 Un usuario con rol ``cajero`` abre su caja en ``/caja/abrir/``
 (``apps.caja.views.AbrirCajaView``), registrando el saldo inicial de cada
-divisa activa del sistema (incluido PYG, si existe como divisa activa):
-``apps.caja.forms.AperturaCajaForm`` genera un campo por divisa en vez de
+divisa activa del sistema, incluido PYG (su existencia en el catálogo está
+garantizada por la migración de datos ``apps.divisas.0014_crear_divisa_pyg``,
+ver `Operaciones en ventanilla`_): ``apps.caja.forms.AperturaCajaForm``
+genera un campo por divisa en vez de
 pedirle al cajero que elija cuáles va a manejar, así que un saldo en cero
 simplemente significa que no maneja esa moneda en el turno. Al confirmar,
 se crea una ``apps.caja.models.Caja`` en estado "Abierta" —asociada al
@@ -596,16 +633,197 @@ validación en la vista, ``Caja.Meta.constraints`` agrega una restricción
 única parcial en la base de datos (solo entre filas con
 ``estado='ABIERTA'``) para que ni una carrera entre dos pestañas pueda
 crear una segunda. El panel del cajero (``/caja/``,
-``apps.caja.views.PanelCajaView``) muestra la caja abierta con el saldo
-inicial de cada moneda tal como se registró, o la invitación a abrir una si
-todavía no tiene ninguna.
+``apps.caja.views.PanelCajaView``) muestra la caja abierta, o la invitación
+a abrir una si todavía no tiene ninguna; al momento de abrir, antes de
+registrar cualquier operación, el saldo que muestra ese panel coincide con
+el saldo inicial recién contado (ver `Operaciones en ventanilla`_ para cómo
+cambia a partir de ahí).
 
-El cierre de caja, las operaciones de caja, el arqueo y los movimientos son
-HU futuras que no existen todavía en este código; ``Caja.estado`` ya
-contempla "Cerrada" para no tener que migrar el modelo de nuevo cuando se
-implementen. El acceso a cualquier función de caja está restringido al rol
-``cajero`` exclusivamente (sin excepción para administración ni análisis
-cambiario, a diferencia de otras pantallas de este sistema).
+El arqueo y el cierre de la caja (ver `Arqueo de caja`_ y `Cierre de caja`_
+más abajo) ya están implementados. El acceso a cualquier función de caja
+está restringido al rol ``cajero`` exclusivamente (sin excepción para
+administración ni análisis cambiario, a diferencia de otras pantallas de
+este sistema).
+
+Operaciones en ventanilla
+-------------------------
+
+Implementa la HU "Gestión de operaciones en ventanilla": con la caja ya
+abierta, el cajero registra en ``/caja/operaciones/compra/`` o
+``/caja/operaciones/venta/`` (``apps.caja.views.RegistrarOperacionVentanillaView``)
+una compra o venta de divisas en efectivo con un cliente de mostrador, usando
+``apps.caja.forms.OperacionVentanillaForm`` para validar la divisa (activa,
+cotizada, nunca PYG) y el monto (mayor que cero, numérico).
+
+El cálculo de tasa y comisión **reutiliza** la misma función que ya usa el
+flujo online del cliente, ``apps.divisas.views._calcular_importe_operacion``
+(ver `Flujo operativo de divisas`_), en vez de duplicar esa lógica. La única
+particularidad es que ``apps.caja.models.OperacionVentanilla.TIPO_COMPRA`` y
+``TIPO_VENTA`` están escritos desde la perspectiva de la casa de cambio, al
+revés de ``CalculoOperacion.TIPO_COMPRA``/``TIPO_VENTA`` (escritos desde la
+perspectiva del cliente):
+
+* **Compra** (la casa le compra divisa al cliente): equivale a una "Venta"
+  para ``_calcular_importe_operacion``. El cliente entrega la divisa
+  (ingresa a la caja) y el cajero entrega guaraníes (egresa).
+* **Venta** (la casa le vende divisa al cliente): equivale a una "Compra"
+  para ``_calcular_importe_operacion``. El cliente entrega guaraníes
+  (ingresa) y el cajero entrega la divisa (egresa).
+
+Esta inversión está documentada explícitamente en el docstring de
+``OperacionVentanilla`` porque es, a propósito, lo contrario de lo que el
+nombre sugiere a primera vista.
+
+El saldo de la caja **no se guarda como un campo mutable**: ``Caja.saldo_actual``
+lo deriva, de forma perezosa, del saldo inicial (``SaldoInicialCaja``) más los
+ingresos y menos los egresos de esa moneda en las operaciones ya registradas,
+siguiendo el mismo patrón de estado computado que ``estado_efectivo``/
+``ultima_cotizacion`` usan en el resto del sistema. Antes de registrar la
+operación, la vista verifica que la caja tenga saldo suficiente de la moneda
+que el cajero debe entregar —la divisa en una venta, guaraníes en una
+compra— y, si no alcanza, la rechaza informando el saldo disponible y el
+monto necesario, sin crear nada.
+
+Sin una caja abierta, tanto el formulario como el registro se rechazan,
+redirigiendo a abrir una primero. Al guardarse, la operación queda vinculada
+a la caja activa y al cajero (``OperacionVentanilla.caja``/``cajero``), con
+la tasa, la comisión y los montos de ambas monedas (``monto_divisa``,
+``monto_pyg``). El panel del cajero (``/caja/``) muestra el saldo actual por
+moneda y las últimas operaciones registradas en el turno.
+
+Una compra necesita, además, poder valuar guaraníes contra una ``Divisa`` de
+código ``PYG`` real del catálogo. PYG es la moneda local/base del sistema —se
+cotiza y liquida todo contra ella, nunca se la ofrece como una divisa
+operable más (``DivisaSelect``/``CalculoOperacionForm``/
+``OperacionVentanillaForm`` la excluyen explícitamente)—, así que su
+existencia **no** depende de que un administrador la dé de alta a mano desde
+"Divisas → Nueva divisa" como si fuera una divisa extranjera: la migración de
+datos ``apps.divisas.0014_crear_divisa_pyg`` la garantiza en el catálogo desde
+el primer ``migrate``. Por el mismo motivo, ``TasasVigentesListView`` la
+excluye de la pantalla de tasas vigentes (nunca tiene una cotización propia
+que mostrar ahí). Una venta no tiene esta dependencia: solo entrega la divisa
+extranjera, nunca necesita resolver la fila de PYG.
+
+Movimientos extraordinarios de caja
+------------------------------------
+
+Implementa la HU "Gestión de movimientos extraordinarios de Caja": con la caja
+ya abierta, el cajero registra en ``/caja/movimientos/ingreso/`` o
+``/caja/movimientos/egreso/`` (``apps.caja.views.RegistrarMovimientoExtraordinarioView``)
+un ingreso o egreso de efectivo que **no** proviene de una compra o venta de
+divisas —por ejemplo, un refuerzo de caja o un pago de gastos de oficina—,
+usando ``apps.caja.forms.MovimientoExtraordinarioForm`` para validar la
+divisa, el monto (mayor que cero, numérico) y el motivo.
+
+A diferencia de ``OperacionVentanillaForm`` (ver `Operaciones en
+ventanilla`_), este formulario no excluye PYG ni ninguna divisa sin
+cotización vigente: un movimiento extraordinario no calcula ninguna tasa ni
+comisión, así que puede registrarse en cualquier divisa activa del sistema.
+
+``Caja.saldo_actual`` suma los ingresos y resta los egresos extraordinarios
+de cada moneda exactamente igual que ya hace con las operaciones de
+ventanilla (Criterio 1), de modo que ambos tipos de movimiento conviven en el
+mismo saldo derivado. Antes de registrar un egreso, la vista verifica que la
+caja tenga saldo suficiente de esa divisa y, si no alcanza, lo rechaza
+informando el saldo disponible y el monto necesario, sin crear nada
+(Criterio 2); un ingreso, en cambio, nunca se rechaza por saldo. El motivo es
+obligatorio: un valor vacío o compuesto solo de espacios se rechaza con el
+mismo criterio que ``apps.authentication.forms.CausaBajaForm`` usa para la
+causa de una baja lógica (Criterio 3).
+
+Sin una caja abierta, tanto el formulario como el registro se rechazan,
+redirigiendo a abrir una primero, igual que el resto de las funciones de
+caja. Al guardarse, el movimiento queda vinculado a la caja activa y al
+cajero (``MovimientoExtraordinario.caja``/``cajero``), con el tipo, la
+divisa, el monto y el motivo. En el panel del cajero (``/caja/``), los
+movimientos extraordinarios se muestran en su propia tabla ("Últimos
+movimientos extraordinarios"), separada de "Últimas operaciones de
+ventanilla", para que nunca se confundan con una operación cambiaria en
+ningún listado o reporte de la caja (Criterio 4).
+
+Arqueo de caja
+--------------
+
+Implementa la HU "Arqueo de Caja": con la caja ya abierta, el cajero inicia
+un arqueo en ``/caja/arqueo/`` (``apps.caja.views.IniciarArqueoCajaView``),
+contando físicamente cuánto tiene de cada divisa activa **ya cotizada**
+(incluido PYG, siempre cotizado con tasa 1:1) — mismo criterio exacto que
+``AperturaCajaForm`` usa para el saldo inicial, hasta reutilizar el mismo
+mensaje de aviso (``apps.caja.views._avisar_divisas_sin_cotizar``):
+``apps.caja.forms.ArqueoCajaForm`` genera un campo ``contado_<divisa.pk>``
+por cada divisa cotizada, y deja **fuera** cualquier divisa activa sin
+ninguna cotización vigente. Sin una tasa de referencia no hay forma
+confiable de interpretar esa moneda en un arqueo, así que ni siquiera se
+ofrece el campo para contarla — a diferencia de la ventanilla (donde una
+divisa sin cotizar simplemente no se puede operar), acá se trata igual que
+en la apertura de caja, incluido el mensaje pidiendo que un analista
+cambiario o un administrador la cotice primero.
+
+Al enviar el formulario, por cada divisa cotizada el sistema congela en un
+``apps.caja.models.DetalleArqueoCaja`` tanto lo contado como
+``Caja.saldo_actual`` en ese instante, y calcula la diferencia entre ambos
+(Criterio 1): positiva es un sobrante, negativa un faltante, cero significa
+que coinciden exactamente.
+
+Una diferencia distinta de cero en cualquier divisa **nunca** rechaza el
+arqueo ni bloquea la caja: se guarda igual, sin impedir que el cajero sigua
+operando con compras, ventas u otro arqueo después (Criterio 2). No hay
+ninguna validación de "la diferencia no puede ser distinta de cero" en
+``ArqueoCajaForm`` — lo único que rechaza es un monto negativo o no numérico,
+igual que el resto de los formularios de caja.
+
+Cada ``apps.caja.models.ArqueoCaja`` queda asociado a la caja y al cajero que
+lo registró, con la fecha y hora (``creado_en``) y, por cada divisa, el
+monto contado y el saldo del sistema en ese momento (Criterio 3). Ambos
+valores quedan **congelados** en ``DetalleArqueoCaja``: no se recalculan
+después, así que un arqueo viejo sigue mostrando el saldo que el sistema
+tenía en ese instante aunque ``Caja.saldo_actual`` haya cambiado desde
+entonces con operaciones nuevas. Queda disponible para consulta posterior en
+``apps.caja.views.DetalleArqueoCajaView`` (``/caja/arqueo/<uuid>/``) y en el
+listado ``apps.caja.views.HistorialArqueosCajaView``
+(``/caja/arqueo/historial/``), ambos restringidos al cajero que lo registró
+— el mismo alcance que el resto de las funciones de caja, donde cada cajero
+ve únicamente lo suyo.
+
+Cierre de caja
+--------------
+
+Implementa la HU "Cierre de Caja": con la caja ya abierta, el cajero inicia
+el cierre en ``/caja/cerrar/`` (``apps.caja.views.CerrarCajaView``), que
+muestra primero un resumen completo del turno (Criterio 1) — por cada
+moneda contada al abrir, el saldo inicial y el saldo final
+(``Caja.saldo_actual``, que ya incluye lo registrado en ventanilla y en
+movimientos extraordinarios), más el detalle de las operaciones de
+ventanilla, los movimientos extraordinarios y los arqueos realizados en el
+turno — antes de pedir la confirmación.
+
+Si el turno no tiene ningún arqueo registrado, el resumen muestra una
+advertencia y agrega una casilla de confirmación explícita; sin marcarla,
+el cierre se rechaza (Criterio 3). Al confirmar, ``Caja.cerrar`` persiste
+la transición a "Cerrada" fijando ``cerrada_en`` con la fecha y hora
+actuales (Criterio 2).
+
+Ninguna de las vistas de registro de este módulo necesitó ningún cambio
+para dejar de aceptar operaciones sobre una caja cerrada: ``AbrirCajaView``,
+``RegistrarOperacionVentanillaView``, ``RegistrarMovimientoExtraordinarioView``
+e ``IniciarArqueoCajaView`` ya resolvían "la caja abierta del cajero"
+filtrando por ``estado=Caja.ESTADO_ABIERTA`` desde que existen; una vez
+cerrada, esa misma consulta deja de encontrarla y cada una redirige con su
+mensaje habitual de que hace falta una caja abierta. Por el mismo motivo,
+una caja cerrada queda, en los hechos, inmutable: como nada puede volver a
+escribirle una fila nueva, su ``saldo_actual`` ya no cambia, así que no fue
+necesario "congelar" el balance final en ningún campo aparte (a diferencia
+de ``DetalleArqueoCaja``, que sí necesita congelarlo porque la caja sigue
+operando después de cada arqueo).
+
+Una vez cerrada, el cajero puede abrir un turno nuevo sin que la
+restricción única de ``Caja.Meta.constraints`` lo bloquee (esa restricción
+solo exige unicidad entre cajas "Abierta", nunca entre una "Cerrada" y una
+nueva). El listado ``apps.caja.views.HistorialCajasView``
+(``/caja/historial/``) muestra todas las cajas del cajero, abiertas y
+cerradas, con el período en que cada una estuvo abierta y su balance por
+moneda (Criterio 4); es una pantalla de solo lectura, sin ninguna acción
+para modificar lo ya registrado.
 
 Acceso a esta documentación desde el sistema
 ----------------------------------------------

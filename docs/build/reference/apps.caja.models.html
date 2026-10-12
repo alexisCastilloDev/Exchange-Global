@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -63,6 +64,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -161,14 +166,20 @@
 <dt class="sig sig-object py" id="apps.caja.models.Caja">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Caja</span></span><a class="reference internal" href="../_modules/apps/caja/models.html#Caja"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.models.Caja" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
-<p>Representa el turno de caja abierto por un cajero.</p>
+<p>Representa el turno de caja abierto (o ya cerrado) por un cajero.</p>
 <p>Implementa la HU «Apertura de Caja»: se crea siempre en estado
 «Abierta», asociada al cajero que la abre y a la fecha y hora de
-apertura (<code class="docutils literal notranslate"><span class="pre">abierta_en</span></code>). El cierre, las operaciones, el arqueo y los
-movimientos de una caja son HU futuras que todavía no existen en este
-código; por eso <code class="docutils literal notranslate"><span class="pre">estado</span></code> ya contempla «Cerrada» y <code class="docutils literal notranslate"><span class="pre">cerrada_en</span></code> desde
-ahora (para no tener que migrar el modelo de nuevo más adelante), pero
-ninguna vista de este archivo los usa todavía.</p>
+apertura (<code class="docutils literal notranslate"><span class="pre">abierta_en</span></code>). El cierre lo implementa la HU «Cierre de
+Caja» (ver <code class="docutils literal notranslate"><span class="pre">cerrar</span></code>): una vez «Cerrada», con <code class="docutils literal notranslate"><span class="pre">cerrada_en</span></code> fijado,
+ninguna de las vistas de registro de este módulo (ventanilla,
+movimientos extraordinarios, arqueo) vuelve a encontrarla, porque todas
+resuelven la caja abierta del cajero filtrando por
+<code class="docutils literal notranslate"><span class="pre">estado=ESTADO_ABIERTA</span></code> — cerrarla alcanza para que dejen de aceptar
+nuevas operaciones sobre ella, sin que ninguna necesite un chequeo
+adicional. Por eso una caja cerrada queda, en los hechos, inmutable:
+como nada puede agregarle una fila nueva, su <code class="docutils literal notranslate"><span class="pre">saldo_actual</span></code> ya no
+vuelve a cambiar, así que no hace falta «congelarlo» en un campo
+aparte para que el historial lo consulte más adelante.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="apps.caja.models.Caja.DoesNotExist">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.caja.models.Caja.DoesNotExist" title="Link to this definition"></a></dt>
@@ -210,10 +221,35 @@ object the first time, the query is executed.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.Caja.arqueos">
+<span class="sig-name descname"><span class="pre">arqueos</span></span><a class="headerlink" href="#apps.caja.models.Caja.arqueos" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.caja.models.Caja.cerrada_en">
 <span class="sig-name descname"><span class="pre">cerrada_en</span></span><a class="headerlink" href="#apps.caja.models.Caja.cerrada_en" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.Caja.cerrar">
+<span class="sig-name descname"><span class="pre">cerrar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/models.html#Caja.cerrar"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.models.Caja.cerrar" title="Link to this definition"></a></dt>
+<dd><p>Cierra esta caja: pasa a «Cerrada» y fija la fecha y hora actuales.</p>
+<p>Implementa el Criterio 2 de «Cierre de Caja». No valida nada por sí
+sola (eso lo resuelve <code class="docutils literal notranslate"><span class="pre">apps.caja.views.CerrarCajaView</span></code> antes de
+llamarla, incluida la confirmación explícita si el turno no tuvo
+ningún arqueo); este método solo persiste la transición.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -246,9 +282,66 @@ object the first time, the query is executed.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.Caja.movimientos_extraordinarios">
+<span class="sig-name descname"><span class="pre">movimientos_extraordinarios</span></span><a class="headerlink" href="#apps.caja.models.Caja.movimientos_extraordinarios" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.caja.models.Caja.objects">
 <span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.caja.models.Caja.objects" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.Caja.operaciones">
+<span class="sig-name descname"><span class="pre">operaciones</span></span><a class="headerlink" href="#apps.caja.models.Caja.operaciones" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.Caja.saldo_actual">
+<span class="sig-name descname"><span class="pre">saldo_actual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">divisa</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/models.html#Caja.saldo_actual"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.models.Caja.saldo_actual" title="Link to this definition"></a></dt>
+<dd><p>Calcula el saldo actual de una moneda en esta caja.</p>
+<p>No se guarda como un campo mutable que haya que mantener
+sincronizado en cada operación: se deriva, de forma perezosa, del
+saldo inicial registrado al abrir (<code class="docutils literal notranslate"><span class="pre">SaldoInicialCaja</span></code>) más los
+ingresos y menos los egresos de esa moneda, tanto en las
+operaciones de ventanilla (<code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code>) como en los
+movimientos extraordinarios (<code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario</span></code>) ya
+registrados — el mismo patrón de estado computado que ya usan
+<code class="docutils literal notranslate"><span class="pre">CalculoOperacion.estado_efectivo</span></code>/<code class="docutils literal notranslate"><span class="pre">Divisa.ultima_cotizacion</span></code> en
+vez de columnas que haya que ir actualizando a mano.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>divisa</strong> (<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa" title="apps.divisas.models.Divisa"><em>apps.divisas.models.Divisa</em></a>) – La moneda a consultar
+(incluye PYG).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El saldo actual de esa moneda en esta caja.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>decimal.Decimal</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.caja.models.Caja.saldos_iniciales">
@@ -290,9 +383,11 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SaldoInicialCaja</span></span><a class="reference internal" href="../_modules/apps/caja/models.html#SaldoInicialCaja"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.models.SaldoInicialCaja" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Saldo inicial de una moneda puntual, registrado al abrir una caja.</p>
-<p>Una fila por cada divisa activa que el cajero contó al momento de abrir
-(incluido PYG, si existe como divisa activa): el inventario completo de
-la apertura es la colección de estas filas asociadas a una <code class="docutils literal notranslate"><span class="pre">Caja</span></code>.</p>
+<p>Una fila por cada divisa activa que el cajero contó al momento de abrir,
+incluido PYG (su existencia en el catálogo está garantizada por la
+migración de datos <code class="docutils literal notranslate"><span class="pre">apps.divisas.0014_crear_divisa_pyg</span></code>, ya que es la
+moneda local/base del sistema): el inventario completo de la apertura
+es la colección de estas filas asociadas a una <code class="docutils literal notranslate"><span class="pre">Caja</span></code>.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="apps.caja.models.SaldoInicialCaja.DoesNotExist">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.caja.models.SaldoInicialCaja.DoesNotExist" title="Link to this definition"></a></dt>
@@ -365,6 +460,586 @@ object the first time, the query is executed.</p>
 <dt class="sig sig-object py" id="apps.caja.models.SaldoInicialCaja.objects">
 <span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.caja.models.SaldoInicialCaja.objects" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">OperacionVentanilla</span></span><a class="reference internal" href="../_modules/apps/caja/models.html#OperacionVentanilla"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.models.OperacionVentanilla" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<p>Registra una compra o venta de divisas en efectivo realizada en ventanilla.</p>
+<p>Implementa la HU «Gestión de operaciones en ventanilla»: reutiliza el
+mismo cálculo de cotización que ya usa el flujo online del cliente
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views._calcular_importe_operacion</span></code>, ver
+<code class="docutils literal notranslate"><span class="pre">apps.caja.views.RegistrarOperacionVentanillaView</span></code>) en vez de
+duplicarlo, pero <code class="docutils literal notranslate"><span class="pre">TIPO_COMPRA</span></code>/<code class="docutils literal notranslate"><span class="pre">TIPO_VENTA</span></code> acá significan lo
+<em>opuesto</em> a <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.CalculoOperacion.TIPO_COMPRA</span></code>/
+<code class="docutils literal notranslate"><span class="pre">TIPO_VENTA</span></code>, que están escritos desde la perspectiva del cliente. En
+esta HU los nombres son desde la perspectiva de la casa de cambio:</p>
+<ul class="simple">
+<li><p>«Compra»: la casa le compra divisa al cliente. El cliente entrega la
+divisa (ingresa a la caja) y el cajero entrega guaraníes (egresa).
+Equivale a una «Venta» para <code class="docutils literal notranslate"><span class="pre">_calcular_importe_operacion</span></code>.</p></li>
+<li><p>«Venta»: la casa le vende divisa al cliente. El cliente entrega
+guaraníes (ingresa) y el cajero entrega la divisa (egresa). Equivale
+a una «Compra» para <code class="docutils literal notranslate"><span class="pre">_calcular_importe_operacion</span></code>.</p></li>
+</ul>
+<p>Es exactamente la lectura que usa el Criterio 3 de la HU al describir
+qué moneda debe entregar el cajero en cada caso («la divisa en una
+venta, guaraníes en una compra»).</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.NotUpdated">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotUpdated</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.NotUpdated" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectNotUpdated</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseError</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.TIPO_CHOICES">
+<span class="sig-name descname"><span class="pre">TIPO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('COMPRA',</span> <span class="pre">'Compra</span> <span class="pre">de</span> <span class="pre">divisas</span> <span class="pre">(la</span> <span class="pre">casa</span> <span class="pre">compra)'),</span> <span class="pre">('VENTA',</span> <span class="pre">'Venta</span> <span class="pre">de</span> <span class="pre">divisas</span> <span class="pre">(la</span> <span class="pre">casa</span> <span class="pre">vende)')]</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.TIPO_CHOICES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.TIPO_COMPRA">
+<span class="sig-name descname"><span class="pre">TIPO_COMPRA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'COMPRA'</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.TIPO_COMPRA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.TIPO_VENTA">
+<span class="sig-name descname"><span class="pre">TIPO_VENTA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'VENTA'</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.TIPO_VENTA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.caja">
+<span class="sig-name descname"><span class="pre">caja</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.caja" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.caja_id">
+<span class="sig-name descname"><span class="pre">caja_id</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.caja_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.cajero">
+<span class="sig-name descname"><span class="pre">cajero</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.cajero" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.cajero_id">
+<span class="sig-name descname"><span class="pre">cajero_id</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.cajero_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.comision">
+<span class="sig-name descname"><span class="pre">comision</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.comision" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.comision_porcentaje">
+<span class="sig-name descname"><span class="pre">comision_porcentaje</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.comision_porcentaje" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.creado_en">
+<span class="sig-name descname"><span class="pre">creado_en</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.creado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.divisa">
+<span class="sig-name descname"><span class="pre">divisa</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.divisa" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.divisa_id">
+<span class="sig-name descname"><span class="pre">divisa_id</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.divisa_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.get_next_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_next_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.get_next_by_creado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.get_previous_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_previous_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.get_previous_by_creado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.get_tipo_display">
+<span class="sig-name descname"><span class="pre">get_tipo_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">tipo&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.get_tipo_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.monto_divisa">
+<span class="sig-name descname"><span class="pre">monto_divisa</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.monto_divisa" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.monto_pyg">
+<span class="sig-name descname"><span class="pre">monto_pyg</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.monto_pyg" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.tasa_aplicada">
+<span class="sig-name descname"><span class="pre">tasa_aplicada</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.tasa_aplicada" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.tipo">
+<span class="sig-name descname"><span class="pre">tipo</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.tipo" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MovimientoExtraordinario</span></span><a class="reference internal" href="../_modules/apps/caja/models.html#MovimientoExtraordinario"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<p>Registra un ingreso o egreso de caja que no proviene de una operación cambiaria.</p>
+<p>Implementa la HU «Gestión de movimientos extraordinarios de Caja»: a
+diferencia de <code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> (que siempre representa una
+compra o venta de divisas con tasa y comisión calculadas), un
+movimiento extraordinario no triangula ninguna cotización — es un
+ingreso o egreso de efectivo puntual, con su <code class="docutils literal notranslate"><span class="pre">motivo</span></code> como único dato
+que lo explica (por ejemplo, un retiro para gastos de oficina, o un
+refuerzo de caja). Por eso no excluye PYG ni ninguna divisa sin
+cotización vigente como sí hace <code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm</span></code>: no hace
+falta ninguna tasa para registrar un monto en una moneda puntual.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> suma los ingresos y resta los egresos de este
+modelo exactamente igual que ya hace con <code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code>
+(Criterio 1), y <code class="docutils literal notranslate"><span class="pre">apps.caja.views.RegistrarMovimientoExtraordinarioView</span></code>
+rechaza un egreso mayor al saldo disponible de esa moneda (Criterio 2)
+con el mismo criterio que ya usa <code class="docutils literal notranslate"><span class="pre">RegistrarOperacionVentanillaView</span></code>
+para una compra o venta. El campo <code class="docutils literal notranslate"><span class="pre">motivo</span></code> es obligatorio a nivel de
+modelo y de formulario (Criterio 3). En cualquier listado o reporte de
+la caja, un movimiento extraordinario se distingue de una operación
+cambiaria por aparecer en su propia sección/tabla, nunca mezclado en el
+listado de <code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> (Criterio 4; ver
+<code class="docutils literal notranslate"><span class="pre">apps.caja.views.PanelCajaView</span></code> y la plantilla <code class="docutils literal notranslate"><span class="pre">panel_caja.html</span></code>).</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.NotUpdated">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotUpdated</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.NotUpdated" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectNotUpdated</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseError</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.TIPO_CHOICES">
+<span class="sig-name descname"><span class="pre">TIPO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('INGRESO',</span> <span class="pre">'Ingreso</span> <span class="pre">extraordinario'),</span> <span class="pre">('EGRESO',</span> <span class="pre">'Egreso</span> <span class="pre">extraordinario')]</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.TIPO_CHOICES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.TIPO_EGRESO">
+<span class="sig-name descname"><span class="pre">TIPO_EGRESO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'EGRESO'</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.TIPO_EGRESO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.TIPO_INGRESO">
+<span class="sig-name descname"><span class="pre">TIPO_INGRESO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INGRESO'</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.TIPO_INGRESO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.caja">
+<span class="sig-name descname"><span class="pre">caja</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.caja" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.caja_id">
+<span class="sig-name descname"><span class="pre">caja_id</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.caja_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.cajero">
+<span class="sig-name descname"><span class="pre">cajero</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.cajero" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.cajero_id">
+<span class="sig-name descname"><span class="pre">cajero_id</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.cajero_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.creado_en">
+<span class="sig-name descname"><span class="pre">creado_en</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.creado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.divisa">
+<span class="sig-name descname"><span class="pre">divisa</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.divisa" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.divisa_id">
+<span class="sig-name descname"><span class="pre">divisa_id</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.divisa_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.get_next_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_next_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.get_next_by_creado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.get_previous_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_previous_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.get_previous_by_creado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.get_tipo_display">
+<span class="sig-name descname"><span class="pre">get_tipo_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">tipo&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.get_tipo_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.monto">
+<span class="sig-name descname"><span class="pre">monto</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.monto" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.motivo">
+<span class="sig-name descname"><span class="pre">motivo</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.motivo" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.MovimientoExtraordinario.tipo">
+<span class="sig-name descname"><span class="pre">tipo</span></span><a class="headerlink" href="#apps.caja.models.MovimientoExtraordinario.tipo" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ArqueoCaja</span></span><a class="reference internal" href="../_modules/apps/caja/models.html#ArqueoCaja"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.models.ArqueoCaja" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<p>Registra la comparación, en un momento puntual, entre el saldo del sistema y lo contado a mano.</p>
+<p>Implementa la HU «Arqueo de Caja»: el cajero cuenta físicamente cuánto
+tiene de cada moneda y el sistema lo compara contra
+<code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> en ese instante (ver
+<code class="docutils literal notranslate"><span class="pre">apps.caja.views.IniciarArqueoCajaView</span></code>). Ambos valores quedan
+congelados por divisa en <code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja</span></code> — no se recalculan
+después — para que el registro sea fiel a lo que realmente se comparó
+ese día, aunque el saldo de la caja siga cambiando con operaciones
+posteriores (Criterio 3: «disponible para consulta posterior»).</p>
+<p>Una diferencia distinta de cero en cualquier divisa (sobrante o
+faltante) nunca impide registrar el arqueo ni sigue bloqueando la caja
+después: solo queda constancia de ella (Criterio 2).</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.NotUpdated">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotUpdated</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.NotUpdated" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectNotUpdated</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseError</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.caja">
+<span class="sig-name descname"><span class="pre">caja</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.caja" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.caja_id">
+<span class="sig-name descname"><span class="pre">caja_id</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.caja_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.cajero">
+<span class="sig-name descname"><span class="pre">cajero</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.cajero" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.cajero_id">
+<span class="sig-name descname"><span class="pre">cajero_id</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.cajero_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.creado_en">
+<span class="sig-name descname"><span class="pre">creado_en</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.creado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.detalles">
+<span class="sig-name descname"><span class="pre">detalles</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.detalles" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.get_next_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_next_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.get_next_by_creado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.get_previous_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_previous_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.get_previous_by_creado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.caja.models.ArqueoCaja.tiene_diferencias">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tiene_diferencias</span></span><a class="headerlink" href="#apps.caja.models.ArqueoCaja.tiene_diferencias" title="Link to this definition"></a></dt>
+<dd><p>Indica si algún detalle de este arqueo tiene una diferencia distinta de cero.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DetalleArqueoCaja</span></span><a class="reference internal" href="../_modules/apps/caja/models.html#DetalleArqueoCaja"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<p>Compara, para una moneda puntual, el saldo del sistema contra lo contado en un arqueo.</p>
+<p>Una fila por cada divisa activa incluida en un <code class="docutils literal notranslate"><span class="pre">ArqueoCaja</span></code>.
+<code class="docutils literal notranslate"><span class="pre">saldo_sistema</span></code> y <code class="docutils literal notranslate"><span class="pre">monto_contado</span></code> quedan congelados en el momento
+del arqueo; <code class="docutils literal notranslate"><span class="pre">diferencia</span></code> se deriva de esos dos valores (positiva:
+sobrante; negativa: faltante; cero: coincide exacto), sin necesidad de
+guardarla por separado.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.NotUpdated">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotUpdated</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.NotUpdated" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectNotUpdated</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseError</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.arqueo">
+<span class="sig-name descname"><span class="pre">arqueo</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.arqueo" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.arqueo_id">
+<span class="sig-name descname"><span class="pre">arqueo_id</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.arqueo_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.diferencia">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">diferencia</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.diferencia" title="Link to this definition"></a></dt>
+<dd><p>Diferencia entre lo contado y el saldo del sistema.</p>
+<p>Positiva indica un sobrante (hay más de lo que el sistema esperaba);
+negativa, un faltante; cero, que coinciden exactamente.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.divisa">
+<span class="sig-name descname"><span class="pre">divisa</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.divisa" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.divisa_id">
+<span class="sig-name descname"><span class="pre">divisa_id</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.divisa_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.monto_contado">
+<span class="sig-name descname"><span class="pre">monto_contado</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.monto_contado" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.DetalleArqueoCaja.saldo_sistema">
+<span class="sig-name descname"><span class="pre">saldo_sistema</span></span><a class="headerlink" href="#apps.caja.models.DetalleArqueoCaja.saldo_sistema" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
 
 </dd></dl>
 

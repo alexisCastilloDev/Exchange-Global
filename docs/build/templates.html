@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -63,6 +64,10 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -528,6 +533,15 @@ Sphinx.</p>
 {% extends 'base.html' %}
 </pre></div>
 </div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Notificaciones de cambio de tasas del usuario cliente (HU GE-51), de la más reciente a la más antigua.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_no_leidas</span>
+<span class="cm">(este último lo aporta apps.divisas.context_processors.notificaciones_context).</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
 </section>
 <section id="caja">
 <h2>Caja<a class="headerlink" href="#caja" title="Link to this heading"></a></h2>
@@ -541,12 +555,77 @@ Sphinx.</p>
 </pre></div>
 </div>
 <div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
-<span class="cm">Panel del cajero: muestra la caja abierta y su saldo inicial por moneda.</span>
+<span class="cm">Resumen del turno antes de confirmar el cierre de la caja abierta del cajero.</span>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
-<span class="cm">Contexto esperado: caja (None si no tiene ninguna abierta).</span>
+<span class="cm">Contexto esperado: caja, saldos (lista de tuplas (divisa, saldo_inicial,</span>
+<span class="cm">saldo_final)), operaciones, movimientos_extraordinarios, arqueos, tiene_arqueos.</span>
 <span class="cm">--&gt;</span>
-{% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Panel del cajero: muestra la caja abierta, su saldo inicial y actual por</span>
+<span class="cm">moneda, los accesos para registrar operaciones de ventanilla y movimientos</span>
+<span class="cm">extraordinarios, y el historial reciente de cada uno por separado.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: caja (None si no tiene ninguna abierta), saldos_actuales</span>
+<span class="cm">(lista de tuplas (divisa, saldo)), operaciones (últimas operaciones de</span>
+<span class="cm">ventanilla de la caja), movimientos_extraordinarios (últimos ingresos/egresos</span>
+<span class="cm">extraordinarios de la caja).</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario de registro de una operación de ventanilla (compra o venta de</span>
+<span class="cm">divisas en efectivo) para la caja abierta del cajero.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: form, tipo ('COMPRA' o 'VENTA'), caja.</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario de registro de un movimiento extraordinario de caja (ingreso o</span>
+<span class="cm">egreso que no proviene de una operación cambiaria) para la caja abierta del cajero.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: form, tipo ('INGRESO' o 'EGRESO'), caja.</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Formulario de arqueo de caja: monto físico contado por cada divisa activa.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: form, caja.</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Detalle de un arqueo de caja ya registrado: fecha, hora, cajero y el</span>
+<span class="cm">saldo del sistema frente a lo contado, por moneda.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: arqueo.</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Historial de arqueos ya registrados por el cajero, para consulta posterior.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: arqueos.</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Historial de cajas (abiertas y cerradas) del cajero, con su balance final por moneda.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: filas (lista de diccionarios {caja, saldos}, donde</span>
+<span class="cm">saldos es una lista de tuplas (divisa, saldo_actual)).</span>
+<span class="cm">--&gt;</span>
 </pre></div>
 </div>
 </section>

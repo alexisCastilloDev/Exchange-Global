@@ -26,7 +26,15 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 10. [Sesión 10 — 09/10/2026 — Apertura de Caja](#sesión-10--09102026--apertura-de-caja)
 11. [Sesión 11 — 09/10/2026 — GE-22 — Pago con tarjeta vía Stripe](#sesión-11--09102026--ge-22--pago-con-tarjeta-vía-stripe)
 12. [Sesión 12 — 11/10/2026 — Pago por transferencia bancaria vía SIPAP](#sesión-12--11102026--pago-por-transferencia-bancaria-vía-sipap)
-13. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+13. [Sesión 13 — 11/10/2026 — sipap-sim y billeteras digitales](#sesión-13--11102026--sipap-sim-y-billeteras-digitales)
+14. [Sesión 14 — 11/10/2026 — GE-19 — Validación real de cuentas en "Métodos de pago"](#sesión-14--11102026--validación-real-de-cuentas-en-métodos-de-pago-ge-19)
+15. [Sesión 15 — 12/10/2026 — sipap-sim reconoce la cuenta del método de pago elegido](#sesión-15--12102026--sipap-sim-reconoce-la-cuenta-del-método-de-pago-elegido)
+16. [Sesión 16 — 12/10/2026 — sipap-sim deja de pedir el monto a transferir](#sesión-16--12102026--sipap-sim-deja-de-pedir-el-monto-a-transferir)
+17. [Sesión 17 — 11/10/2026 — Gestión de operaciones en ventanilla](#sesión-17--11102026--gestión-de-operaciones-en-ventanilla)
+18. [Sesión 18 — 11/10/2026 — Arqueo de Caja](#sesión-18--11102026--arqueo-de-caja)
+19. [Sesión 19 — 12/10/2026 — GE-54 — Movimientos extraordinarios de Caja](#sesión-19--12102026--ge-54--gestión-de-movimientos-extraordinarios-de-caja)
+20. [Sesión 20 — 12/10/2026 — GE-56 — Cierre de Caja](#sesión-20--12102026--ge-56--cierre-de-caja)
+21. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -2294,6 +2302,584 @@ inflado por `POST` (que ya no es posible).
   (que es donde ya estaba probado). Si en algún momento hiciera falta una demostración de punta a
   punta para QA manual, haría falta un mecanismo separado (p. ej. un comando de gestión o un endpoint
   de sipap-sim pensado explícitamente para pruebas, distinto de la pantalla que ve el cliente).
+
+## Sesión 17 — 11/10/2026 — Gestión de operaciones en ventanilla
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Gestión de operaciones en ventanilla
+**Rama:** `develop`
+**Participantes:** Ruth, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Gestión de operaciones en ventanilla", con tests, docstrings, Sphinx
+actualizado y esta documentación de la conversación.
+
+> Como cajero quiero registrar las operaciones de compra y venta de divisas realizadas en
+> efectivo para mantener actualizado el saldo de la caja.
+
+Criterios de aceptación:
+
+1. Dado que tengo una caja abierta, cuando registro una operación de compra o venta en
+   efectivo (reutilizando el cálculo de cotización ya existente), entonces el saldo de la
+   caja se actualiza según la divisa y el sentido de la operación: ingresa lo que el cliente
+   entrega y egresa lo que el cajero entrega.
+2. Dado que no tengo una caja abierta, cuando intento registrar una operación de ventanilla,
+   entonces el sistema rechaza la acción e indica que debo abrir una caja primero.
+3. Dado que el saldo de la moneda que el cajero debe entregar es insuficiente (la divisa en
+   una venta, guaraníes en una compra), cuando intento registrar la operación, entonces el
+   sistema la rechaza e informa el motivo.
+4. Dado que registro una operación en ventanilla, cuando se guarda, entonces queda vinculada
+   a la caja activa y al cajero, con la tasa y la comisión aplicadas y los montos de ambas
+   monedas.
+
+### Diagnóstico inicial
+
+El proyecto ya tenía todo lo necesario para reutilizar en vez de duplicar: `apps.caja.models.Caja`
+y `SaldoInicialCaja` (HU "Apertura de Caja", Sesión 10) para el saldo inicial por moneda, y
+`apps.divisas.views._calcular_importe_operacion` para el cálculo de tasa y comisión que ya usa el
+flujo online del cliente (`CalculoOperacionView`). No existía, en cambio, ningún concepto de "saldo
+actual" de una caja (solo el saldo inicial contado al abrir) ni ningún modelo de operación de
+ventanilla — había que diseñar ambos desde cero.
+
+Una decisión de nombres resultó más sutil de lo esperado: el Criterio 3 describe "la divisa en una
+venta, guaraníes en una compra" como lo que el cajero debe entregar. Eso implica que, en esta HU,
+"Compra" significa que **la casa le compra divisa al cliente** (perspectiva del cajero/casa de
+cambio) — exactamente lo opuesto a `apps.divisas.models.CalculoOperacion.TIPO_COMPRA`, que significa
+que el cliente compra divisa (perspectiva del cliente, usada en el flujo online). Confundir ambas
+convenciones habría invertido silenciosamente qué moneda entra y cuál sale en cada caso, así que la
+inversión quedó documentada explícitamente en el docstring del modelo nuevo en vez de dejarla
+implícita.
+
+### Diseño
+
+- **`apps.caja.models.OperacionVentanilla`** (nuevo): UUID, `caja` y `cajero` (vínculo explícito a
+  ambos, tal como pide el Criterio 4, aunque `caja.usuario` ya identifica al cajero), `tipo`
+  (`COMPRA`/`VENTA`, con el significado invertido respecto de `CalculoOperacion` explicado arriba),
+  `divisa`, `monto_divisa`, `tasa_aplicada`, `comision_porcentaje`, `comision` y `monto_pyg` (el
+  monto final en guaraníes, equivalente a `CalculoOperacion.monto_final`).
+- **`Caja.saldo_actual(divisa)`** (nuevo): en vez de agregar un campo mutable que haya que
+  mantener sincronizado en cada operación, el saldo se deriva de forma perezosa —mismo patrón que
+  `CalculoOperacion.estado_efectivo`/`Divisa.ultima_cotizacion` ya usan en este proyecto— como el
+  saldo inicial (`SaldoInicialCaja`) más los ingresos y menos los egresos de esa moneda en las
+  `OperacionVentanilla` ya registradas. Para PYG, una "Venta" ingresa y una "Compra" egresa
+  `monto_pyg`; para la divisa extranjera, una "Compra" ingresa y una "Venta" egresa `monto_divisa`
+  — el espejo exacto de a quién le entrega qué cada tipo de operación.
+- **`apps.caja.views.RegistrarOperacionVentanillaView`**: sigue el mismo patrón que
+  `CalculoOperacionView` (tipo normalizado desde la URL, `/caja/operaciones/<tipo>/`). Antes de
+  calcular nada, resuelve la caja abierta del cajero (Criterio 2) devolviendo la misma redirección a
+  `caja:abrir` que ya usa `AbrirCajaView`. Para calcular, invierte el `tipo` antes de llamar a
+  `_calcular_importe_operacion` (ver el diagnóstico) y nunca duplica esa función. Antes de guardar,
+  compara `caja.saldo_actual(...)` contra lo que el cajero debe entregar según el Criterio 3 y
+  rechaza con el motivo si no alcanza, sin crear nada.
+- **`apps.caja.forms.OperacionVentanillaForm`**: mismo criterio de validación que
+  `apps.divisas.forms.CalculoOperacionForm` (monto mayor que cero, numérico, con mensajes en
+  español) y mismo filtro de divisas operables (activas, cotizadas, nunca PYG).
+- El panel del cajero (`apps.caja.views.PanelCajaView`, `templates/caja/panel_caja.html`) pasó de
+  mostrar solo el saldo inicial a mostrar el **saldo actual** por moneda, dos accesos directos
+  ("Comprar divisas" / "Vender divisas") y el historial de las últimas operaciones del turno, para
+  poder verificar visualmente el Criterio 1 sin tener que ir a la base de datos.
+
+### Tests
+
+`tests/test_operaciones_ventanilla.py` (21 tests nuevos): uno o más por cada criterio (compra
+ingresa divisa y egresa guaraníes, venta al revés, la comisión configurada se descuenta
+correctamente, sin caja abierta se rechaza tanto el GET como el POST, saldo insuficiente de
+guaraníes rechaza una compra, saldo insuficiente de la divisa rechaza una venta, el límite exacto es
+suficiente, la operación guardada referencia caja/cajero/tasa/comisión/ambos montos), más
+validaciones de formulario (monto negativo, no numérico, PYG no ofrecido, divisa sin cotización no
+ofrecida, tipo de URL desconocido responde 404) y permisos (sin rol cajero, sin sesión). Se agregó
+además `CajaSaldoActualTest`, una clase aparte que prueba `Caja.saldo_actual` directamente contra el
+modelo (sin saldo inicial registrado parte de cero, no de un error; una operación de otra caja nunca
+se mezcla con el saldo de esta).
+
+### Resultado final
+
+- Suite completa: sin fallas tras agregar los 21 tests nuevos (ver el resultado de esta misma
+  sesión), sin ninguna regresión sobre `tests/test_caja.py` ni el resto del proyecto.
+- `manage.py check` y `makemigrations --check --dry-run`: sin problemas. Migración
+  `apps.caja.0002_operacionventanilla` generada y verificada.
+- Sphinx recompilado con `-W`: sin advertencias. `guia.rst` agregó la sección "Operaciones en
+  ventanilla" (con la explicación de la inversión de nombres respecto del flujo online, enlazada
+  desde "Flujo operativo de divisas"); `reference/apps.caja.models.rst`,
+  `reference/apps.caja.forms.rst` y `reference/apps.caja.views.rst` incluyen los símbolos nuevos;
+  `templates.rst` incluye la plantilla nueva (`operacion_ventanilla.html`) y el encabezado actualizado
+  de `panel_caja.html`.
+
+### Pendiente / fuera de alcance
+
+- No se modela un cliente de mostrador: ninguno de los 4 criterios de aceptación pide identificar
+  con qué cliente se hizo la operación, así que no se agregó ese campo para no construir algo que no
+  se pidió.
+- El cierre de caja y el arqueo siguen siendo HU futuras, igual que antes de esta sesión.
+
+### Corrección posterior (mismo día): compra rota por falta de la Divisa PYG en el catálogo
+
+Al probar una compra en el entorno real (no en los tests, que sí la creaban explícitamente), el
+sistema devolvía un error 500 (`Divisa.DoesNotExist: Divisa matching query does not exist.`) al
+intentar resolver la Divisa de código `PYG` para comprobar el saldo disponible (Criterio 3). La
+causa: en este proyecto, a diferencia de lo que esta sesión asumió, `PYG` **no** es una fila
+garantizada del catálogo de divisas — `AperturaCajaForm` ya trata su saldo inicial como opcional por
+el mismo motivo ("PYG, si existe como divisa activa"), y en la base real todavía no se había creado
+esa fila.
+
+Como una venta de ventanilla nunca necesita resolver la Divisa PYG (solo entrega la divisa
+extranjera), el problema era exclusivo de la rama de compra. Se corrigió reemplazando
+`Divisa.objects.get(codigo='PYG')` por una consulta que no rompe si no existe
+(`Divisa.objects.filter(codigo='PYG').first()`), informando el problema con un mensaje accionable
+("Divisas → Nueva divisa, código PYG") en vez de un error de servidor — mismo criterio que ya usa
+`AbrirCajaView._avisar_divisas_sin_cotizar` para una divisa extranjera sin cotizar.
+
+Se agregó `RegistrarOperacionVentanillaSinDivisaPygTest` (2 tests nuevos) que reproduce el escenario
+real, sin crear la Divisa PYG en el `setUp` (a diferencia del resto de la suite): confirma que una
+compra informa el problema sin romper y que una venta sigue funcionando igual sin esa fila. Suite
+completa: sin fallas tras el fix.
+
+### Segunda corrección (mismo día): el mensaje seguía siendo conceptualmente incorrecto
+
+El usuario señaló que el mensaje de la corrección anterior ("un administrador debe crearla desde
+Divisas → Nueva divisa") estaba mal planteado: PYG es la divisa **local/base** del sistema —contra
+la que se cotizan y liquidan todas las operaciones—, no una divisa extranjera más que alguien deba
+dar de alta manualmente desde el catálogo de divisas operables. Tratarla como un dato de catálogo
+opcional, a cargo de un administrador, contradice cómo el resto del sistema ya la trata: `DivisaSelect`,
+`CalculoOperacionForm`, `TriangulacionForm` y `OperacionVentanillaForm` la excluyen explícitamente de
+cualquier selector de "divisa a operar", precisamente porque nunca es algo que se compre o venda
+directamente.
+
+La corrección real no era mejorar el mensaje, sino eliminar la dependencia de que alguien la creara
+a mano: se agregó la migración de datos `apps.divisas.0014_crear_divisa_pyg` (`get_or_create`,
+reversible como no-op) que garantiza la fila `Divisa(codigo='PYG')` desde el primer `migrate` en
+cualquier base, nueva o existente. Con esa garantía, se revirtió el mensaje defensivo de la corrección
+anterior: la vista vuelve a `Divisa.objects.get(codigo='PYG')` sin ninguna rama de error, porque su
+ausencia ya no es un escenario posible en el flujo normal del sistema (coherente con la guía del
+proyecto de no agregar manejo de errores para casos que no pueden ocurrir).
+
+Efecto colateral detectado y corregido de paso: al garantizar PYG en el catálogo, empezaba a
+aparecer también en la pantalla de "tasas vigentes" (`TasasVigentesListView`), mostrando "sin
+cotización" junto a USD/EUR — exactamente la inconsistencia que el usuario señaló, porque PYG nunca
+tiene una cotización propia que mostrar ahí. Se la excluyó de esa vista con el mismo criterio que ya
+usan los selectores de divisa operable.
+
+Se actualizaron los tests que antes creaban `Divisa(codigo='PYG', ...)` a mano
+(`tests/test_caja.py`, `tests/test_operaciones_ventanilla.py`) para usar `Divisa.objects.get(...)` en
+su lugar (la migración ya la crea; volver a crearla ahora chocaría con la unicidad del código ISO), y
+se cambió el ejemplo de `test_admin_registra_divisa_activa_con_datos_obligatorios` de PYG a JPY por el
+mismo motivo. `RegistrarOperacionVentanillaSinDivisaPygTest` se reescribió: ya no se puede simular la
+ausencia de PYG (la migración la garantiza), así que ahora confirma lo contrario — que una compra
+funciona de punta a punta sin que nadie la haya dado de alta manualmente. `manage.py makemigrations
+--check` y `manage.py check`: sin problemas. Sphinx recompilado con `-W`: sin advertencias. Suite
+completa: sin fallas tras este segundo fix.
+
+## Sesión 18 — 11/10/2026 — Arqueo de Caja
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Arqueo de Caja
+**Rama:** `develop`
+**Participantes:** Ruth, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Arqueo de Caja", con tests, docstrings, Sphinx actualizado y esta
+documentación de la conversación.
+
+> Como cajero quiero realizar un arqueo de caja para comparar el saldo registrado por el
+> sistema con los valores disponibles en la caja.
+
+Criterios de aceptación:
+
+1. Dado que tengo una caja abierta, cuando inicio un arqueo e ingreso el monto físico contado
+   por cada moneda, entonces el sistema lo compara contra el saldo registrado y muestra la
+   diferencia (sobrante o faltante) por divisa.
+2. Dado que el arqueo arroja una diferencia distinta de cero en alguna divisa, cuando se
+   registra, entonces el sistema deja constancia de esa diferencia sin bloquear la operación
+   de la caja.
+3. Dado que realizo un arqueo, cuando se completa, entonces queda registrado con fecha, hora,
+   cajero y los montos contados frente a los del sistema, disponible para consulta posterior.
+
+### Diagnóstico inicial
+
+El terreno ya estaba preparado por las dos HU anteriores de `apps.caja` (Sesión 10 "Apertura de
+Caja" y Sesión 17 "Gestión de operaciones en ventanilla"): `Caja.saldo_actual(divisa)` ya existía
+como el saldo "según el sistema" (saldo inicial + movimientos de `OperacionVentanilla`), así que
+esta HU no necesitaba ningún cálculo nuevo de saldo — solo comparar ese valor ya disponible contra
+lo que el cajero cuenta a mano. El propio docstring de `Caja` (Sesión 10) ya anticipaba esta HU:
+"el arqueo... son HU futuras que todavía no existen en este código".
+
+Una decisión de diseño central: el saldo "según el sistema" en el momento del arqueo tiene que
+quedar **congelado** en el historial. `Caja.saldo_actual` es un valor derivado que cambia con cada
+operación nueva; si el registro del arqueo solo guardara una referencia a la caja y volviera a
+calcular `saldo_actual` cada vez que se consulta, un arqueo de hace una semana mostraría el saldo
+de *hoy*, no el que realmente se comparó ese día — contradiciendo el Criterio 3 ("disponible para
+consulta posterior"). Por eso `DetalleArqueoCaja` guarda ambos montos (`saldo_sistema` y
+`monto_contado`) como valores fijos en el momento de crearse, no como referencias a recalcular.
+
+### Diseño
+
+- **`apps.caja.models.ArqueoCaja`** (nuevo): UUID, `caja`, `cajero`, `creado_en` (fecha y hora,
+  automática). Una propiedad `tiene_diferencias` (True si algún detalle tiene una diferencia
+  distinta de cero) resume el resultado sin necesidad de iterar manualmente en cada plantilla.
+- **`apps.caja.models.DetalleArqueoCaja`** (nuevo): una fila por divisa dentro de un arqueo, con
+  `saldo_sistema` y `monto_contado` congelados, y una propiedad `diferencia` (`monto_contado -
+  saldo_sistema`: positiva es sobrante, negativa es faltante) derivada de esos dos valores en vez
+  de guardarse por separado — mismo criterio que el resto del proyecto usa para evitar datos
+  redundantes que puedan desincronizarse. Restricción única por `(arqueo, divisa)`.
+- **`apps.caja.forms.ArqueoCajaForm`**: mismo patrón que `AperturaCajaForm` (Sesión 10) — genera un
+  campo `contado_<divisa.pk>` por cada divisa activa, incluido PYG, con cero como valor válido (el
+  cajero no tiene nada físico de esa moneda) y rechazo de negativos/no numéricos.
+- **`apps.caja.views.IniciarArqueoCajaView`**: sin una caja abierta, redirige a abrirla primero
+  (mismo criterio que `RegistrarOperacionVentanillaView`, Sesión 17). Al validar el formulario, por
+  cada divisa llama a `caja.saldo_actual(divisa)` una sola vez y la congela junto con lo contado en
+  un `DetalleArqueoCaja`, dentro de una transacción atómica junto con la creación del `ArqueoCaja`.
+  No existe ninguna validación que rechace una diferencia distinta de cero (Criterio 2): la única
+  validación de `ArqueoCajaForm` es sobre el formato del monto, no sobre el resultado de la
+  comparación.
+- **`apps.caja.views.DetalleArqueoCajaView`** y **`HistorialArqueosCajaView`** (Criterio 3): el
+  detalle de un arqueo (fecha, hora, cajero, y la tabla de saldo del sistema/contado/diferencia por
+  divisa) y el listado de arqueos ya registrados, ambos restringidos al cajero que lo generó
+  (`cajero=request.user` en la consulta, no solo en el `test_func`) — mismo alcance que el resto de
+  las pantallas de caja, donde cada cajero ve únicamente lo suyo.
+- El panel del cajero (`panel_caja.html`) agregó los accesos "Arqueo de caja" e "Historial de
+  arqueos" junto a los de comprar/vender divisas.
+
+### Tests
+
+`tests/test_arqueo_caja.py` (22 tests nuevos): uno o más por cada criterio (la comparación calcula
+sobrante y faltante correctamente por divisa, la pantalla de detalle los muestra explícitamente, un
+arqueo sin diferencias lo indica; una diferencia distinta de cero no bloquea el registro ni impide
+que la caja siga operando después —se verificó registrando una venta de ventanilla tras un arqueo
+con diferencias—; el arqueo guardado tiene fecha, hora, cajero y ambos montos, el detalle y el
+historial permiten consultarlo después, y el saldo del sistema queda congelado aunque
+`Caja.saldo_actual` cambie más tarde), más validaciones de formulario (monto negativo, no numérico,
+cero válido), prerequisito de caja abierta (GET y POST), permisos (sin rol cajero, sin sesión, y que
+un cajero no pueda ver el detalle de un arqueo ajeno), y una clase aparte (`ArqueoCajaModeloTest`)
+que prueba `diferencia`/`tiene_diferencias` y la restricción única directamente contra el modelo.
+
+### Problema de entorno encontrado (no introducido por esta HU)
+
+Al correr `manage.py makemigrations`/`check` por primera vez en esta sesión, falló con
+`ModuleNotFoundError: No module named 'stripe'`: el código real de la HU "Pago con tarjeta vía
+Stripe" ya está mergeado en este `develop` (confirmado al ver aparecer
+`apps.divisas.pagos_stripe` en la recompilación de Sphinx), pero el venv local de esta sesión
+nunca había instalado esa dependencia nueva de `requirements.txt`. Se corrigió con
+`pip install -r requirements.txt`, una instalación de dependencias ya declaradas, no un cambio de
+código.
+
+### Resultado final
+
+- Suite completa: sin fallas tras agregar los 22 tests nuevos, sin ninguna regresión sobre
+  `tests/test_caja.py` ni `tests/test_operaciones_ventanilla.py`.
+- `manage.py check` y `makemigrations --check --dry-run`: sin problemas. Migración
+  `apps.caja.0003_arqueocaja_detallearqueocaja` generada y verificada.
+- Sphinx recompilado con `-W`: sin advertencias. `guia.rst` agregó la sección "Arqueo de caja" (y
+  corrigió una frase de la sección "Apertura de caja" que todavía decía que el arqueo era una HU
+  futura); `reference/apps.caja.models.rst`, `reference/apps.caja.forms.rst` y
+  `reference/apps.caja.views.rst` incluyen los símbolos nuevos; `templates.rst` incluye las tres
+  plantillas nuevas (`arqueo_form.html`, `arqueo_detalle.html`, `arqueo_historial.html`).
+
+### Pendiente / fuera de alcance
+
+- El cierre de caja sigue siendo una HU futura: ninguno de los 3 criterios de esta HU lo menciona.
+- No se limita la cantidad de arqueos por turno: un cajero puede arquear varias veces mientras su
+  caja esté abierta, ya que ningún criterio pide restringirlo a uno solo.
+
+### Corrección posterior (mismo día): no ofrecer una divisa sin tasa para arquear
+
+El usuario pidió que, si existe alguna divisa activa sin tasa, el arqueo no permita ingresar datos
+para ella. El diseño original de `ArqueoCajaForm` generaba un campo `contado_<divisa.pk>` para
+*cualquier* divisa activa, sin mirar si tenía cotización — copiando solo la mitad del patrón de
+`AperturaCajaForm` (Sesión 10), que sí la mira.
+
+Se corrigió `ArqueoCajaForm.__init__` para excluir del arqueo cualquier divisa activa sin ninguna
+cotización vigente (PYG, con su tasa 1:1 implícita, sigue contando siempre como cotizada), dejándola
+en `self.divisas_sin_cotizar` para avisar por qué no se ofrece — exactamente el mismo criterio que
+`AperturaCajaForm` ya usa. Como ese aviso (`messages.warning` con el mismo texto) ya existía
+duplicado en `AbrirCajaView` como método privado, se extrajo a una función de módulo
+`apps.caja.views._avisar_divisas_sin_cotizar` y ambas vistas (`AbrirCajaView` e
+`IniciarArqueoCajaView`) pasaron a llamarla, en vez de mantener dos copias de la misma lógica.
+`arqueo_form.html` ganó el mismo bloque de aviso que ya tiene `abrir_caja.html`.
+
+Como `ArqueoCajaForm` nunca valida campos que no declaró, forzar a mano un `contado_<pk>` de una
+divisa sin cotizar en el POST tampoco cuela: Django simplemente lo ignora porque ese campo no existe
+en el formulario, así que no hace falta ninguna limpieza adicional del lado del servidor para ese
+caso.
+
+Efecto colateral en los tests existentes: como ahora `ArqueoCajaForm` exige cotización para toda
+divisa que no sea PYG, el `setUp` de `IniciarArqueoCajaTest` (que usaba USD sin ninguna `Cotizacion`
+desde que esta HU se escribió) necesitó agregarle una, igual que ya hacía
+`test_operaciones_ventanilla.py`. Se agregaron 3 tests nuevos: una divisa sin cotizar no aparece en
+el formulario (con el mensaje de aviso), el arqueo se puede registrar igual sin esa divisa, y un
+`contado_<pk>` forzado a mano para ella se ignora sin crear su detalle. Sphinx recompilado con `-W`:
+sin advertencias (se agregó `apps.caja.views._avisar_divisas_sin_cotizar` a la referencia). Suite
+completa: sin fallas tras este fix.
+
+## Sesión 19 — 12/10/2026 — GE-54 — Gestión de movimientos extraordinarios de Caja
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-54
+**Rama:** `feature/GE-54`
+**Participantes:** Adriana Benítez, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Gestión de movimientos extraordinarios de Caja", con tests, docstrings, Sphinx
+actualizado y esta documentación de la conversación.
+
+> Como cajero quiero registrar movimientos extraordinarios de caja para reflejar ingresos o
+> egresos que no provienen directamente de operaciones cambiarias.
+
+Criterios de aceptación:
+
+1. Dado que tengo una caja abierta, cuando registro un movimiento extraordinario (ingreso o
+   egreso) indicando monto, moneda y motivo, entonces el saldo de la caja se actualiza en
+   consecuencia.
+2. Dado que intento registrar un egreso extraordinario mayor al saldo disponible de esa divisa,
+   cuando lo intento, entonces el sistema rechaza el movimiento e informa el motivo.
+3. Dado que no ingreso un motivo, cuando intento guardar el movimiento, entonces el sistema exige
+   ese campo antes de permitir el registro.
+4. Dado que se registra un movimiento extraordinario, cuando se guarda, entonces queda
+   identificado como distinto de una operación cambiaria en cualquier listado o reporte de la
+   caja.
+
+### Diagnóstico inicial
+
+Esta sesión arrancó después de un salto de contexto grande: la última vez que se tocó este código
+fue la Sesión 8 (GE-37, "Consultar el historial de transacciones"), pero `develop` había avanzado
+mucho desde entonces sin que esta sesión lo supiera — un `Pago` asociado a transacciones (Sesión 9),
+pagos con tarjeta vía Stripe (dos sesiones, con una corrección), y toda una app `apps.caja` nueva
+construida en tres HU sucesivas (Sesión 10 "Apertura de Caja", Sesión 17 "Gestión de operaciones en
+ventanilla", Sesión 18 "Arqueo de Caja"). Antes de tocar nada se investigó a fondo el estado actual:
+`apps/caja/models.py`, `views.py`, `forms.py`, `urls.py`, los templates de caja, y
+`tests/test_operaciones_ventanilla.py`/`test_arqueo_caja.py`, además de confirmar que la convención
+de esta misma documentación cambió (de un archivo `.md` nuevo por sesión a este único archivo
+consolidado, `REGISTRO_CONVERSACIONES_IA.md`, con una sección "Sesión N" por sesión).
+
+Esa investigación confirmó que "caja abierta" ya es un concepto resuelto (``Caja``, per cajero, con
+una restricción única en base para que nunca haya dos "Abierta" a la vez) y que el único saldo por
+moneda que existe en todo el sistema es ``Caja.saldo_actual(divisa)`` — un valor derivado
+perezosamente del saldo inicial más los ingresos y egresos de ``OperacionVentanilla`` ya registrada,
+sin ningún campo mutable que mantener sincronizado. Esta HU es, en esencia, una segunda fuente de
+ingresos/egresos para ese mismo saldo, que no pasa por ningún cálculo de tasa ni comisión. El propio
+docstring de ``Caja`` (Sesión 10) decía literalmente que "los movimientos" de una caja eran una HU
+futura que todavía no existía en el código — exactamente lo que esta sesión vino a resolver.
+
+### Diseño
+
+- **`apps.caja.models.MovimientoExtraordinario`** (nuevo, junto a `OperacionVentanilla`): UUID,
+  `caja` y `cajero` (mismo vínculo explícito que `OperacionVentanilla`), `tipo`
+  (`INGRESO`/`EGRESO`), `divisa`, `monto` y `motivo` (`TextField`, obligatorio a nivel de modelo,
+  igual que `HistorialBaja.causa`). Migración `apps.caja.0004_movimientoextraordinario`.
+- **`Caja.saldo_actual(divisa)` extendido, no reemplazado**: se agregó, al final del cálculo
+  existente, la suma de ingresos y resta de egresos de `MovimientoExtraordinario` para esa misma
+  divisa, exactamente con el mismo patrón de agregación (`aggregate(Sum(...))` con `or Decimal('0.00')`
+  para el caso sin movimientos) que ya usa para `OperacionVentanilla`. Así ambas fuentes conviven en
+  un mismo saldo derivado, sin que `ArqueoCaja`/`DetalleArqueoCaja` (Sesión 18) necesiten ningún
+  cambio: siguen llamando a `caja.saldo_actual(divisa)` tal cual, y automáticamente comparan contra
+  un saldo que ya incluye los movimientos extraordinarios.
+- **`apps.caja.forms.MovimientoExtraordinarioForm`** (nuevo): a propósito **no** reutiliza el mismo
+  filtro de divisas que `OperacionVentanillaForm` (que excluye PYG y cualquier divisa sin
+  cotización vigente). Un movimiento extraordinario no calcula ninguna tasa, así que esas dos
+  exclusiones no tienen sentido acá: ofrece todas las divisas activas del sistema, PYG incluido. El
+  campo `motivo` usa el mismo criterio de validación que
+  `apps.authentication.forms.CausaBajaForm.clean_causa` (rechaza vacío o solo espacios, con mensaje
+  en español) en vez de inventar uno nuevo para "motivo".
+- **`apps.caja.views.RegistrarMovimientoExtraordinarioView`** (nuevo, junto a
+  `RegistrarOperacionVentanillaView`): mismo patrón de tipo normalizado desde la URL
+  (`/caja/movimientos/<tipo>/`) y de resolución de la caja abierta (Criterio 1). A diferencia de
+  `RegistrarOperacionVentanillaView`, no hay ningún cálculo de tasa/comisión antes de guardar; la
+  única validación de negocio es, para un egreso, comparar `caja.saldo_actual(divisa)` contra el
+  monto y rechazar con el mismo estilo de mensaje ("Saldo insuficiente de ...: hay ... y se
+  necesitan ...") que ya usa la ventanilla (Criterio 2). Un ingreso nunca se valida contra el saldo.
+- **Criterio 4 (distinguible de una operación cambiaria)**: se resolvió con la misma estrategia que
+  ya separa "Operaciones de ventanilla" de "Arqueos" en este mismo panel — una sección y una tabla
+  propias ("Últimos movimientos extraordinarios"), nunca mezclada con la de "Últimas operaciones de
+  ventanilla". No se diseñó ningún listado unificado de "todos los movimientos de caja" porque
+  ningún criterio lo pide, y mezclar dos modelos distintos en una sola tabla habría requerido
+  normalizarlos a un formato común como ya hace `HistorialTransaccionesView` en `apps.divisas` para
+  compras/ventas/cambios — una complejidad que esta HU no necesita.
+- **`PanelCajaView`/`panel_caja.html`**: dos accesos nuevos ("Ingreso extraordinario" / "Egreso
+  extraordinario") junto a los de comprar/vender divisas y arqueo, y la nueva tabla de movimientos
+  extraordinarios (últimos 20 de la caja abierta), con su propio mensaje de "todavía no registraste
+  ninguno" cuando está vacía.
+
+### Problema de entorno encontrado (no introducido por esta HU)
+
+Al correr `manage.py makemigrations caja` por primera vez en esta sesión, falló con
+`ModuleNotFoundError: No module named 'stripe'` — el mismo problema que ya quedó documentado en la
+Sesión 18: el código real de los pagos con tarjeta vía Stripe ya está mergeado en `develop`, pero el
+entorno local de esta sesión nunca había instalado esa dependencia nueva de `requirements.txt`. Se
+corrigió con `pip install -r requirements.txt` (instalación de dependencias ya declaradas, no un
+cambio de código) y recién ahí se pudo generar la migración.
+
+### Tests
+
+`tests/test_movimientos_extraordinarios.py` (nuevo, 23 tests): uno o más por cada criterio (un
+ingreso suma al saldo actual, un egreso resta, un movimiento puede registrarse en PYG —a diferencia
+de ventanilla—, sin caja abierta se rechaza tanto el GET como el POST, un egreso mayor al saldo
+disponible se rechaza informando el motivo, el límite exacto es suficiente, un ingreso nunca se
+rechaza por saldo, un motivo vacío o solo de espacios se rechaza, el movimiento guardado referencia
+caja/cajero/tipo/divisa/monto/motivo, y el panel muestra la tabla de movimientos extraordinarios
+separada de la de operaciones de ventanilla), más validaciones de formulario (monto negativo, no
+numérico, PYG sí se ofrece, una divisa sin cotizar también se ofrece, tipo de URL desconocido
+responde 404) y permisos (sin rol cajero, sin sesión). Se agregó además
+`CajaSaldoActualConMovimientosExtraordinariosTest`, una clase aparte que prueba `Caja.saldo_actual`
+directamente contra el modelo con movimientos extraordinarios (solos, combinados con
+`OperacionVentanilla`, y aislados entre cajas distintas), siguiendo el mismo patrón que
+`CajaSaldoActualTest` ya usa en `test_operaciones_ventanilla.py` (Sesión 17).
+
+### Resultado final
+
+- Suite completa: **386 passed** (363 previos + 23 nuevos de esta HU).
+- `manage.py check`: sin problemas. `makemigrations --check --dry-run`: sin cambios pendientes
+  (ya generada y aplicada la migración `apps.caja.0004_movimientoextraordinario`).
+- Sphinx recompilado con `-W` sobre un directorio temporal (sin tocar `docs/build/`, que está
+  versionado): sin advertencias. `guia.rst` agregó la sección "Movimientos extraordinarios de
+  caja" entre "Operaciones en ventanilla" y "Arqueo de caja"; `reference/apps.caja.models.rst`,
+  `reference/apps.caja.forms.rst` y `reference/apps.caja.views.rst` incluyen los símbolos nuevos;
+  `templates.rst` incluye `movimiento_extraordinario.html` y actualiza el rango de líneas de
+  `panel_caja.html` (su comentario de encabezado creció de 7 a 9 líneas de contenido).
+
+### Pendiente / fuera de alcance
+
+- No existe ningún listado unificado de "todos los movimientos de caja" (ventanilla + extraordinarios
+  + arqueos en una sola vista): cada uno tiene su propia tabla en el panel, que es lo que pide el
+  Criterio 4 (distinguibles entre sí), no un reporte combinado.
+- No se agregó ninguna categoría/clasificación del motivo (por ejemplo, "gasto de oficina", "refuerzo
+  de caja"): el criterio solo pide que el campo exista y sea obligatorio, como texto libre.
+
+## Sesión 20 — 12/10/2026 — GE-56 — Cierre de Caja
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-56
+**Rama:** `feature/GE-56`
+**Participantes:** Adriana Benítez, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Cierre de Caja", con tests, docstrings, Sphinx actualizado y esta
+documentación de la conversación.
+
+> Como cajero quiero cerrar mi caja al finalizar el turno para registrar el balance final y
+> consolidar las operaciones realizadas.
+
+Criterios de aceptación:
+
+1. Dado que tengo una caja abierta, cuando inicio el cierre, entonces el sistema muestra un
+   resumen del turno: saldo inicial, operaciones realizadas, movimientos extraordinarios y saldo
+   final por moneda.
+2. Dado que confirmo el cierre, cuando se procesa, entonces la caja pasa a estado "Cerrada" y deja
+   de aceptar operaciones de ventanilla, arqueos y movimientos extraordinarios.
+3. Dado que la caja no tiene ningún arqueo registrado en el turno, cuando inicio el cierre,
+   entonces el sistema muestra una advertencia y permite continuar solo si confirmo
+   explícitamente.
+4. Dado que mi caja se cerró, cuando accedo al historial de cajas, entonces aparece con su balance
+   final y el período en que estuvo abierta, sin posibilidad de modificar sus operaciones.
+
+### Diagnóstico inicial
+
+Esta sesión siguió directamente a la Sesión 19 (GE-54, "Gestión de movimientos extraordinarios de
+Caja"), ya mergeada a `develop`, así que el contexto de `apps.caja` seguía fresco. El propio
+docstring de ``Caja`` (desde la Sesión 10, "Apertura de Caja") venía anticipando exactamente esta
+HU: *"El cierre... son HU futuras que todavía no existen en este código; por eso `estado` ya
+contempla 'Cerrada' y `cerrada_en` desde ahora... para no tener que migrar el modelo de nuevo más
+adelante"*. Confirmado: ambos campos ya existían sin usarse, así que esta HU no necesitó ninguna
+migración nueva.
+
+El punto central del diagnóstico fue notar que las tres vistas de registro (ventanilla,
+movimientos extraordinarios, arqueo) **ya resuelven la caja abierta del cajero filtrando por
+`estado=Caja.ESTADO_ABIERTA`** desde que cada una se escribió. Eso significa que el Criterio 2 ("la
+caja... deja de aceptar operaciones") no requiere ningún cambio en esas tres vistas: en el momento
+en que una caja pasa a "Cerrada", esa misma consulta deja de encontrarla, y cada vista redirige con
+su mensaje habitual de "Necesitás abrir una caja...". La única pieza que faltaba era, literalmente,
+la transición de estado en sí.
+
+Segunda observación relevante: como ninguna vista puede escribir sobre una caja ya cerrada, su
+`Caja.saldo_actual(divisa)` —que siempre fue un valor derivado, nunca un campo mutable— deja de
+poder cambiar desde el momento del cierre. A diferencia de `DetalleArqueoCaja` (Sesión 18), que
+necesitó congelar `saldo_sistema` en un campo propio porque la caja seguía operando después de cada
+arqueo, el "saldo final" de esta HU no necesita ningún campo nuevo: `saldo_actual` ya es,
+de hecho, el balance final definitivo en cuanto la caja se cierra.
+
+### Diseño
+
+- **`Caja.cerrar()`** (nuevo método, sin migración): pasa `estado` a `ESTADO_CERRADA` y fija
+  `cerrada_en = timezone.now()`, con `save(update_fields=[...])`. No valida nada por sí solo —esa
+  responsabilidad es de la vista, incluida la confirmación explícita sin arqueo (Criterio 3)— para
+  mantenerlo como la única pieza que persiste la transición, testeable por separado del flujo HTTP.
+- **`apps.caja.views.CerrarCajaView`** (nueva, junto a `AbrirCajaView`): GET construye el resumen
+  del turno (Criterio 1) — por cada `SaldoInicialCaja` de la caja, su `monto` (saldo inicial) junto
+  a `caja.saldo_actual(esa_divisa)` (saldo final), más las `OperacionVentanilla`,
+  `MovimientoExtraordinario` y `ArqueoCaja` completos del turno (no solo las últimas 20, a
+  diferencia del panel: acá es un cierre de turno, tiene que verse todo) — y lo muestra sin cerrar
+  nada todavía. POST repite la misma resolución de caja abierta que ya usan
+  `RegistrarOperacionVentanillaView`/`IniciarArqueoCajaView`, y agrega la única validación de
+  negocio nueva: si `caja.arqueos.exists()` es falso y el campo `confirmar_sin_arqueo` no llegó
+  marcado (`'on'`), rechaza con un mensaje y vuelve a mostrar el mismo resumen con la advertencia
+  (Criterio 3); en cualquier otro caso, llama a `caja.cerrar()` y redirige al panel.
+- **Sin cambios en `AbrirCajaView`/`RegistrarOperacionVentanillaView`/
+  `RegistrarMovimientoExtraordinarioView`/`IniciarArqueoCajaView`** (Criterio 2): todas ya
+  resolvían "la caja abierta" filtrando por estado, así que cerrar una caja alcanza para que dejen
+  de encontrarla. La restricción única de `Caja.Meta.constraints` tampoco necesitó ningún cambio:
+  solo exige unicidad entre cajas "Abierta", así que el cajero puede abrir un turno nuevo
+  inmediatamente después de cerrar el anterior.
+- **`apps.caja.views.HistorialCajasView`** (nueva, al final de `views.py`): lista todas las cajas
+  del cajero (abiertas y cerradas) con su balance por moneda (``caja.saldo_actual(divisa)`` para
+  cada divisa que esa caja contó al abrir) y su período (`abierta_en`/`cerrada_en`, mostrando
+  "— (en curso)" si todavía está abierta) (Criterio 4). Es de solo lectura: no se diseñó ninguna
+  acción de edición ni eliminación para ninguno de los modelos de `apps.caja` desde que existen
+  (ni siquiera para la caja ya abierta), así que "sin posibilidad de modificar sus operaciones" ya
+  estaba garantizado por lo que el resto del código *no* ofrece, no por un chequeo nuevo.
+- **`templates/caja/panel_caja.html`**: accesos nuevos "Cerrar caja" (solo con una caja abierta) e
+  "Historial de cajas" (siempre visible, a diferencia de "Historial de arqueos", que solo aparece
+  con una caja abierta — el historial de cajas tiene sentido consultarlo incluso sin ninguna
+  abierta en este momento).
+
+### Tests
+
+`tests/test_cierre_caja.py` (nuevo, 19 tests): uno o más por cada criterio (el resumen muestra
+saldo inicial/final por moneda, operaciones y movimientos del turno; sin caja abierta no hay nada
+que cerrar; confirmar el cierre pasa la caja a "Cerrada" con fecha y hora; una caja cerrada
+rechaza una operación de ventanilla, un movimiento extraordinario y un arqueo nuevos con el mismo
+mensaje de "Necesitás abrir una caja..."; tras cerrar se puede abrir una caja nueva sin que la
+restricción única lo bloquee; sin arqueos el resumen avisa y el cierre se rechaza sin la
+confirmación explícita, se acepta marcándola, y no se pide ninguna confirmación si ya hay al menos
+un arqueo; una caja cerrada aparece en el historial con balance y período, una que sigue abierta
+también aparece pero sin fecha de cierre, y el historial no ofrece ninguna acción de edición), más
+permisos (sin rol cajero, sin sesión). Se agregó además `CajaCerrarModeloTest`, una clase aparte
+que prueba `Caja.cerrar()` directamente contra el modelo.
+
+### Problema encontrado: formato numérico localizado en las aserciones
+
+Los primeros tres tests que verificaban un monto renderizado como texto (`assertContains(response,
+'200.00')`) fallaron: el proyecto sobreescribe el formato numérico del locale `en-us` con uno propio
+(`global_exchange/formats/en_US/formats.py`, `THOUSAND_SEPARATOR = '.'`, `DECIMAL_SEPARATOR = ','`,
+convención paraguaya/argentina), así que `floatformat` renderiza `200,00` y `1.000.000,00`, no
+`200.00` ni `1000000.00`. Ninguno de los tests de las HU anteriores de `apps.caja` había chequeado
+un monto renderizado como texto literal (siempre comparaban contra el `Decimal` directamente), así
+que esta sesión fue la primera en tropezar con eso. Se corrigieron las tres aserciones para usar el
+formato localizado correcto.
+
+### Resultado final
+
+- Suite completa: **405 passed** (386 previos + 19 nuevos de esta HU).
+- `manage.py check`: sin problemas. `makemigrations --check --dry-run`: sin cambios pendientes
+  (esta HU no agrega ni modifica campos; `estado`/`cerrada_en` ya existían en `Caja` desde la
+  Sesión 10).
+- Sphinx recompilado con `-W` sobre un directorio temporal (sin tocar `docs/build/`, que está
+  versionado): sin advertencias. `guia.rst` agregó la sección "Cierre de caja" entre "Arqueo de
+  caja" y "Acceso a esta documentación desde el sistema", y corrigió la nota de "Apertura de caja"
+  que todavía decía que el cierre era una HU futura; `reference/apps.caja.views.rst` incluye
+  `CerrarCajaView` y `HistorialCajasView` (``Caja.cerrar`` se documenta solo, sin tocar ningún
+  `.rst`, porque `apps.caja.models.rst` ya usa `:members:` sobre la clase `Caja`); `templates.rst`
+  incluye `cerrar_caja.html` e `historial_cajas.html`.
+
+### Pendiente / fuera de alcance
+
+- No existe ninguna pantalla de detalle por caja en el historial (solo el listado, con el balance
+  final inline por moneda): ningún criterio pide un detalle separado, y el resumen completo de
+  operaciones/movimientos/arqueos de una caja ya es visible una sola vez, en la propia pantalla de
+  cierre, antes de confirmarlo.
+- No se agregó ninguna restricción sobre cuántas veces puede abrir y cerrar cajas un cajero en un
+  mismo día: cada apertura y cierre es independiente, igual que ya permite "Apertura de Caja".
 
 ## Enlaces externos (conversaciones completas)
 

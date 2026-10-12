@@ -124,6 +124,37 @@ class Cotizacion(models.Model):
         """Retorna la representación de la cotización con su fecha."""
         return f"{self.divisa.codigo} - Compra: {self.tasa_compra} / Venta: {self.tasa_venta}"
 
+    def save(self, *args, **kwargs):
+        """Guarda la cotización y notifica a los clientes si cambió alguna tasa.
+
+        Implementa la HU "Notificaciones sobre tasas de cambio" (GE-51).
+        Cada actualización de tasas se registra como una cotización *nueva*
+        (el historial nunca se pisa, ver ``ActualizarCotizacionView``), así
+        que "la tasa anterior" es la última cotización de la divisa que ya
+        existía antes de esta. Solo al crear una cotización se compara contra
+        esa anterior y, por cada tasa (compra o venta) cuyo valor sea
+        distinto, se genera una notificación para cada usuario cliente (ver
+        ``NotificacionTasa.notificar_cambios``). Si la tasa se guarda con el
+        mismo valor que ya tenía no se notifica nada, y tampoco en la primera
+        cotización de una divisa, porque no hay una tasa anterior con la que
+        comparar ni que informar.
+
+        La cotización y sus notificaciones se guardan en una única
+        transacción de base de datos: o quedan ambas registradas, o ninguna.
+        """
+        es_nueva = self._state.adding
+        anterior = None
+        if es_nueva and self.divisa_id:
+            anterior = (
+                Cotizacion.objects.filter(divisa_id=self.divisa_id)
+                .order_by('-fecha_actualizacion', '-pk')
+                .first()
+            )
+        with db_transaction.atomic():
+            super().save(*args, **kwargs)
+            if anterior is not None:
+                NotificacionTasa.notificar_cambios(anterior, self)
+
 
 class CalculoOperacion(models.Model):
     """Representa una transacción de compra o venta iniciada por el cliente.
@@ -976,3 +1007,190 @@ class SolicitudPagoSipap(models.Model):
             self.save(update_fields=['estado'])
             return True
         return False
+
+
+def _a_tasa(valor):
+    """Normaliza una tasa a ``Decimal`` con los dos decimales de ``Cotizacion``.
+
+    Permite comparar sin falsos positivos una tasa recién cargada (que puede
+    llegar como ``float``, ``int`` o ``str``, por ejemplo ``7400``) con la
+    guardada en base de datos (``Decimal('7400.00')``).
+    """
+    return Decimal(str(valor)).quantize(Decimal('0.01'))
+
+
+class NotificacionTasa(models.Model):
+    """Aviso a un usuario cliente de que cambió una tasa de cambio.
+
+    Implementa la HU "Notificaciones sobre tasas de cambio" (GE-51). Cada
+    registro informa un único cambio: una divisa, un tipo de tasa (compra o
+    venta), la tasa anterior y la nueva. Si en una misma actualización
+    cambian la compra y la venta, cada usuario recibe dos notificaciones,
+    una por tipo de tasa. Se generan automáticamente al guardar una nueva
+    ``Cotizacion`` (ver ``Cotizacion.save`` y ``notificar_cambios``).
+
+    Cada usuario solo ve sus propias notificaciones, de la más reciente a la
+    más antigua (ver ``MisNotificacionesView``), y puede marcarlas como
+    leídas (ver ``marcar_como_leida``); las no leídas se cuentan en el
+    indicador de la barra superior (ver
+    ``apps.divisas.context_processors.notificaciones_context``).
+
+    Campos principales:
+
+    - ``usuario``: usuario cliente destinatario de la notificación.
+    - ``divisa``: divisa cuya tasa cambió.
+    - ``cotizacion``: cotización que introdujo el cambio.
+    - ``tipo_tasa``: ``COMPRA`` o ``VENTA``.
+    - ``tasa_anterior`` / ``tasa_nueva``: valor de la tasa antes y después del cambio.
+    - ``creada_en``: momento en que se generó la notificación.
+    - ``leida`` / ``leida_en``: si el usuario ya la marcó como leída, y cuándo.
+    """
+
+    TIPO_COMPRA = 'COMPRA'
+    TIPO_VENTA = 'VENTA'
+    TIPO_TASA_CHOICES = [
+        (TIPO_COMPRA, 'Compra'),
+        (TIPO_VENTA, 'Venta'),
+    ]
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notificaciones_tasa',
+        verbose_name='Usuario destinatario',
+    )
+    divisa = models.ForeignKey(
+        Divisa,
+        on_delete=models.CASCADE,
+        related_name='notificaciones_tasa',
+        verbose_name='Divisa',
+    )
+    cotizacion = models.ForeignKey(
+        Cotizacion,
+        on_delete=models.CASCADE,
+        related_name='notificaciones',
+        verbose_name='Cotización que generó el cambio',
+    )
+    tipo_tasa = models.CharField(max_length=6, choices=TIPO_TASA_CHOICES, verbose_name='Tipo de tasa')
+    tasa_anterior = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Tasa anterior')
+    tasa_nueva = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Tasa nueva')
+    creada_en = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de notificación')
+    leida = models.BooleanField(default=False, verbose_name='Leída')
+    leida_en = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de lectura')
+
+    class Meta:
+        """Ordena de la más reciente a la más antigua e indexa las no leídas."""
+        verbose_name = 'Notificación de tasa'
+        verbose_name_plural = 'Notificaciones de tasas'
+        ordering = ['-creada_en', '-pk']
+        indexes = [
+            models.Index(fields=['usuario', 'leida'], name='notif_tasa_usuario_leida_idx'),
+        ]
+
+    def __str__(self):
+        """Resume la notificación con su divisa, tipo de tasa y valores."""
+        return (
+            f'{self.divisa.codigo} {self.get_tipo_tasa_display()}: '
+            f'{self.tasa_anterior} -> {self.tasa_nueva}'
+        )
+
+    @property
+    def variacion(self):
+        """Diferencia entre la tasa nueva y la anterior (negativa si bajó)."""
+        return self.tasa_nueva - self.tasa_anterior
+
+    @property
+    def subio(self):
+        """Indica si la tasa aumentó respecto de la anterior."""
+        return self.variacion > 0
+
+    @property
+    def mensaje(self):
+        """Texto legible de la notificación, listo para mostrar al usuario."""
+        return (
+            f'La tasa de {self.get_tipo_tasa_display().lower()} de {self.divisa.codigo} '
+            f'cambió de {self.tasa_anterior} a {self.tasa_nueva}.'
+        )
+
+    def marcar_como_leida(self):
+        """Marca la notificación como leída y registra cuándo.
+
+        Es idempotente: si ya estaba leída no se vuelve a guardar ni se pisa
+        la fecha de lectura original.
+
+        Returns:
+            bool: ``True`` si la notificación pasó a leída recién ahora.
+        """
+        if self.leida:
+            return False
+        self.leida = True
+        self.leida_en = timezone.now()
+        self.save(update_fields=['leida', 'leida_en'])
+        return True
+
+    @staticmethod
+    def usuarios_clientes():
+        """Devuelve los usuarios que deben recibir notificaciones de tasas.
+
+        El rol ``cliente`` vive solo en la sesión de Keycloak (ver
+        ``apps.authentication.backends``), así que no puede consultarse para
+        usuarios que no están conectados. Por eso se considera "usuario
+        cliente" a todo usuario activo asociado a al menos un ``Cliente``
+        activo, ya sea como usuario del sistema asociado (``usuarios``) o
+        como titular (``user``): son justamente los usuarios que pueden
+        operar en nombre de un cliente.
+
+        Returns:
+            QuerySet: Usuarios activos, sin repetidos.
+        """
+        from django.contrib.auth import get_user_model
+
+        return (
+            get_user_model().objects.filter(is_active=True)
+            .filter(
+                models.Q(clientes__is_active=True)
+                | models.Q(cliente_perfil__is_active=True)
+            )
+            .distinct()
+        )
+
+    @classmethod
+    def notificar_cambios(cls, anterior, nueva):
+        """Genera las notificaciones por los cambios entre dos cotizaciones.
+
+        Compara por separado la tasa de compra y la de venta. Por cada una
+        cuyo valor sea distinto, crea una notificación para cada usuario
+        cliente (ver ``usuarios_clientes``), con la divisa afectada, el tipo
+        de tasa, la tasa anterior y la nueva. Si ninguna tasa cambió, no se
+        crea nada.
+
+        Args:
+            anterior (Cotizacion): Última cotización vigente antes del cambio.
+            nueva (Cotizacion): Cotización recién guardada.
+
+        Returns:
+            list[NotificacionTasa]: Las notificaciones creadas (vacía si no
+            hubo cambios o no hay usuarios clientes).
+        """
+        cambios = []
+        for tipo, campo in ((cls.TIPO_COMPRA, 'tasa_compra'), (cls.TIPO_VENTA, 'tasa_venta')):
+            valor_anterior = _a_tasa(getattr(anterior, campo))
+            valor_nuevo = _a_tasa(getattr(nueva, campo))
+            if valor_anterior != valor_nuevo:
+                cambios.append((tipo, valor_anterior, valor_nuevo))
+        if not cambios:
+            return []
+
+        notificaciones = [
+            cls(
+                usuario_id=usuario_id,
+                divisa_id=nueva.divisa_id,
+                cotizacion=nueva,
+                tipo_tasa=tipo,
+                tasa_anterior=valor_anterior,
+                tasa_nueva=valor_nuevo,
+            )
+            for usuario_id in cls.usuarios_clientes().values_list('pk', flat=True)
+            for tipo, valor_anterior, valor_nuevo in cambios
+        ]
+        return cls.objects.bulk_create(notificaciones)

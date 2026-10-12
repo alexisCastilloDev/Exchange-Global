@@ -1,0 +1,61 @@
+<!--
+Historial de arqueos ya registrados por el cajero, para consulta posterior.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: arqueos.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Historial de arqueos - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-clipboard-check"></i> Caja</span>
+        <h1>Historial de arqueos</h1>
+        <p>Arqueos que registraste, del más reciente al más antiguo.</p>
+    </div>
+    <a href="{% url 'caja:panel' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver</a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+        <div class="ge-card">
+            {% if arqueos %}
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Fecha y hora</th>
+                            <th>Resultado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for arqueo in arqueos %}
+                        <tr>
+                            <td>{{ arqueo.creado_en|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if arqueo.tiene_diferencias %}
+                                    <span class="text-danger">Con diferencias</span>
+                                {% else %}
+                                    <span class="text-success">Sin diferencias</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'caja:detalle_arqueo' arqueo.pk %}" class="btn btn-sm btn-outline-primary">
+                                    Ver detalle
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="ge-empty-state">Todavía no registraste ningún arqueo.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

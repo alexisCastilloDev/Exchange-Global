@@ -21,7 +21,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Índice" href="../genindex.html" />
     <link rel="search" title="Búsqueda" href="../search.html" />
-    <link rel="next" title="apps.divisas.forms module" href="apps.divisas.forms.html" />
+    <link rel="next" title="apps.divisas.context_processors module" href="apps.divisas.context_processors.html" />
     <link rel="prev" title="apps.clientes.views module" href="apps.clientes.views.html" /> 
 </head>
 
@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -63,6 +64,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -160,6 +165,10 @@
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="apps.divisas.context_processors.html">apps.divisas.context_processors module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.context_processors.html#apps.divisas.context_processors.notificaciones_context"><code class="docutils literal notranslate"><span class="pre">notificaciones_context()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.forms.html">apps.divisas.forms module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm"><code class="docutils literal notranslate"><span class="pre">CalculoOperacionForm</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.__init__"><code class="docutils literal notranslate"><span class="pre">CalculoOperacionForm.__init__()</span></code></a></li>
@@ -266,16 +275,25 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.models.html">apps.divisas.models module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa"><code class="docutils literal notranslate"><span class="pre">Divisa</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.CODIGO_BASE"><code class="docutils literal notranslate"><span class="pre">Divisa.CODIGO_BASE</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">Divisa.DoesNotExist</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Divisa.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.NOMBRE_BASE"><code class="docutils literal notranslate"><span class="pre">Divisa.NOMBRE_BASE</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.NotUpdated"><code class="docutils literal notranslate"><span class="pre">Divisa.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.SIMBOLO_BASE"><code class="docutils literal notranslate"><span class="pre">Divisa.SIMBOLO_BASE</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.activa"><code class="docutils literal notranslate"><span class="pre">Divisa.activa</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.calculos_operacion"><code class="docutils literal notranslate"><span class="pre">Divisa.calculos_operacion</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.codigo"><code class="docutils literal notranslate"><span class="pre">Divisa.codigo</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.cotizaciones"><code class="docutils literal notranslate"><span class="pre">Divisa.cotizaciones</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.delete"><code class="docutils literal notranslate"><span class="pre">Divisa.delete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.es_base"><code class="docutils literal notranslate"><span class="pre">Divisa.es_base</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.id"><code class="docutils literal notranslate"><span class="pre">Divisa.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.movimientos_extraordinarios"><code class="docutils literal notranslate"><span class="pre">Divisa.movimientos_extraordinarios</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.nombre"><code class="docutils literal notranslate"><span class="pre">Divisa.nombre</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.notificaciones_tasa"><code class="docutils literal notranslate"><span class="pre">Divisa.notificaciones_tasa</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.objects"><code class="docutils literal notranslate"><span class="pre">Divisa.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.operaciones_ventanilla"><code class="docutils literal notranslate"><span class="pre">Divisa.operaciones_ventanilla</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.save"><code class="docutils literal notranslate"><span class="pre">Divisa.save()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.simbolo"><code class="docutils literal notranslate"><span class="pre">Divisa.simbolo</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.triangulaciones_destino"><code class="docutils literal notranslate"><span class="pre">Divisa.triangulaciones_destino</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.triangulaciones_origen"><code class="docutils literal notranslate"><span class="pre">Divisa.triangulaciones_origen</span></code></a></li>
@@ -292,7 +310,9 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.get_next_by_fecha_actualizacion"><code class="docutils literal notranslate"><span class="pre">Cotizacion.get_next_by_fecha_actualizacion()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.get_previous_by_fecha_actualizacion"><code class="docutils literal notranslate"><span class="pre">Cotizacion.get_previous_by_fecha_actualizacion()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.id"><code class="docutils literal notranslate"><span class="pre">Cotizacion.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.notificaciones"><code class="docutils literal notranslate"><span class="pre">Cotizacion.notificaciones</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.objects"><code class="docutils literal notranslate"><span class="pre">Cotizacion.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.save"><code class="docutils literal notranslate"><span class="pre">Cotizacion.save()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.tasa_compra"><code class="docutils literal notranslate"><span class="pre">Cotizacion.tasa_compra</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.tasa_venta"><code class="docutils literal notranslate"><span class="pre">Cotizacion.tasa_venta</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario"><code class="docutils literal notranslate"><span class="pre">Cotizacion.usuario</span></code></a></li>
@@ -489,6 +509,38 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.vence_en"><code class="docutils literal notranslate"><span class="pre">SolicitudPagoSipap.vence_en</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.NotUpdated"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.TIPO_COMPRA"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.TIPO_COMPRA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.TIPO_TASA_CHOICES"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.TIPO_TASA_CHOICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.TIPO_VENTA"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.TIPO_VENTA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.cotizacion"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.cotizacion_id"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.cotizacion_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.creada_en"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.creada_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.divisa"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.divisa_id"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.divisa_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.get_next_by_creada_en"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.get_next_by_creada_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.get_previous_by_creada_en"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.get_previous_by_creada_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.get_tipo_tasa_display"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.get_tipo_tasa_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.id"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.leida"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.leida</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.leida_en"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.leida_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.marcar_como_leida"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.marcar_como_leida()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.mensaje"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.mensaje</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.notificar_cambios"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.notificar_cambios()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.objects"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.subio"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.subio</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.tasa_anterior"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.tasa_anterior</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.tasa_nueva"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.tasa_nueva</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.tipo_tasa"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.tipo_tasa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuario"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.usuario</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuario_id"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.usuario_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuarios_clientes"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.usuarios_clientes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionTasa.variacion"><code class="docutils literal notranslate"><span class="pre">NotificacionTasa.variacion</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.pagos_sipap.html">apps.divisas.pagos_sipap module</a><ul>
@@ -557,9 +609,11 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.context_object_name"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.context_object_name</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.form_class"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.form_class</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.form_valid"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.form_valid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.get()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_context_data"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.get_context_data()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.get_object"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.get_object()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.model"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.post"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.post()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.success_url"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.success_url</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.template_name"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.template_name</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.test_func"><code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView.test_func()</span></code></a></li>
@@ -613,6 +667,22 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.PagarTransaccionCambioView.get"><code class="docutils literal notranslate"><span class="pre">PagarTransaccionCambioView.get()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.PagarTransaccionCambioView.post"><code class="docutils literal notranslate"><span class="pre">PagarTransaccionCambioView.post()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.PagarTransaccionCambioView.test_func"><code class="docutils literal notranslate"><span class="pre">PagarTransaccionCambioView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.NotificacionesClienteMixin"><code class="docutils literal notranslate"><span class="pre">NotificacionesClienteMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.NotificacionesClienteMixin.test_func"><code class="docutils literal notranslate"><span class="pre">NotificacionesClienteMixin.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.context_object_name"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.context_object_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_queryset"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.get_queryset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.paginate_by"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.paginate_by</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.template_name"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.template_name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView"><code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView.http_method_names"><code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView.http_method_names</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView.post"><code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView.post()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComisionListView</span></code></a><ul>
@@ -688,7 +758,9 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaUpdateView"><code class="docutils literal notranslate"><span class="pre">DivisaUpdateView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaUpdateView.form_class"><code class="docutils literal notranslate"><span class="pre">DivisaUpdateView.form_class</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaUpdateView.get"><code class="docutils literal notranslate"><span class="pre">DivisaUpdateView.get()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaUpdateView.model"><code class="docutils literal notranslate"><span class="pre">DivisaUpdateView.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaUpdateView.post"><code class="docutils literal notranslate"><span class="pre">DivisaUpdateView.post()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaUpdateView.success_url"><code class="docutils literal notranslate"><span class="pre">DivisaUpdateView.success_url</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DivisaUpdateView.template_name"><code class="docutils literal notranslate"><span class="pre">DivisaUpdateView.template_name</span></code></a></li>
 </ul>
@@ -716,7 +788,7 @@ comercial del sistema.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
         <a href="apps.clientes.views.html" class="btn btn-neutral float-left" title="apps.clientes.views module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
-        <a href="apps.divisas.forms.html" class="btn btn-neutral float-right" title="apps.divisas.forms module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="apps.divisas.context_processors.html" class="btn btn-neutral float-right" title="apps.divisas.context_processors module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

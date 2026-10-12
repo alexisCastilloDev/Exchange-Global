@@ -22,7 +22,7 @@
     <link rel="index" title="Índice" href="../genindex.html" />
     <link rel="search" title="Búsqueda" href="../search.html" />
     <link rel="next" title="apps.divisas.models module" href="apps.divisas.models.html" />
-    <link rel="prev" title="apps.divisas package" href="apps.divisas.html" /> 
+    <link rel="prev" title="apps.divisas.context_processors module" href="apps.divisas.context_processors.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -63,6 +64,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -508,6 +513,13 @@ de proveedor, identificador externo ni monto, que son responsabilidad de
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaForm</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelForm</span></code></p>
 <p>Valida los datos básicos de una divisa administrable.</p>
+<p>PYG queda fuera de este catálogo a propósito: es la moneda base del
+sistema (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.moneda_a_pagar</span></code>), implícita en
+cualquier operación, y nunca algo que un administrador deba poder
+crear, editar ni dar de baja desde acá. La fila que la representa en
+la base (necesaria para otros módulos, como la apertura de caja) la
+asegura una migración de datos (<code class="docutils literal notranslate"><span class="pre">0017_asegurar_divisa_pyg</span></code>), no
+este formulario.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.forms.DivisaForm.Meta">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm.Meta"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm.Meta" title="Link to this definition"></a></dt>
@@ -534,7 +546,7 @@ de proveedor, identificador externo ni monto, que son responsabilidad de
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.forms.DivisaForm.clean_codigo">
 <span class="sig-name descname"><span class="pre">clean_codigo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#DivisaForm.clean_codigo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.DivisaForm.clean_codigo" title="Link to this definition"></a></dt>
-<dd><p>Normaliza el código ISO y controla que no esté duplicado.</p>
+<dd><p>Normaliza el código ISO, rechaza PYG y controla que no esté duplicado.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -625,7 +637,7 @@ de proveedor, identificador externo ni monto, que son responsabilidad de
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
-        <a href="apps.divisas.html" class="btn btn-neutral float-left" title="apps.divisas package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.context_processors.html" class="btn btn-neutral float-left" title="apps.divisas.context_processors module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
         <a href="apps.divisas.models.html" class="btn btn-neutral float-right" title="apps.divisas.models module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

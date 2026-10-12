@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -63,6 +64,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -171,6 +176,13 @@
 <dt class="sig sig-object py" id="apps.divisas.views.TasasVigentesListView.get_queryset">
 <span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TasasVigentesListView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TasasVigentesListView.get_queryset" title="Link to this definition"></a></dt>
 <dd><p>Criterio de Aceptación 4: Las divisas inactivas no se muestran.</p>
+<p>Tampoco PYG: es la moneda base del sistema (1:1 implícito, sin
+cotización propia que cargar ni actualizar; garantizada en el
+catálogo por las migraciones de datos
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.0014_crear_divisa_pyg</span></code> y
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.0017_asegurar_divisa_pyg</span></code>), no una divisa
+operable más en esta pantalla, igual que ya la excluyen los
+selectores de divisa operable (<code class="docutils literal notranslate"><span class="pre">DivisaSelect</span></code>/<code class="docutils literal notranslate"><span class="pre">CalculoOperacionForm</span></code>).</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -198,6 +210,11 @@ cliente.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ActualizarCotizacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateView</span></code></p>
 <p>Permite a roles autorizados registrar una nueva cotización.</p>
+<p>PYG queda afuera: no tiene una cotización propia que cargar (ver
+<code class="docutils literal notranslate"><span class="pre">TasasVigentesListView</span></code>). Se bloquea en <code class="docutils literal notranslate"><span class="pre">get</span></code>/<code class="docutils literal notranslate"><span class="pre">post</span></code> —en vez de
+dejar que <code class="docutils literal notranslate"><span class="pre">get_object</span></code> levante un 404 crudo— para avisarle a quien
+entre por una URL directa con un mensaje claro, no con una página de
+error de Django.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.context_object_name">
 <span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cotizacion'</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.context_object_name" title="Link to this definition"></a></dt>
@@ -216,6 +233,12 @@ cliente.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.get" title="Link to this definition"></a></dt>
+<dd><p>Bloquea el acceso a la pantalla de actualización de PYG.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.get_context_data">
 <span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.get_context_data" title="Link to this definition"></a></dt>
 <dd><p>Agrega la divisa asociada al contexto del formulario.</p>
@@ -231,6 +254,12 @@ cliente.</p>
 <dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.model">
 <span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.model" title="Link to this definition"></a></dt>
 <dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion" title="apps.divisas.models.Cotizacion"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cotizacion</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ActualizarCotizacionView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ActualizarCotizacionView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ActualizarCotizacionView.post" title="Link to this definition"></a></dt>
+<dd><p>Bloquea el guardado directo (sin pasar por la pantalla) sobre PYG.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -536,6 +565,97 @@ al detalle del cambio con el resultado en cualquier otro caso.</p>
 <dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionCambioView.test_func">
 <span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionCambioView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionCambioView.test_func" title="Link to this definition"></a></dt>
 <dd><p>Permite pagar solo a los roles que pueden operar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.NotificacionesClienteMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotificacionesClienteMixin</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#NotificacionesClienteMixin"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.NotificacionesClienteMixin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code></p>
+<p>Restringe las pantallas de notificaciones de tasas a usuarios clientes.</p>
+<p>Las notificaciones de cambio de tasa (HU GE-51) están dirigidas a
+usuarios clientes, así que se exige el rol <code class="docutils literal notranslate"><span class="pre">cliente</span></code> en la sesión de
+Keycloak, el mismo criterio con el que se muestra el indicador de no
+leídas (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.context_processors.notificaciones_context</span></code>).
+Además, cada vista filtra siempre por <code class="docutils literal notranslate"><span class="pre">request.user</span></code>: nadie puede ver
+ni modificar notificaciones ajenas.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.NotificacionesClienteMixin.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#NotificacionesClienteMixin.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.NotificacionesClienteMixin.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el usuario tenga el rol de cliente.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MisNotificacionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisNotificacionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.NotificacionesClienteMixin" title="apps.divisas.views.NotificacionesClienteMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">NotificacionesClienteMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Lista las notificaciones de cambio de tasa del usuario autenticado.</p>
+<p>Criterio de aceptación 4 de GE-51: las notificaciones se muestran
+ordenadas de la más reciente a la más antigua. Cada una muestra la
+divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;
+las no leídas ofrecen la acción de marcarlas como leídas (ver
+<code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'notificaciones'</span></span><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisNotificacionesView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Devuelve solo las notificaciones propias, de la más nueva a la más vieja.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.paginate_by">
+<span class="sig-name descname"><span class="pre">paginate_by</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.paginate_by" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/mis_notificaciones.html'</span></span><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.MarcarNotificacionLeidaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MarcarNotificacionLeidaView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#MarcarNotificacionLeidaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MarcarNotificacionLeidaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.NotificacionesClienteMixin" title="apps.divisas.views.NotificacionesClienteMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">NotificacionesClienteMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Marca como leída una notificación de cambio de tasa propia.</p>
+<p>Criterio de aceptación 6 de GE-51: al marcarla, su estado cambia a
+leída y deja de contarse en el indicador de no leídas. Solo acepta
+POST (es una acción que modifica datos, protegida por CSRF) y responde
+404 si la notificación no existe o pertenece a otro usuario, sin
+revelar cuál de los dos casos es.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MarcarNotificacionLeidaView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['post']</span></span><a class="headerlink" href="#apps.divisas.views.MarcarNotificacionLeidaView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MarcarNotificacionLeidaView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MarcarNotificacionLeidaView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MarcarNotificacionLeidaView.post" title="Link to this definition"></a></dt>
+<dd><p>Marca la notificación como leída y vuelve a la página de origen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – La request actual.</p></li>
+<li><p><strong>pk</strong> (<em>int</em>) – Identificador de la notificación.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>A la URL indicada en <code class="docutils literal notranslate"><span class="pre">next</span></code> si es segura
+(por ejemplo, para conservar la página del listado), o al
+listado de notificaciones en caso contrario.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1000,16 +1120,35 @@ procesar la acción.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaUpdateView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaUpdateView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateView</span></code></p>
 <p>Permite editar los datos de una divisa existente.</p>
+<p>PYG queda afuera: es la moneda base del sistema, implícita en
+cualquier operación, y no algo que un administrador pueda editar
+desde este catálogo (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.forms.DivisaForm</span></code>). Se
+bloquea también acá —en <code class="docutils literal notranslate"><span class="pre">get</span></code>/<code class="docutils literal notranslate"><span class="pre">post</span></code>, después de que
+<code class="docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code> ya comprobó el rol— para no mostrarle siquiera
+la pantalla de edición, en vez de confiar solo en que el formulario
+la rechace al guardar.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView.form_class">
 <span class="sig-name descname"><span class="pre">form_class</span></span><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView.form_class" title="Link to this definition"></a></dt>
 <dd><p>alias de <a class="reference internal" href="apps.divisas.forms.html#apps.divisas.forms.DivisaForm" title="apps.divisas.forms.DivisaForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">DivisaForm</span></code></a></p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaUpdateView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView.get" title="Link to this definition"></a></dt>
+<dd><p>Bloquea el acceso a la pantalla de edición de PYG.</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView.model">
 <span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView.model" title="Link to this definition"></a></dt>
 <dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa" title="apps.divisas.models.Divisa"><code class="xref py py-class docutils literal notranslate"><span class="pre">Divisa</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DivisaUpdateView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaUpdateView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaUpdateView.post" title="Link to this definition"></a></dt>
+<dd><p>Bloquea el guardado directo (sin pasar por el formulario) sobre PYG.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1029,6 +1168,9 @@ procesar la acción.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivisaSoftDeleteView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaSoftDeleteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaSoftDeleteView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
 <p>Confirma y ejecuta la baja lógica de una divisa.</p>
+<p>PYG no se puede dar de baja: es la divisa base del sistema y tiene
+que seguir siempre activa (otros módulos, como la apertura de caja,
+dependen de eso).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.DivisaSoftDeleteView.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaSoftDeleteView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaSoftDeleteView.get" title="Link to this definition"></a></dt>

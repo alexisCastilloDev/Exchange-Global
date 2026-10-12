@@ -17,7 +17,13 @@ class AperturaCajaTest(TestCase):
     """Verifica los criterios de aceptación de la HU 'Apertura de Caja'."""
 
     def setUp(self):
-        """Prepara un cajero logueado y dos divisas activas."""
+        """Prepara un cajero logueado y dos divisas activas.
+
+        PYG ya existe de antemano: la migración de datos
+        ``apps.divisas.0014_crear_divisa_pyg`` la garantiza como moneda
+        local/base del sistema, así que no hace falta (ni se puede, por la
+        unicidad del código) volver a crearla acá.
+        """
         self.cajero = User.objects.create_user(username='cajero-001', password='password123')
         self.client.login(username='cajero-001', password='password123')
         session = self.client.session

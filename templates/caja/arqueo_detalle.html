@@ -1,0 +1,67 @@
+<!--
+Detalle de un arqueo de caja ya registrado: fecha, hora, cajero y el
+saldo del sistema frente a lo contado, por moneda.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: arqueo.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Detalle de arqueo - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-clipboard-check"></i> Caja</span>
+        <h1>Detalle del arqueo</h1>
+        <p>Registrado el {{ arqueo.creado_en|date:"d/m/Y H:i" }} por {{ arqueo.cajero }}.</p>
+    </div>
+    <a href="{% url 'caja:historial_arqueos' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver al historial</a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+        <div class="ge-card">
+            {% if arqueo.tiene_diferencias %}
+            <div class="operation-expiry mb-3">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Este arqueo registró diferencias entre lo contado y el saldo del sistema.
+            </div>
+            {% else %}
+            <div class="ge-empty-state mb-3">Lo contado coincide exactamente con el saldo del sistema en todas las monedas.</div>
+            {% endif %}
+
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Divisa</th>
+                            <th>Saldo del sistema</th>
+                            <th>Monto contado</th>
+                            <th>Diferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for detalle in arqueo.detalles.all %}
+                        <tr>
+                            <td>{{ detalle.divisa.codigo }}</td>
+                            <td class="ge-num">{{ detalle.saldo_sistema|floatformat:2 }}</td>
+                            <td class="ge-num">{{ detalle.monto_contado|floatformat:2 }}</td>
+                            <td class="ge-num">
+                                {% if detalle.diferencia > 0 %}
+                                    <span class="text-success">Sobrante: {{ detalle.diferencia|floatformat:2 }}</span>
+                                {% elif detalle.diferencia < 0 %}
+                                    <span class="text-danger">Faltante: {{ detalle.diferencia|floatformat:2 }}</span>
+                                {% else %}
+                                    <span>Sin diferencia</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -37,6 +37,18 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.NotificacionesClienteMixin
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.MisNotificacionesView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.MarcarNotificacionLeidaView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.ConfiguracionComisionListView
    :members:
    :show-inheritance:

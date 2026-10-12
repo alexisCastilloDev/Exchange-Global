@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -63,6 +64,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -170,6 +175,32 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.AperturaCajaForm.saldos_por_divisa"><code class="docutils literal notranslate"><span class="pre">AperturaCajaForm.saldos_por_divisa()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm"><code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm.__init__"><code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm.base_fields"><code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm.base_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm.declared_fields"><code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm.declared_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm.divisa_seleccionada"><code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm.divisa_seleccionada()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.OperacionVentanillaForm.media"><code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm.media</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinarioForm</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.__init__"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinarioForm.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.base_fields"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinarioForm.base_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.clean_motivo"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinarioForm.clean_motivo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.declared_fields"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinarioForm.declared_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.divisa_seleccionada"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinarioForm.divisa_seleccionada()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.media"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinarioForm.media</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm"><code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.__init__"><code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.base_fields"><code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm.base_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.declared_fields"><code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm.declared_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.media"><code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm.media</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.montos_por_divisa"><code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm.montos_por_divisa()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.forms.html#apps.caja.forms.ArqueoCajaForm.nombre_campo"><code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm.nombre_campo()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.caja.models.html">apps.caja.models module</a><ul>
@@ -181,13 +212,18 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">Caja.MultipleObjectsReturned</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.NotUpdated"><code class="docutils literal notranslate"><span class="pre">Caja.NotUpdated</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.abierta_en"><code class="docutils literal notranslate"><span class="pre">Caja.abierta_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.arqueos"><code class="docutils literal notranslate"><span class="pre">Caja.arqueos</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.cerrada_en"><code class="docutils literal notranslate"><span class="pre">Caja.cerrada_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.cerrar"><code class="docutils literal notranslate"><span class="pre">Caja.cerrar()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.estado"><code class="docutils literal notranslate"><span class="pre">Caja.estado</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.get_estado_display"><code class="docutils literal notranslate"><span class="pre">Caja.get_estado_display()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.get_next_by_abierta_en"><code class="docutils literal notranslate"><span class="pre">Caja.get_next_by_abierta_en()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.get_previous_by_abierta_en"><code class="docutils literal notranslate"><span class="pre">Caja.get_previous_by_abierta_en()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.id"><code class="docutils literal notranslate"><span class="pre">Caja.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.movimientos_extraordinarios"><code class="docutils literal notranslate"><span class="pre">Caja.movimientos_extraordinarios</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.objects"><code class="docutils literal notranslate"><span class="pre">Caja.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.operaciones"><code class="docutils literal notranslate"><span class="pre">Caja.operaciones</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.saldo_actual"><code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.saldos_iniciales"><code class="docutils literal notranslate"><span class="pre">Caja.saldos_iniciales</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.usuario"><code class="docutils literal notranslate"><span class="pre">Caja.usuario</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.Caja.usuario_id"><code class="docutils literal notranslate"><span class="pre">Caja.usuario_id</span></code></a></li>
@@ -206,19 +242,142 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.SaldoInicialCaja.objects"><code class="docutils literal notranslate"><span class="pre">SaldoInicialCaja.objects</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.NotUpdated"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.TIPO_CHOICES"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.TIPO_CHOICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.TIPO_COMPRA"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.TIPO_COMPRA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.TIPO_VENTA"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.TIPO_VENTA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.caja"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.caja</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.caja_id"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.caja_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.cajero"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.cajero</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.cajero_id"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.cajero_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.comision"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.comision</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.comision_porcentaje"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.comision_porcentaje</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.creado_en"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.creado_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.divisa"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.divisa_id"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.divisa_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.get_next_by_creado_en"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.get_next_by_creado_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.get_previous_by_creado_en"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.get_previous_by_creado_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.get_tipo_display"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.get_tipo_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.id"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.monto_divisa"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.monto_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.monto_pyg"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.monto_pyg</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.objects"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.tasa_aplicada"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.tasa_aplicada</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.OperacionVentanilla.tipo"><code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.tipo</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.NotUpdated"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.TIPO_CHOICES"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.TIPO_CHOICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.TIPO_EGRESO"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.TIPO_EGRESO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.TIPO_INGRESO"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.TIPO_INGRESO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.caja"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.caja</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.caja_id"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.caja_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.cajero"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.cajero</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.cajero_id"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.cajero_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.creado_en"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.creado_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.divisa"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.divisa_id"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.divisa_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.get_next_by_creado_en"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.get_next_by_creado_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.get_previous_by_creado_en"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.get_previous_by_creado_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.get_tipo_display"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.get_tipo_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.id"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.monto"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.monto</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.motivo"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.motivo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.objects"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.tipo"><code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.tipo</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.NotUpdated"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.caja"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.caja</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.caja_id"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.caja_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.cajero"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.cajero</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.cajero_id"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.cajero_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.creado_en"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.creado_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.detalles"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.detalles</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.get_next_by_creado_en"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.get_next_by_creado_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.get_previous_by_creado_en"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.get_previous_by_creado_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.id"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.objects"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.ArqueoCaja.tiene_diferencias"><code class="docutils literal notranslate"><span class="pre">ArqueoCaja.tiene_diferencias</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.NotUpdated"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.arqueo"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.arqueo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.arqueo_id"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.arqueo_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.diferencia"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.diferencia</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.divisa"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.divisa_id"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.divisa_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.id"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.monto_contado"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.monto_contado</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.objects"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.saldo_sistema"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja.saldo_sistema</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.caja.urls.html">apps.caja.urls module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps.caja.views.html">apps.caja.views module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views._avisar_divisas_sin_cotizar"><code class="docutils literal notranslate"><span class="pre">_avisar_divisas_sin_cotizar()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.AbrirCajaView"><code class="docutils literal notranslate"><span class="pre">AbrirCajaView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.AbrirCajaView.get"><code class="docutils literal notranslate"><span class="pre">AbrirCajaView.get()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.AbrirCajaView.post"><code class="docutils literal notranslate"><span class="pre">AbrirCajaView.post()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.AbrirCajaView.test_func"><code class="docutils literal notranslate"><span class="pre">AbrirCajaView.test_func()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.CerrarCajaView"><code class="docutils literal notranslate"><span class="pre">CerrarCajaView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.CerrarCajaView.get"><code class="docutils literal notranslate"><span class="pre">CerrarCajaView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.CerrarCajaView.post"><code class="docutils literal notranslate"><span class="pre">CerrarCajaView.post()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.CerrarCajaView.test_func"><code class="docutils literal notranslate"><span class="pre">CerrarCajaView.test_func()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.PanelCajaView"><code class="docutils literal notranslate"><span class="pre">PanelCajaView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.PanelCajaView.get"><code class="docutils literal notranslate"><span class="pre">PanelCajaView.get()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.PanelCajaView.test_func"><code class="docutils literal notranslate"><span class="pre">PanelCajaView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView"><code class="docutils literal notranslate"><span class="pre">RegistrarOperacionVentanillaView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.get"><code class="docutils literal notranslate"><span class="pre">RegistrarOperacionVentanillaView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.post"><code class="docutils literal notranslate"><span class="pre">RegistrarOperacionVentanillaView.post()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.test_func"><code class="docutils literal notranslate"><span class="pre">RegistrarOperacionVentanillaView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView"><code class="docutils literal notranslate"><span class="pre">RegistrarMovimientoExtraordinarioView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView.get"><code class="docutils literal notranslate"><span class="pre">RegistrarMovimientoExtraordinarioView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView.post"><code class="docutils literal notranslate"><span class="pre">RegistrarMovimientoExtraordinarioView.post()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView.test_func"><code class="docutils literal notranslate"><span class="pre">RegistrarMovimientoExtraordinarioView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.IniciarArqueoCajaView"><code class="docutils literal notranslate"><span class="pre">IniciarArqueoCajaView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.IniciarArqueoCajaView.get"><code class="docutils literal notranslate"><span class="pre">IniciarArqueoCajaView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.IniciarArqueoCajaView.post"><code class="docutils literal notranslate"><span class="pre">IniciarArqueoCajaView.post()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.IniciarArqueoCajaView.test_func"><code class="docutils literal notranslate"><span class="pre">IniciarArqueoCajaView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCajaView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView.get"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCajaView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView.test_func"><code class="docutils literal notranslate"><span class="pre">DetalleArqueoCajaView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.HistorialArqueosCajaView"><code class="docutils literal notranslate"><span class="pre">HistorialArqueosCajaView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.HistorialArqueosCajaView.get"><code class="docutils literal notranslate"><span class="pre">HistorialArqueosCajaView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.HistorialArqueosCajaView.test_func"><code class="docutils literal notranslate"><span class="pre">HistorialArqueosCajaView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.HistorialCajasView"><code class="docutils literal notranslate"><span class="pre">HistorialCajasView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.HistorialCajasView.get"><code class="docutils literal notranslate"><span class="pre">HistorialCajasView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.caja.views.html#apps.caja.views.HistorialCajasView.test_func"><code class="docutils literal notranslate"><span class="pre">HistorialCajasView.test_func()</span></code></a></li>
 </ul>
 </li>
 </ul>

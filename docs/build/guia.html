@@ -52,6 +52,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#flujo-de-autenticacion">Flujo de autenticación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -63,6 +64,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -160,7 +165,8 @@
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">apps.authentication</span></code>: integración OIDC con Keycloak, roles de sesión,
 filtros de plantillas y auditoría de bajas.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">apps.caja</span></code>: apertura de caja y saldo inicial por moneda de un cajero.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">apps.caja</span></code>: apertura de caja, saldo inicial por moneda, operaciones de
+ventanilla (compra y venta de divisas en efectivo) y arqueo de un cajero.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">apps.clientes</span></code>: perfiles de clientes, selección del cliente activo,
 asociaciones de usuarios y métodos de pago.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">apps.divisas</span></code>: catálogo de divisas, cotizaciones, historial y simulación.</p></li>
@@ -298,6 +304,38 @@ realmente ajena); si es de otro cliente propio del mismo usuario, en vez de
 un error de Django informa con un mensaje («Esta transacción no corresponde
 al cliente activo…») y redirige, ya que no hay nada que ocultarle al
 propio usuario sobre su otra transacción.</p>
+</section>
+<section id="notificaciones-de-cambio-de-tasas">
+<h2>Notificaciones de cambio de tasas<a class="headerlink" href="#notificaciones-de-cambio-de-tasas" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Notificaciones sobre tasas de cambio» (GE-51). Cada vez
+que se guarda una nueva cotización de una divisa (por ejemplo desde
+<code class="docutils literal notranslate"><span class="pre">ActualizarCotizacionView</span></code>), <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.Cotizacion.save</span></code> la
+compara con la última cotización que esa divisa tenía hasta ese momento:</p>
+<ul class="simple">
+<li><p>Por cada tasa (compra o venta) cuyo valor <strong>cambió</strong>, se crea una
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.NotificacionTasa</span></code> para cada usuario cliente, con la
+divisa, el tipo de tasa, la tasa anterior y la nueva. Si cambian ambas,
+cada usuario recibe dos notificaciones, una por tipo.</p></li>
+<li><p>Si la tasa se guarda con el <strong>mismo valor</strong> (<code class="docutils literal notranslate"><span class="pre">7300</span></code> y <code class="docutils literal notranslate"><span class="pre">7300.00</span></code> se
+consideran iguales), no se genera ninguna notificación; la cotización igual
+queda en el historial.</p></li>
+<li><p>La primera cotización de una divisa no notifica: no hay tasa anterior con
+la que comparar.</p></li>
+</ul>
+<p>La cotización y sus notificaciones se guardan en una única transacción de
+base de datos. Como el rol <code class="docutils literal notranslate"><span class="pre">cliente</span></code> vive solo en la sesión de Keycloak,
+para elegir los destinatarios se considera «usuario cliente» a todo usuario
+activo asociado a al menos un <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> activo, ya sea como usuario
+asociado o como titular (<code class="docutils literal notranslate"><span class="pre">NotificacionTasa.usuarios_clientes</span></code>).</p>
+<p>Un usuario con el rol <code class="docutils literal notranslate"><span class="pre">cliente</span></code> consulta sus notificaciones en
+<code class="docutils literal notranslate"><span class="pre">/divisas/notificaciones/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.MisNotificacionesView</span></code>),
+de la más reciente a la más antigua y paginadas de a 20, y puede marcar
+cada una como leída (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.MarcarNotificacionLeidaView</span></code>,
+solo POST; las notificaciones ajenas responden 404). En la barra superior
+de todas las pantallas, una campana muestra la cantidad de notificaciones
+no leídas, calculada por el context processor
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.context_processors.notificaciones_context</span></code>; al marcar una
+como leída deja de contarse.</p>
 </section>
 <section id="pago-de-una-transaccion-confirmada">
 <h2>Pago de una transacción confirmada<a class="headerlink" href="#pago-de-una-transaccion-confirmada" title="Link to this heading"></a></h2>
@@ -620,10 +658,13 @@ cliente al iniciar el pago (criterio 2): la transacción pasa a
 llama en cambio a <code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago_observado</span></code>, con la
 diferencia (<code class="docutils literal notranslate"><span class="pre">monto</span> <span class="pre">recibido</span> <span class="pre">-</span> <span class="pre">monto</span> <span class="pre">esperado</span></code>, con signo): queda
 un <code class="docutils literal notranslate"><span class="pre">Pago</span></code> con <code class="docutils literal notranslate"><span class="pre">observado=True</span></code> para revisión manual, pero la
-transacción <strong>no</strong> pasa a «Pagada» (criterio 3) — a diferencia de
-Stripe, donde el sistema siempre cobra exactamente lo que pidió, en
-la «banca en línea» de sipap-sim el cliente puede, a propósito,
-elegir un monto distinto del solicitado.</p></li>
+transacción <strong>no</strong> pasa a «Pagada» (criterio 3). La «banca en
+línea» de sipap-sim no deja elegir un monto distinto del solicitado
+(acredita siempre el pedido, igual que Stripe); este caso queda
+para cuando la confirmación reporte un monto distinto por otro
+motivo, y está cubierto por los tests del webhook
+(<code class="docutils literal notranslate"><span class="pre">tests/test_pagos_sipap.py</span></code>) aunque no se pueda disparar desde
+la pantalla de sipap-sim.</p></li>
 </ul>
 </li>
 </ol>
@@ -710,8 +751,10 @@ de la comisión, acá no participa <code class="docutils literal notranslate"><s
 <h2>Apertura de caja<a class="headerlink" href="#apertura-de-caja" title="Link to this heading"></a></h2>
 <p>Un usuario con rol <code class="docutils literal notranslate"><span class="pre">cajero</span></code> abre su caja en <code class="docutils literal notranslate"><span class="pre">/caja/abrir/</span></code>
 (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.AbrirCajaView</span></code>), registrando el saldo inicial de cada
-divisa activa del sistema (incluido PYG, si existe como divisa activa):
-<code class="docutils literal notranslate"><span class="pre">apps.caja.forms.AperturaCajaForm</span></code> genera un campo por divisa en vez de
+divisa activa del sistema, incluido PYG (su existencia en el catálogo está
+garantizada por la migración de datos <code class="docutils literal notranslate"><span class="pre">apps.divisas.0014_crear_divisa_pyg</span></code>,
+ver <a class="reference internal" href="#operaciones-en-ventanilla">Operaciones en ventanilla</a>): <code class="docutils literal notranslate"><span class="pre">apps.caja.forms.AperturaCajaForm</span></code>
+genera un campo por divisa en vez de
 pedirle al cajero que elija cuáles va a manejar, así que un saldo en cero
 simplemente significa que no maneja esa moneda en el turno. Al confirmar,
 se crea una <code class="docutils literal notranslate"><span class="pre">apps.caja.models.Caja</span></code> en estado «Abierta» —asociada al
@@ -722,15 +765,179 @@ validación en la vista, <code class="docutils literal notranslate"><span class=
 única parcial en la base de datos (solo entre filas con
 <code class="docutils literal notranslate"><span class="pre">estado='ABIERTA'</span></code>) para que ni una carrera entre dos pestañas pueda
 crear una segunda. El panel del cajero (<code class="docutils literal notranslate"><span class="pre">/caja/</span></code>,
-<code class="docutils literal notranslate"><span class="pre">apps.caja.views.PanelCajaView</span></code>) muestra la caja abierta con el saldo
-inicial de cada moneda tal como se registró, o la invitación a abrir una si
-todavía no tiene ninguna.</p>
-<p>El cierre de caja, las operaciones de caja, el arqueo y los movimientos son
-HU futuras que no existen todavía en este código; <code class="docutils literal notranslate"><span class="pre">Caja.estado</span></code> ya
-contempla «Cerrada» para no tener que migrar el modelo de nuevo cuando se
-implementen. El acceso a cualquier función de caja está restringido al rol
-<code class="docutils literal notranslate"><span class="pre">cajero</span></code> exclusivamente (sin excepción para administración ni análisis
-cambiario, a diferencia de otras pantallas de este sistema).</p>
+<code class="docutils literal notranslate"><span class="pre">apps.caja.views.PanelCajaView</span></code>) muestra la caja abierta, o la invitación
+a abrir una si todavía no tiene ninguna; al momento de abrir, antes de
+registrar cualquier operación, el saldo que muestra ese panel coincide con
+el saldo inicial recién contado (ver <a class="reference internal" href="#operaciones-en-ventanilla">Operaciones en ventanilla</a> para cómo
+cambia a partir de ahí).</p>
+<p>El arqueo y el cierre de la caja (ver <a class="reference internal" href="#arqueo-de-caja">Arqueo de caja</a> y <a class="reference internal" href="#cierre-de-caja">Cierre de caja</a>
+más abajo) ya están implementados. El acceso a cualquier función de caja
+está restringido al rol <code class="docutils literal notranslate"><span class="pre">cajero</span></code> exclusivamente (sin excepción para
+administración ni análisis cambiario, a diferencia de otras pantallas de
+este sistema).</p>
+</section>
+<section id="operaciones-en-ventanilla">
+<h2>Operaciones en ventanilla<a class="headerlink" href="#operaciones-en-ventanilla" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Gestión de operaciones en ventanilla»: con la caja ya
+abierta, el cajero registra en <code class="docutils literal notranslate"><span class="pre">/caja/operaciones/compra/</span></code> o
+<code class="docutils literal notranslate"><span class="pre">/caja/operaciones/venta/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.RegistrarOperacionVentanillaView</span></code>)
+una compra o venta de divisas en efectivo con un cliente de mostrador, usando
+<code class="docutils literal notranslate"><span class="pre">apps.caja.forms.OperacionVentanillaForm</span></code> para validar la divisa (activa,
+cotizada, nunca PYG) y el monto (mayor que cero, numérico).</p>
+<p>El cálculo de tasa y comisión <strong>reutiliza</strong> la misma función que ya usa el
+flujo online del cliente, <code class="docutils literal notranslate"><span class="pre">apps.divisas.views._calcular_importe_operacion</span></code>
+(ver <a class="reference internal" href="#flujo-operativo-de-divisas">Flujo operativo de divisas</a>), en vez de duplicar esa lógica. La única
+particularidad es que <code class="docutils literal notranslate"><span class="pre">apps.caja.models.OperacionVentanilla.TIPO_COMPRA</span></code> y
+<code class="docutils literal notranslate"><span class="pre">TIPO_VENTA</span></code> están escritos desde la perspectiva de la casa de cambio, al
+revés de <code class="docutils literal notranslate"><span class="pre">CalculoOperacion.TIPO_COMPRA</span></code>/<code class="docutils literal notranslate"><span class="pre">TIPO_VENTA</span></code> (escritos desde la
+perspectiva del cliente):</p>
+<ul class="simple">
+<li><p><strong>Compra</strong> (la casa le compra divisa al cliente): equivale a una «Venta»
+para <code class="docutils literal notranslate"><span class="pre">_calcular_importe_operacion</span></code>. El cliente entrega la divisa
+(ingresa a la caja) y el cajero entrega guaraníes (egresa).</p></li>
+<li><p><strong>Venta</strong> (la casa le vende divisa al cliente): equivale a una «Compra»
+para <code class="docutils literal notranslate"><span class="pre">_calcular_importe_operacion</span></code>. El cliente entrega guaraníes
+(ingresa) y el cajero entrega la divisa (egresa).</p></li>
+</ul>
+<p>Esta inversión está documentada explícitamente en el docstring de
+<code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> porque es, a propósito, lo contrario de lo que el
+nombre sugiere a primera vista.</p>
+<p>El saldo de la caja <strong>no se guarda como un campo mutable</strong>: <code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code>
+lo deriva, de forma perezosa, del saldo inicial (<code class="docutils literal notranslate"><span class="pre">SaldoInicialCaja</span></code>) más los
+ingresos y menos los egresos de esa moneda en las operaciones ya registradas,
+siguiendo el mismo patrón de estado computado que <code class="docutils literal notranslate"><span class="pre">estado_efectivo</span></code>/
+<code class="docutils literal notranslate"><span class="pre">ultima_cotizacion</span></code> usan en el resto del sistema. Antes de registrar la
+operación, la vista verifica que la caja tenga saldo suficiente de la moneda
+que el cajero debe entregar —la divisa en una venta, guaraníes en una
+compra— y, si no alcanza, la rechaza informando el saldo disponible y el
+monto necesario, sin crear nada.</p>
+<p>Sin una caja abierta, tanto el formulario como el registro se rechazan,
+redirigiendo a abrir una primero. Al guardarse, la operación queda vinculada
+a la caja activa y al cajero (<code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.caja</span></code>/<code class="docutils literal notranslate"><span class="pre">cajero</span></code>), con
+la tasa, la comisión y los montos de ambas monedas (<code class="docutils literal notranslate"><span class="pre">monto_divisa</span></code>,
+<code class="docutils literal notranslate"><span class="pre">monto_pyg</span></code>). El panel del cajero (<code class="docutils literal notranslate"><span class="pre">/caja/</span></code>) muestra el saldo actual por
+moneda y las últimas operaciones registradas en el turno.</p>
+<p>Una compra necesita, además, poder valuar guaraníes contra una <code class="docutils literal notranslate"><span class="pre">Divisa</span></code> de
+código <code class="docutils literal notranslate"><span class="pre">PYG</span></code> real del catálogo. PYG es la moneda local/base del sistema —se
+cotiza y liquida todo contra ella, nunca se la ofrece como una divisa
+operable más (<code class="docutils literal notranslate"><span class="pre">DivisaSelect</span></code>/<code class="docutils literal notranslate"><span class="pre">CalculoOperacionForm</span></code>/
+<code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm</span></code> la excluyen explícitamente)—, así que su
+existencia <strong>no</strong> depende de que un administrador la dé de alta a mano desde
+«Divisas → Nueva divisa» como si fuera una divisa extranjera: la migración de
+datos <code class="docutils literal notranslate"><span class="pre">apps.divisas.0014_crear_divisa_pyg</span></code> la garantiza en el catálogo desde
+el primer <code class="docutils literal notranslate"><span class="pre">migrate</span></code>. Por el mismo motivo, <code class="docutils literal notranslate"><span class="pre">TasasVigentesListView</span></code> la
+excluye de la pantalla de tasas vigentes (nunca tiene una cotización propia
+que mostrar ahí). Una venta no tiene esta dependencia: solo entrega la divisa
+extranjera, nunca necesita resolver la fila de PYG.</p>
+</section>
+<section id="movimientos-extraordinarios-de-caja">
+<h2>Movimientos extraordinarios de caja<a class="headerlink" href="#movimientos-extraordinarios-de-caja" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Gestión de movimientos extraordinarios de Caja»: con la caja
+ya abierta, el cajero registra en <code class="docutils literal notranslate"><span class="pre">/caja/movimientos/ingreso/</span></code> o
+<code class="docutils literal notranslate"><span class="pre">/caja/movimientos/egreso/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.RegistrarMovimientoExtraordinarioView</span></code>)
+un ingreso o egreso de efectivo que <strong>no</strong> proviene de una compra o venta de
+divisas —por ejemplo, un refuerzo de caja o un pago de gastos de oficina—,
+usando <code class="docutils literal notranslate"><span class="pre">apps.caja.forms.MovimientoExtraordinarioForm</span></code> para validar la
+divisa, el monto (mayor que cero, numérico) y el motivo.</p>
+<p>A diferencia de <code class="docutils literal notranslate"><span class="pre">OperacionVentanillaForm</span></code> (ver <a class="reference internal" href="#operaciones-en-ventanilla">Operaciones en
+ventanilla</a>), este formulario no excluye PYG ni ninguna divisa sin
+cotización vigente: un movimiento extraordinario no calcula ninguna tasa ni
+comisión, así que puede registrarse en cualquier divisa activa del sistema.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> suma los ingresos y resta los egresos extraordinarios
+de cada moneda exactamente igual que ya hace con las operaciones de
+ventanilla (Criterio 1), de modo que ambos tipos de movimiento conviven en el
+mismo saldo derivado. Antes de registrar un egreso, la vista verifica que la
+caja tenga saldo suficiente de esa divisa y, si no alcanza, lo rechaza
+informando el saldo disponible y el monto necesario, sin crear nada
+(Criterio 2); un ingreso, en cambio, nunca se rechaza por saldo. El motivo es
+obligatorio: un valor vacío o compuesto solo de espacios se rechaza con el
+mismo criterio que <code class="docutils literal notranslate"><span class="pre">apps.authentication.forms.CausaBajaForm</span></code> usa para la
+causa de una baja lógica (Criterio 3).</p>
+<p>Sin una caja abierta, tanto el formulario como el registro se rechazan,
+redirigiendo a abrir una primero, igual que el resto de las funciones de
+caja. Al guardarse, el movimiento queda vinculado a la caja activa y al
+cajero (<code class="docutils literal notranslate"><span class="pre">MovimientoExtraordinario.caja</span></code>/<code class="docutils literal notranslate"><span class="pre">cajero</span></code>), con el tipo, la
+divisa, el monto y el motivo. En el panel del cajero (<code class="docutils literal notranslate"><span class="pre">/caja/</span></code>), los
+movimientos extraordinarios se muestran en su propia tabla («Últimos
+movimientos extraordinarios»), separada de «Últimas operaciones de
+ventanilla», para que nunca se confundan con una operación cambiaria en
+ningún listado o reporte de la caja (Criterio 4).</p>
+</section>
+<section id="arqueo-de-caja">
+<h2>Arqueo de caja<a class="headerlink" href="#arqueo-de-caja" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Arqueo de Caja»: con la caja ya abierta, el cajero inicia
+un arqueo en <code class="docutils literal notranslate"><span class="pre">/caja/arqueo/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.IniciarArqueoCajaView</span></code>),
+contando físicamente cuánto tiene de cada divisa activa <strong>ya cotizada</strong>
+(incluido PYG, siempre cotizado con tasa 1:1) — mismo criterio exacto que
+<code class="docutils literal notranslate"><span class="pre">AperturaCajaForm</span></code> usa para el saldo inicial, hasta reutilizar el mismo
+mensaje de aviso (<code class="docutils literal notranslate"><span class="pre">apps.caja.views._avisar_divisas_sin_cotizar</span></code>):
+<code class="docutils literal notranslate"><span class="pre">apps.caja.forms.ArqueoCajaForm</span></code> genera un campo <code class="docutils literal notranslate"><span class="pre">contado_&lt;divisa.pk&gt;</span></code>
+por cada divisa cotizada, y deja <strong>fuera</strong> cualquier divisa activa sin
+ninguna cotización vigente. Sin una tasa de referencia no hay forma
+confiable de interpretar esa moneda en un arqueo, así que ni siquiera se
+ofrece el campo para contarla — a diferencia de la ventanilla (donde una
+divisa sin cotizar simplemente no se puede operar), acá se trata igual que
+en la apertura de caja, incluido el mensaje pidiendo que un analista
+cambiario o un administrador la cotice primero.</p>
+<p>Al enviar el formulario, por cada divisa cotizada el sistema congela en un
+<code class="docutils literal notranslate"><span class="pre">apps.caja.models.DetalleArqueoCaja</span></code> tanto lo contado como
+<code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> en ese instante, y calcula la diferencia entre ambos
+(Criterio 1): positiva es un sobrante, negativa un faltante, cero significa
+que coinciden exactamente.</p>
+<p>Una diferencia distinta de cero en cualquier divisa <strong>nunca</strong> rechaza el
+arqueo ni bloquea la caja: se guarda igual, sin impedir que el cajero sigua
+operando con compras, ventas u otro arqueo después (Criterio 2). No hay
+ninguna validación de «la diferencia no puede ser distinta de cero» en
+<code class="docutils literal notranslate"><span class="pre">ArqueoCajaForm</span></code> — lo único que rechaza es un monto negativo o no numérico,
+igual que el resto de los formularios de caja.</p>
+<p>Cada <code class="docutils literal notranslate"><span class="pre">apps.caja.models.ArqueoCaja</span></code> queda asociado a la caja y al cajero que
+lo registró, con la fecha y hora (<code class="docutils literal notranslate"><span class="pre">creado_en</span></code>) y, por cada divisa, el
+monto contado y el saldo del sistema en ese momento (Criterio 3). Ambos
+valores quedan <strong>congelados</strong> en <code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja</span></code>: no se recalculan
+después, así que un arqueo viejo sigue mostrando el saldo que el sistema
+tenía en ese instante aunque <code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code> haya cambiado desde
+entonces con operaciones nuevas. Queda disponible para consulta posterior en
+<code class="docutils literal notranslate"><span class="pre">apps.caja.views.DetalleArqueoCajaView</span></code> (<code class="docutils literal notranslate"><span class="pre">/caja/arqueo/&lt;uuid&gt;/</span></code>) y en el
+listado <code class="docutils literal notranslate"><span class="pre">apps.caja.views.HistorialArqueosCajaView</span></code>
+(<code class="docutils literal notranslate"><span class="pre">/caja/arqueo/historial/</span></code>), ambos restringidos al cajero que lo registró
+— el mismo alcance que el resto de las funciones de caja, donde cada cajero
+ve únicamente lo suyo.</p>
+</section>
+<section id="cierre-de-caja">
+<h2>Cierre de caja<a class="headerlink" href="#cierre-de-caja" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Cierre de Caja»: con la caja ya abierta, el cajero inicia
+el cierre en <code class="docutils literal notranslate"><span class="pre">/caja/cerrar/</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.caja.views.CerrarCajaView</span></code>), que
+muestra primero un resumen completo del turno (Criterio 1) — por cada
+moneda contada al abrir, el saldo inicial y el saldo final
+(<code class="docutils literal notranslate"><span class="pre">Caja.saldo_actual</span></code>, que ya incluye lo registrado en ventanilla y en
+movimientos extraordinarios), más el detalle de las operaciones de
+ventanilla, los movimientos extraordinarios y los arqueos realizados en el
+turno — antes de pedir la confirmación.</p>
+<p>Si el turno no tiene ningún arqueo registrado, el resumen muestra una
+advertencia y agrega una casilla de confirmación explícita; sin marcarla,
+el cierre se rechaza (Criterio 3). Al confirmar, <code class="docutils literal notranslate"><span class="pre">Caja.cerrar</span></code> persiste
+la transición a «Cerrada» fijando <code class="docutils literal notranslate"><span class="pre">cerrada_en</span></code> con la fecha y hora
+actuales (Criterio 2).</p>
+<p>Ninguna de las vistas de registro de este módulo necesitó ningún cambio
+para dejar de aceptar operaciones sobre una caja cerrada: <code class="docutils literal notranslate"><span class="pre">AbrirCajaView</span></code>,
+<code class="docutils literal notranslate"><span class="pre">RegistrarOperacionVentanillaView</span></code>, <code class="docutils literal notranslate"><span class="pre">RegistrarMovimientoExtraordinarioView</span></code>
+e <code class="docutils literal notranslate"><span class="pre">IniciarArqueoCajaView</span></code> ya resolvían «la caja abierta del cajero»
+filtrando por <code class="docutils literal notranslate"><span class="pre">estado=Caja.ESTADO_ABIERTA</span></code> desde que existen; una vez
+cerrada, esa misma consulta deja de encontrarla y cada una redirige con su
+mensaje habitual de que hace falta una caja abierta. Por el mismo motivo,
+una caja cerrada queda, en los hechos, inmutable: como nada puede volver a
+escribirle una fila nueva, su <code class="docutils literal notranslate"><span class="pre">saldo_actual</span></code> ya no cambia, así que no fue
+necesario «congelar» el balance final en ningún campo aparte (a diferencia
+de <code class="docutils literal notranslate"><span class="pre">DetalleArqueoCaja</span></code>, que sí necesita congelarlo porque la caja sigue
+operando después de cada arqueo).</p>
+<p>Una vez cerrada, el cajero puede abrir un turno nuevo sin que la
+restricción única de <code class="docutils literal notranslate"><span class="pre">Caja.Meta.constraints</span></code> lo bloquee (esa restricción
+solo exige unicidad entre cajas «Abierta», nunca entre una «Cerrada» y una
+nueva). El listado <code class="docutils literal notranslate"><span class="pre">apps.caja.views.HistorialCajasView</span></code>
+(<code class="docutils literal notranslate"><span class="pre">/caja/historial/</span></code>) muestra todas las cajas del cajero, abiertas y
+cerradas, con el período en que cada una estuvo abierta y su balance por
+moneda (Criterio 4); es una pantalla de solo lectura, sin ninguna acción
+para modificar lo ya registrado.</p>
 </section>
 <section id="acceso-a-esta-documentacion-desde-el-sistema">
 <h2>Acceso a esta documentación desde el sistema<a class="headerlink" href="#acceso-a-esta-documentacion-desde-el-sistema" title="Link to this heading"></a></h2>
