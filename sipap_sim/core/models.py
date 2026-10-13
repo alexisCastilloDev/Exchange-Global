@@ -31,7 +31,7 @@ class ProveedorPago(models.Model):
     ]
 
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
-    codigo = models.CharField(max_length=10, unique=True)
+    codigo = models.CharField(max_length=20, unique=True)
     nombre = models.CharField(max_length=100)
 
     class Meta:
