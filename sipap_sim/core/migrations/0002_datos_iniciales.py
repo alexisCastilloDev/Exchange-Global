@@ -8,7 +8,7 @@ para tener con qué probar la "banca en línea" simulada de punta a punta.
 
 from decimal import Decimal
 
-from django.db import migrations
+from django.db import migrations, models
 
 
 def cargar_datos(apps, schema_editor):
@@ -67,5 +67,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='proveedorpago',
+            name='codigo',
+            field=models.CharField(max_length=20, unique=True),
+        ),
         migrations.RunPython(cargar_datos, borrar_datos),
     ]
