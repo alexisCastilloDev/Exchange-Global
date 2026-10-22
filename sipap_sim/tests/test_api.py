@@ -1,11 +1,9 @@
 """Pruebas de la API de sipap-sim que consume Global Exchange.
 
-Usan los datos de prueba cargados por la migración
-``core.migrations.0002_datos_iniciales`` (bancos, billeteras, cuentas de
-la casa de cambio y de clientes), en vez de crear proveedores/cuentas
-propios: esos mismos códigos y números ya existen en cualquier base de
-sipap-sim, así que crear otros iguales en un ``setUp`` chocaría con la
-restricción de unicidad.
+El banco, la cuenta de la casa de cambio y la cuenta de cliente que
+necesitan se crean en cada ``setUp`` con ``fixtures.crear_banco_y_cuentas_pyg``
+(ver ese módulo): ya no vienen de una migración de datos, sino del panel
+administrativo en cualquier entorno real.
 """
 
 import json
@@ -15,12 +13,10 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from fixtures import DOCUMENTO_CLIENTE_PYG, NUMERO_CUENTA_CLIENTE_PYG, crear_banco_y_cuentas_pyg
 from core.models import Cuenta, Transferencia
 
 API_KEY_TEST = 'api-key-de-test'
-
-NUMERO_CUENTA_CLIENTE_PYG = '2000000000000101'
-DOCUMENTO_CLIENTE_PYG = '3456789'
 
 
 def _encabezado_auth(valido=True):
@@ -33,7 +29,7 @@ class CrearSolicitudCobroTest(TestCase):
     """``POST /api/solicitudes-cobro/``."""
 
     def setUp(self):
-        self.casa_pyg = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
+        self.casa_pyg, self.cliente_pyg = crear_banco_y_cuentas_pyg()
 
     def test_rechaza_sin_token(self):
         response = self.client.post(reverse('crear_solicitud_cobro'), data={}, content_type='application/json')
@@ -122,7 +118,7 @@ class ConsultarTransferenciaTest(TestCase):
     """``GET /api/transferencias/<id>/``."""
 
     def setUp(self):
-        casa = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
+        casa, _ = crear_banco_y_cuentas_pyg()
         self.transferencia = Transferencia.objects.create(
             cuenta_destino=casa, monto_solicitado=Decimal('1000'), moneda='PYG',
             referencia='GE-1', vence_en='2099-01-01T00:00:00Z',
@@ -147,6 +143,9 @@ class ConsultarTransferenciaTest(TestCase):
 @override_settings(SIPAP_API_KEY=API_KEY_TEST)
 class ValidarCuentaTest(TestCase):
     """``GET /api/cuentas/validar/``."""
+
+    def setUp(self):
+        crear_banco_y_cuentas_pyg()
 
     def test_rechaza_sin_token(self):
         response = self.client.get(reverse('validar_cuenta'))
@@ -177,8 +176,7 @@ class CrearTransferenciaSalienteTest(TestCase):
     """``POST /api/transferencias/`` (acreditación a un cliente, Sprint 5)."""
 
     def setUp(self):
-        self.casa = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
-        self.cliente = Cuenta.objects.get(numero=NUMERO_CUENTA_CLIENTE_PYG)
+        self.casa, self.cliente = crear_banco_y_cuentas_pyg()
 
     def test_acredita_de_inmediato_y_mueve_saldo(self):
         saldo_casa_inicial = self.casa.saldo

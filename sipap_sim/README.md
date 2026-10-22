@@ -14,42 +14,40 @@ comunican solo por HTTP, como lo harían con un proveedor real.
 cd sipap_sim
 pip install -r requirements.txt
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver 8001
 ```
 
-La migración `0002_datos_iniciales` carga, automáticamente:
+La base arranca completamente vacía: no hay ninguna migración de datos
+que cargue bancos, billeteras ni cuentas (eso fue a propósito: así se
+comporta exactamente igual en desarrollo, en los tests y en
+producción, sin datos fijos versionados en el código que alguien pueda
+olvidarse de actualizar). Todo se carga desde el **panel
+administrativo**, en `http://localhost:8001/panel/` (`/ingresar/` para
+iniciar sesión), con el usuario creado por `createsuperuser` u otro con
+`is_staff=True`. No hay autoregistro: los usuarios del panel se crean
+por consola, igual que cualquier superusuario de Django.
 
-- Bancos: Itaú, Continental, Ueno, Familiar.
-- Billeteras digitales: Tigo Money, Billetera Personal, Zimple.
-- Dos cuentas de la casa de cambio (`es_cuenta_casa_de_cambio=True`),
-  una en PYG y otra en USD: el destino de cualquier solicitud de cobro.
-- Varias cuentas de clientes de prueba, repartidas entre bancos y
-  billeteras, en ambas monedas, para poder probar la "banca en línea" y
-  el alta de un método de pago en Global Exchange (que valida contra
-  `GET /api/cuentas/validar/`):
+Desde el panel se da de alta, en este orden:
 
-  | Proveedor | Número de cuenta | Titular | CI/RUC | Moneda | Saldo |
-  |---|---|---|---|---|---|
-  | Banco Itaú Paraguay | `2000000000000101` | Juan Pérez | `3456789` | PYG | 15.000.000 |
-  | Banco Itaú Paraguay | `2000000000000102` | Juan Pérez | `3456789` | USD | 2.000 |
-  | Banco Continental | `2000000000000201` | María Gómez | `4567890` | PYG | 8.000.000 |
-  | Banco Ueno | `2000000000000301` | Carlos Ruiz | `5678901` | PYG | 500.000 |
-  | Banco Familiar | `2000000000000401` | Ana Benítez | `6789012` | USD | 500 |
-  | Tigo Money | `2000000000000501` | Juan Pérez | `3456789` | PYG | 1.200.000 |
-  | Billetera Personal | `2000000000000601` | María Gómez | `4567890` | PYG | 300.000 |
-  | Zimple | `2000000000000701` | Carlos Ruiz | `5678901` | USD | 150 |
+1. **Bancos y billeteras** (`/panel/proveedores/`): el nombre y el tipo
+   (banco o billetera digital) de cada proveedor que va a emitir cuentas.
+2. **Cuentas** (`/panel/cuentas/`): número, titular, documento, moneda y
+   saldo de cada cuenta, elige a qué proveedor pertenece, y si es la
+   cuenta de la casa de cambio de esa moneda (`es_cuenta_casa_de_cambio`).
+   Solo puede haber **una** cuenta de la casa de cambio por moneda: sin
+   ella, `POST /api/solicitudes-cobro/` en esa moneda no tiene a dónde
+   acreditar y responde 400. El panel avisa en su pantalla principal si
+   falta alguna.
 
-  Para agregar más cuentas de prueba (otro banco, otro titular, otro
-  saldo), hay dos formas:
+Las cuentas de clientes (las que simulan la cuenta bancaria o billetera
+de alguien que va a pagarle a Global Exchange) se cargan de la misma
+forma, con `es_cuenta_casa_de_cambio` sin marcar.
 
-  1. **Admin de sipap-sim** (`http://localhost:8001/admin/`, creando antes
-     un superusuario con `python manage.py createsuperuser`): entrar a
-     "Cuentas" y agregar una fila a mano, elegible al toque.
-  2. **Una migración de datos nueva** (para que quede versionada y la
-     tengan todos los que clonen el repo): copiar el patrón de
-     `core/migrations/0002_datos_iniciales.py` en un archivo
-     `0003_mas_cuentas_de_prueba.py`, con `dependencies = [('core', '0002_datos_iniciales')]`,
-     y correr `python manage.py migrate` de nuevo.
+Ambas pantallas también permiten eliminar una fila ("Eliminar", con
+confirmación). No se puede eliminar un proveedor que todavía tiene
+cuentas a su nombre, ni una cuenta que ya participó en alguna
+transferencia; el panel lo informa en vez de romper.
 
 En Global Exchange, configurar (`.env`):
 

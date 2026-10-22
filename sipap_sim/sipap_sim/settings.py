@@ -95,6 +95,24 @@ FORCE_SCRIPT_NAME = os.environ.get('SIPAP_SCRIPT_NAME') or None
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# El panel administrativo (alta de proveedores de pago y cuentas, ver
+# core/views.py) requiere iniciar sesión con un usuario de staff
+# (``python manage.py createsuperuser``, o cualquier usuario con
+# ``is_staff=True``); no hay autoregistro.
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'panel'
+LOGOUT_REDIRECT_URL = 'login'
+
+# En producción (DEBUG=False), las cookies de sesión y de CSRF del panel
+# solo viajan por HTTPS. SECURE_PROXY_SSL_HEADER le avisa a Django que la
+# conexión original es HTTPS aunque Gunicorn la reciba en texto plano
+# detrás de Nginx, que termina TLS y reenvía con
+# "X-Forwarded-Proto https" (ver deploy/aws/nginx/nginx.conf).
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # --- Específico de sipap-sim ---
 
 # El token que Global Exchange tiene que mandar en

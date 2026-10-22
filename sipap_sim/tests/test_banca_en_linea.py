@@ -1,7 +1,8 @@
 """Pruebas de la 'banca en línea' simulada (``core.views.elegir_cuenta_view``).
 
-Usan los datos de prueba cargados por la migración
-``core.migrations.0002_datos_iniciales``, igual que ``test_api.py``.
+El banco, la cuenta de la casa de cambio y la cuenta de cliente se crean
+en ``setUp`` con ``fixtures.crear_banco_y_cuentas_pyg``, igual que en
+``test_api.py``.
 """
 
 from decimal import Decimal
@@ -11,17 +12,15 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from core.models import Cuenta, Transferencia
-
-NUMERO_CUENTA_CLIENTE_PYG = '2000000000000101'
+from fixtures import crear_banco_y_cuentas_pyg
+from core.models import Transferencia
 
 
 class ElegirCuentaViewTest(TestCase):
     """Aprobar o rechazar con la cuenta que ya identificó quien pidió el cobro."""
 
     def setUp(self):
-        self.casa = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
-        self.cuenta_cliente = Cuenta.objects.get(numero=NUMERO_CUENTA_CLIENTE_PYG)
+        self.casa, self.cuenta_cliente = crear_banco_y_cuentas_pyg()
         self.saldo_cliente_inicial = self.cuenta_cliente.saldo
         self.saldo_casa_inicial = self.casa.saldo
         self.transferencia = Transferencia.objects.create(

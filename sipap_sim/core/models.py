@@ -62,8 +62,9 @@ class Cuenta(models.Model):
         default=False,
         verbose_name='¿Es la cuenta de la casa de cambio?',
         help_text=(
-            'La cuenta destino de cualquier solicitud de cobro: hay una '
-            'por moneda, cargada en la migración de datos iniciales.'
+            'La cuenta destino de cualquier solicitud de cobro: debe haber '
+            'una por moneda (lo valida el panel administrativo al crearla, '
+            'ver core.forms.CuentaForm), nunca más de una.'
         ),
     )
 

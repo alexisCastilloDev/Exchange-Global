@@ -4,7 +4,10 @@ La API (``crear_solicitud_cobro``, ``consultar_transferencia``,
 ``crear_transferencia_saliente``, ``validar_cuenta``) exige
 ``Authorization: Bearer <SIPAP_API_KEY>``, como lo haría un proveedor
 real. La "banca en línea" (``elegir_cuenta_view``) no: es la pantalla que
-ve el cliente en su navegador, no Global Exchange.
+ve el cliente en su navegador, no Global Exchange. El panel
+administrativo (``panel_view``, ``proveedores_view``, ``cuentas_view``)
+tampoco usa esa API key: exige haber iniciado sesión con un usuario de
+staff, como cualquier pantalla pensada para un operador humano.
 """
 
 import json
@@ -13,6 +16,9 @@ from decimal import Decimal, InvalidOperation
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import ProtectedError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -20,7 +26,8 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .models import Cuenta, Transferencia
+from .forms import CuentaForm, ProveedorPagoForm
+from .models import Cuenta, ProveedorPago, Transferencia
 from .webhooks import enviar_confirmacion
 
 VIGENCIA_SOLICITUD_SEGUNDOS = 3600
@@ -273,3 +280,98 @@ def elegir_cuenta_view(request, id_transferencia):
 
     enviar_confirmacion(transferencia)
     return _volver(request, transferencia)
+
+
+@staff_member_required(login_url='login')
+def panel_view(request):
+    """Panel administrativo: punto de entrada para cargar proveedores y cuentas.
+
+    Reemplaza a la migración de datos iniciales como forma de poblar
+    este simulador: antes, los bancos, billeteras y cuentas (incluidas
+    las de la casa de cambio) venían ya cargados por
+    ``core.migrations.0002_datos_iniciales``; ahora se dan de alta desde
+    acá, en cualquier entorno, detrás del inicio de sesión.
+    """
+    moneda_sin_cuenta_casa_de_cambio = [
+        codigo for codigo, _ in Cuenta.MONEDA_CHOICES
+        if not Cuenta.objects.filter(es_cuenta_casa_de_cambio=True, moneda=codigo).exists()
+    ]
+    return render(request, 'core/panel.html', {
+        'cantidad_proveedores': ProveedorPago.objects.count(),
+        'cantidad_cuentas': Cuenta.objects.count(),
+        'moneda_sin_cuenta_casa_de_cambio': moneda_sin_cuenta_casa_de_cambio,
+    })
+
+
+@staff_member_required(login_url='login')
+def proveedores_view(request):
+    """Lista los bancos y billeteras digitales cargados, y permite agregar uno nuevo."""
+    if request.method == 'POST':
+        form = ProveedorPagoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('proveedores')
+    else:
+        form = ProveedorPagoForm()
+    return render(request, 'core/proveedores.html', {
+        'form': form,
+        'proveedores': ProveedorPago.objects.all(),
+    })
+
+
+@staff_member_required(login_url='login')
+def eliminar_proveedor_view(request, pk):
+    """Elimina un banco o billetera, si no tiene ninguna cuenta cargada a su nombre.
+
+    ``Cuenta.proveedor`` usa ``on_delete=PROTECT``: si todavía hay
+    cuentas de ese proveedor, Django rechaza el borrado con
+    ``ProtectedError`` en vez de arrastrarlas o dejarlas huérfanas; acá
+    se lo convierte en un mensaje claro en vez de un error 500.
+    """
+    proveedor = get_object_or_404(ProveedorPago, pk=pk)
+    if request.method == 'POST':
+        try:
+            proveedor.delete()
+            messages.success(request, f'Se eliminó "{proveedor.nombre}".')
+        except ProtectedError:
+            messages.error(
+                request,
+                f'No se pudo eliminar "{proveedor.nombre}": todavía tiene cuentas cargadas a su nombre.',
+            )
+    return redirect('proveedores')
+
+
+@staff_member_required(login_url='login')
+def cuentas_view(request):
+    """Lista las cuentas cargadas (de clientes y de la casa de cambio), y permite agregar una nueva."""
+    if request.method == 'POST':
+        form = CuentaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('cuentas')
+    else:
+        form = CuentaForm()
+    return render(request, 'core/cuentas.html', {
+        'form': form,
+        'cuentas': Cuenta.objects.select_related('proveedor').all(),
+    })
+
+
+@staff_member_required(login_url='login')
+def eliminar_cuenta_view(request, pk):
+    """Elimina una cuenta, si no tiene ninguna transferencia asociada (recibida, enviada o sugerida).
+
+    Mismo motivo que ``eliminar_proveedor_view``: las relaciones desde
+    ``Transferencia`` hacia ``Cuenta`` también son ``PROTECT``.
+    """
+    cuenta = get_object_or_404(Cuenta, pk=pk)
+    if request.method == 'POST':
+        try:
+            cuenta.delete()
+            messages.success(request, f'Se eliminó la cuenta {cuenta.numero}.')
+        except ProtectedError:
+            messages.error(
+                request,
+                f'No se pudo eliminar la cuenta {cuenta.numero}: tiene transferencias asociadas.',
+            )
+    return redirect('cuentas')
