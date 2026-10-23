@@ -9,8 +9,23 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from decimal import Decimal
+from unittest.mock import patch
+
 from apps.authentication.models import HistorialBaja
-from apps.divisas.models import Cotizacion, Divisa
+from apps.clientes.models import Cliente
+from apps.divisas.casa_de_cambio import DesignacionCuentaPropiaError, SipapComunicacionError
+from apps.divisas.models import (
+    CalculoOperacion,
+    CalculoTriangulacion,
+    Cotizacion,
+    CuentaPropia,
+    Divisa,
+    moneda_a_entregar,
+    moneda_a_pagar,
+    monto_a_entregar,
+    monto_a_pagar,
+)
 from tests.utils_formato import formato
 
 
@@ -180,6 +195,8 @@ class AdministracionDivisasTest(TestCase):
         self.assertEqual(divisa.nombre, 'Yen')
         self.assertEqual(divisa.simbolo, '¥')
         self.assertTrue(divisa.activa)
+        cuenta_propia = CuentaPropia.objects.get(divisa=divisa)
+        self.assertEqual(cuenta_propia.saldo, Decimal('0.00'))
 
     def test_rechaza_crear_una_divisa_con_codigo_pyg(self):
         """PYG es la divisa base del sistema: no se puede crear desde el catálogo."""
@@ -330,6 +347,239 @@ class AdministracionDivisasTest(TestCase):
         self.assertContains(response, inactiva.codigo)
         self.assertContains(response, inactiva.nombre)
         self.assertContains(response, 'Inactivo')
+
+
+class CuentaPropiaAdminTest(TestCase):
+    """Verifica la pantalla administrativa de fondos propios (``CuentaPropia``), sincronizada con sipap-sim."""
+
+    def setUp(self):
+        """Prepara un administrador y una divisa con su cuenta propia."""
+        self.admin = User.objects.create_user(username='admin-fondos', password='password123')
+        self.client.login(username='admin-fondos', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.cuenta_usd = CuentaPropia.objects.create(divisa=self.usd, saldo=Decimal('0.00'))
+
+    @patch('apps.divisas.views.consultar_cuenta_casa_de_cambio')
+    @patch('apps.divisas.views.consultar_saldo_casa_de_cambio')
+    def test_lista_muestra_el_saldo_de_cada_moneda_incluida_pyg(self, mock_saldo, mock_cuenta):
+        """A diferencia del catálogo de divisas, PYG sí aparece acá."""
+        mock_saldo.return_value = Decimal('0.00')
+        mock_cuenta.return_value = None
+
+        response = self.client.get(reverse('divisas:lista_cuentas_propias'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'USD')
+        self.assertContains(response, 'PYG')
+
+    @patch('apps.divisas.views.consultar_cuenta_casa_de_cambio')
+    @patch('apps.divisas.views.consultar_saldo_casa_de_cambio')
+    def test_cada_divisa_enlaza_a_su_propia_pantalla_de_historial(self, mock_saldo, mock_cuenta):
+        """El botón "Historial" lleva a una pantalla propia del sistema, no al admin de sipap-sim."""
+        mock_saldo.return_value = Decimal('0.00')
+        mock_cuenta.return_value = None
+
+        response = self.client.get(reverse('divisas:lista_cuentas_propias'))
+
+        self.assertContains(response, reverse('divisas:historial_cuenta_propia', kwargs={'codigo': 'USD'}))
+        self.assertContains(response, reverse('divisas:historial_cuenta_propia', kwargs={'codigo': 'PYG'}))
+        self.assertNotContains(response, f'{settings.SIPAP_BASE_URL}/admin/')
+
+    @patch('apps.divisas.views.consultar_cuenta_casa_de_cambio')
+    @patch('apps.divisas.views.consultar_saldo_casa_de_cambio')
+    def test_sincroniza_el_saldo_con_el_que_informa_sipap_sim(self, mock_saldo, mock_cuenta):
+        """El saldo mostrado y guardado es el real de sipap-sim, no el que ya tenía guardado."""
+        mock_saldo.return_value = Decimal('15000.50')
+        mock_cuenta.return_value = None
+
+        response = self.client.get(reverse('divisas:lista_cuentas_propias'))
+
+        self.assertContains(response, '15.000,50')
+        self.cuenta_usd.refresh_from_db()
+        self.assertEqual(self.cuenta_usd.saldo, Decimal('15000.50'))
+
+    @patch('apps.divisas.views.consultar_cuenta_casa_de_cambio')
+    @patch('apps.divisas.views.consultar_saldo_casa_de_cambio')
+    def test_muestra_la_cuenta_designada_cuando_hay_una(self, mock_saldo, mock_cuenta):
+        """Además del saldo, se muestra qué cuenta real de sipap-sim está designada en esa divisa."""
+        mock_saldo.return_value = Decimal('15000.50')
+        mock_cuenta.return_value = {
+            'numero': '2000000000000999', 'titular': 'Global Exchange S.A.', 'proveedor': 'Banco Itaú Paraguay',
+        }
+
+        response = self.client.get(reverse('divisas:lista_cuentas_propias'))
+
+        self.assertContains(response, '2000000000000999')
+        self.assertContains(response, 'Banco Itaú Paraguay')
+        self.assertNotContains(response, 'Sin designar')
+
+    @patch('apps.divisas.views.consultar_cuenta_casa_de_cambio')
+    @patch('apps.divisas.views.consultar_saldo_casa_de_cambio')
+    def test_avisa_si_una_moneda_no_tiene_cuenta_designada_como_la_casa_de_cambio(self, mock_saldo, mock_cuenta):
+        mock_saldo.return_value = None
+
+        response = self.client.get(reverse('divisas:lista_cuentas_propias'))
+
+        self.assertContains(response, 'Todavía no hay ninguna cuenta designada como la casa de cambio')
+        self.assertContains(response, 'USD')
+        self.assertContains(response, 'Sin designar')
+        self.cuenta_usd.refresh_from_db()
+        self.assertEqual(self.cuenta_usd.saldo, Decimal('0.00'))
+        mock_cuenta.assert_not_called()
+
+    @patch('apps.divisas.views.consultar_cuenta_casa_de_cambio')
+    @patch('apps.divisas.views.consultar_saldo_casa_de_cambio')
+    def test_si_sipap_sim_no_responde_muestra_el_ultimo_valor_conocido(self, mock_saldo, mock_cuenta):
+        mock_saldo.side_effect = SipapComunicacionError('no se pudo conectar')
+        self.cuenta_usd.saldo = Decimal('500.00')
+        self.cuenta_usd.save(update_fields=['saldo'])
+
+        response = self.client.get(reverse('divisas:lista_cuentas_propias'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No se pudo conectar con sipap-sim')
+        self.cuenta_usd.refresh_from_db()
+        self.assertEqual(self.cuenta_usd.saldo, Decimal('500.00'))
+        mock_cuenta.assert_not_called()
+
+    @patch('apps.divisas.views.consultar_saldo_casa_de_cambio')
+    def test_usuario_sin_rol_admin_no_puede_ver(self, mock_consultar):
+        self.client.logout()
+        User.objects.create_user(username='cliente-fondos', password='password123')
+        self.client.login(username='cliente-fondos', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        response_list = self.client.get(reverse('divisas:lista_cuentas_propias'))
+
+        self.assertEqual(response_list.status_code, 403)
+        mock_consultar.assert_not_called()
+
+
+class DesignarCuentaPropiaViewTest(TestCase):
+    """Verifica la designación, desde Global Exchange, de cuál cuenta de sipap-sim es la casa de cambio."""
+
+    def setUp(self):
+        """Prepara un administrador y una divisa."""
+        self.admin = User.objects.create_user(username='admin-designar', password='password123')
+        self.client.login(username='admin-designar', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.url = reverse('divisas:designar_cuenta_propia', kwargs={'codigo': 'USD'})
+
+    @patch('apps.divisas.views.designar_cuenta_casa_de_cambio')
+    def test_designa_la_cuenta_indicada(self, mock_designar):
+        mock_designar.return_value = {
+            'numero': '2000000000000999', 'titular': 'Global Exchange S.A.', 'proveedor': 'Tigo Money',
+        }
+
+        response = self.client.post(
+            self.url, {'numero_cuenta': '2000000000000999', 'documento_titular': '80012345-6'}, follow=True,
+        )
+
+        self.assertContains(response, 'queda designada como la')
+        mock_designar.assert_called_once_with('USD', '2000000000000999', '80012345-6')
+
+    @patch('apps.divisas.views.designar_cuenta_casa_de_cambio')
+    def test_informa_si_sipap_sim_rechaza_la_designacion(self, mock_designar):
+        mock_designar.side_effect = DesignacionCuentaPropiaError('Esa cuenta es de PYG, no de USD.')
+
+        response = self.client.post(
+            self.url, {'numero_cuenta': '1000000000000001', 'documento_titular': '80012345-6'}, follow=True,
+        )
+
+        self.assertContains(response, 'Esa cuenta es de PYG, no de USD.')
+
+    @patch('apps.divisas.views.designar_cuenta_casa_de_cambio')
+    def test_informa_si_sipap_sim_no_responde(self, mock_designar):
+        mock_designar.side_effect = SipapComunicacionError('no se pudo conectar')
+
+        response = self.client.post(
+            self.url, {'numero_cuenta': '2000000000000999', 'documento_titular': '80012345-6'}, follow=True,
+        )
+
+        self.assertContains(response, 'No se pudo conectar con sipap-sim')
+
+    def test_rechaza_datos_incompletos_sin_llamar_a_sipap_sim(self):
+        with patch('apps.divisas.views.designar_cuenta_casa_de_cambio') as mock_designar:
+            response = self.client.post(self.url, {'numero_cuenta': '', 'documento_titular': ''}, follow=True)
+
+        self.assertContains(response, 'Ingresá el número de cuenta')
+        mock_designar.assert_not_called()
+
+    def test_un_cliente_no_puede_designar(self):
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        response = self.client.post(
+            self.url, {'numero_cuenta': '2000000000000999', 'documento_titular': '80012345-6'},
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+
+class HistorialCuentaPropiaViewTest(TestCase):
+    """Verifica la pantalla propia de historial de movimientos de una divisa (traído de sipap-sim por API)."""
+
+    def setUp(self):
+        """Prepara un administrador y una divisa."""
+        self.admin = User.objects.create_user(username='admin-historial', password='password123')
+        self.client.login(username='admin-historial', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.url = reverse('divisas:historial_cuenta_propia', kwargs={'codigo': 'USD'})
+
+    @patch('apps.divisas.views.consultar_movimientos_casa_de_cambio')
+    def test_muestra_los_movimientos_reales_de_sipap_sim(self, mock_consultar):
+        mock_consultar.return_value = [{
+            'id': 'SPI-1', 'direccion': 'entrada', 'estado': 'acreditada', 'estado_display': 'Acreditada',
+            'contraparte': 'Juan Pérez', 'monto_solicitado': Decimal('100.00'), 'monto_acreditado': Decimal('100.00'),
+            'moneda': 'USD', 'referencia': 'GE-1', 'creado_en': timezone.now(), 'resuelto_en': timezone.now(),
+        }]
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Juan Pérez')
+        self.assertContains(response, 'GE-1')
+        mock_consultar.assert_called_once_with('USD')
+
+    @patch('apps.divisas.views.consultar_movimientos_casa_de_cambio')
+    def test_si_sipap_sim_no_responde_muestra_un_aviso_sin_romper(self, mock_consultar):
+        mock_consultar.side_effect = SipapComunicacionError('no se pudo conectar')
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No se pudo conectar con sipap-sim')
+
+    def test_404_si_la_divisa_no_existe(self):
+        response = self.client.get(reverse('divisas:historial_cuenta_propia', kwargs={'codigo': 'XYZ'}))
+
+        self.assertEqual(response.status_code, 404)
+
+    @patch('apps.divisas.views.consultar_movimientos_casa_de_cambio')
+    def test_un_cliente_no_puede_acceder(self, mock_consultar):
+        self.client.logout()
+        User.objects.create_user(username='cliente-historial', password='password123')
+        self.client.login(username='cliente-historial', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 403)
+        mock_consultar.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -619,3 +869,69 @@ class SimuladorDivisasTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Debe seleccionar dos divisas distintas')
+
+
+class MontoYMonedaAPagarYAEntregarTest(TestCase):
+    """Verifica qué paga y qué recibe el cliente en cada tipo de operación.
+
+    Una compra se paga en PYG y entrega la divisa comprada; una venta
+    entrega la propia divisa vendida (nunca PYG) y recibe PYG a cambio;
+    un cambio entrega la divisa de origen y recibe la de destino,
+    triangulando por PYG solo internamente (ver
+    ``apps.divisas.models.monto_a_pagar``/``monto_a_entregar``).
+    """
+
+    def setUp(self):
+        """Prepara un cliente y dos divisas cotizadas."""
+        usuario = User.objects.create_user(username='cliente-montos', password='password123')
+        self.cliente = Cliente.objects.create(
+            user=usuario, identificador='MONTOS-001', nombre='Cliente', apellido='Montos',
+            email='cliente-montos@test.com', is_active=True,
+        )
+        self.usuario = usuario
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+
+    def _compra_o_venta(self, tipo):
+        return CalculoOperacion.objects.create(
+            usuario=self.usuario, cliente=self.cliente, tipo=tipo, divisa=self.usd, codigo_divisa='USD',
+            monto_origen=Decimal('100.00'), tasa_aplicada=Decimal('7400.00'),
+            comision_porcentaje=Decimal('1.000'), comision=Decimal('7400.00'), monto_final=Decimal('747400.00'),
+            estado=CalculoOperacion.ESTADO_CONFIRMADA, vence_en=timezone.now(),
+        )
+
+    def _cambio(self):
+        return CalculoTriangulacion.objects.create(
+            usuario=self.usuario, cliente=self.cliente, divisa_origen=self.usd, divisa_destino=self.eur,
+            codigo_divisa_origen='USD', codigo_divisa_destino='EUR', monto_origen=Decimal('100.00'),
+            tasa_compra_aplicada=Decimal('7300.00'), tasa_venta_aplicada=Decimal('8100.00'),
+            tasa_cruzada=Decimal('0.901235'), monto_equivalente_pyg=Decimal('730000.00'),
+            comision_porcentaje=Decimal('1.000'), comision=Decimal('0.90'), monto_final=Decimal('89.22'),
+            estado=CalculoTriangulacion.ESTADO_CONFIRMADA, vence_en=timezone.now(),
+        )
+
+    def test_compra_paga_en_pyg_y_entrega_la_divisa_comprada(self):
+        compra = self._compra_o_venta(CalculoOperacion.TIPO_COMPRA)
+
+        self.assertEqual(moneda_a_pagar(compra), 'PYG')
+        self.assertEqual(monto_a_pagar(compra), compra.monto_final)
+        self.assertEqual(moneda_a_entregar(compra), 'USD')
+        self.assertEqual(monto_a_entregar(compra), compra.monto_origen)
+
+    def test_venta_entrega_la_divisa_vendida_y_recibe_pyg(self):
+        """La venta nunca se paga en PYG: el cliente entrega la divisa que vende, no guaraníes."""
+        venta = self._compra_o_venta(CalculoOperacion.TIPO_VENTA)
+
+        self.assertEqual(moneda_a_pagar(venta), 'USD')
+        self.assertEqual(monto_a_pagar(venta), venta.monto_origen)
+        self.assertEqual(moneda_a_entregar(venta), 'PYG')
+        self.assertEqual(monto_a_entregar(venta), venta.monto_final)
+
+    def test_cambio_entrega_la_divisa_origen_y_recibe_la_de_destino(self):
+        """El cambio nunca toca PYG desde la perspectiva del cliente: es solo un paso interno de la triangulación."""
+        cambio = self._cambio()
+
+        self.assertEqual(moneda_a_pagar(cambio), 'USD')
+        self.assertEqual(monto_a_pagar(cambio), cambio.monto_origen)
+        self.assertEqual(moneda_a_entregar(cambio), 'EUR')
+        self.assertEqual(monto_a_entregar(cambio), cambio.monto_final)

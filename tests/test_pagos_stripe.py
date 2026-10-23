@@ -305,6 +305,14 @@ class IniciarPagoStripeOperacionTest(TestCase):
         parche_config.start()
         self.addCleanup(parche_config.stop)
 
+        # La entrega (transferir la divisa comprada al cliente) es un paso
+        # posterior a este cobro, con su propia integración HTTP a
+        # sipap-sim; estos tests cubren solo el cobro con tarjeta en sí,
+        # así que se mockea para que "siempre funcione" sin red real.
+        parche_entrega = patch('apps.divisas.pagos_stripe.realizar_entrega', return_value=True)
+        parche_entrega.start()
+        self.addCleanup(parche_entrega.stop)
+
     @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.create')
     @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
     def test_cobra_directo_con_la_tarjeta_elegida_y_marca_pagada(self, mock_payment_intent, mock_checkout):
@@ -369,6 +377,36 @@ class IniciarPagoStripeOperacionTest(TestCase):
 
         self.assertContains(response, 'no está en condiciones de pagarse')
         mock_payment_intent.assert_not_called()
+
+    @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
+    def test_no_permite_cobrar_si_la_tasa_fijada_ya_vencio(self, mock_payment_intent):
+        """Con la tasa vencida, no se inicia ningún cobro nuevo (ni directo ni por Checkout)."""
+        self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+
+        response = self.client.get(self.url, follow=True)
+
+        self.assertContains(response, 'ya venció')
+        mock_payment_intent.assert_not_called()
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+        self.assertEqual(Pago.objects.count(), 0)
+
+    @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.create')
+    @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
+    def test_la_sesion_de_checkout_vence_junto_con_la_tasa_fijada(self, mock_payment_intent, mock_checkout):
+        """``expires_at`` de la sesión de Checkout queda alineado con ``tasa_vence_en``."""
+        mock_payment_intent.side_effect = stripe.error.CardError('Rechazada.', param=None, code='card_declined')
+        mock_checkout.return_value = SimpleNamespace(url='https://checkout.stripe.com/reintentar')
+        self.transaccion.tasa_vence_en = timezone.now() + timedelta(hours=1)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+
+        self.client.get(self.url)
+
+        checkout_kwargs = mock_checkout.call_args.kwargs
+        self.assertEqual(
+            checkout_kwargs['expires_at'], int(self.transaccion.tasa_vence_en.timestamp()),
+        )
 
     def test_problema_de_comunicacion_al_resolver_el_customer_no_modifica_la_transaccion(self):
         """Criterio 6: si falla la consulta/creación del Customer de Stripe, no se toca la transacción."""
@@ -494,6 +532,12 @@ class IniciarPagoStripeCambioTest(TestCase):
         parche_config.start()
         self.addCleanup(parche_config.stop)
 
+        # Ver IniciarPagoStripeOperacionTest.setUp: la entrega queda fuera
+        # del alcance de estos tests, que cubren solo el cobro con tarjeta.
+        parche_entrega = patch('apps.divisas.pagos_stripe.realizar_entrega', return_value=True)
+        parche_entrega.start()
+        self.addCleanup(parche_entrega.stop)
+
     @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.create')
     @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
     def test_cobra_directo_con_el_monto_en_centavos_de_la_divisa_de_origen(self, mock_payment_intent, mock_checkout):
@@ -537,6 +581,12 @@ class StripeWebhookTest(TestCase):
             confirmado_en=timezone.now(),
         )
         self.url = reverse('stripe_webhook')
+
+        # Ver IniciarPagoStripeOperacionTest.setUp: la entrega queda fuera
+        # del alcance de estos tests, que cubren solo el webhook de Stripe.
+        parche_entrega = patch('apps.divisas.pagos_stripe.realizar_entrega', return_value=True)
+        self.mock_entrega = parche_entrega.start()
+        self.addCleanup(parche_entrega.stop)
 
     def _evento_sesion_completada(self, payment_status='paid', payment_intent='pi_123', session_id='cs_123'):
         """Arma el payload de un evento 'checkout.session.completed' para esta transacción."""
@@ -586,6 +636,24 @@ class StripeWebhookTest(TestCase):
         self.assertEqual(pago.proveedor, 'STRIPE')
         self.assertEqual(pago.identificador_externo, 'pi_123')
         self.assertEqual(pago.monto, self.transaccion.monto_final)
+
+    @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
+    def test_sesion_completada_con_la_tasa_ya_vencida_no_entrega_ni_marca_pagada(self, mock_construct_event):
+        """Un webhook que llega tarde registra el pago igual, pero como 'Pago fuera de plazo', sin entregar."""
+        self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+        mock_construct_event.return_value = self._evento_sesion_completada()
+
+        response = self.client.post(
+            self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGO_EXPIRADO)
+        pago = Pago.objects.get(calculo_operacion=self.transaccion)
+        self.assertTrue(pago.fuera_de_plazo)
+        self.mock_entrega.assert_not_called()
 
     @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
     def test_sesion_no_pagada_no_modifica_la_transaccion(self, mock_construct_event):
@@ -777,6 +845,7 @@ class ConfirmarTarjetaStripeTest(TestCase):
         self.assertEqual(metodo.numero_tarjeta, '4242')
         self.assertEqual(metodo.proveedor_externo, MetodoPago.PROVEEDOR_STRIPE)
         self.assertEqual(metodo.referencia_externa, 'pm_nuevo_123')
+        self.assertEqual(metodo.moneda.codigo, 'PYG')
 
     def test_sin_session_id_no_crea_nada(self):
         """Sin ``?session_id=``, no hay nada que confirmar."""

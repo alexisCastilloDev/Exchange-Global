@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 # Se agregó MetodoPago a la importación existente
 from apps.clientes.models import Cliente, MetodoPago
 from apps.clientes.validacion_sipap import SipapComunicacionError, validar_cuenta
+from apps.divisas.models import Divisa
 
 User = get_user_model()
 
@@ -282,9 +283,18 @@ class MetodoPagoForm(forms.ModelForm):
                     'No encontramos ninguna cuenta con ese número y ese documento. Verificá los datos.',
                 )
             else:
-                # El titular y el banco/billetera los confirma sipap-sim,
-                # no lo que haya escrito el cliente.
+                # El titular, el banco/billetera y la moneda los confirma
+                # sipap-sim, no lo que haya escrito el cliente.
                 self.instance.nombre_titular = resultado['titular']
                 self.instance.entidad_financiera = resultado['proveedor']
+                moneda = Divisa.objects.filter(codigo=resultado.get('moneda'), activa=True).first()
+                if moneda is None:
+                    self.add_error(
+                        None,
+                        f'La cuenta está en {resultado.get("moneda")}, una moneda que Global '
+                        'Exchange no tiene habilitada.',
+                    )
+                else:
+                    self.instance.moneda = moneda
 
         return cleaned_data

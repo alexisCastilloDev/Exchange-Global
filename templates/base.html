@@ -66,6 +66,16 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                         </a>
                     </li>
                     <li>
+                        <a href="{% url 'divisas:lista_cuentas_propias' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'lista_cuentas_propias' %}is-active{% endif %}">
+                            <i class="bi bi-safe"></i> Fondos propios
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:entregas_pendientes' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'entregas_pendientes' %}is-active{% endif %}">
+                            <i class="bi bi-arrow-clockwise"></i> Entregas pendientes
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'documentacion' %}" class="ge-sidebar__link" target="_blank" rel="noopener">
                             <i class="bi bi-book"></i> Documentación
                         </a>

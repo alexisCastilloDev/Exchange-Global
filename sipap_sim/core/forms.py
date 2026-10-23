@@ -25,32 +25,26 @@ class ProveedorPagoForm(forms.ModelForm):
 
 
 class CuentaForm(forms.ModelForm):
-    """Alta de una cuenta bancaria o de billetera, de un cliente o de la casa de cambio.
+    """Alta o edición de una cuenta bancaria o de billetera, de un cliente o de la casa de cambio.
 
-    ``clean()`` evita a propósito un caso que el modelo no impide por sí
-    solo: dos cuentas marcadas como "de la casa de cambio" en la misma
-    moneda. ``crear_solicitud_cobro``/``crear_transferencia_saliente``
-    (``core/views.py``) usan ``.first()`` sobre ese filtro, así que una
-    segunda cuenta así quedaría cargada pero invisible para el sistema,
-    sin ningún aviso.
+    El mismo formulario sirve para crear (``core.views.cuentas_view``) y
+    para editar (``core.views.editar_cuenta_view``) una cuenta ya
+    existente. No incluye ``es_cuenta_casa_de_cambio`` a propósito:
+    sipap-sim no decide por sí solo cuál de sus cuentas hace ese papel,
+    solo la muestra una vez que Global Exchange la designa desde su
+    propio panel (ver ``core.views.designar_cuenta_casa_de_cambio`` y
+    ``apps.divisas.views.DesignarCuentaPropiaView`` del lado de Global
+    Exchange) — así se simula con más realismo que esa decisión la toma
+    la casa de cambio, no el banco/billetera.
     """
 
     class Meta:
         model = Cuenta
-        fields = [
-            'proveedor', 'numero', 'titular', 'documento', 'moneda', 'saldo',
-            'es_cuenta_casa_de_cambio',
-        ]
+        fields = ['proveedor', 'numero', 'titular', 'documento', 'moneda', 'saldo']
+        widgets = {
+            'moneda': forms.TextInput(attrs={'placeholder': 'USD, EUR, JPY...', 'maxlength': 3}),
+        }
 
-    def clean(self):
-        datos = super().clean()
-        moneda = datos.get('moneda')
-        es_casa_de_cambio = datos.get('es_cuenta_casa_de_cambio')
-        if es_casa_de_cambio and moneda:
-            if Cuenta.objects.filter(es_cuenta_casa_de_cambio=True, moneda=moneda).exists():
-                self.add_error(
-                    'es_cuenta_casa_de_cambio',
-                    f'Ya existe una cuenta de la casa de cambio en {moneda}; '
-                    'solo puede haber una por moneda.',
-                )
-        return datos
+    def clean_moneda(self):
+        """Normaliza a mayúsculas: no hay un select del que elegir, es texto libre."""
+        return self.cleaned_data['moneda'].strip().upper()

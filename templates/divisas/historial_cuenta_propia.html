@@ -1,0 +1,77 @@
+<!--
+Historial real de movimientos de la cuenta propia de Global Exchange en una divisa, traído de sipap-sim por API.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: divisa, movimientos, error_sincronizacion.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Historial de {{ divisa.codigo }} - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Historial de {{ divisa.codigo }} — {{ divisa.nombre }}</h1>
+        <p>Movimientos reales de la cuenta propia de Global Exchange en esta divisa, según sipap-sim.</p>
+    </div>
+    <a href="{% url 'divisas:lista_cuentas_propias' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver a fondos propios
+    </a>
+</div>
+
+{% if error_sincronizacion %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        No se pudo conectar con sipap-sim para traer el historial. Intentá nuevamente en unos minutos.
+    </div>
+{% endif %}
+
+<div class="ge-card p-0">
+    <div class="ge-card__header">
+        <h2>Movimientos</h2>
+        <span class="badge bg-secondary">{{ movimientos|length }} movimientos</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Dirección</th>
+                    <th>Contraparte</th>
+                    <th>Estado</th>
+                    <th>Monto solicitado</th>
+                    <th>Monto acreditado</th>
+                    <th>Referencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movimiento in movimientos %}
+                <tr>
+                    <td>{{ movimiento.creado_en }}</td>
+                    <td>
+                        {% if movimiento.direccion == 'entrada' %}
+                            <span class="text-success"><i class="bi bi-arrow-down-circle me-1"></i>Entrada</span>
+                        {% else %}
+                            <span class="text-danger"><i class="bi bi-arrow-up-circle me-1"></i>Salida</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ movimiento.contraparte|default:'—' }}</td>
+                    <td><span class="badge-activo">{{ movimiento.estado_display }}</span></td>
+                    <td>{{ movimiento.monto_solicitado|floatformat:2 }} {{ divisa.simbolo }}</td>
+                    <td>
+                        {% if movimiento.monto_acreditado is not None %}
+                            {{ movimiento.monto_acreditado|floatformat:2 }} {{ divisa.simbolo }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ movimiento.referencia }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center py-4 text-muted">Todavía no hay ningún movimiento registrado en esta divisa.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

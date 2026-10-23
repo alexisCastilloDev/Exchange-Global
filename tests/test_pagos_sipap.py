@@ -400,6 +400,22 @@ class IniciarPagoSipapOperacionTest(TestCase):
         self.assertEqual(primera.link_pago, segunda.link_pago)
         mock_crear.assert_called_once()
 
+    def test_una_carrera_entre_dos_solicitudes_simultaneas_no_rompe_con_un_500(self, mock_crear):
+        """Un doble clic (dos solicitudes casi simultáneas) no debe terminar en un IntegrityError sin manejar."""
+        ganadora = SolicitudPagoSipap.objects.create(
+            calculo_operacion=self.transaccion, referencia='SIPAP-GANADORA', monto=Decimal('747400.00'),
+            moneda='PYG', medio_pago=MetodoPago.TIPO_TRANSFERENCIA, metodo_pago=self.metodo_pago,
+            vence_en=timezone.now() + timedelta(hours=1), link_pago='http://sipap-sim.test/pagar/ganadora/',
+        )
+        with patch(
+            'apps.divisas.pagos_sipap.SolicitudPagoSipap.objects.filter',
+            return_value=SolicitudPagoSipap.objects.none(),
+        ):
+            response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk})
+
+        self.assertRedirects(response, ganadora.link_pago, fetch_redirect_response=False)
+        self.assertEqual(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).count(), 1)
+
     def test_no_permite_pagar_una_transaccion_que_no_esta_confirmada(self, mock_crear):
         """Solo una transacción 'Confirmada' puede iniciar un pago por SIPAP."""
         self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
@@ -410,6 +426,27 @@ class IniciarPagoSipapOperacionTest(TestCase):
         self.assertContains(response, 'no está en condiciones de pagarse')
         self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
         mock_crear.assert_not_called()
+
+    def test_no_permite_generar_una_solicitud_si_la_tasa_fijada_ya_vencio(self, mock_crear):
+        """Con la tasa vencida, no se genera ninguna solicitud de cobro nueva."""
+        self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+
+        response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+
+        self.assertContains(response, 'ya venció')
+        self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
+        mock_crear.assert_not_called()
+
+    def test_la_solicitud_nunca_dura_mas_que_la_tasa_fijada(self, mock_crear):
+        """``vence_en`` de la solicitud nunca supera ``tasa_vence_en`` de la transacción."""
+        self.transaccion.tasa_vence_en = timezone.now() + timedelta(minutes=5)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+
+        self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk})
+
+        solicitud = SolicitudPagoSipap.objects.get(calculo_operacion=self.transaccion)
+        self.assertEqual(solicitud.vence_en, self.transaccion.tasa_vence_en)
 
     def test_problema_de_comunicacion_no_crea_ninguna_solicitud(self, mock_crear):
         """Criterio 6: si sipap-sim no responde, no se crea ninguna solicitud ni se toca la transacción."""
@@ -537,6 +574,14 @@ class SipapWebhookTest(TestCase):
         )
         self.url = reverse('sipap_webhook')
 
+        # La entrega (transferir la divisa comprada al cliente) es un paso
+        # posterior a este webhook, con su propia integración HTTP a
+        # sipap-sim; estos tests cubren solo la confirmación del pago en
+        # sí, así que se mockea para que "siempre funcione" sin red real.
+        parche_entrega = patch('apps.divisas.pagos_sipap.realizar_entrega', return_value=True)
+        self.mock_entrega = parche_entrega.start()
+        self.addCleanup(parche_entrega.stop)
+
     def _post(self, datos, secreto=WEBHOOK_SECRET_TEST):
         """Firma y envía un payload al webhook, como lo haría sipap-sim de verdad."""
         payload = json.dumps(datos).encode('utf-8')
@@ -583,6 +628,24 @@ class SipapWebhookTest(TestCase):
         self.assertEqual(pago.metodo_pago, self.metodo_pago)
 
     @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
+    def test_acreditada_con_la_tasa_ya_vencida_no_entrega_ni_marca_pagada(self):
+        """Una acreditación que llega tarde registra el pago igual, pero como 'Pago fuera de plazo', sin entregar."""
+        self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+
+        response = self._post({
+            'id_operacion': 'SPI-TARDE-001', 'referencia': self.solicitud.referencia, 'estado': 'acreditada',
+            'monto': 747400, 'moneda': 'PYG', 'banco_origen': 'Banco Itaú Paraguay',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGO_EXPIRADO)
+        pago = Pago.objects.get(calculo_operacion=self.transaccion)
+        self.assertTrue(pago.fuera_de_plazo)
+        self.mock_entrega.assert_not_called()
+
+    @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
     def test_acreditada_por_billetera_registra_el_pago_como_billetera(self):
         """El medio de pago que se muestra en el historial sigue siendo el que eligió el cliente, no 'transferencia'."""
         self.solicitud.medio_pago = MetodoPago.TIPO_BILLETERA
@@ -625,6 +688,18 @@ class SipapWebhookTest(TestCase):
         self.assertEqual(self.solicitud.estado, SolicitudPagoSipap.ESTADO_RECHAZADA)
         self.transaccion.refresh_from_db()
         self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+
+    @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
+    def test_saldo_insuficiente_cancela_la_transaccion_sin_crear_ningun_pago(self):
+        """A diferencia de 'rechazada', sipap-sim ya detectó que la cuenta no alcanza: cancela directamente."""
+        response = self._post({'referencia': self.solicitud.referencia, 'estado': 'saldo_insuficiente'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 0)
+        self.solicitud.refresh_from_db()
+        self.assertEqual(self.solicitud.estado, SolicitudPagoSipap.ESTADO_SALDO_INSUFICIENTE)
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA_FONDOS_CLIENTE)
 
     @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
     def test_referencia_desconocida_no_rompe_ni_crea_nada(self):

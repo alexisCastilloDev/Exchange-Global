@@ -15,11 +15,19 @@ class ProveedorPagoAdmin(admin.ModelAdmin):
 
 @admin.register(Cuenta)
 class CuentaAdmin(admin.ModelAdmin):
-    """Lista cuentas de prueba, incluida la de la casa de cambio."""
+    """Lista cuentas de prueba, incluida la de la casa de cambio.
+
+    ``es_cuenta_casa_de_cambio`` queda de solo lectura también acá: ni
+    siquiera por este admin de Django se decide cuál cuenta hace ese
+    papel. La designa Global Exchange por API (ver
+    ``core.views.designar_cuenta_casa_de_cambio``); esta pantalla solo
+    la refleja.
+    """
 
     list_display = ['numero', 'proveedor', 'titular', 'documento', 'moneda', 'saldo', 'es_cuenta_casa_de_cambio']
     list_filter = ['proveedor', 'moneda', 'es_cuenta_casa_de_cambio']
     search_fields = ['numero', 'titular', 'documento']
+    readonly_fields = ['es_cuenta_casa_de_cambio']
 
 
 @admin.register(Transferencia)

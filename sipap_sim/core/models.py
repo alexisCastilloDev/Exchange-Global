@@ -9,8 +9,19 @@ de SIPAP (que no tiene un sandbox público).
 import uuid
 from decimal import Decimal
 
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
+
+# Validador del código de moneda de una Cuenta: 3 letras mayúsculas,
+# sin restringirlo a una lista fija (ver Cuenta.moneda) — Global
+# Exchange puede dar de alta cualquier divisa en su propio catálogo
+# (apps.divisas.models.Divisa), y sipap-sim tiene que poder tener una
+# cuenta en cualquiera de ellas, no solo en las que existían cuando se
+# escribió este simulador.
+_validar_codigo_moneda = RegexValidator(
+    r'^[A-Z]{3}$', 'Usá un código de 3 letras mayúsculas (por ejemplo: USD, EUR, JPY).',
+)
 
 
 class ProveedorPago(models.Model):
@@ -46,9 +57,14 @@ class ProveedorPago(models.Model):
 
 
 class Cuenta(models.Model):
-    """Una cuenta bancaria o de billetera: de un cliente de prueba, o de la casa de cambio."""
+    """Una cuenta bancaria o de billetera: de un cliente de prueba, o de la casa de cambio.
 
-    MONEDA_CHOICES = [('PYG', 'PYG'), ('USD', 'USD')]
+    ``moneda`` acepta cualquier código de 3 letras, no una lista fija:
+    Global Exchange decide qué divisas existen (su propio catálogo,
+    ``apps.divisas.models.Divisa``), y sipap-sim tiene que poder tener
+    una cuenta en cualquiera de ellas, incluidas las que se den de alta
+    después de este simulador.
+    """
 
     numero = models.CharField(max_length=20, unique=True, verbose_name='Número de cuenta')
     proveedor = models.ForeignKey(
@@ -56,8 +72,11 @@ class Cuenta(models.Model):
     )
     titular = models.CharField(max_length=150)
     documento = models.CharField(max_length=20, verbose_name='CI o RUC del titular')
-    moneda = models.CharField(max_length=3, choices=MONEDA_CHOICES)
-    saldo = models.DecimalField(max_digits=18, decimal_places=2, default=Decimal('0.00'))
+    moneda = models.CharField(max_length=3, validators=[_validar_codigo_moneda])
+    # 30 dígitos en total (28 enteros + 2 decimales): suficiente para
+    # cualquier saldo institucional realista, muy por encima de los 18
+    # dígitos (16 enteros) que alcanzaban antes.
+    saldo = models.DecimalField(max_digits=30, decimal_places=2, default=Decimal('0.00'))
     es_cuenta_casa_de_cambio = models.BooleanField(
         default=False,
         verbose_name='¿Es la cuenta de la casa de cambio?',
@@ -104,11 +123,13 @@ class Transferencia(models.Model):
     ESTADO_ACREDITADA = 'acreditada'
     ESTADO_RECHAZADA = 'rechazada'
     ESTADO_VENCIDA = 'vencida'
+    ESTADO_SALDO_INSUFICIENTE = 'saldo_insuficiente'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente'),
         (ESTADO_ACREDITADA, 'Acreditada'),
         (ESTADO_RECHAZADA, 'Rechazada'),
         (ESTADO_VENCIDA, 'Vencida'),
+        (ESTADO_SALDO_INSUFICIENTE, 'Saldo insuficiente'),
     ]
 
     id = models.CharField(max_length=40, primary_key=True, default=_generar_id_transferencia, editable=False)
@@ -139,9 +160,9 @@ class Transferencia(models.Model):
         Cuenta, on_delete=models.PROTECT, related_name='transferencias_recibidas',
         verbose_name='Cuenta destino (de la casa de cambio)',
     )
-    monto_solicitado = models.DecimalField(max_digits=18, decimal_places=2)
+    monto_solicitado = models.DecimalField(max_digits=30, decimal_places=2)
     monto_acreditado = models.DecimalField(
-        max_digits=18, decimal_places=2, null=True, blank=True,
+        max_digits=30, decimal_places=2, null=True, blank=True,
         help_text='El monto que se acreditó al aprobar: siempre igual al solicitado (la "banca en línea" no deja cambiarlo).',
     )
     moneda = models.CharField(max_length=3)
