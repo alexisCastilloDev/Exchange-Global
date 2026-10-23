@@ -173,3 +173,11 @@ CALCULO_OPERACION_VIGENCIA_SEGUNDOS = 300
 # confirmación") espera a que el cliente la confirme o cancele en la
 # pantalla de confirmación, antes de considerarse "Vencida".
 CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS = 300
+
+# Tiempo que la tasa fijada al confirmar una operación sigue vigente
+# para pagarla (ver CalculoOperacion.tasa_vencida). 1800s (30 min) es el
+# mínimo real que admite "expires_at" en una sesión de Stripe Checkout
+# (verificado contra https://docs.stripe.com/api/checkout/sessions/create),
+# así que es el valor por defecto elegido para que la sesión de Stripe y
+# la tasa fijada venzan juntas en el caso por defecto.
+PAGO_OPERACION_VIGENCIA_SEGUNDOS = 1800

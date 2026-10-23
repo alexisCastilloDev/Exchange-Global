@@ -1,11 +1,9 @@
 """Pruebas de la API de sipap-sim que consume Global Exchange.
 
-Usan los datos de prueba cargados por la migración
-``core.migrations.0002_datos_iniciales`` (bancos, billeteras, cuentas de
-la casa de cambio y de clientes), en vez de crear proveedores/cuentas
-propios: esos mismos códigos y números ya existen en cualquier base de
-sipap-sim, así que crear otros iguales en un ``setUp`` chocaría con la
-restricción de unicidad.
+El banco, la cuenta de la casa de cambio y la cuenta de cliente que
+necesitan se crean en cada ``setUp`` con ``fixtures.crear_banco_y_cuentas_pyg``
+(ver ese módulo): ya no vienen de una migración de datos, sino del panel
+administrativo en cualquier entorno real.
 """
 
 import json
@@ -15,12 +13,10 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from fixtures import DOCUMENTO_CLIENTE_PYG, NOMBRE_BANCO, NUMERO_CUENTA_CLIENTE_PYG, crear_banco_y_cuentas_pyg
 from core.models import Cuenta, Transferencia
 
 API_KEY_TEST = 'api-key-de-test'
-
-NUMERO_CUENTA_CLIENTE_PYG = '2000000000000101'
-DOCUMENTO_CLIENTE_PYG = '3456789'
 
 
 def _encabezado_auth(valido=True):
@@ -33,7 +29,7 @@ class CrearSolicitudCobroTest(TestCase):
     """``POST /api/solicitudes-cobro/``."""
 
     def setUp(self):
-        self.casa_pyg = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
+        self.casa_pyg, self.cliente_pyg = crear_banco_y_cuentas_pyg()
 
     def test_rechaza_sin_token(self):
         response = self.client.post(reverse('crear_solicitud_cobro'), data={}, content_type='application/json')
@@ -122,7 +118,7 @@ class ConsultarTransferenciaTest(TestCase):
     """``GET /api/transferencias/<id>/``."""
 
     def setUp(self):
-        casa = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
+        casa, _ = crear_banco_y_cuentas_pyg()
         self.transferencia = Transferencia.objects.create(
             cuenta_destino=casa, monto_solicitado=Decimal('1000'), moneda='PYG',
             referencia='GE-1', vence_en='2099-01-01T00:00:00Z',
@@ -147,6 +143,9 @@ class ConsultarTransferenciaTest(TestCase):
 @override_settings(SIPAP_API_KEY=API_KEY_TEST)
 class ValidarCuentaTest(TestCase):
     """``GET /api/cuentas/validar/``."""
+
+    def setUp(self):
+        crear_banco_y_cuentas_pyg()
 
     def test_rechaza_sin_token(self):
         response = self.client.get(reverse('validar_cuenta'))
@@ -173,12 +172,193 @@ class ValidarCuentaTest(TestCase):
 
 
 @override_settings(SIPAP_API_KEY=API_KEY_TEST)
+class ConsultarSaldoCasaDeCambioTest(TestCase):
+    """``GET /api/casa-de-cambio/<moneda>/``."""
+
+    def setUp(self):
+        self.casa_pyg, _ = crear_banco_y_cuentas_pyg()
+
+    def test_rechaza_sin_token(self):
+        response = self.client.get(reverse('consultar_saldo_casa_de_cambio', args=['PYG']))
+        self.assertEqual(response.status_code, 401)
+
+    def test_devuelve_el_saldo_si_existe_la_cuenta(self):
+        response = self.client.get(
+            reverse('consultar_saldo_casa_de_cambio', args=['PYG']), **_encabezado_auth(),
+        )
+        self.assertEqual(response.status_code, 200)
+        datos = response.json()
+        self.assertEqual(datos['moneda'], 'PYG')
+        self.assertEqual(Decimal(datos['saldo']), self.casa_pyg.saldo)
+
+    def test_404_si_no_hay_cuenta_de_la_casa_de_cambio_en_esa_moneda(self):
+        response = self.client.get(
+            reverse('consultar_saldo_casa_de_cambio', args=['USD']), **_encabezado_auth(),
+        )
+        self.assertEqual(response.status_code, 404)
+
+
+@override_settings(SIPAP_API_KEY=API_KEY_TEST)
+class ConsultarCuentaCasaDeCambioTest(TestCase):
+    """``GET /api/casa-de-cambio/<moneda>/cuenta/``."""
+
+    def setUp(self):
+        self.casa_pyg, _ = crear_banco_y_cuentas_pyg()
+
+    def test_rechaza_sin_token(self):
+        response = self.client.get(reverse('consultar_cuenta_casa_de_cambio', args=['PYG']))
+        self.assertEqual(response.status_code, 401)
+
+    def test_devuelve_los_datos_de_la_cuenta_designada(self):
+        response = self.client.get(reverse('consultar_cuenta_casa_de_cambio', args=['PYG']), **_encabezado_auth())
+
+        self.assertEqual(response.status_code, 200)
+        datos = response.json()
+        self.assertEqual(datos['numero'], self.casa_pyg.numero)
+        self.assertEqual(datos['titular'], self.casa_pyg.titular)
+        self.assertEqual(datos['proveedor'], NOMBRE_BANCO)
+
+    def test_404_si_no_hay_ninguna_cuenta_designada_en_esa_moneda(self):
+        response = self.client.get(reverse('consultar_cuenta_casa_de_cambio', args=['USD']), **_encabezado_auth())
+        self.assertEqual(response.status_code, 404)
+
+
+@override_settings(SIPAP_API_KEY=API_KEY_TEST)
+class DesignarCuentaCasaDeCambioTest(TestCase):
+    """``POST /api/casa-de-cambio/<moneda>/designar/``: Global Exchange designa la cuenta, no sipap-sim."""
+
+    def setUp(self):
+        self.casa_pyg, self.cliente_pyg = crear_banco_y_cuentas_pyg()
+
+    def test_rechaza_sin_token(self):
+        response = self.client.post(
+            reverse('designar_cuenta_casa_de_cambio', args=['PYG']), data={}, content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_designa_una_cuenta_de_cliente_como_la_casa_de_cambio(self):
+        """Antes de designarla, es una cuenta común; después, queda marcada y la anterior pierde la marca."""
+        payload = {'numero': NUMERO_CUENTA_CLIENTE_PYG, 'documento': DOCUMENTO_CLIENTE_PYG}
+        response = self.client.post(
+            reverse('designar_cuenta_casa_de_cambio', args=['PYG']), data=json.dumps(payload),
+            content_type='application/json', **_encabezado_auth(),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        datos = response.json()
+        self.assertEqual(datos['numero'], NUMERO_CUENTA_CLIENTE_PYG)
+        self.cliente_pyg.refresh_from_db()
+        self.casa_pyg.refresh_from_db()
+        self.assertTrue(self.cliente_pyg.es_cuenta_casa_de_cambio)
+        self.assertFalse(self.casa_pyg.es_cuenta_casa_de_cambio)
+
+    def test_404_si_no_existe_una_cuenta_con_ese_numero_y_documento(self):
+        payload = {'numero': '0000000000000000', 'documento': '0000000'}
+        response = self.client.post(
+            reverse('designar_cuenta_casa_de_cambio', args=['PYG']), data=json.dumps(payload),
+            content_type='application/json', **_encabezado_auth(),
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_400_si_la_cuenta_es_de_otra_moneda(self):
+        payload = {'numero': self.casa_pyg.numero, 'documento': self.casa_pyg.documento}
+        response = self.client.post(
+            reverse('designar_cuenta_casa_de_cambio', args=['USD']), data=json.dumps(payload),
+            content_type='application/json', **_encabezado_auth(),
+        )
+        self.assertEqual(response.status_code, 400)
+        self.casa_pyg.refresh_from_db()
+        self.assertTrue(self.casa_pyg.es_cuenta_casa_de_cambio)
+
+    def test_rechaza_payload_invalido(self):
+        response = self.client.post(
+            reverse('designar_cuenta_casa_de_cambio', args=['PYG']), data=json.dumps({'numero': 'solo-numero'}),
+            content_type='application/json', **_encabezado_auth(),
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+@override_settings(SIPAP_API_KEY=API_KEY_TEST)
+class ConsultarMovimientosCasaDeCambioTest(TestCase):
+    """``GET /api/casa-de-cambio/<moneda>/movimientos/``."""
+
+    def setUp(self):
+        self.casa_pyg, self.cliente_pyg = crear_banco_y_cuentas_pyg()
+
+    def test_rechaza_sin_token(self):
+        response = self.client.get(reverse('consultar_movimientos_casa_de_cambio', args=['PYG']))
+        self.assertEqual(response.status_code, 401)
+
+    def test_una_entrada_de_cobro_pendiente_aparece_como_entrada(self):
+        Transferencia.objects.create(
+            cuenta_destino=self.casa_pyg, monto_solicitado=Decimal('1000'), moneda='PYG',
+            referencia='GE-MOV-1', vence_en='2099-01-01T00:00:00Z',
+        )
+
+        response = self.client.get(
+            reverse('consultar_movimientos_casa_de_cambio', args=['PYG']), **_encabezado_auth(),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        datos = response.json()
+        self.assertEqual(datos['moneda'], 'PYG')
+        self.assertEqual(len(datos['movimientos']), 1)
+        self.assertEqual(datos['movimientos'][0]['direccion'], 'entrada')
+        self.assertEqual(datos['movimientos'][0]['referencia'], 'GE-MOV-1')
+        self.assertEqual(Decimal(datos['movimientos'][0]['monto_solicitado']), Decimal('1000'))
+
+    def test_una_salida_acreditada_aparece_como_salida_con_la_contraparte(self):
+        payload = {
+            'cuenta_destino': NUMERO_CUENTA_CLIENTE_PYG, 'documento': DOCUMENTO_CLIENTE_PYG,
+            'monto': 5000, 'referencia': 'GE-MOV-2',
+        }
+        self.client.post(
+            reverse('crear_transferencia_saliente'), data=json.dumps(payload), content_type='application/json',
+            **_encabezado_auth(),
+        )
+
+        response = self.client.get(
+            reverse('consultar_movimientos_casa_de_cambio', args=['PYG']), **_encabezado_auth(),
+        )
+
+        datos = response.json()
+        self.assertEqual(len(datos['movimientos']), 1)
+        self.assertEqual(datos['movimientos'][0]['direccion'], 'salida')
+        self.assertEqual(datos['movimientos'][0]['contraparte'], 'Juan Pérez')
+        self.assertEqual(datos['movimientos'][0]['estado'], Transferencia.ESTADO_ACREDITADA)
+
+    def test_no_mezcla_movimientos_de_otra_moneda(self):
+        Transferencia.objects.create(
+            cuenta_destino=self.casa_pyg, monto_solicitado=Decimal('1000'), moneda='PYG',
+            referencia='GE-MOV-PYG', vence_en='2099-01-01T00:00:00Z',
+        )
+
+        response = self.client.get(
+            reverse('consultar_movimientos_casa_de_cambio', args=['USD']), **_encabezado_auth(),
+        )
+
+        self.assertEqual(response.json()['movimientos'], [])
+
+    def test_respeta_el_limite_pedido(self):
+        for indice in range(3):
+            Transferencia.objects.create(
+                cuenta_destino=self.casa_pyg, monto_solicitado=Decimal('1000'), moneda='PYG',
+                referencia=f'GE-MOV-LIMITE-{indice}', vence_en='2099-01-01T00:00:00Z',
+            )
+
+        response = self.client.get(
+            reverse('consultar_movimientos_casa_de_cambio', args=['PYG']), {'limite': 2}, **_encabezado_auth(),
+        )
+
+        self.assertEqual(len(response.json()['movimientos']), 2)
+
+
+@override_settings(SIPAP_API_KEY=API_KEY_TEST)
 class CrearTransferenciaSalienteTest(TestCase):
     """``POST /api/transferencias/`` (acreditación a un cliente, Sprint 5)."""
 
     def setUp(self):
-        self.casa = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
-        self.cliente = Cuenta.objects.get(numero=NUMERO_CUENTA_CLIENTE_PYG)
+        self.casa, self.cliente = crear_banco_y_cuentas_pyg()
 
     def test_acredita_de_inmediato_y_mueve_saldo(self):
         saldo_casa_inicial = self.casa.saldo
@@ -210,3 +390,28 @@ class CrearTransferenciaSalienteTest(TestCase):
             **_encabezado_auth(),
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_una_referencia_repetida_no_mueve_el_saldo_dos_veces(self):
+        payload = {
+            'cuenta_destino': NUMERO_CUENTA_CLIENTE_PYG, 'documento': DOCUMENTO_CLIENTE_PYG,
+            'monto': 50000, 'referencia': 'GE-9',
+        }
+        primera = self.client.post(
+            reverse('crear_transferencia_saliente'), data=json.dumps(payload), content_type='application/json',
+            **_encabezado_auth(),
+        )
+        self.assertEqual(primera.status_code, 201)
+
+        saldo_casa_tras_primera = Cuenta.objects.get(pk=self.casa.pk).saldo
+        saldo_cliente_tras_primera = Cuenta.objects.get(pk=self.cliente.pk).saldo
+
+        segunda = self.client.post(
+            reverse('crear_transferencia_saliente'), data=json.dumps(payload), content_type='application/json',
+            **_encabezado_auth(),
+        )
+        self.assertEqual(segunda.status_code, 200)
+        self.assertEqual(segunda.json()['id'], primera.json()['id'])
+
+        self.assertEqual(Cuenta.objects.get(pk=self.casa.pk).saldo, saldo_casa_tras_primera)
+        self.assertEqual(Cuenta.objects.get(pk=self.cliente.pk).saldo, saldo_cliente_tras_primera)
+        self.assertEqual(Transferencia.objects.filter(referencia='GE-9').count(), 1)

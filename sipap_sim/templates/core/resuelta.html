@@ -9,6 +9,9 @@
 </head>
 <body>
     <h1>Transferencia {{ transferencia.get_estado_display|lower }}</h1>
+    {% if transferencia.estado == 'saldo_insuficiente' %}
+        <p>La cuenta no tenía fondos suficientes para transferir el monto solicitado. La operación fue cancelada.</p>
+    {% endif %}
     <p>Referencia: {{ transferencia.referencia }}</p>
     <p>Podés cerrar esta ventana y volver a Global Exchange.</p>
 </body>

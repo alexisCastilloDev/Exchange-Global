@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>SIPAP (simulado) · Panel administrativo</title>
+    <style>
+        body { font-family: sans-serif; max-width: 560px; margin: 40px auto; color: #222; }
+        h1 { font-size: 1.2rem; }
+        .encabezado { display: flex; justify-content: space-between; align-items: baseline; }
+        .tarjetas { display: flex; gap: 16px; margin: 20px 0; }
+        .tarjeta {
+            flex: 1; background: #f3f3f3; border-radius: 6px; padding: 16px;
+            text-align: center;
+        }
+        .tarjeta .numero { font-size: 1.6rem; font-weight: bold; }
+        .enlaces { display: flex; gap: 10px; margin-top: 10px; }
+        .enlaces a {
+            flex: 1; display: block; text-align: center; padding: 12px; border-radius: 4px;
+            background: #1565c0; color: white; text-decoration: none;
+        }
+        .aviso { background: #fff3cd; border: 1px solid #ffe69c; border-radius: 6px; padding: 12px; margin-top: 20px; }
+        form.salir button {
+            background: none; border: none; color: #1565c0; cursor: pointer; text-decoration: underline; padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="encabezado">
+        <h1>Panel administrativo de SIPAP (simulado)</h1>
+        <form class="salir" method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit">Salir</button>
+        </form>
+    </div>
+    <p>Sesión iniciada como <strong>{{ user.username }}</strong>.</p>
+
+    <div class="tarjetas">
+        <div class="tarjeta">
+            <div class="numero">{{ cantidad_proveedores }}</div>
+            <div>Bancos y billeteras cargados</div>
+        </div>
+        <div class="tarjeta">
+            <div class="numero">{{ cantidad_cuentas }}</div>
+            <div>Cuentas cargadas</div>
+        </div>
+    </div>
+
+    <div class="enlaces">
+        <a href="{% url 'proveedores' %}">Bancos y billeteras</a>
+        <a href="{% url 'cuentas' %}">Cuentas</a>
+    </div>
+
+    {% if moneda_sin_cuenta_casa_de_cambio %}
+        <div class="aviso">
+            <strong>Atención:</strong> todavía no hay una cuenta de la casa de cambio
+            en {{ moneda_sin_cuenta_casa_de_cambio|join:", " }}. Sin esa cuenta, SIPAP
+            no puede procesar cobros en esa moneda. Cargala desde
+            <a href="{% url 'cuentas' %}">Cuentas</a>.
+        </div>
+    {% endif %}
+</body>
+</html>

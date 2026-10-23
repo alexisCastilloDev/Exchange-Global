@@ -19,6 +19,7 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from apps.authentication.decorators import requiere_rol
 from apps.authentication.forms import CausaBajaForm
 from apps.authentication.models import HistorialBaja
+from apps.divisas.models import Divisa
 from .forms import AsociarUsuarioClienteForm, ClienteForm, MetodoPagoForm
 from .models import Cliente, MetodoPago
 from apps.users.services import sincronizar_usuarios_desde_keycloak
@@ -376,6 +377,24 @@ def metodo_pago_list(request):
     """
     Muestra los métodos del cliente activo, con datos censurados.
     Solo clientes con un cliente activo seleccionado pueden verlo.
+
+    En vez de una sola lista plana, agrupa las cuentas y billeteras por
+    divisa (``grupos_por_divisa``, uno por cada ``Divisa`` activa,
+    incluida una fila aunque esté vacía) y deja las tarjetas en su
+    propia sección (``tarjetas``), ya que siempre son en PYG y no tiene
+    sentido subdividirlas por divisa. Un grupo sin ningún medio marca
+    de entrada que falta agregar uno: sin eso, el cliente no puede
+    elegir nada para pagar ni para recibir una operación en esa divisa
+    (ver ``apps.divisas.forms.PagarTransaccionForm``), así que conviene
+    avisarlo antes de que lo descubra recién al intentar pagar.
+
+    Una cuenta o billetera registrada antes de que existiera el campo
+    ``MetodoPago.moneda`` (la migración de datos que agregó este campo
+    deja esas filas en ``moneda=NULL`` a propósito, sin adivinar)
+    quedaría invisible en cualquier agrupación por divisa: en vez de
+    eso, se muestra aparte (``metodos_sin_divisa``) para que el cliente
+    la vea y sepa que tiene que volver a registrarla, en vez de que
+    desaparezca sin ningún aviso.
     """
     roles = request.session.get('keycloak_roles', [])
     if 'admin' in roles or 'cliente' not in roles:
@@ -387,12 +406,29 @@ def metodo_pago_list(request):
         messages.error(request, 'No tenés clientes asociados para gestionar métodos de pago.')
         return redirect('home')
 
-    metodos = MetodoPago.objects.filter(cliente=cliente_activo)
+    metodos = list(MetodoPago.objects.filter(cliente=cliente_activo).select_related('moneda'))
     metodos_revelados = request.session.get('metodos_pago_revelados', [])
+
+    tarjetas = [metodo for metodo in metodos if metodo.tipo_medio == MetodoPago.TIPO_TARJETA]
+    metodos_por_divisa = [metodo for metodo in metodos if metodo.tipo_medio != MetodoPago.TIPO_TARJETA]
+    metodos_sin_divisa = [metodo for metodo in metodos_por_divisa if metodo.moneda_id is None]
+    grupos_por_divisa = [
+        {
+            'divisa': divisa,
+            'metodos': [metodo for metodo in metodos_por_divisa if metodo.moneda_id == divisa.pk],
+        }
+        for divisa in Divisa.objects.filter(activa=True).order_by('codigo')
+    ]
     return render(
         request,
         'clientes/metodo_pago_list.html',
-        {'metodos': metodos, 'metodos_revelados': metodos_revelados},
+        {
+            'metodos': metodos,
+            'metodos_revelados': metodos_revelados,
+            'grupos_por_divisa': grupos_por_divisa,
+            'tarjetas': tarjetas,
+            'metodos_sin_divisa': metodos_sin_divisa,
+        },
     )
 
 

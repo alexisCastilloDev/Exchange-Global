@@ -278,6 +278,19 @@ class MetodoPago(models.Model):
         null=True,
         verbose_name='Número de Tarjeta'
     )
+    moneda = models.ForeignKey(
+        'divisas.Divisa',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='metodos_pago',
+        verbose_name='Moneda',
+        help_text=(
+            'La moneda de esta cuenta o billetera (la confirma sipap-sim al '
+            'validarla, ver apps.clientes.validacion_sipap; para tarjeta, '
+            'siempre PYG). Decide en qué operaciones puede usarse este medio.'
+        ),
+    )
     proveedor_externo = models.CharField(
         max_length=20,
         choices=PROVEEDOR_EXTERNO_CHOICES,
@@ -318,6 +331,26 @@ class MetodoPago(models.Model):
     def __str__(self):
         """Devuelve una descripción legible del método de pago."""
         return f"{self.get_tipo_medio_display()} - {self.entidad_financiera} ({self.nombre_titular})"
+
+    @property
+    def etiqueta_corta(self):
+        """Etiqueta para elegir este medio en un <select>: tipo, entidad, identificador y divisa.
+
+        A diferencia de ``__str__`` (usado en el admin y en logs), esta
+        no alcanza con el tipo y la entidad: dos cuentas o billeteras
+        del mismo banco en distinta divisa, o dos tarjetas del mismo
+        banco, se verían idénticas en un desplegable. Se agrega el
+        número (los últimos 4 dígitos, nunca el completo) y el código
+        de la divisa para que cada opción sea inequívoca.
+        """
+        numero = self.numero_tarjeta if self.tipo_medio == self.TIPO_TARJETA else self.numero_cuenta
+        cola = numero[-4:] if numero else ''
+        partes = [self.get_tipo_medio_display(), self.entidad_financiera]
+        if cola:
+            partes.append(f'····{cola}')
+        if self.moneda_id:
+            partes.append(self.moneda.codigo)
+        return ' · '.join(partes)
 
     def save(self, *args, **kwargs):
         """

@@ -9,11 +9,11 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from core.models import Cuenta, Transferencia
+from fixtures import crear_banco_y_cuentas_pyg
+from core.models import Transferencia
 from core.webhooks import enviar_confirmacion
 
 WEBHOOK_SECRET_TEST = 'secreto-de-test'
-NUMERO_CUENTA_CLIENTE_PYG = '2000000000000101'
 
 
 @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST, GLOBAL_EXCHANGE_WEBHOOK_URL='http://ge.test/webhooks/sipap/')
@@ -21,8 +21,7 @@ class EnviarConfirmacionTest(TestCase):
     """``core.webhooks.enviar_confirmacion``."""
 
     def setUp(self):
-        casa = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
-        cuenta_cliente = Cuenta.objects.get(numero=NUMERO_CUENTA_CLIENTE_PYG)
+        casa, cuenta_cliente = crear_banco_y_cuentas_pyg()
         self.transferencia = Transferencia.objects.create(
             cuenta_origen=cuenta_cliente, cuenta_destino=casa,
             monto_solicitado=Decimal('1500000'), monto_acreditado=Decimal('1500000'),

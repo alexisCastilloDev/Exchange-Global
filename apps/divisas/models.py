@@ -156,6 +156,115 @@ class Cotizacion(models.Model):
                 NotificacionTasa.notificar_cambios(anterior, self)
 
 
+class SaldoInsuficienteError(Exception):
+    """Global Exchange no tiene saldo propio suficiente para entregar en esa moneda."""
+
+
+class CuentaPropiaInexistenteError(Exception):
+    """Global Exchange no tiene una cuenta propia configurada en esa moneda."""
+
+
+class CuentaPropia(models.Model):
+    """Saldo propio de Global Exchange en una moneda, espejado contra la cuenta real en sipap-sim.
+
+    Una fila por ``Divisa``, incluida PYG — a diferencia del catálogo
+    administrable de divisas (donde PYG está prohibida, ver
+    ``DivisaUpdateView``), acá es al revés: PYG también tiene su propia
+    cuenta, porque esto es Global Exchange llevando su propia tenencia,
+    no el catálogo de qué monedas existen.
+
+    La cuenta bancaria o billetera real (adónde entra y de dónde sale
+    la plata de verdad) se administra en sipap-sim, no acá: este
+    modelo nunca se edita a mano. Se mantiene en espejo de dos formas:
+
+    1. En cada entrega (``apps.divisas.entrega.realizar_entrega``): se
+       acredita la moneda que el cliente pagó y se debita la que
+       Global Exchange le transfirió a cambio, recién después de que
+       esa transferencia se confirma de verdad contra sipap-sim.
+    2. Al visitar el panel de administración ("Fondos propios",
+       ``CuentaPropiaListView``): se vuelve a consultar el saldo real a
+       sipap-sim y se corrige cualquier diferencia (por ejemplo, si un
+       administrador fondeó la cuenta directamente en sipap-sim), ver
+       ``apps.divisas.casa_de_cambio``.
+
+    Antes de confirmar una operación, un chequeo rápido contra esta
+    misma fila (sin red, sin depender de que sipap-sim esté arriba en
+    ese instante) decide si Global Exchange puede llegar a entregarla;
+    por eso conviene que el espejo exista en esta base, en vez de
+    consultar a sipap-sim en ese momento tan sensible al tiempo.
+    """
+
+    divisa = models.OneToOneField(Divisa, on_delete=models.PROTECT, related_name='cuenta_propia')
+    # 30 dígitos en total, igual que ``sipap_sim.core.models.Cuenta.saldo``
+    # (ver ese modelo): tienen que poder representar exactamente el mismo
+    # saldo, sin que un número grande se trunque de un lado y no del otro.
+    saldo = models.DecimalField(max_digits=30, decimal_places=2, default=Decimal('0.00'))
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        """Ordena por código de divisa y define las etiquetas administrativas."""
+        verbose_name = 'Cuenta propia'
+        verbose_name_plural = 'Cuentas propias'
+        ordering = ['divisa__codigo']
+
+    def __str__(self):
+        """Identifica la cuenta propia por la divisa y su saldo actual."""
+        return f'{self.divisa.codigo}: {self.saldo}'
+
+    @classmethod
+    def ajustar_saldos(cls, *, divisa_recibir, monto_recibir, divisa_entregar, monto_entregar):
+        """Acredita lo recibido y debita lo entregado, las dos piernas juntas y atómicas.
+
+        Única operación que mueve saldo propio por una entrega: nunca
+        se edita ``saldo`` directamente fuera de acá (la otra forma en
+        que cambia es la sincronización con sipap-sim, ver
+        ``CuentaPropiaListView``), para que las dos piernas de cada
+        entrega siempre se muevan juntas.
+
+        Bloquea las dos filas con ``select_for_update()`` en una sola
+        consulta ordenada por ``divisa_id`` (nunca dos ``.get()``
+        separados): así, sin importar en qué orden una compra y una
+        venta de las mismas dos monedas tomen los locks, siempre se
+        adquieren en el mismo orden global y no hay deadlock.
+
+        Args:
+            divisa_recibir (Divisa): La moneda que el cliente pagó.
+            monto_recibir (Decimal): Cuánto se acredita en esa moneda.
+            divisa_entregar (Divisa): La moneda que Global Exchange le
+                transfirió al cliente a cambio.
+            monto_entregar (Decimal): Cuánto se debita en esa moneda.
+
+        Raises:
+            CuentaPropiaInexistenteError: Si falta la fila de alguna de
+                las dos monedas (no debería pasar: se crea sola al dar
+                de alta la divisa, ver ``DivisaCreateView``).
+            SaldoInsuficienteError: Si no hay saldo suficiente en la
+                moneda a entregar. No se modifica nada en ese caso.
+        """
+        with db_transaction.atomic():
+            cuentas = {
+                cuenta.divisa_id: cuenta for cuenta in
+                cls.objects.select_for_update()
+                    .filter(divisa_id__in=[divisa_recibir.pk, divisa_entregar.pk])
+                    .order_by('divisa_id')
+            }
+            for divisa in (divisa_recibir, divisa_entregar):
+                if divisa.pk not in cuentas:
+                    raise CuentaPropiaInexistenteError(
+                        f'Global Exchange no tiene una cuenta propia en {divisa.codigo}.'
+                    )
+            cuenta_entregar = cuentas[divisa_entregar.pk]
+            if cuenta_entregar.saldo < monto_entregar:
+                raise SaldoInsuficienteError(
+                    f'Global Exchange no tiene saldo suficiente en {divisa_entregar.codigo} '
+                    f'(disponible: {cuenta_entregar.saldo}, necesario: {monto_entregar}).'
+                )
+            cuenta_entregar.saldo -= monto_entregar
+            cuenta_entregar.save(update_fields=['saldo'])
+            cuentas[divisa_recibir.pk].saldo += monto_recibir
+            cuentas[divisa_recibir.pk].save(update_fields=['saldo'])
+
+
 class CalculoOperacion(models.Model):
     """Representa una transacción de compra o venta iniciada por el cliente.
 
@@ -194,14 +303,22 @@ class CalculoOperacion(models.Model):
     ESTADO_CANCELADA = 'CANCELADA'
     ESTADO_VENCIDA = 'VENCIDA'
     ESTADO_CANCELADA_COTIZACION = 'CANCELADA_COTIZACION'
+    ESTADO_CANCELADA_SALDO_INSUFICIENTE = 'CANCELADA_SALDO_INSUFICIENTE'
+    ESTADO_CANCELADA_FONDOS_CLIENTE = 'CANCELADA_FONDOS_CLIENTE'
     ESTADO_PAGADA = 'PAGADA'
+    ESTADO_ENTREGA_FALLIDA = 'ENTREGA_FALLIDA'
+    ESTADO_PAGO_EXPIRADO = 'PAGO_EXPIRADO'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
         (ESTADO_CANCELADA, 'Cancelada'),
         (ESTADO_VENCIDA, 'Vencida'),
         (ESTADO_CANCELADA_COTIZACION, 'Cancelada por cambio de cotización'),
+        (ESTADO_CANCELADA_SALDO_INSUFICIENTE, 'Cancelada por saldo insuficiente de Global Exchange'),
+        (ESTADO_CANCELADA_FONDOS_CLIENTE, 'Cancelada por fondos insuficientes del cliente'),
         (ESTADO_PAGADA, 'Pagada'),
+        (ESTADO_ENTREGA_FALLIDA, 'Pagada, pero la entrega al cliente falló'),
+        (ESTADO_PAGO_EXPIRADO, 'Pago fuera de plazo'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -230,10 +347,35 @@ class CalculoOperacion(models.Model):
     comision_porcentaje = models.DecimalField(max_digits=6, decimal_places=3)
     comision = models.DecimalField(max_digits=18, decimal_places=2)
     monto_final = models.DecimalField(max_digits=18, decimal_places=2)
-    estado = models.CharField(max_length=25, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
+    estado = models.CharField(max_length=30, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
+    medio_destino = models.ForeignKey(
+        MetodoPago,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+        verbose_name='Medio al que se entrega',
+        help_text=(
+            'La cuenta o billetera propia del cliente a la que Global '
+            'Exchange le transfiere lo que corresponda (la divisa comprada, '
+            'o los guaraníes de una venta). Se elige en el paso de pago, '
+            'nunca una tarjeta (Stripe no puede depositarle a una).'
+        ),
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
     vence_en = models.DateTimeField()
     confirmado_en = models.DateTimeField(null=True, blank=True)
+    tasa_vence_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='La tasa fijada vence en',
+        help_text=(
+            'Se fija al confirmar, sumándole a ese momento '
+            'ConfiguracionVigencia.vigencia_pago_segundos(). Campo separado '
+            'de "vence_en" (que gobierna solo Pendiente → Confirmar/Cancelar) '
+            'para no interferir con ese mecanismo ya existente.'
+        ),
+    )
 
     class Meta:
         """Define el orden y etiquetas administrativas de los cálculos."""
@@ -245,6 +387,24 @@ class CalculoOperacion(models.Model):
     def esta_vencido(self):
         """Indica si el cálculo ya superó su tiempo de vigencia."""
         return timezone.now() >= self.vence_en
+
+    @property
+    def tasa_vencida(self):
+        """Indica si la tasa fijada al confirmar ya venció sin que se haya pagado.
+
+        Solo aplica a una transacción "Confirmada": una vez pagada (o
+        cancelada, por cualquier motivo), la tasa ya no está "vigente o
+        vencida" — ya se usó o ya no corresponde. Se usa para bloquear un
+        cobro nuevo (``apps.divisas.pagos_stripe``/``pagos_sipap``) antes
+        de intentarlo, y como red de seguridad en
+        ``Pago.registrar_pago`` si de todos modos llega una confirmación
+        tardía.
+        """
+        return (
+            self.estado == self.ESTADO_CONFIRMADA
+            and self.tasa_vence_en is not None
+            and timezone.now() >= self.tasa_vence_en
+        )
 
     @property
     def estado_efectivo(self):
@@ -353,9 +513,9 @@ class ConfiguracionVigencia(models.Model):
 
     Es un registro único (patrón singleton): si el administrador no configuró
     ninguno todavía, se usan los valores por defecto de ``settings``. Controla
-    dos tiempos distintos, correspondientes a los pasos 1→2 y 2→3 del flujo de
-    compra/venta/cambio (ver ``apps.divisas.views.CalculoOperacionView`` y
-    ``ConfirmarTransaccionOperacionView``):
+    tres tiempos distintos, correspondientes a los pasos 1→2, 2→3 y "ya
+    confirmada, falta pagar" del flujo de compra/venta/cambio (ver
+    ``apps.divisas.views.CalculoOperacionView`` y ``ConfirmarTransaccionOperacionView``):
 
     - ``calculo_vigencia_segundos``: cuánto tiene el cliente, tras calcular el
       importe (Paso 1), para confirmarlo (Paso 2) antes de que la cotización
@@ -363,6 +523,16 @@ class ConfiguracionVigencia(models.Model):
     - ``confirmacion_vigencia_segundos``: cuánto tiene, ya con la transacción
       creada en "Pendiente de confirmación" (Paso 2), para confirmarla o
       cancelarla (Paso 3) antes de que se considere "Vencida".
+    - ``pago_vigencia_segundos``: cuánto dura fija la tasa una vez confirmada
+      la operación (Paso 3), antes de que un pago que llegue ya no pueda
+      liquidarse a esa tasa (ver ``CalculoOperacion.tasa_vencida``). El
+      mínimo recomendado es 1800 segundos (30 minutos): es el mínimo real
+      que admite ``expires_at`` en una sesión de Stripe Checkout, así que
+      con un valor menor la sesión de Stripe puede seguir activa después de
+      que la tasa ya venció del lado de Global Exchange — no es un error,
+      ``Pago.registrar_pago`` sigue siendo la autoridad final en cualquier
+      caso y un pago así llega registrado como "fuera de plazo", nunca se
+      pierde.
     """
 
     calculo_vigencia_segundos = models.IntegerField(
@@ -374,6 +544,15 @@ class ConfiguracionVigencia(models.Model):
         help_text=(
             'Tiempo entre confirmar el importe y confirmar o cancelar la'
             ' operación, antes de que la transacción venza.'
+        ),
+    )
+    pago_vigencia_segundos = models.IntegerField(
+        default=1800,
+        verbose_name='Tiempo de espera para pagar con la tasa fijada (segundos)',
+        help_text=(
+            'Tiempo entre confirmar la operación y pagarla, antes de que la '
+            'tasa fijada venza. Mínimo recomendado: 1800 (el mínimo real de '
+            'Stripe Checkout).'
         ),
     )
     actualizado_en = models.DateTimeField(auto_now=True)
@@ -413,6 +592,14 @@ class ConfiguracionVigencia(models.Model):
             return configuracion.confirmacion_vigencia_segundos
         return settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS
 
+    @classmethod
+    def vigencia_pago_segundos(cls):
+        """Segundos que la tasa fijada al confirmar sigue vigente para pagar."""
+        configuracion = cls.objects.first()
+        if configuracion:
+            return configuracion.pago_vigencia_segundos
+        return settings.PAGO_OPERACION_VIGENCIA_SEGUNDOS
+
 
 class CalculoTriangulacion(models.Model):
     """Representa un cambio entre dos divisas extranjeras vía PYG.
@@ -445,14 +632,22 @@ class CalculoTriangulacion(models.Model):
     ESTADO_CANCELADA = 'CANCELADA'
     ESTADO_VENCIDA = 'VENCIDA'
     ESTADO_CANCELADA_COTIZACION = 'CANCELADA_COTIZACION'
+    ESTADO_CANCELADA_SALDO_INSUFICIENTE = 'CANCELADA_SALDO_INSUFICIENTE'
+    ESTADO_CANCELADA_FONDOS_CLIENTE = 'CANCELADA_FONDOS_CLIENTE'
     ESTADO_PAGADA = 'PAGADA'
+    ESTADO_ENTREGA_FALLIDA = 'ENTREGA_FALLIDA'
+    ESTADO_PAGO_EXPIRADO = 'PAGO_EXPIRADO'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
         (ESTADO_CANCELADA, 'Cancelada'),
         (ESTADO_VENCIDA, 'Vencida'),
         (ESTADO_CANCELADA_COTIZACION, 'Cancelada por cambio de cotización'),
+        (ESTADO_CANCELADA_SALDO_INSUFICIENTE, 'Cancelada por saldo insuficiente de Global Exchange'),
+        (ESTADO_CANCELADA_FONDOS_CLIENTE, 'Cancelada por fondos insuficientes del cliente'),
         (ESTADO_PAGADA, 'Pagada'),
+        (ESTADO_ENTREGA_FALLIDA, 'Pagada, pero la entrega al cliente falló'),
+        (ESTADO_PAGO_EXPIRADO, 'Pago fuera de plazo'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -467,7 +662,7 @@ class CalculoTriangulacion(models.Model):
         related_name='calculos_triangulacion',
         verbose_name='Cliente',
     )
-    estado = models.CharField(max_length=25, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
+    estado = models.CharField(max_length=30, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
     divisa_origen = models.ForeignKey(
         Divisa,
         on_delete=models.PROTECT,
@@ -488,9 +683,31 @@ class CalculoTriangulacion(models.Model):
     comision_porcentaje = models.DecimalField(max_digits=6, decimal_places=3)
     comision = models.DecimalField(max_digits=18, decimal_places=2)
     monto_final = models.DecimalField(max_digits=18, decimal_places=2)
+    medio_destino = models.ForeignKey(
+        MetodoPago,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+        verbose_name='Medio al que se entrega',
+        help_text=(
+            'La cuenta o billetera propia del cliente, en la divisa de '
+            'destino, a la que Global Exchange le transfiere el resultado '
+            'del cambio. Se elige en el paso de pago, nunca una tarjeta.'
+        ),
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
     vence_en = models.DateTimeField()
     confirmado_en = models.DateTimeField(null=True, blank=True)
+    tasa_vence_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='La tasa fijada vence en',
+        help_text=(
+            'Ver CalculoOperacion.tasa_vence_en: mismo criterio, aplicado '
+            'al cambio entre divisas.'
+        ),
+    )
 
     class Meta:
         """Define el orden y etiquetas administrativas de la triangulación."""
@@ -502,6 +719,15 @@ class CalculoTriangulacion(models.Model):
     def esta_vencido(self):
         """Indica si el cálculo ya superó su tiempo de vigencia."""
         return timezone.now() >= self.vence_en
+
+    @property
+    def tasa_vencida(self):
+        """Ver ``CalculoOperacion.tasa_vencida``: mismo criterio, aplicado al cambio entre divisas."""
+        return (
+            self.estado == self.ESTADO_CONFIRMADA
+            and self.tasa_vence_en is not None
+            and timezone.now() >= self.tasa_vence_en
+        )
 
     @property
     def estado_efectivo(self):
@@ -555,17 +781,21 @@ class CalculoTriangulacion(models.Model):
 def monto_a_pagar(transaccion):
     """Devuelve lo que el cliente entrega de verdad para esta transacción.
 
-    Una compra o venta (``CalculoOperacion``) liquida siempre en PYG:
-    ``monto_final`` ya es ese valor, lo que el cliente paga (compra) o
-    recibe (venta) en guaraníes. Un cambio entre divisas
-    (``CalculoTriangulacion``) usa PYG solo como paso intermedio de la
-    triangulación: lo que el cliente entrega de verdad es
-    ``monto_origen``, en su propia divisa de origen. ``monto_final`` ahí
-    es lo que el cliente *recibe* a cambio, no lo que paga — por eso no
-    sirve como "monto a cobrar" para un cambio, aunque sí lo sea para una
-    compra/venta.
+    Una **compra** se paga en PYG: ``monto_final`` es lo que el cliente
+    entrega a cambio de la divisa que compra. Una **venta** se paga
+    entregando la propia divisa vendida, no PYG: ahí lo que el cliente
+    entrega es ``monto_origen``, en ``codigo_divisa`` — ``monto_final``
+    es lo que *recibe* en guaraníes, no lo que paga. Un **cambio** entre
+    divisas (``CalculoTriangulacion``) usa PYG solo como paso intermedio
+    de la triangulación, nunca lo toca el cliente: lo que entrega de
+    verdad es ``monto_origen``, en su propia divisa de origen.
+
+    Ver ``monto_a_entregar`` para el lado contrario (lo que Global
+    Exchange le transfiere al cliente a cambio).
     """
     if isinstance(transaccion, CalculoTriangulacion):
+        return transaccion.monto_origen
+    if transaccion.tipo == CalculoOperacion.TIPO_VENTA:
         return transaccion.monto_origen
     return transaccion.monto_final
 
@@ -573,12 +803,71 @@ def monto_a_pagar(transaccion):
 def moneda_a_pagar(transaccion):
     """Devuelve el código de la moneda en la que el cliente paga esta transacción.
 
-    Ver ``monto_a_pagar``: una compra/venta siempre se paga en PYG; un
+    Ver ``monto_a_pagar``: una compra se paga en PYG; una venta se paga
+    en la propia divisa vendida (``codigo_divisa``), nunca en PYG; un
     cambio se paga en su divisa de origen, no en la de destino.
     """
     if isinstance(transaccion, CalculoTriangulacion):
         return transaccion.codigo_divisa_origen
+    if transaccion.tipo == CalculoOperacion.TIPO_VENTA:
+        return transaccion.codigo_divisa
     return 'PYG'
+
+
+def monto_a_entregar(transaccion):
+    """Devuelve lo que Global Exchange le transfiere al cliente a cambio.
+
+    Simétrico de ``monto_a_pagar``: en una compra, lo que se entrega es
+    la divisa comprada (``monto_origen``); en una venta, los guaraníes
+    resultantes (``monto_final``); en un cambio, el monto ya convertido
+    a la divisa de destino (``monto_final``).
+    """
+    if isinstance(transaccion, CalculoTriangulacion):
+        return transaccion.monto_final
+    if transaccion.tipo == CalculoOperacion.TIPO_VENTA:
+        return transaccion.monto_final
+    return transaccion.monto_origen
+
+
+def moneda_a_entregar(transaccion):
+    """Devuelve el código de la moneda en la que Global Exchange entrega esta transacción.
+
+    Ver ``monto_a_entregar``: una compra entrega la divisa comprada
+    (``codigo_divisa``); una venta entrega PYG; un cambio entrega la
+    divisa de destino (``codigo_divisa_destino``), nunca la de origen ni
+    PYG.
+    """
+    if isinstance(transaccion, CalculoTriangulacion):
+        return transaccion.codigo_divisa_destino
+    if transaccion.tipo == CalculoOperacion.TIPO_VENTA:
+        return 'PYG'
+    return transaccion.codigo_divisa
+
+
+def divisa_a_pagar(transaccion):
+    """Devuelve la ``Divisa`` (no solo el código) en la que el cliente paga esta transacción.
+
+    Mismo criterio que ``moneda_a_pagar``, pero como objeto: lo que
+    necesita ``CuentaPropia.ajustar_saldos`` para acreditar la moneda
+    correcta, en vez de buscarla de nuevo por código.
+    """
+    if isinstance(transaccion, CalculoTriangulacion):
+        return transaccion.divisa_origen
+    if transaccion.tipo == CalculoOperacion.TIPO_VENTA:
+        return transaccion.divisa
+    return Divisa.objects.get(codigo=Divisa.CODIGO_BASE)
+
+
+def divisa_a_entregar(transaccion):
+    """Devuelve la ``Divisa`` (no solo el código) en la que Global Exchange entrega esta transacción.
+
+    Ver ``divisa_a_pagar``.
+    """
+    if isinstance(transaccion, CalculoTriangulacion):
+        return transaccion.divisa_destino
+    if transaccion.tipo == CalculoOperacion.TIPO_VENTA:
+        return Divisa.objects.get(codigo=Divisa.CODIGO_BASE)
+    return transaccion.divisa
 
 
 class PagoRechazadoError(Exception):
@@ -667,6 +956,17 @@ class Pago(models.Model):
         verbose_name='Diferencia (monto recibido − monto esperado)',
         help_text='Solo tiene valor cuando `observado` es verdadero.',
     )
+    fuera_de_plazo = models.BooleanField(
+        default=False,
+        verbose_name='Fuera de plazo',
+        help_text=(
+            'El pago llegó después de que venció la tasa fijada al '
+            'confirmar (ver CalculoOperacion.tasa_vencida): se registra '
+            'igual, nunca se pierde, pero la transacción pasa a "Pago '
+            'fuera de plazo" en vez de "Pagada", porque ya no corresponde '
+            'liquidarla a esa tasa.'
+        ),
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -730,6 +1030,14 @@ class Pago(models.Model):
                 pendiente, vencida, cancelada, o ya "Pagada"), siempre que
                 no se trate de una repetición idempotente del mismo pago
                 ya registrado.
+
+        Nota:
+            Si la tasa fijada al confirmar ya venció (``tasa_vencida``) en
+            el momento en que llega el pago, el pago NUNCA se pierde ni se
+            rechaza: se registra igual, con ``fuera_de_plazo=True``, pero
+            la transacción pasa a "Pago fuera de plazo"
+            (``ESTADO_PAGO_EXPIRADO``) en vez de "Pagada", porque ya no
+            corresponde liquidarla a esa tasa.
         """
         if transaccion is None:
             raise PagoRechazadoError('No hay una transacción válida para registrar el pago.')
@@ -747,6 +1055,9 @@ class Pago(models.Model):
                 'La transacción debe estar "Confirmada" para poder registrar un pago.'
             )
 
+        fuera_de_plazo = transaccion.tasa_vencida
+        nuevo_estado = transaccion.ESTADO_PAGO_EXPIRADO if fuera_de_plazo else transaccion.ESTADO_PAGADA
+
         campo_transaccion = (
             'calculo_operacion' if isinstance(transaccion, CalculoOperacion) else 'calculo_triangulacion'
         )
@@ -758,9 +1069,10 @@ class Pago(models.Model):
                     identificador_externo=identificador_externo,
                     monto=monto,
                     metodo_pago=metodo_pago,
+                    fuera_de_plazo=fuera_de_plazo,
                     **{campo_transaccion: transaccion},
                 )
-                transaccion.estado = transaccion.ESTADO_PAGADA
+                transaccion.estado = nuevo_estado
                 transaccion.save(update_fields=['estado'])
         except IntegrityError:
             # Carrera entre dos llamadas simultáneas: o bien la otra ya
@@ -888,12 +1200,14 @@ class SolicitudPagoSipap(models.Model):
     ESTADO_OBSERVADA = 'OBSERVADA'
     ESTADO_RECHAZADA = 'RECHAZADA'
     ESTADO_VENCIDA = 'VENCIDA'
+    ESTADO_SALDO_INSUFICIENTE = 'SALDO_INSUFICIENTE'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente'),
         (ESTADO_ACREDITADA, 'Acreditada'),
         (ESTADO_OBSERVADA, 'Observada'),
         (ESTADO_RECHAZADA, 'Rechazada'),
         (ESTADO_VENCIDA, 'Vencida'),
+        (ESTADO_SALDO_INSUFICIENTE, 'Saldo insuficiente del cliente'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -1,0 +1,65 @@
+<!--
+Lista las compras, ventas y cambios cuya entrega al cliente falló, para reintentarla.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: entregas.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Entregas pendientes - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Entregas pendientes</h1>
+        <p>Transacciones ya pagadas por el cliente cuya entrega a sipap-sim falló y necesita reintentarse.</p>
+    </div>
+    <span class="badge bg-secondary">{{ entregas|length }} pendientes</span>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Cliente</th>
+                    <th>Divisa</th>
+                    <th>A entregar</th>
+                    <th>Medio de destino</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entrega in entregas %}
+                <tr>
+                    <td>{{ entrega.creado_en }}</td>
+                    <td>{{ entrega.tipo }}</td>
+                    <td><a href="{{ entrega.url_detalle }}">{{ entrega.cliente }}</a></td>
+                    <td>{{ entrega.divisa }}</td>
+                    <td>{{ entrega.monto_a_entregar|floatformat:2 }} {{ entrega.moneda_a_entregar }}</td>
+                    <td>
+                        {% if entrega.medio_destino %}
+                            {{ entrega.medio_destino.entidad_financiera }}
+                        {% else %}
+                            <span class="text-danger">Sin medio de destino</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <form method="post" action="{{ entrega.url_reintentar }}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center py-4 text-muted">No hay ninguna entrega pendiente.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,7 +1,8 @@
 """Pruebas de la 'banca en línea' simulada (``core.views.elegir_cuenta_view``).
 
-Usan los datos de prueba cargados por la migración
-``core.migrations.0002_datos_iniciales``, igual que ``test_api.py``.
+El banco, la cuenta de la casa de cambio y la cuenta de cliente se crean
+en ``setUp`` con ``fixtures.crear_banco_y_cuentas_pyg``, igual que en
+``test_api.py``.
 """
 
 from decimal import Decimal
@@ -11,17 +12,15 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from core.models import Cuenta, Transferencia
-
-NUMERO_CUENTA_CLIENTE_PYG = '2000000000000101'
+from fixtures import crear_banco_y_cuentas_pyg
+from core.models import Transferencia
 
 
 class ElegirCuentaViewTest(TestCase):
     """Aprobar o rechazar con la cuenta que ya identificó quien pidió el cobro."""
 
     def setUp(self):
-        self.casa = Cuenta.objects.get(es_cuenta_casa_de_cambio=True, moneda='PYG')
-        self.cuenta_cliente = Cuenta.objects.get(numero=NUMERO_CUENTA_CLIENTE_PYG)
+        self.casa, self.cuenta_cliente = crear_banco_y_cuentas_pyg()
         self.saldo_cliente_inicial = self.cuenta_cliente.saldo
         self.saldo_casa_inicial = self.casa.saldo
         self.transferencia = Transferencia.objects.create(
@@ -36,9 +35,9 @@ class ElegirCuentaViewTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.cuenta_cliente.numero)
-        # El template localiza el Decimal (coma en vez de punto): se busca
-        # solo la parte entera, para no depender de ese formato exacto.
-        self.assertContains(response, str(int(self.cuenta_cliente.saldo)))
+        # El template localiza el Decimal con separador de miles ('.') y
+        # coma decimal (ver USE_THOUSAND_SEPARATOR en sipap_sim.settings).
+        self.assertContains(response, '15.000.000,00')
 
     @patch('core.webhooks.requests.post')
     def test_aprobar_mueve_saldo_y_redirige_a_url_retorno(self, post_mock):
@@ -74,8 +73,29 @@ class ElegirCuentaViewTest(TestCase):
         self.assertEqual(self.cuenta_cliente.saldo, self.saldo_cliente_inicial)
         post_mock.assert_called_once()
 
-    def test_no_permite_aprobar_con_saldo_insuficiente(self):
-        """Si el monto solicitado supera el saldo de la cuenta identificada, se informa sin aprobar."""
+    @patch('core.webhooks.requests.post')
+    def test_al_abrir_la_pantalla_detecta_solo_el_saldo_insuficiente_y_cancela(self, post_mock):
+        """Ni siquiera hace falta que el cliente apruebe o rechace: se detecta solo, apenas se abre."""
+        transferencia_cara = Transferencia.objects.create(
+            cuenta_sugerida=self.cuenta_cliente, cuenta_destino=self.casa,
+            monto_solicitado=self.saldo_cliente_inicial + Decimal('1'), moneda='PYG',
+            referencia='GE-CARA', url_retorno='http://ge.test/retorno',
+            vence_en=timezone.now() + timezone.timedelta(hours=1),
+        )
+
+        response = self.client.get(reverse('elegir_cuenta', args=[transferencia_cara.id]))
+
+        self.assertRedirects(response, 'http://ge.test/retorno', fetch_redirect_response=False)
+        transferencia_cara.refresh_from_db()
+        self.cuenta_cliente.refresh_from_db()
+        self.assertEqual(transferencia_cara.estado, Transferencia.ESTADO_SALDO_INSUFICIENTE)
+        self.assertEqual(transferencia_cara.cuenta_origen, self.cuenta_cliente)
+        self.assertEqual(self.cuenta_cliente.saldo, self.saldo_cliente_inicial)
+        post_mock.assert_called_once()
+
+    @patch('core.webhooks.requests.post')
+    def test_aprobar_con_saldo_insuficiente_tambien_cancela(self, post_mock):
+        """Si por alguna razón sí llega a mostrarse el formulario, aprobar tampoco mueve nada."""
         transferencia_cara = Transferencia.objects.create(
             cuenta_sugerida=self.cuenta_cliente, cuenta_destino=self.casa,
             monto_solicitado=self.saldo_cliente_inicial + Decimal('1'), moneda='PYG',
@@ -87,9 +107,12 @@ class ElegirCuentaViewTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Saldo insuficiente')
+        self.assertContains(response, 'cancelada')
         transferencia_cara.refresh_from_db()
-        self.assertEqual(transferencia_cara.estado, Transferencia.ESTADO_PENDIENTE)
+        self.cuenta_cliente.refresh_from_db()
+        self.assertEqual(transferencia_cara.estado, Transferencia.ESTADO_SALDO_INSUFICIENTE)
+        self.assertEqual(self.cuenta_cliente.saldo, self.saldo_cliente_inicial)
+        post_mock.assert_called_once()
 
     def test_una_transferencia_ya_resuelta_no_se_puede_volver_a_aprobar(self):
         self.transferencia.estado = Transferencia.ESTADO_ACREDITADA

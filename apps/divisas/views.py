@@ -18,6 +18,15 @@ from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from apps.authentication.forms import CausaBajaForm
 from apps.authentication.models import HistorialBaja
 from apps.clientes.models import Cliente, MetodoPago
+from apps.divisas.casa_de_cambio import (
+    DesignacionCuentaPropiaError,
+    SipapComunicacionError,
+    consultar_cuenta_casa_de_cambio,
+    consultar_movimientos_casa_de_cambio,
+    consultar_saldo_casa_de_cambio,
+    designar_cuenta_casa_de_cambio,
+)
+from apps.divisas.entrega import realizar_entrega
 from apps.divisas.forms import (
     CalculoOperacionForm,
     ConfiguracionComisionForm,
@@ -25,6 +34,7 @@ from apps.divisas.forms import (
     ConfirmarCalculoOperacionForm,
     ConfirmarTriangulacionForm,
     CotizacionForm,
+    DesignarCuentaPropiaForm,
     DivisaForm,
     PagarTransaccionForm,
     SimulacionDivisasForm,
@@ -36,8 +46,14 @@ from apps.divisas.models import (
     ConfiguracionComision,
     ConfiguracionVigencia,
     Cotizacion,
+    CuentaPropia,
     Divisa,
     NotificacionTasa,
+    divisa_a_entregar,
+    moneda_a_entregar,
+    moneda_a_pagar,
+    monto_a_entregar,
+    monto_a_pagar,
 )
 
 
@@ -48,8 +64,43 @@ def _puede_pagarse(transaccion):
     pagarse. Se usa tanto para decidir si mostrar el formulario de pago
     como, al enviarlo, para rechazarlo con el mismo criterio sin depender
     únicamente de la validación que hace el propio ``registrar_pago``.
+
+    Además de "Confirmada", exige que la tasa fijada al confirmar no haya
+    vencido todavía (``tasa_vencida``): no tiene sentido iniciar un cobro
+    nuevo (con tarjeta o por SIPAP) para una tasa que ya no es válida. Un
+    pago que de todas formas llegue tarde (por ejemplo, un cobro con
+    tarjeta ya iniciado antes de que venciera) nunca se pierde: queda
+    registrado como "Pago fuera de plazo" (ver ``Pago.registrar_pago``).
     """
-    return transaccion.estado_efectivo == transaccion.ESTADO_CONFIRMADA
+    return transaccion.estado_efectivo == transaccion.ESTADO_CONFIRMADA and not transaccion.tasa_vencida
+
+
+def _verificar_saldo_casa_de_cambio(transaccion):
+    """Verifica que Global Exchange tenga saldo propio suficiente para entregar esta transacción.
+
+    Se llama al confirmar, después del chequeo de cambio de cotización
+    (que tiene prioridad): no tiene sentido que el cliente pague algo
+    que Global Exchange no va a poder entregarle. El saldo propio se
+    lleva en esta misma base (``CuentaPropia``, espejado contra las
+    transferencias reales que se mandan a sipap-sim al entregar, ver
+    ``apps.divisas.entrega``), así que esto es una consulta local, sin
+    red y sin depender de que sipap-sim esté arriba en este instante.
+
+    Returns:
+        str | None: ``None`` si hay saldo suficiente (se puede
+        confirmar); si no, el mensaje de error con el que se cancela la
+        transacción como "saldo insuficiente" (sin fondos, o esa moneda
+        no tiene ninguna cuenta propia cargada todavía).
+    """
+    divisa = divisa_a_entregar(transaccion)
+    monto = monto_a_entregar(transaccion)
+    cuenta = CuentaPropia.objects.filter(divisa=divisa).first()
+    if cuenta is None or cuenta.saldo < monto:
+        return (
+            f'Global Exchange no dispone de fondos suficientes en {divisa.codigo} para completar '
+            'esta operación en este momento. La operación fue cancelada; intentá nuevamente más tarde.'
+        )
+    return None
 
 
 def _avisar_resultado_pago_stripe(request):
@@ -652,19 +703,27 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
         if redireccion is not None:
             return redireccion
         transaccion.marcar_vencida_si_corresponde()
-        form = PagarTransaccionForm(cliente=transaccion.cliente) if _puede_pagarse(transaccion) else None
-        return render(request, 'divisas/pagar_transaccion.html', {'transaccion': transaccion, 'form': form})
+        form = (
+            PagarTransaccionForm(cliente=transaccion.cliente, transaccion=transaccion)
+            if _puede_pagarse(transaccion) else None
+        )
+        return render(request, 'divisas/pagar_transaccion.html', {
+            'transaccion': transaccion, 'form': form,
+            'monto_a_pagar': monto_a_pagar(transaccion), 'moneda_a_pagar': moneda_a_pagar(transaccion),
+            'monto_a_entregar': monto_a_entregar(transaccion), 'moneda_a_entregar': moneda_a_entregar(transaccion),
+        })
 
     def post(self, request, *args, **kwargs):
-        """Registra el pago con el método elegido, o inicia el cobro con Stripe.
+        """Guarda el medio de destino elegido y registra el pago, o inicia el cobro con Stripe.
 
         Args:
-            request (HttpRequest): Solicitud POST con el campo ``metodo_pago``.
+            request (HttpRequest): Solicitud POST con los campos
+                ``medio_origen`` y ``medio_destino``.
 
         Returns:
-            HttpResponse: Redirección a Stripe si el método es "tarjeta", o
-            al detalle de la transacción con el resultado en cualquier otro
-            caso.
+            HttpResponse: Redirección a Stripe si el medio de origen es
+            "tarjeta", o al detalle de la transacción con el resultado en
+            cualquier otro caso.
         """
         transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
         if redireccion is not None:
@@ -674,29 +733,50 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
         if not _puede_pagarse(transaccion):
             if transaccion.estado_efectivo == CalculoOperacion.ESTADO_PAGADA:
                 messages.error(request, 'Esta transacción ya fue pagada.')
+            elif transaccion.tasa_vencida:
+                messages.error(
+                    request,
+                    'La tasa fijada al confirmar esta operación ya venció. Debe recalcularla.',
+                )
             else:
                 messages.error(request, 'Esta transacción no está en condiciones de pagarse.')
             return redirect('divisas:detalle_transaccion_operacion', pk=transaccion.pk)
 
-        form = PagarTransaccionForm(request.POST, cliente=transaccion.cliente)
-        if not form.is_valid():
-            return render(request, 'divisas/pagar_transaccion.html', {'transaccion': transaccion, 'form': form})
+        if request.POST.get('accion') == 'cancelar':
+            transaccion.estado = CalculoOperacion.ESTADO_CANCELADA
+            transaccion.save(update_fields=['estado'])
+            messages.success(request, 'La operación fue cancelada.')
+            return redirect('divisas:detalle_transaccion_operacion', pk=transaccion.pk)
 
-        metodo_pago = form.cleaned_data['metodo_pago']
-        if metodo_pago.tipo_medio == MetodoPago.TIPO_TARJETA:
+        form = PagarTransaccionForm(request.POST, cliente=transaccion.cliente, transaccion=transaccion)
+        if not form.is_valid():
+            return render(request, 'divisas/pagar_transaccion.html', {
+            'transaccion': transaccion, 'form': form,
+            'monto_a_pagar': monto_a_pagar(transaccion), 'moneda_a_pagar': moneda_a_pagar(transaccion),
+            'monto_a_entregar': monto_a_entregar(transaccion), 'moneda_a_entregar': moneda_a_entregar(transaccion),
+        })
+
+        medio_origen = form.cleaned_data['medio_origen']
+        transaccion.medio_destino = form.cleaned_data['medio_destino']
+        transaccion.save(update_fields=['medio_destino'])
+
+        if medio_origen.tipo_medio == MetodoPago.TIPO_TARJETA:
             # Un método guardado de tipo "tarjeta" se cobra vía Stripe, no
             # de forma manual: en vez de registrar el pago acá, se redirige
             # a cobrar con esa tarjeta puntual (ver
-            # apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView).
+            # apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView). El
+            # parámetro sigue llamándose "metodo_pago" en la URL por
+            # compatibilidad con ese módulo, aunque el campo del formulario
+            # se llame "medio_origen".
             url = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': transaccion.pk})
-            return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+            return redirect(f'{url}?metodo_pago={medio_origen.pk}')
         # Transferencia o billetera digital: ambas se pagan vía SIPAP, no
         # de forma manual (sipap-sim simula indistintamente bancos y
         # billeteras). Se redirige a generar la solicitud de pago (ver
         # apps.divisas.pagos_sipap.IniciarPagoSipapOperacionView),
         # pasando con qué cuenta puntual, igual que con una tarjeta.
         url = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': transaccion.pk})
-        return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+        return redirect(f'{url}?metodo_pago={medio_origen.pk}')
 
 
 class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -725,18 +805,27 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
         if redireccion is not None:
             return redireccion
         transaccion.marcar_vencida_si_corresponde()
-        form = PagarTransaccionForm(cliente=transaccion.cliente) if _puede_pagarse(transaccion) else None
-        return render(request, 'divisas/pagar_transaccion_cambio.html', {'transaccion': transaccion, 'form': form})
+        form = (
+            PagarTransaccionForm(cliente=transaccion.cliente, transaccion=transaccion)
+            if _puede_pagarse(transaccion) else None
+        )
+        return render(request, 'divisas/pagar_transaccion_cambio.html', {
+            'transaccion': transaccion, 'form': form,
+            'monto_a_pagar': monto_a_pagar(transaccion), 'moneda_a_pagar': moneda_a_pagar(transaccion),
+            'monto_a_entregar': monto_a_entregar(transaccion), 'moneda_a_entregar': moneda_a_entregar(transaccion),
+        })
 
     def post(self, request, *args, **kwargs):
-        """Registra el pago con el método elegido, o inicia el cobro con Stripe.
+        """Guarda el medio de destino elegido y registra el pago, o inicia el cobro con Stripe.
 
         Args:
-            request (HttpRequest): Solicitud POST con el campo ``metodo_pago``.
+            request (HttpRequest): Solicitud POST con los campos
+                ``medio_origen`` y ``medio_destino``.
 
         Returns:
-            HttpResponse: Redirección a Stripe si el método es "tarjeta", o
-            al detalle del cambio con el resultado en cualquier otro caso.
+            HttpResponse: Redirección a Stripe si el medio de origen es
+            "tarjeta", o al detalle del cambio con el resultado en
+            cualquier otro caso.
         """
         transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
         if redireccion is not None:
@@ -746,26 +835,46 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not _puede_pagarse(transaccion):
             if transaccion.estado_efectivo == CalculoTriangulacion.ESTADO_PAGADA:
                 messages.error(request, 'Esta transacción ya fue pagada.')
+            elif transaccion.tasa_vencida:
+                messages.error(
+                    request,
+                    'La tasa fijada al confirmar este cambio ya venció. Debe recalcularlo.',
+                )
             else:
                 messages.error(request, 'Esta transacción no está en condiciones de pagarse.')
             return redirect('divisas:detalle_transaccion_cambio', pk=transaccion.pk)
 
-        form = PagarTransaccionForm(request.POST, cliente=transaccion.cliente)
-        if not form.is_valid():
-            return render(
-                request, 'divisas/pagar_transaccion_cambio.html', {'transaccion': transaccion, 'form': form}
-            )
+        if request.POST.get('accion') == 'cancelar':
+            transaccion.estado = CalculoTriangulacion.ESTADO_CANCELADA
+            transaccion.save(update_fields=['estado'])
+            messages.success(request, 'El cambio fue cancelado.')
+            return redirect('divisas:detalle_transaccion_cambio', pk=transaccion.pk)
 
-        metodo_pago = form.cleaned_data['metodo_pago']
-        if metodo_pago.tipo_medio == MetodoPago.TIPO_TARJETA:
+        form = PagarTransaccionForm(request.POST, cliente=transaccion.cliente, transaccion=transaccion)
+        if not form.is_valid():
+            return render(request, 'divisas/pagar_transaccion_cambio.html', {
+                'transaccion': transaccion, 'form': form,
+                'monto_a_pagar': monto_a_pagar(transaccion), 'moneda_a_pagar': moneda_a_pagar(transaccion),
+                'monto_a_entregar': monto_a_entregar(transaccion), 'moneda_a_entregar': moneda_a_entregar(transaccion),
+            })
+
+        medio_origen = form.cleaned_data['medio_origen']
+        transaccion.medio_destino = form.cleaned_data['medio_destino']
+        transaccion.save(update_fields=['medio_destino'])
+
+        if medio_origen.tipo_medio == MetodoPago.TIPO_TARJETA:
             # Ver PagarTransaccionOperacionView.post: un método de tipo
-            # "tarjeta" se cobra vía Stripe, no de forma manual.
+            # "tarjeta" se cobra vía Stripe, no de forma manual. En la
+            # práctica esto nunca ocurre para un cambio (el filtro de
+            # medio_origen del formulario ya excluye la tarjeta, porque
+            # un cambio nunca se paga en PYG); se deja el chequeo igual,
+            # por las dudas, en vez de asumirlo.
             url = reverse('divisas:pagar_transaccion_cambio_stripe', kwargs={'pk': transaccion.pk})
-            return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+            return redirect(f'{url}?metodo_pago={medio_origen.pk}')
         # Ver PagarTransaccionOperacionView.post: transferencia o
         # billetera digital, ambas se pagan vía SIPAP.
         url = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': transaccion.pk})
-        return redirect(f'{url}?metodo_pago={metodo_pago.pk}')
+        return redirect(f'{url}?metodo_pago={medio_origen.pk}')
 
 
 class ConfiguracionComisionListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -1192,9 +1301,18 @@ class ConfirmarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, Vi
                     ' puede recalcularlo con las tasas nuevas.',
                 )
                 return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
+            mensaje_saldo = _verificar_saldo_casa_de_cambio(transaccion)
+            if mensaje_saldo is not None:
+                transaccion.estado = CalculoTriangulacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE
+                transaccion.save(update_fields=['estado'])
+                messages.error(request, mensaje_saldo)
+                return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
             transaccion.estado = CalculoTriangulacion.ESTADO_CONFIRMADA
             transaccion.confirmado_en = timezone.now()
-            transaccion.save(update_fields=['estado', 'confirmado_en'])
+            transaccion.tasa_vence_en = transaccion.confirmado_en + timedelta(
+                seconds=ConfiguracionVigencia.vigencia_pago_segundos()
+            )
+            transaccion.save(update_fields=['estado', 'confirmado_en', 'tasa_vence_en'])
             messages.success(request, 'El cambio fue confirmado.')
             return redirect('divisas:confirmar_transaccion_cambio', pk=transaccion.pk)
 
@@ -1380,9 +1498,18 @@ class ConfirmarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin,
                     ' puede recalcularla con la tasa nueva.',
                 )
                 return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
+            mensaje_saldo = _verificar_saldo_casa_de_cambio(transaccion)
+            if mensaje_saldo is not None:
+                transaccion.estado = CalculoOperacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE
+                transaccion.save(update_fields=['estado'])
+                messages.error(request, mensaje_saldo)
+                return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
             transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA
             transaccion.confirmado_en = timezone.now()
-            transaccion.save(update_fields=['estado', 'confirmado_en'])
+            transaccion.tasa_vence_en = transaccion.confirmado_en + timedelta(
+                seconds=ConfiguracionVigencia.vigencia_pago_segundos()
+            )
+            transaccion.save(update_fields=['estado', 'confirmado_en', 'tasa_vence_en'])
             messages.success(request, 'La operación fue confirmada.')
             return redirect('divisas:confirmar_transaccion', pk=transaccion.pk)
 
@@ -1505,6 +1632,7 @@ class ConfiguracionVigenciaUpdateView(AdminDivisasMixin, UpdateView):
         return ConfiguracionVigencia.objects.first() or ConfiguracionVigencia(
             calculo_vigencia_segundos=settings.CALCULO_OPERACION_VIGENCIA_SEGUNDOS,
             confirmacion_vigencia_segundos=settings.CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS,
+            pago_vigencia_segundos=settings.PAGO_OPERACION_VIGENCIA_SEGUNDOS,
         )
 
     def form_valid(self, form):
@@ -1513,6 +1641,218 @@ class ConfiguracionVigenciaUpdateView(AdminDivisasMixin, UpdateView):
         super().form_valid(form)
         messages.success(self.request, 'Los tiempos de espera se actualizaron correctamente.')
         return redirect('divisas:configuracion_vigencia')
+
+
+class CuentaPropiaListView(AdminDivisasMixin, ListView):
+    """Lista el saldo propio de Global Exchange en cada divisa, sincronizado con sipap-sim.
+
+    La cuenta bancaria o billetera real se crea en sipap-sim (ver
+    ``sipap_panel_url`` en el contexto), pero cuál de las cuentas de
+    sipap-sim hace de "casa de cambio" para cada divisa se designa
+    desde acá, no en sipap-sim (ver ``DesignarCuentaPropiaView``):
+    sipap-sim solo refleja esa designación, nunca la decide por sí
+    solo. Esta pantalla es de solo lectura sobre el saldo y la cuenta
+    designada, y en cada visita vuelve a consultarlos para corregir
+    cualquier diferencia con lo que tenía guardado (ver
+    ``apps.divisas.casa_de_cambio``). Si sipap-sim no responde, se
+    muestra el último valor conocido en vez de romper la pantalla.
+    """
+    model = CuentaPropia
+    template_name = 'divisas/cuenta_propia_list.html'
+    context_object_name = 'cuentas_propias'
+
+    def get_queryset(self):
+        """Sincroniza cada cuenta propia con sipap-sim antes de listarlas."""
+        cuentas = list(
+            CuentaPropia.objects.filter(divisa__activa=True).select_related('divisa').order_by('divisa__codigo')
+        )
+        self.sin_cuenta_en_sipap = []
+        self.error_sincronizacion = False
+        for cuenta in cuentas:
+            try:
+                saldo_real = consultar_saldo_casa_de_cambio(cuenta.divisa.codigo)
+            except SipapComunicacionError:
+                self.error_sincronizacion = True
+                cuenta.cuenta_sipap = None
+                continue
+            if saldo_real is None:
+                self.sin_cuenta_en_sipap.append(cuenta.divisa.codigo)
+                cuenta.cuenta_sipap = None
+                continue
+            if saldo_real != cuenta.saldo:
+                cuenta.saldo = saldo_real
+                cuenta.save(update_fields=['saldo'])
+            try:
+                cuenta.cuenta_sipap = consultar_cuenta_casa_de_cambio(cuenta.divisa.codigo)
+            except SipapComunicacionError:
+                self.error_sincronizacion = True
+                cuenta.cuenta_sipap = None
+        return cuentas
+
+    def get_context_data(self, **kwargs):
+        """Agrega los avisos de sincronización, el enlace al panel de sipap-sim y el formulario de designación."""
+        context = super().get_context_data(**kwargs)
+        context['sin_cuenta_en_sipap'] = self.sin_cuenta_en_sipap
+        context['error_sincronizacion'] = self.error_sincronizacion
+        context['sipap_panel_url'] = f'{settings.SIPAP_BASE_URL}/panel/cuentas/'
+        context['form_designar'] = DesignarCuentaPropiaForm()
+        return context
+
+
+class DesignarCuentaPropiaView(AdminDivisasMixin, View):
+    """Designa, a pedido de un administrador, cuál cuenta de sipap-sim es la casa de cambio en una divisa.
+
+    sipap-sim no decide esto por sí solo (ver ``core.forms.CuentaForm``
+    del lado de sipap-sim, que ya no incluye ``es_cuenta_casa_de_cambio``):
+    la cuenta se crea ahí como una más y Global Exchange, desde acá, le
+    indica cuál puntual —identificada por número y documento, igual
+    que al validar un método de pago— le corresponde a cada divisa.
+    """
+
+    def post(self, request, codigo):
+        """Valida el formulario y le pide a sipap-sim que designe la cuenta indicada."""
+        divisa = get_object_or_404(Divisa, codigo=codigo)
+        form = DesignarCuentaPropiaForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, 'Ingresá el número de cuenta y el CI o RUC del titular.')
+            return redirect('divisas:lista_cuentas_propias')
+
+        try:
+            cuenta_designada = designar_cuenta_casa_de_cambio(
+                divisa.codigo,
+                form.cleaned_data['numero_cuenta'],
+                form.cleaned_data['documento_titular'],
+            )
+        except DesignacionCuentaPropiaError as error:
+            messages.error(request, str(error))
+        except SipapComunicacionError:
+            messages.error(
+                request,
+                'No se pudo conectar con sipap-sim para designar la cuenta. Intentá nuevamente en unos minutos.',
+            )
+        else:
+            messages.success(
+                request,
+                f'{cuenta_designada["numero"]} ({cuenta_designada["proveedor"]}) queda designada como la '
+                f'cuenta de la casa de cambio en {divisa.codigo}.',
+            )
+        return redirect('divisas:lista_cuentas_propias')
+
+
+class HistorialCuentaPropiaView(AdminDivisasMixin, View):
+    """Muestra el historial real de movimientos de la cuenta propia en una divisa.
+
+    En vez de llevar un ledger propio (que duplicaría algo que
+    sipap-sim ya guarda con más detalle) o linkear al admin de
+    sipap-sim (otro estilo, otra sesión), trae los movimientos reales
+    por API (``apps.divisas.casa_de_cambio.consultar_movimientos_casa_de_cambio``)
+    y los muestra con el mismo diseño que el resto del sistema.
+    """
+
+    def get(self, request, codigo):
+        """Busca la divisa por su código y consulta sus movimientos reales en sipap-sim."""
+        divisa = get_object_or_404(Divisa, codigo=codigo)
+        try:
+            movimientos = consultar_movimientos_casa_de_cambio(divisa.codigo)
+            error_sincronizacion = False
+        except SipapComunicacionError:
+            movimientos = []
+            error_sincronizacion = True
+        return render(request, 'divisas/historial_cuenta_propia.html', {
+            'divisa': divisa,
+            'movimientos': movimientos,
+            'error_sincronizacion': error_sincronizacion,
+        })
+
+
+class EntregasPendientesListView(AdminDivisasMixin, ListView):
+    """Lista las compras, ventas y cambios cuya entrega al cliente falló, para reintentarla a mano.
+
+    Reúne, igual que ``HistorialTransaccionesView``, las dos clases de
+    transacción (``CalculoOperacion``/``CalculoTriangulacion``) que
+    quedaron en "Entrega fallida" (ver
+    ``apps.divisas.entrega.realizar_entrega``): el pago del cliente ya
+    se registró, pero la transferencia saliente a sipap-sim no se pudo
+    completar (sin respuesta, rechazada, o sin saldo propio suficiente
+    en ese momento). Reintentar desde acá (``ReintentarEntregaView``)
+    es seguro: sipap-sim reconoce la misma referencia y no transfiere
+    dos veces si la entrega anterior sí había llegado a procesarse.
+    """
+    template_name = 'divisas/entregas_pendientes.html'
+    context_object_name = 'entregas'
+
+    @staticmethod
+    def _fila(transaccion, tipo_modelo, tipo_display, divisa_display, url_detalle, url_reintentar):
+        return {
+            'pk': transaccion.pk,
+            'creado_en': transaccion.creado_en,
+            'tipo': tipo_display,
+            'cliente': transaccion.cliente,
+            'divisa': divisa_display,
+            'monto_a_entregar': monto_a_entregar(transaccion),
+            'moneda_a_entregar': moneda_a_entregar(transaccion),
+            'medio_destino': transaccion.medio_destino,
+            'url_detalle': url_detalle,
+            'url_reintentar': url_reintentar,
+        }
+
+    def get_queryset(self):
+        """Devuelve las entregas fallidas de ambas transacciones, de la más reciente a la más antigua."""
+        filas = [
+            self._fila(
+                operacion, 'operacion', operacion.get_tipo_display(), operacion.codigo_divisa,
+                reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': operacion.pk}),
+                reverse('divisas:reintentar_entrega', kwargs={'tipo': 'operacion', 'pk': operacion.pk}),
+            )
+            for operacion in CalculoOperacion.objects.filter(
+                estado=CalculoOperacion.ESTADO_ENTREGA_FALLIDA,
+            ).select_related('cliente', 'medio_destino')
+        ]
+        filas.extend(
+            self._fila(
+                cambio, 'cambio', CalculoTriangulacion.TIPO_DISPLAY,
+                f'{cambio.codigo_divisa_origen} → {cambio.codigo_divisa_destino}',
+                reverse('divisas:detalle_transaccion_cambio', kwargs={'pk': cambio.pk}),
+                reverse('divisas:reintentar_entrega', kwargs={'tipo': 'cambio', 'pk': cambio.pk}),
+            )
+            for cambio in CalculoTriangulacion.objects.filter(
+                estado=CalculoTriangulacion.ESTADO_ENTREGA_FALLIDA,
+            ).select_related('cliente', 'medio_destino')
+        )
+        return sorted(filas, key=lambda fila: fila['creado_en'], reverse=True)
+
+
+class ReintentarEntregaView(AdminDivisasMixin, View):
+    """Reintenta, a pedido de un administrador, la entrega de una transacción en 'Entrega fallida'."""
+
+    def post(self, request, tipo, pk):
+        """Vuelve a llamar a ``realizar_entrega``; si falla otra vez, queda igual en la lista."""
+        if tipo not in ('operacion', 'cambio'):
+            raise Http404
+        modelo = CalculoOperacion if tipo == 'operacion' else CalculoTriangulacion
+        transaccion = get_object_or_404(modelo, pk=pk)
+        if transaccion.estado != modelo.ESTADO_ENTREGA_FALLIDA:
+            messages.info(request, 'Esta transacción ya no está en entrega fallida.')
+            return redirect('divisas:entregas_pendientes')
+
+        # realizar_entrega no transiciona por sí sola de "Entrega fallida"
+        # a "Pagada": en el flujo normal ya la encuentra "Pagada" (nunca
+        # toca el estado si todo sale bien) y solo escribe un estado
+        # nuevo si algo vuelve a fallar. Para un reintento manual hay que
+        # devolverla a "Pagada" antes de llamarla, así que el éxito deja
+        # el mismo estado de siempre en vez de quedar atascada en
+        # "Entrega fallida" con un pago que en realidad sí se completó.
+        transaccion.estado = modelo.ESTADO_PAGADA
+        transaccion.save(update_fields=['estado'])
+
+        if realizar_entrega(transaccion):
+            messages.success(request, 'La entrega se reintentó con éxito.')
+        else:
+            messages.error(
+                request,
+                'La entrega volvió a fallar. Revisá el medio de destino y el saldo propio antes de reintentar de nuevo.',
+            )
+        return redirect('divisas:entregas_pendientes')
 
 
 class DivisaListView(AdminDivisasMixin, ListView):
@@ -1531,9 +1871,17 @@ class DivisaCreateView(AdminDivisasMixin, CreateView):
     success_url = reverse_lazy('divisas:lista_divisas')
 
     def form_valid(self, form):
-        """Marca como activa la divisa recién creada."""
+        """Marca como activa la divisa recién creada y le crea su cuenta propia en cero.
+
+        Sin esto, ninguna operación en la divisa nueva podría
+        confirmarse nunca: el chequeo de saldo, al no encontrar ninguna
+        cuenta propia, la trataría siempre como "sin fondos" (ver
+        ``apps.divisas.views._verificar_saldo_casa_de_cambio``).
+        """
         form.instance.activa = True
-        return super().form_valid(form)
+        respuesta = super().form_valid(form)
+        CuentaPropia.objects.get_or_create(divisa=self.object)
+        return respuesta
 
 
 class DivisaUpdateView(AdminDivisasMixin, UpdateView):

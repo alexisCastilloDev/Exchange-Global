@@ -8,6 +8,7 @@ from django.urls import NoReverseMatch, reverse
 from apps.clientes.forms import MetodoPagoForm
 from apps.clientes.models import Cliente, MetodoPago
 from apps.clientes.validacion_sipap import SipapComunicacionError
+from apps.divisas.models import Divisa
 
 User = get_user_model()
 
@@ -106,6 +107,44 @@ class MetodoPagoTestCase(TestCase):
         self.assertEqual(metodo.nombre_titular, 'Juan Pérez')
         self.assertEqual(metodo.entidad_financiera, 'Banco Itaú Paraguay')
         self.assertEqual(metodo.documento_titular, '3456789')
+        self.assertEqual(metodo.moneda.codigo, 'PYG')
+
+    @patch('apps.clientes.forms.validar_cuenta')
+    def test_guarda_la_moneda_que_confirma_sipap_sim(self, mock_validar):
+        """La moneda de la cuenta la decide sipap-sim, no el formulario (GE-19 extendida)."""
+        usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        mock_validar.return_value = {
+            'valida': True, 'titular': 'Juan Pérez', 'proveedor': 'Banco Itaú Paraguay', 'moneda': 'USD',
+        }
+
+        self.client.post(reverse('clientes:metodo_pago_create'), {
+            'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
+            'numero_cuenta': '2000000000000102',
+            'documento_titular': '3456789',
+            'tipo_cuenta': 'AHORRO',
+        })
+
+        metodo = MetodoPago.objects.get(cliente=self.cliente)
+        self.assertEqual(metodo.moneda, usd)
+
+    @patch('apps.clientes.forms.validar_cuenta')
+    def test_rechaza_una_cuenta_en_una_moneda_que_global_exchange_no_tiene_habilitada(self, mock_validar):
+        """Si sipap-sim confirma una moneda que no está dada de alta en Global Exchange, no se guarda nada."""
+        mock_validar.return_value = {
+            'valida': True, 'titular': 'Juan Pérez', 'proveedor': 'Banco Itaú Paraguay', 'moneda': 'JPY',
+        }
+
+        response = self.client.post(reverse('clientes:metodo_pago_create'), {
+            'tipo_medio': MetodoPago.TIPO_TRANSFERENCIA,
+            'numero_cuenta': '2000000000000103',
+            'documento_titular': '3456789',
+            'tipo_cuenta': 'AHORRO',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertIn('JPY', form.non_field_errors()[0])
+        self.assertEqual(MetodoPago.objects.filter(cliente=self.cliente).count(), 0)
 
     def test_validacion_campos_incompletos(self):
         """Criterio 2: Muestra errores de validación si faltan datos requeridos."""
@@ -186,6 +225,75 @@ class MetodoPagoTestCase(TestCase):
         response = self.client.get(reverse('clientes:metodo_pago_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Sudameris')
+
+    def test_cada_metodo_muestra_la_divisa_a_la_que_pertenece(self):
+        """Para que se entienda en qué divisa opera cada cuenta o billetera, se muestra como badge."""
+        pyg = Divisa.objects.get(codigo='PYG')
+        MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TRANSFERENCIA, nombre_titular='Juan Pérez',
+            entidad_financiera='Sudameris', numero_cuenta='987654', tipo_cuenta='CORRIENTE', moneda=pyg,
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+
+        self.assertContains(response, '>PYG<')
+
+    def test_avisa_en_la_subdivision_de_la_divisa_sin_ningun_metodo_registrado(self):
+        """Sin ningún medio en una divisa activa, no se puede pagar ni recibir en ella; la subdivisión lo marca."""
+        Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        pyg = Divisa.objects.get(codigo='PYG')
+        MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TRANSFERENCIA, nombre_titular='Juan Pérez',
+            entidad_financiera='Sudameris', numero_cuenta='987654', tipo_cuenta='CORRIENTE', moneda=pyg,
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+
+        self.assertContains(response, 'Te falta agregar una cuenta bancaria o billetera en')
+        self.assertContains(response, '>USD<')
+
+    def test_no_avisa_si_ya_hay_un_metodo_en_cada_divisa_activa(self):
+        """Cubiertas todas las divisas activas, ninguna subdivisión debe marcar que falta un medio."""
+        pyg = Divisa.objects.get(codigo='PYG')
+        MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TRANSFERENCIA, nombre_titular='Juan Pérez',
+            entidad_financiera='Sudameris', numero_cuenta='987654', tipo_cuenta='CORRIENTE', moneda=pyg,
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+
+        self.assertNotContains(response, 'Te falta agregar una cuenta bancaria o billetera en')
+
+    def test_cada_divisa_activa_tiene_su_propia_subdivision_aunque_este_vacia(self):
+        """Cada divisa activa aparece como su propia sección, agrupando solo sus cuentas/billeteras."""
+        usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        pyg = Divisa.objects.get(codigo='PYG')
+        MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_BILLETERA, nombre_titular='Juan Pérez',
+            entidad_financiera='Tigo Money', numero_cuenta='2000000000001111', moneda=usd,
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+
+        grupos = {grupo['divisa'].codigo: grupo['metodos'] for grupo in response.context['grupos_por_divisa']}
+        self.assertIn('USD', grupos)
+        self.assertIn('PYG', grupos)
+        self.assertEqual(len(grupos['USD']), 1)
+        self.assertEqual(grupos['PYG'], [])
+
+    def test_las_tarjetas_quedan_en_su_propia_seccion_separada_de_las_divisas(self):
+        """Una tarjeta no aparece agrupada dentro de ninguna divisa, sino en su propia sección."""
+        MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TARJETA, nombre_titular='Juan Pérez',
+            entidad_financiera='Visa', numero_tarjeta='4111', proveedor_externo=MetodoPago.PROVEEDOR_STRIPE,
+            moneda=Divisa.objects.get(codigo='PYG'),
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_list'))
+
+        self.assertEqual(len(response.context['tarjetas']), 1)
+        for grupo in response.context['grupos_por_divisa']:
+            self.assertFalse(any(m.tipo_medio == MetodoPago.TIPO_TARJETA for m in grupo['metodos']))
 
     def test_numero_cuenta_censurado_por_defecto_y_revelable_por_su_creador(self):
         """Comprueba censura inicial y revelación por el titular."""
@@ -415,3 +523,52 @@ class MetodoPagoFormStripeTest(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn('tipo_medio', form.errors)
+
+
+class MetodoPagoEtiquetaCortaTest(TestCase):
+    """Verifica ``MetodoPago.etiqueta_corta``, usada para identificar cada medio en un <select>."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='cliente-etiqueta', password='password123')
+        self.cliente = Cliente.objects.create(
+            user=self.user, identificador='CI-ETIQUETA-001', nombre='Ana', apellido='Ríos',
+            email='etiqueta@test.com', is_active=True,
+        )
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+
+    def test_incluye_tipo_entidad_los_ultimos_digitos_y_la_divisa(self):
+        metodo = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_BILLETERA, nombre_titular='Ana Ríos',
+            entidad_financiera='Tigo Money', numero_cuenta='2000000000001234', moneda=self.usd,
+        )
+
+        etiqueta = metodo.etiqueta_corta
+
+        self.assertIn('Billetera Digital', etiqueta)
+        self.assertIn('Tigo Money', etiqueta)
+        self.assertIn('1234', etiqueta)
+        self.assertNotIn('2000000000001234', etiqueta)
+        self.assertIn('USD', etiqueta)
+
+    def test_una_tarjeta_usa_el_numero_de_tarjeta_no_el_de_cuenta(self):
+        pyg = Divisa.objects.get(codigo='PYG')
+        metodo = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TARJETA, nombre_titular='Ana Ríos',
+            entidad_financiera='Visa', numero_tarjeta='4111', moneda=pyg,
+        )
+
+        etiqueta = metodo.etiqueta_corta
+
+        self.assertIn('4111', etiqueta)
+        self.assertIn('PYG', etiqueta)
+
+    def test_sin_numero_ni_divisa_no_rompe(self):
+        metodo = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_BILLETERA, nombre_titular='Ana Ríos',
+            entidad_financiera='Tigo Money',
+        )
+
+        etiqueta = metodo.etiqueta_corta
+
+        self.assertIn('Billetera Digital', etiqueta)
+        self.assertIn('Tigo Money', etiqueta)
