@@ -100,3 +100,7 @@ apps.divisas.views module
 .. autoclass:: apps.divisas.views.DivisaSoftDeleteView
    :members:
    :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ReintentarEntregaView
+   :members:
+   :show-inheritance:

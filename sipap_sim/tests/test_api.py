@@ -163,6 +163,7 @@ class ValidarCuentaTest(TestCase):
         self.assertEqual(datos['proveedor'], 'Banco Itaú Paraguay')
         self.assertEqual(datos['tipo_proveedor'], 'BANCO')
         self.assertEqual(datos['moneda'], 'PYG')
+        self.assertEqual(Decimal(datos['saldo']), Decimal('15000000.00'))
 
     def test_valida_false_si_no_coinciden(self):
         response = self.client.get(

@@ -330,6 +330,7 @@ class IniciarPagoStripeOperacionTest(TestCase):
         self.assertEqual(pago.proveedor, 'STRIPE')
         self.assertEqual(pago.identificador_externo, 'pi_directo_123')
         self.assertEqual(pago.monto, self.transaccion.monto_final)
+        self.assertEqual(pago.metodo_pago, self.tarjeta)
         kwargs = mock_payment_intent.call_args.kwargs
         self.assertEqual(kwargs['amount'], 747400)
         self.assertEqual(kwargs['currency'], 'pyg')
@@ -565,6 +566,7 @@ class StripeWebhookTest(TestCase):
         """Prepara una compra 'Confirmada' y la URL del webhook."""
         self.usuario, self.cliente = _crear_cliente_logueado(self.client, 'cliente-webhook', 'STRIPE-WEBHOOK-001')
         self.usd = _crear_divisa_cotizada('USD', 'Dólar', Decimal('7300.00'), Decimal('7400.00'))
+        self.tarjeta = _crear_tarjeta_stripe(self.cliente)
         self.transaccion = CalculoOperacion.objects.create(
             usuario=self.usuario,
             cliente=self.cliente,
@@ -600,6 +602,7 @@ class StripeWebhookTest(TestCase):
                     'metadata': {
                         'tipo_transaccion': 'operacion',
                         'transaccion_id': str(self.transaccion.pk),
+                        'metodo_pago_id': str(self.tarjeta.pk),
                     },
                 },
             },
@@ -636,6 +639,22 @@ class StripeWebhookTest(TestCase):
         self.assertEqual(pago.proveedor, 'STRIPE')
         self.assertEqual(pago.identificador_externo, 'pi_123')
         self.assertEqual(pago.monto, self.transaccion.monto_final)
+        self.assertEqual(pago.metodo_pago, self.tarjeta)
+
+    @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
+    def test_sesion_completada_sin_metodo_pago_id_en_metadata_no_rompe(self, mock_construct_event):
+        """Un evento sin ese dato (sesiones viejas, por ejemplo) registra el pago igual, sin tarjeta asociada."""
+        evento = self._evento_sesion_completada()
+        del evento['data']['object']['metadata']['metodo_pago_id']
+        mock_construct_event.return_value = evento
+
+        response = self.client.post(
+            self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        pago = Pago.objects.get(calculo_operacion=self.transaccion)
+        self.assertIsNone(pago.metodo_pago)
 
     @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
     def test_sesion_completada_con_la_tasa_ya_vencida_no_entrega_ni_marca_pagada(self, mock_construct_event):

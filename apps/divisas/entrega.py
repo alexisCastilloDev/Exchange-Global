@@ -11,9 +11,11 @@ sincrónica, inmediatamente después de registrar el pago (ver
 llamadores). Si sipap-sim no responde o rechaza la transferencia, no se
 reintenta solo ni se inventa un estado intermedio: la transacción pasa
 a "Pagada, pero la entrega al cliente falló"
-(``ESTADO_ENTREGA_FALLIDA``), visible en el historial para que un
-administrador la resuelva a mano. El ``Pago`` ya registrado nunca se
-pierde ni se duplica (sipap-sim es idempotente por referencia, ver
+(``ESTADO_ENTREGA_FALLIDA``), visible tanto para un administrador
+("Entregas pendientes") como para el propio cliente (en el detalle de
+su transacción), para reintentarla desde cualquiera de los dos lados
+(ver ``reintentar_entrega``). El ``Pago`` ya registrado nunca se pierde
+ni se duplica (sipap-sim es idempotente por referencia, ver
 ``core.views.crear_transferencia_saliente``).
 
 Recién después de que esa transferencia se confirma de verdad contra
@@ -22,13 +24,23 @@ sipap-sim se ajusta el saldo propio de Global Exchange
 si una futura operación puede confirmarse siempre queda en espejo con
 lo que realmente se transfirió, nunca adelantado a algo que todavía
 podría fallar.
+
+Una entrega exitosa de una compra o de un cambio entre divisas (HU
+"Acreditación de fondos", GE-23) deja además la transacción en
+"Acreditada" en vez de "Pagada" sin más, con la fecha, hora y
+referencia externa de esa acreditación (ver ``_es_acreditable``). Una
+venta, por ahora, sigue quedando en "Pagada" al entregarse con éxito:
+"retirar" lo obtenido por una venta es la HU "Retiro de fondos" (GE-24),
+todavía no implementada.
 """
 
 import requests
 from django.conf import settings
+from django.utils import timezone
 
 from apps.divisas.models import (
     CalculoOperacion,
+    CalculoTriangulacion,
     CuentaPropia,
     CuentaPropiaInexistenteError,
     SaldoInsuficienteError,
@@ -77,12 +89,29 @@ def _enviar_transferencia_saliente(medio_destino, monto, referencia):
     respuesta.raise_for_status()
 
 
+def _es_acreditable(transaccion):
+    """Indica si, al entregarse con éxito, la transacción debe pasar a "Acreditada".
+
+    Una compra o un cambio entre divisas reciben algo a cambio del pago
+    (ver HU "Acreditación de fondos", GE-23): si la entrega sale bien,
+    quedan "Acreditada" en vez de "Pagada" sin más, con su propia fecha,
+    hora y referencia. Una venta no, todavía: "retirar" lo obtenido por
+    una venta es la HU "Retiro de fondos" (GE-24), fuera de este
+    alcance — hasta que se implemente, una venta exitosa se sigue
+    quedando en "Pagada", como antes de esta HU.
+    """
+    if isinstance(transaccion, CalculoTriangulacion):
+        return True
+    return transaccion.tipo == CalculoOperacion.TIPO_COMPRA
+
+
 def realizar_entrega(transaccion):
     """Entrega a una transacción ya "Pagada" lo que le corresponde al cliente.
 
     Se llama una sola vez, justo después de que ``Pago.registrar_pago``
     deja la transacción en "Pagada" (nunca antes, y nunca si el pago ya
-    existía de antes — ver los llamadores). Si no hay un medio de
+    existía de antes — ver los llamadores), o desde ``reintentar_entrega``
+    si una entrega anterior quedó fallida. Si no hay un medio de
     destino elegido (no debería pasar: se exige al pagar, ver
     ``apps.divisas.forms.PagarTransaccionForm``), la llamada a sipap-sim
     falla, o el saldo propio de Global Exchange no alcanza (una
@@ -95,8 +124,10 @@ def realizar_entrega(transaccion):
             recién marcada "Pagada".
 
     Returns:
-        bool: ``True`` si la entrega se completó, ``False`` si falló
-        (la transacción ya quedó marcada "Entrega fallida").
+        bool: ``True`` si la entrega se completó (la transacción queda
+        "Acreditada" para una compra o un cambio, ver ``_es_acreditable``,
+        o sigue "Pagada" para una venta), ``False`` si falló (la
+        transacción ya quedó marcada "Entrega fallida").
     """
     medio_destino = transaccion.medio_destino
     if medio_destino is None:
@@ -125,4 +156,36 @@ def realizar_entrega(transaccion):
         transaccion.estado = transaccion.ESTADO_ENTREGA_FALLIDA
         transaccion.save(update_fields=['estado'])
         return False
+
+    if _es_acreditable(transaccion):
+        transaccion.estado = transaccion.ESTADO_ACREDITADA
+        transaccion.acreditado_en = timezone.now()
+        transaccion.referencia_acreditacion = referencia
+        transaccion.save(update_fields=['estado', 'acreditado_en', 'referencia_acreditacion'])
     return True
+
+
+def reintentar_entrega(transaccion):
+    """Reintenta la entrega de una transacción que quedó en "Entrega fallida".
+
+    La devuelve primero a "Pagada" (``realizar_entrega`` no sabe
+    "reanudar" desde una entrega fallida por sí sola, solo entregar algo
+    que está "Pagada") y recién ahí llama a ``realizar_entrega``, que
+    decide el resultado final exactamente igual que en el intento
+    original. Lo usan tanto un administrador (pantalla "Entregas
+    pendientes") como el propio cliente, desde el detalle de su
+    transacción.
+
+    Args:
+        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``.
+
+    Returns:
+        bool | None: Lo mismo que ``realizar_entrega`` si había algo
+        para reintentar, o ``None`` si la transacción ya no estaba en
+        "Entrega fallida" (nada que hacer).
+    """
+    if transaccion.estado != transaccion.ESTADO_ENTREGA_FALLIDA:
+        return None
+    transaccion.estado = transaccion.ESTADO_PAGADA
+    transaccion.save(update_fields=['estado'])
+    return realizar_entrega(transaccion)

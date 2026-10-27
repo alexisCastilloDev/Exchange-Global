@@ -34,7 +34,9 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 18. [Sesión 18 — 11/10/2026 — Arqueo de Caja](#sesión-18--11102026--arqueo-de-caja)
 19. [Sesión 19 — 12/10/2026 — GE-54 — Movimientos extraordinarios de Caja](#sesión-19--12102026--ge-54--gestión-de-movimientos-extraordinarios-de-caja)
 20. [Sesión 20 — 12/10/2026 — GE-56 — Cierre de Caja](#sesión-20--12102026--ge-56--cierre-de-caja)
-21. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+21. [Sesión 21 — 26/10/2026 — GE-23 — Acreditación de fondos](#sesión-21--26102026--ge-23--acreditación-de-fondos)
+22. [Sesión 22 — 26/10/2026 — GE-19 — Movimientos y saldo de los métodos de pago](#sesión-22--26102026--ge-19--movimientos-y-saldo-de-los-métodos-de-pago)
+23. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -2880,6 +2882,221 @@ formato localizado correcto.
   cierre, antes de confirmarlo.
 - No se agregó ninguna restricción sobre cuántas veces puede abrir y cerrar cajas un cajero en un
   mismo día: cada apertura y cierre es independiente, igual que ya permite "Apertura de Caja".
+
+## Sesión 21 — 26/10/2026 — GE-23 — Acreditación de fondos
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-23
+**Rama:** `feature/GE-23`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Acreditación de fondos" (GE-23), con tests, docstrings, Sphinx actualizado y
+esta documentación de la conversación.
+
+> Como usuario cliente quiero recibir los fondos de una operación de compra en mi cuenta bancaria
+> o billetera electrónica para disponer de las divisas adquiridas.
+
+Criterios de aceptación:
+
+1. Dado que tengo una transacción de compra en estado "Pagada", cuando el sistema procesa la
+   acreditación, entonces transfiere el monto correspondiente a la cuenta bancaria o billetera
+   registrada como destino, usando el medio seleccionado (Stripe o SIPAP, según corresponda).
+2. Dado que la acreditación se confirma exitosamente, cuando se completa, entonces la transacción
+   pasa a estado "Acreditada" y queda registrada con fecha, hora y referencia externa de la
+   acreditación.
+3. Dado que la acreditación falla (cuenta inválida, servicio no disponible, etc.), cuando ocurre,
+   entonces la transacción permanece en estado "Pagada" (no pasa a "Acreditada"), se notifica el
+   error al usuario y se habilita un reintento.
+4. Dado que una transacción ya fue acreditada, cuando se intenta acreditar de nuevo, entonces el
+   sistema rechaza la operación e informa que los fondos ya fueron acreditados.
+5. Dado que no tengo un medio de acreditación configurado, cuando intento recibir la acreditación,
+   entonces el sistema me solicita completar esos datos antes de continuar.
+
+### Diagnóstico inicial
+
+Antes de escribir código se evaluó, criterio por criterio, qué parte de esta HU ya estaba resuelta
+por trabajo de sprints anteriores (``apps.divisas.entrega.realizar_entrega``, construido para la
+entrega automática de compra/venta/cambio apenas se confirma el pago):
+
+- **Criterios 1, 4 y 5 ya estaban cubiertos**: la entrega a la cuenta/billetera de destino ya
+  ocurre automáticamente al pagar (criterio 1, con una precisión: siempre sale por SIPAP, nunca
+  por Stripe, porque Stripe no puede depositarle a una cuenta arbitraria); la entrega es idempotente
+  por referencia, así que un segundo intento nunca duplica nada (criterio 4); y
+  ``PagarTransaccionForm`` ya exige elegir el medio de destino antes de poder pagar (criterio 5).
+- **Criterios 2 y 3 eran el trabajo real pendiente**: no existía ningún estado "Acreditada" (una
+  entrega exitosa dejaba la transacción en "Pagada" sin más, sin fecha ni referencia propia de la
+  acreditación), y el reintento ante una falla solo lo podía hacer un administrador desde "Entregas
+  pendientes" — el cliente no tenía ninguna visibilidad ni manera de reintentarlo él mismo.
+
+### Diseño
+
+- **Nuevo estado `ESTADO_ACREDITADA`** (con los campos `acreditado_en` y `referencia_acreditacion`)
+  en `CalculoOperacion` y `CalculoTriangulacion` (espejado en los dos modelos, mismo patrón que el
+  resto de los estados de esta app).
+- **`apps.divisas.entrega._es_acreditable(transaccion)`** (nueva): decide si, al entregarse con
+  éxito, corresponde pasar a "Acreditada". Una compra o un cambio entre divisas sí (reciben algo a
+  cambio); una venta, por ahora, no — "retirar" lo obtenido por una venta es la HU "Retiro de
+  fondos" (GE-24), todavía sin implementar, así que una venta exitosa se sigue quedando en "Pagada"
+  exactamente como antes de esta HU.
+- **`realizar_entrega()` modificado**: en el camino de éxito, si `_es_acreditable()` es verdadero,
+  pasa a "Acreditada" con `timezone.now()` y la misma referencia que ya se usó para pedirle la
+  transferencia a sipap-sim (no se inventa una nueva).
+- **`reintentar_entrega()` (nueva, extraída de la vista administrativa)**: devuelve la transacción
+  a "Pagada" y vuelve a llamar a `realizar_entrega()`, devolviendo `None` si no había nada que
+  reintentar. La reutilizan tanto `ReintentarEntregaView` (administrador, refactorizada para usar
+  este helper en vez de repetir la lógica) como el nuevo `post()` de
+  `DetalleTransaccionOperacionView`/`DetalleTransaccionCambioView` (criterio 3: ahora el propio
+  cliente ve el error en el detalle de su transacción y puede reintentarla él mismo, no solo un
+  administrador).
+- **Plantillas**: sección "Acreditación" (fecha y referencia) cuando corresponde, botón "Reintentar
+  entrega" para el cliente cuando quedó "Entrega fallida", y los mensajes de "esta transacción ya
+  fue pagada" (en las pantallas de pago y de inicio de cobro por Stripe/SIPAP) ahora también
+  reconocen "Acreditada" como ya pagada (criterio 4).
+- **Migración** `0025_calculooperacion_acreditado_en_and_more.py` (sin datos que migrar: los campos
+  nacen vacíos).
+
+### Tests
+
+`tests/test_entrega.py`: se corrigieron 2 tests existentes que asumían que una entrega exitosa
+dejaba la transacción en "Pagada" (ahora es "Acreditada" para una compra), y se agregaron: una
+compra exitosa queda "Acreditada" con fecha y referencia; una venta exitosa se sigue quedando en
+"Pagada" (todavía no hay HU de retiro); un cambio entre divisas también queda "Acreditada";
+`reintentar_entrega()` devuelve `None` sin tocar nada si no hay ninguna entrega fallida; y una clase
+nueva (`ReintentarEntregaClienteTest`) para el reintento desde el detalle del propio cliente (éxito,
+vuelve a fallar, y no puede reintentar ni ver una transacción de otro cliente).
+
+### Problema encontrado: `User.clientes` es una relación M2M explícita
+
+Los primeros tres tests de reintento desde el detalle del cliente fallaban con 403 en vez del
+código esperado. La causa: a diferencia de los tests administrativos de este mismo archivo (que
+nunca necesitaron la relación cliente-usuario), `DetalleTransaccionOperacionView.test_func()` y
+`_resolver_transaccion_propia()` dependen de `request.user.clientes` — una relación M2M explícita
+que hay que poblar con `usuario.clientes.add(cliente)`, no una simple FK inversa de
+`Cliente.objects.create(user=usuario, ...)`. Los fixtures de este archivo nunca habían necesitado
+hacer ese `.add()` porque las dos clases de test anteriores (`EntregasPendientesListViewTest`,
+`ReintentarEntregaViewTest`) solo probaban la vista administrativa, que no depende de esa relación.
+
+### Resultado final
+
+- `tests/test_entrega.py`: **22/22** verde.
+- Regresión dirigida (`test_operaciones`, `test_pagos_stripe`, `test_pagos_sipap`, `test_divisas`):
+  **273/273** verde.
+- `makemigrations --check --dry-run`: sin cambios pendientes.
+- Sphinx: se encontró que `apps.divisas.entrega` y `apps.divisas.casa_de_cambio` (creados en una
+  sesión anterior) nunca habían tenido su propio `.rst` — se agregaron ambos al `toctree` de
+  `apps.divisas.rst`, más la entrada de `ReintentarEntregaView` (modificada en esta sesión) en
+  `apps.divisas.views.rst`. La única advertencia que queda con `-W` es preexistente y ajena a esta
+  HU (un resaltado de sintaxis en `templates.rst` sobre `metodo_pago_list.html`, de la sesión de
+  rediseño de métodos de pago).
+
+### Pendiente / fuera de alcance
+
+- "Retiro de fondos" (GE-24): una venta exitosa sigue quedando en "Pagada", sin un estado
+  "Retirada" propio ni reintento visible para el cliente en ese caso — es una HU aparte, todavía no
+  implementada.
+- La advertencia preexistente de Sphinx sobre `metodo_pago_list.html` no se corrigió: es ajena a
+  esta HU y no impide que la documentación se genere (solo aparece con `-W`, no en la generación
+  normal que usa `entrypoint.sh` en producción).
+
+## Sesión 22 — 26/10/2026 — GE-19 — Movimientos y saldo de los métodos de pago
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-19 (Gestión de métodos de pago del cliente) — mejora pedida directamente,
+sin un ticket de Jira propio todavía.
+**Rama:** `feature/GE-23` (continuación de la sesión anterior, sin cambiar de rama)
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+> - En cada cuenta bancaria, billetera digital o tarjeta de crédito/débito, se puedan ver los
+>   movimientos que se hicieron con ella en el sistema (para la tarjeta, se entendía que había que
+>   extraer la información de Stripe).
+> - En el sistema se pueda ver la información de saldo de las cuentas bancarias, billeteras
+>   digitales y tarjetas de crédito/débito.
+
+### Diagnóstico inicial
+
+Dos decisiones de diseño importantes antes de escribir código, ambas explicadas en la respuesta
+antes de implementar:
+
+- **"Movimientos" no necesita llamar a Stripe.** Global Exchange ya registra, en su propia base,
+  cada pago (`Pago.metodo_pago`) y cada entrega recibida
+  (`CalculoOperacion`/`CalculoTriangulacion.medio_destino`). Volver a pedirle esos mismos datos a
+  Stripe duplicaría información que ya es exacta de este lado. Al revisar esto se encontró que
+  `Pago.metodo_pago` **no se estaba completando para los pagos con tarjeta** (sí para SIPAP): los
+  dos puntos de `apps.divisas.pagos_stripe` que llaman a `Pago.registrar_pago` (cobro directo y el
+  webhook de Checkout) nunca pasaban `metodo_pago=...`. Sin corregir eso, "movimientos de una
+  tarjeta" habría quedado siempre vacío.
+- **"Saldo" de una tarjeta no es algo que Stripe pueda dar.** Stripe procesa cobros; no es el
+  banco emisor de la tarjeta, así que no tiene (ni expone) su saldo disponible ni su límite de
+  crédito. Se decidió no inventar ese número: para una tarjeta se muestran los movimientos, y en
+  el lugar del saldo se explica por qué no hay ninguno. Para una cuenta bancaria o billetera, en
+  cambio, el saldo real sí existe del otro lado (sipap-sim), así que se consulta en vivo.
+
+### Diseño
+
+- **`GET /api/cuentas/validar/` (sipap-sim)** ahora devuelve también `saldo`, además de lo que ya
+  devolvía (`titular`, `proveedor`, `tipo_proveedor`, `moneda`). Es el mismo endpoint que ya se usa
+  al registrar una cuenta o billetera; se reutiliza para consultar el saldo actual de una ya
+  guardada, en vez de sumar un endpoint nuevo.
+- **Atribución de `Pago.metodo_pago` para tarjeta (corrección, no pedida explícitamente pero
+  necesaria):**
+  - `_cobrar_con_tarjeta_guardada` ahora recibe el `MetodoPago` completo (antes solo
+    `referencia_externa`) y lo pasa a `Pago.registrar_pago`.
+  - La sesión de Stripe Checkout (cobro que necesita confirmarse en la página de Stripe) ahora
+    manda `metodo_pago_id` en sus `metadata`, igual que ya hace con `transaccion_id`; el webhook
+    (`_procesar_sesion_completada`) lo usa para resolver el `MetodoPago` y pasarlo también. Si ese
+    dato faltara (sesiones viejas), el pago se registra igual, sin tarjeta asociada, en vez de
+    romper.
+- **`apps.clientes.views._movimientos_de_metodo_pago(metodo)`** (nueva, privada): junta, de más
+  reciente a más antiguo, los pagos hechos con ese medio (`metodo.pagos`) y, solo para cuenta o
+  billetera (nunca tarjeta), las entregas recibidas en él
+  (`CalculoOperacion`/`CalculoTriangulacion.filter(medio_destino=metodo)`). Cada ítem lleva ya
+  resuelta la URL de detalle correspondiente (compra/venta o cambio), para no tener que distinguir
+  el tipo en el template.
+- **`apps.clientes.views.metodo_pago_movimientos`** (nueva vista, con el mismo patrón de
+  verificación de rol y dueño que el resto de las vistas de `MetodoPago` en este módulo): además
+  de los movimientos, resuelve el saldo (consultando sipap-sim para cuenta/billetera, u omitiéndolo
+  con una explicación para tarjeta).
+- **`templates/clientes/metodo_pago_movimientos.html`** (nueva) y un botón "Movimientos y saldo"
+  agregado a `_metodo_pago_card.html`, visible en cada tarjeta de la lista de métodos de pago.
+
+### Tests
+
+`tests/test_metodos_pago.py` (clase nueva `MetodoPagoMovimientosTest`, 8 tests): una billetera que
+se usó para pagar y para recibir muestra ambos movimientos junto con el saldo real consultado a
+sipap-sim; si sipap-sim no responde, se avisa sin romper; una tarjeta solo muestra sus pagos, nunca
+consulta a sipap-sim y explica por qué no hay saldo; una tarjeta nunca aparece como medio de
+destino; un cambio entre divisas (no solo una compra/venta) también cuenta como movimiento recibido
+y enlaza al detalle correcto; sin ningún movimiento se avisa sin error; no se puede ver el método de
+otro cliente; sin rol cliente, redirige. `tests/test_pagos_stripe.py`: se agregaron aserciones de
+`pago.metodo_pago` a los dos tests existentes de pago con tarjeta (cobro directo y webhook), más un
+test nuevo para el caso sin `metodo_pago_id` en los metadatos. `sipap_sim/tests/test_api.py`: se
+agregó la aserción de `saldo` al test existente de `validar_cuenta`.
+
+### Resultado final
+
+- `tests/test_metodos_pago.py`: **37/37** verde.
+- `tests/test_pagos_stripe.py`: **52/52** verde.
+- `sipap_sim/tests/`: **71/71** verde.
+- `makemigrations --check --dry-run`: sin cambios pendientes (esta mejora no agrega ni modifica
+  ningún campo).
+- Sphinx: sin advertencias nuevas (`apps.clientes.views.rst` ya documenta el módulo entero con
+  `automodule`, así que la vista nueva se incluye sola; se agregó
+  `metodo_pago_movimientos.html` a `templates.rst`, junto a los demás templates de esta app). La
+  única advertencia que sigue apareciendo con `-W` es la misma preexistente y ajena, ya señalada en
+  la Sesión 21.
+- Queda pendiente la verificación completa de `tests/` (corriendo en segundo plano al cerrar esta
+  sesión).
+
+### Pendiente / fuera de alcance
+
+- El saldo de una tarjeta sigue sin mostrarse, a propósito: no hay ninguna fuente real (ni Stripe
+  ni ningún otro sistema de este proyecto) de la que obtenerlo sin inventarlo.
+- No se creó ningún ticket de Jira para esta mejora; si corresponde, habría que darla de alta bajo
+  GE-19 (Gestión de métodos de pago del cliente), la epic más cercana a lo que pide.
 
 ## Enlaces externos (conversaciones completas)
 

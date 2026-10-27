@@ -317,7 +317,12 @@ class MetodoPago(models.Model):
     )
     es_predeterminado = models.BooleanField(
         default=False,
-        verbose_name='¿Es Predeterminado?'
+        verbose_name='¿Es Predeterminado?',
+        help_text=(
+            'El predeterminado es por divisa, no uno solo por cliente: '
+            'marcar este no le quita el flag a un método predeterminado '
+            'en otra divisa.'
+        ),
     )
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
@@ -355,18 +360,28 @@ class MetodoPago(models.Model):
     def save(self, *args, **kwargs):
         """
         Sobrescribe save para garantizar que solo exista un método de pago predeterminado
-        por cliente a la vez (Criterio 6).
+        por cliente y por divisa a la vez (Criterio 6).
+
+        El predeterminado no es único por cliente sino por cada divisa en la que
+        tiene medios registrados: puede tener, por ejemplo, una cuenta predeterminada
+        en USD y otra distinta en EUR al mismo tiempo, cada una para pagar u operar
+        en esa divisa. ``moneda=None`` (medios sin divisa confirmada, ver
+        ``apps.clientes.views.metodo_pago_list``) cuenta como una divisa más a este
+        efecto, nunca se mezcla con una divisa real.
         """
         with transaction.atomic():
-            # Si el usuario no tiene métodos de pago previos, este será predeterminado por defecto
-            if not MetodoPago.objects.filter(cliente=self.cliente).exists():
+            # Si el cliente todavía no tiene ningún método en esta divisa, este será
+            # predeterminado por defecto.
+            if not MetodoPago.objects.filter(cliente=self.cliente, moneda_id=self.moneda_id).exists():
                 self.es_predeterminado = True
 
-            # Si se está guardando como predeterminado, quitar el flag a los demás métodos de este usuario
+            # Si se está guardando como predeterminado, quitar el flag solo a los demás
+            # métodos del cliente en esa misma divisa (los de otra divisa no se tocan).
             if self.es_predeterminado:
                 MetodoPago.objects.filter(
-                    cliente=self.cliente, 
-                    es_predeterminado=True
+                    cliente=self.cliente,
+                    moneda_id=self.moneda_id,
+                    es_predeterminado=True,
                 ).exclude(pk=self.pk).update(es_predeterminado=False)
 
             super().save(*args, **kwargs)

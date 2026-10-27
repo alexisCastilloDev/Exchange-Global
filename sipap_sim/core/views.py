@@ -206,12 +206,15 @@ def crear_transferencia_saliente(request):
 def validar_cuenta(request):
     """``GET /api/cuentas/validar/?numero=...&documento=...``: existe y es del titular indicado.
 
-    Devuelve también el titular, el proveedor (banco o billetera) y la
-    moneda cuando la cuenta es válida: Global Exchange los usa para
-    completar un método de pago con datos reales (HU "Métodos de pago"),
-    en vez de confiar en lo que escriba el cliente — quién es el banco o
-    la billetera, y a nombre de quién está la cuenta, lo decide esta
-    respuesta, no el formulario.
+    Devuelve también el titular, el proveedor (banco o billetera), la
+    moneda y el saldo actual cuando la cuenta es válida. Global Exchange
+    usa titular/proveedor/moneda para completar un método de pago con
+    datos reales al registrarlo (HU "Métodos de pago"), en vez de
+    confiar en lo que escriba el cliente; y vuelve a llamar a este mismo
+    endpoint después, cada vez que el cliente quiere ver el saldo actual
+    de una cuenta o billetera ya guardada (ver
+    ``apps.clientes.views.MetodoPagoMovimientosView``), en vez de llevar
+    un espejo propio que podría desincronizarse.
     """
     if not _autorizado(request):
         return JsonResponse({'detalle': 'No autorizado.'}, status=401)
@@ -228,6 +231,7 @@ def validar_cuenta(request):
         'proveedor': cuenta.proveedor.nombre,
         'tipo_proveedor': cuenta.proveedor.tipo,
         'moneda': cuenta.moneda,
+        'saldo': str(cuenta.saldo),
     })
 
 

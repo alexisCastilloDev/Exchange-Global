@@ -374,7 +374,7 @@ class _IniciarPagoSipapBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo == self.model.ESTADO_PAGADA:
+            if transaccion.estado_efectivo in (self.model.ESTADO_PAGADA, self.model.ESTADO_ACREDITADA):
                 messages.error(request, 'Esta transacción ya fue pagada.')
             elif transaccion.tasa_vencida:
                 messages.error(
