@@ -308,7 +308,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo == self.model.ESTADO_PAGADA:
+            if transaccion.estado_efectivo in (self.model.ESTADO_PAGADA, self.model.ESTADO_ACREDITADA):
                 messages.error(request, 'Esta transacción ya fue pagada.')
             elif transaccion.tasa_vencida:
                 messages.error(
@@ -338,7 +338,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
             return redirect(self.url_detalle, pk=transaccion.pk)
 
         resultado = self._cobrar_con_tarjeta_guardada(
-            request, transaccion, customer_id, metodo_pago.referencia_externa, moneda,
+            request, transaccion, customer_id, metodo_pago, moneda,
         )
         if resultado is not None:
             return resultado
@@ -363,6 +363,13 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
                 metadata={
                     'tipo_transaccion': self.tipo_transaccion,
                     'transaccion_id': str(transaccion.pk),
+                    # La misma tarjeta queda preseleccionada en Checkout
+                    # (``customer=...``), así que esto es, en la enorme
+                    # mayoría de los casos, la que termina usándose; sirve
+                    # para que el Pago resultante quede asociado a esa
+                    # tarjeta (ver _procesar_sesion_completada), igual que
+                    # ya pasa con el cobro directo.
+                    'metodo_pago_id': str(metodo_pago.pk),
                 },
                 success_url=_url_absoluta(request, self.url_detalle, pk=transaccion.pk) + '?pago=iniciado',
                 cancel_url=_url_absoluta(request, self.url_detalle, pk=transaccion.pk) + '?pago=cancelado',
@@ -379,13 +386,19 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         return redirect(sesion.url)
 
-    def _cobrar_con_tarjeta_guardada(self, request, transaccion, customer_id, metodo_guardado, moneda):
+    def _cobrar_con_tarjeta_guardada(self, request, transaccion, customer_id, metodo_pago, moneda):
         """Intenta cobrar directo, sin que el cliente vea ninguna página de Stripe.
 
         Usa una ``idempotency_key`` fija por transacción: si esta vista se
         llama dos veces para la misma transacción (doble clic, el usuario
         vuelve atrás y refresca), Stripe devuelve el mismo ``PaymentIntent``
         ya creado en vez de cobrar la tarjeta una segunda vez.
+
+        Args:
+            metodo_pago (apps.clientes.models.MetodoPago): La tarjeta
+                guardada elegida. Se guarda en el ``Pago`` resultante
+                (ver ``apps.clientes.views.MetodoPagoMovimientosView``),
+                no solo su ``referencia_externa``.
 
         Returns:
             HttpResponse | None: La redirección final si el cobro directo
@@ -398,7 +411,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
                 amount=_monto_en_unidad_minima_stripe(monto_a_pagar(transaccion), moneda),
                 currency=moneda.lower(),
                 customer=customer_id,
-                payment_method=metodo_guardado,
+                payment_method=metodo_pago.referencia_externa,
                 off_session=True,
                 confirm=True,
                 metadata={
@@ -437,6 +450,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
                 proveedor=PROVEEDOR_STRIPE,
                 identificador_externo=intent.id,
                 monto=monto_a_pagar(transaccion),
+                metodo_pago=metodo_pago,
             )
         except PagoRechazadoError as error:
             messages.error(request, str(error))
@@ -680,6 +694,10 @@ def _procesar_sesion_completada(session):
     except model.DoesNotExist:
         return
 
+    metodo_pago = MetodoPago.objects.filter(
+        pk=metadata.get('metodo_pago_id'), cliente=transaccion.cliente,
+    ).first()
+
     identificador_externo = session.get('payment_intent') or session.get('id')
     try:
         pago, creado = Pago.registrar_pago(
@@ -688,6 +706,7 @@ def _procesar_sesion_completada(session):
             proveedor=PROVEEDOR_STRIPE,
             identificador_externo=identificador_externo,
             monto=monto_a_pagar(transaccion),
+            metodo_pago=metodo_pago,
         )
     except PagoRechazadoError:
         # La transacción ya no está en condiciones de pagarse con este

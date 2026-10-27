@@ -13,7 +13,7 @@ Contexto esperado: transaccion.
     <div>
         <span class="ge-eyebrow"><i class="bi bi-receipt"></i> Mi historial de transacciones</span>
         <h1>Detalle de la transacción</h1>
-        <p>Consulta de solo lectura: esta pantalla no permite confirmar, cancelar ni reprocesar el cambio.</p>
+        <p>Consulta de solo lectura: esta pantalla no permite confirmar, cancelar ni reprocesar el cambio (salvo reintentar una entrega fallida).</p>
     </div>
     <a href="{% url 'divisas:mis_transacciones' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver al historial</a>
 </div>
@@ -55,6 +55,24 @@ Contexto esperado: transaccion.
                 {% if transaccion.estado_efectivo == 'CONFIRMADA' %}
                     <a href="{% url 'divisas:pagar_transaccion_cambio' transaccion.pk %}" class="btn btn-primary"><i class="bi bi-credit-card me-1"></i> Pagar ahora</a>
                 {% endif %}
+            {% endif %}
+
+            {% if transaccion.estado == 'ACREDITADA' %}
+                <div class="ge-card__header mb-3 mt-4">
+                    <h2>Acreditación</h2>
+                </div>
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Fecha: </span><strong class="operation-summary__value">{{ transaccion.acreditado_en|date:"d/m/Y H:i" }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Referencia: </span><strong class="operation-summary__value">{{ transaccion.referencia_acreditacion }}</strong></div>
+                </div>
+            {% elif transaccion.estado == 'ENTREGA_FALLIDA' %}
+                <div class="operation-expiry mt-3 mb-3">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Tu pago se registró, pero todavía no pudimos completar la entrega.
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-clockwise me-1"></i> Reintentar entrega</button>
+                </form>
             {% endif %}
         </div>
     </div>

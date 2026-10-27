@@ -1,0 +1,94 @@
+<!--
+Movimientos y saldo de un método de pago propio (cuenta bancaria, billetera o tarjeta).
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: metodo, saldo, error_saldo, movimientos, cliente_activo (vía context
+processor).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Movimientos - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-receipt"></i> Métodos de pago</span>
+        <h1>Movimientos de {{ metodo.entidad_financiera }}</h1>
+        <p>Todo lo que se pagó o se recibió con este medio a través del sistema.</p>
+    </div>
+    <a href="{% url 'clientes:metodo_pago_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver</a>
+</div>
+
+<div class="ge-card">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div class="d-flex align-items-center gap-3">
+            <span class="ge-payment-card__icon"><i class="bi {% if metodo.tipo_medio == 'TARJETA' %}bi-credit-card-2-front{% elif metodo.tipo_medio == 'TRANSFERENCIA' %}bi-bank{% else %}bi-phone{% endif %}"></i></span>
+            <div>
+                <span class="ge-eyebrow">{{ metodo.get_tipo_medio_display }}</span>
+                <h2 class="mb-0">{{ metodo.entidad_financiera }}</h2>
+            </div>
+        </div>
+        {% if metodo.moneda %}<span class="badge bg-secondary">{{ metodo.moneda.codigo }}</span>{% endif %}
+    </div>
+    <div class="d-flex flex-wrap gap-4">
+        <div><span class="ge-eyebrow d-block">Titular</span><strong>{{ metodo.nombre_titular }}</strong></div>
+        {% if metodo.numero_cuenta %}<div><span class="ge-eyebrow d-block">Número</span><strong>*****{{ metodo.numero_cuenta|slice:'-3:' }}</strong></div>{% endif %}
+        {% if metodo.numero_tarjeta %}<div><span class="ge-eyebrow d-block">Tarjeta</span><strong>•••• {{ metodo.numero_tarjeta|slice:'-4:' }}</strong></div>{% endif %}
+    </div>
+</div>
+
+<div class="ge-card mt-3">
+    <div class="ge-card__header mb-2">
+        <h2>Saldo</h2>
+    </div>
+    {% if metodo.tipo_medio == 'TARJETA' %}
+        <p class="text-muted mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            Stripe procesa el cobro, pero no es el banco emisor de la tarjeta: no expone el saldo
+            disponible ni el límite de crédito de una tarjeta ajena, así que no hay ningún saldo
+            para mostrar acá.
+        </p>
+    {% elif saldo %}
+        <p class="mb-0"><strong class="fs-4">{{ saldo.monto|floatformat:2 }} {{ saldo.moneda }}</strong></p>
+        <p class="text-muted small mb-0">Saldo real en sipap-sim, consultado en este momento.</p>
+    {% elif error_saldo %}
+        <div class="alert alert-warning mb-0"><i class="bi bi-exclamation-triangle me-1"></i>{{ error_saldo }}</div>
+    {% endif %}
+</div>
+
+<div class="ge-card p-0 mt-3">
+    <div class="ge-card__header">
+        <h2>Movimientos</h2>
+        <span class="badge bg-secondary">{{ movimientos|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr><th>Fecha</th><th>Dirección</th><th>Monto</th><th>Estado</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for movimiento in movimientos %}
+                <tr>
+                    <td>{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if movimiento.direccion == 'pagaste' %}
+                            <span class="text-danger"><i class="bi bi-arrow-up-circle me-1"></i>Pagaste</span>
+                        {% else %}
+                            <span class="text-success"><i class="bi bi-arrow-down-circle me-1"></i>Recibiste</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ movimiento.monto|floatformat:2 }} {{ movimiento.moneda }}</td>
+                    <td>
+                        <span class="badge-activo">{{ movimiento.estado }}</span>
+                        {% if movimiento.observado %}<span class="badge bg-warning text-dark ms-1">Observado</span>{% endif %}
+                    </td>
+                    <td class="text-end"><a href="{{ movimiento.url_detalle }}" class="btn btn-sm btn-outline-secondary">Ver transacción</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4 text-muted">Todavía no hay ningún movimiento con este medio.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

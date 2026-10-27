@@ -17,7 +17,7 @@ No se usa sola: siempre incluida desde otro template, con esas variables ya en c
                 <span class="badge bg-secondary">{{ metodo.moneda.codigo }}</span>
             {% endif %}
             {% if metodo.es_predeterminado %}
-                <span class="ge-status ge-status--active"><i class="bi bi-check2"></i> Predeterminado</span>
+                <span class="ge-status ge-status--active"><i class="bi bi-check2"></i> Predeterminado{% if metodo.moneda %} en {{ metodo.moneda.codigo }}{% endif %}</span>
             {% endif %}
         </div>
     </div>
@@ -81,6 +81,7 @@ No se usa sola: siempre incluida desde otro template, con esas variables ya en c
 
     <div class="ge-payment-card__actions">
         <div class="d-flex gap-2">
+            <a href="{% url 'clientes:metodo_pago_movimientos' metodo.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clock-history me-1"></i>Movimientos y saldo</a>
             {% if metodo.cliente_id == cliente_activo.id and metodo.proveedor_externo != 'STRIPE' %}
             <form action="{% url 'clientes:metodo_pago_reveal' metodo.pk %}" method="post" class="d-inline">
                 {% csrf_token %}
@@ -97,7 +98,7 @@ No se usa sola: siempre incluida desde otro template, con esas variables ya en c
         {% if not metodo.es_predeterminado %}
         <form action="{% url 'clientes:metodo_pago_set_default' metodo.pk %}" method="post" class="d-inline">
             {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-star me-1"></i>Usar por defecto</button>
+            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-star me-1"></i>Usar por defecto{% if metodo.moneda %} en {{ metodo.moneda.codigo }}{% endif %}</button>
         </form>
         {% endif %}
     </div>

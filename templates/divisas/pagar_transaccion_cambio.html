@@ -66,10 +66,13 @@ Contexto esperado: transaccion, form (None si no puede pagarse todavía).
                         <a href="{% url 'metodo_pago_create' %}">Agregá una</a> para poder pagar este cambio.
                     </div>
                 {% endif %}
-            {% elif transaccion.estado_efectivo == 'PAGADA' %}
+            {% elif transaccion.estado_efectivo == 'PAGADA' or transaccion.estado_efectivo == 'ACREDITADA' %}
                 <div class="operation-expiry mt-3"><i class="bi bi-check2-circle me-1"></i> Este cambio ya fue pagado.</div>
             {% elif transaccion.estado_efectivo == 'ENTREGA_FALLIDA' %}
-                <div class="operation-expiry mt-3"><i class="bi bi-exclamation-triangle me-1"></i> Tu pago se registró, pero la entrega no se pudo completar. Un administrador va a revisarlo.</div>
+                <div class="operation-expiry mt-3">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Tu pago se registró, pero la entrega no se pudo completar.
+                    Podés <a href="{% url 'divisas:detalle_transaccion_cambio' transaccion.pk %}">reintentarla desde el detalle</a> del cambio.
+                </div>
             {% elif transaccion.estado_efectivo == 'CANCELADA_FONDOS_CLIENTE' %}
                 <div class="operation-expiry mt-3"><i class="bi bi-exclamation-triangle me-1"></i> La cuenta elegida no tenía fondos suficientes y el cambio se canceló. Si querés intentarlo de nuevo, calculalo otra vez.</div>
             {% else %}

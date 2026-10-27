@@ -26,7 +26,7 @@ from apps.divisas.casa_de_cambio import (
     consultar_saldo_casa_de_cambio,
     designar_cuenta_casa_de_cambio,
 )
-from apps.divisas.entrega import realizar_entrega
+from apps.divisas.entrega import reintentar_entrega
 from apps.divisas.forms import (
     CalculoOperacionForm,
     ConfiguracionComisionForm,
@@ -623,7 +623,10 @@ class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, V
     de ``ConfirmarTransaccionOperacionView``, no ofrece ningún botón para
     confirmar, cancelar ni recalcular: solo expone tipo de operación, divisa,
     monto, tasa aplicada, comisión, importe final, estado y fecha, sin
-    importar en qué estado se encuentre la transacción.
+    importar en qué estado se encuentre la transacción. La única acción que
+    sí ofrece es "Reintentar" cuando la entrega quedó fallida (ver
+    ``post``, HU "Acreditación de fondos" GE-23): el cliente no depende
+    solo de un administrador para resolverlo.
     """
 
     def test_func(self):
@@ -643,6 +646,24 @@ class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, V
         _avisar_resultado_pago_stripe(request)
         return render(request, 'divisas/detalle_transaccion_operacion.html', {'transaccion': transaccion})
 
+    def post(self, request, *args, **kwargs):
+        """Reintenta la entrega de la propia transacción, si quedó en "Entrega fallida"."""
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoOperacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
+
+        resultado = reintentar_entrega(transaccion)
+        if resultado is None:
+            messages.info(request, 'Esta transacción ya no está en entrega fallida.')
+        elif resultado:
+            messages.success(request, 'La entrega se reintentó con éxito.')
+        else:
+            messages.error(
+                request,
+                'La entrega volvió a fallar. Un administrador va a revisarla; también podés reintentarla de nuevo.',
+            )
+        return redirect('divisas:detalle_transaccion_operacion', pk=transaccion.pk)
+
 
 class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Muestra el detalle completo, de solo lectura, de un cambio entre divisas propio.
@@ -652,7 +673,9 @@ class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View
     "Cambio". A diferencia de ``ConfirmarTransaccionCambioView``, no ofrece
     ningún botón para confirmar, cancelar ni recalcular: solo expone las
     divisas, el monto, las tasas aplicadas, la comisión, el importe final, el
-    estado y la fecha, sin importar en qué estado se encuentre el cambio.
+    estado y la fecha, sin importar en qué estado se encuentre el cambio. La
+    única acción que sí ofrece es "Reintentar" cuando la entrega quedó
+    fallida (ver ``post``, HU "Acreditación de fondos" GE-23).
     """
 
     def test_func(self):
@@ -671,6 +694,24 @@ class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View
             return redireccion
         _avisar_resultado_pago_stripe(request)
         return render(request, 'divisas/detalle_transaccion_cambio.html', {'transaccion': transaccion})
+
+    def post(self, request, *args, **kwargs):
+        """Reintenta la entrega del propio cambio, si quedó en "Entrega fallida"."""
+        transaccion, redireccion = _resolver_transaccion_propia(request, CalculoTriangulacion, kwargs['pk'])
+        if redireccion is not None:
+            return redireccion
+
+        resultado = reintentar_entrega(transaccion)
+        if resultado is None:
+            messages.info(request, 'Esta transacción ya no está en entrega fallida.')
+        elif resultado:
+            messages.success(request, 'La entrega se reintentó con éxito.')
+        else:
+            messages.error(
+                request,
+                'La entrega volvió a fallar. Un administrador va a revisarla; también podés reintentarla de nuevo.',
+            )
+        return redirect('divisas:detalle_transaccion_cambio', pk=transaccion.pk)
 
 
 class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -731,7 +772,7 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo == CalculoOperacion.ESTADO_PAGADA:
+            if transaccion.estado_efectivo in (CalculoOperacion.ESTADO_PAGADA, CalculoOperacion.ESTADO_ACREDITADA):
                 messages.error(request, 'Esta transacción ya fue pagada.')
             elif transaccion.tasa_vencida:
                 messages.error(
@@ -833,7 +874,7 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo == CalculoTriangulacion.ESTADO_PAGADA:
+            if transaccion.estado_efectivo in (CalculoTriangulacion.ESTADO_PAGADA, CalculoTriangulacion.ESTADO_ACREDITADA):
                 messages.error(request, 'Esta transacción ya fue pagada.')
             elif transaccion.tasa_vencida:
                 messages.error(
@@ -1826,26 +1867,16 @@ class ReintentarEntregaView(AdminDivisasMixin, View):
     """Reintenta, a pedido de un administrador, la entrega de una transacción en 'Entrega fallida'."""
 
     def post(self, request, tipo, pk):
-        """Vuelve a llamar a ``realizar_entrega``; si falla otra vez, queda igual en la lista."""
+        """Vuelve a llamar a ``realizar_entrega`` (vía ``reintentar_entrega``); si falla, queda igual en la lista."""
         if tipo not in ('operacion', 'cambio'):
             raise Http404
         modelo = CalculoOperacion if tipo == 'operacion' else CalculoTriangulacion
         transaccion = get_object_or_404(modelo, pk=pk)
-        if transaccion.estado != modelo.ESTADO_ENTREGA_FALLIDA:
+
+        resultado = reintentar_entrega(transaccion)
+        if resultado is None:
             messages.info(request, 'Esta transacción ya no está en entrega fallida.')
-            return redirect('divisas:entregas_pendientes')
-
-        # realizar_entrega no transiciona por sí sola de "Entrega fallida"
-        # a "Pagada": en el flujo normal ya la encuentra "Pagada" (nunca
-        # toca el estado si todo sale bien) y solo escribe un estado
-        # nuevo si algo vuelve a fallar. Para un reintento manual hay que
-        # devolverla a "Pagada" antes de llamarla, así que el éxito deja
-        # el mismo estado de siempre en vez de quedar atascada en
-        # "Entrega fallida" con un pago que en realidad sí se completó.
-        transaccion.estado = modelo.ESTADO_PAGADA
-        transaccion.save(update_fields=['estado'])
-
-        if realizar_entrega(transaccion):
+        elif resultado:
             messages.success(request, 'La entrega se reintentó con éxito.')
         else:
             messages.error(

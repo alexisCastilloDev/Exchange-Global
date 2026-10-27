@@ -41,6 +41,7 @@ urlpatterns = [
     path('metodos-pago/<int:pk>/eliminar/', views.metodo_pago_delete, name='metodo_pago_delete'),
     path('metodos-pago/<int:pk>/predeterminado/', views.metodo_pago_set_default, name='metodo_pago_set_default'),
     path('metodos-pago/<int:pk>/ver-datos/', views.metodo_pago_reveal, name='metodo_pago_reveal'),
+    path('metodos-pago/<int:pk>/movimientos/', views.metodo_pago_movimientos, name='metodo_pago_movimientos'),
     path(
         'metodos-pago/tarjeta/nueva/',
         IniciarAgregarTarjetaStripeView.as_view(),

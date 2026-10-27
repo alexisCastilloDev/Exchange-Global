@@ -1,6 +1,7 @@
 """
 Módulo de vistas para la aplicación de clientes.
 """
+from decimal import Decimal
 from urllib.parse import urlparse
 
 from django.contrib import messages
@@ -19,9 +20,17 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from apps.authentication.decorators import requiere_rol
 from apps.authentication.forms import CausaBajaForm
 from apps.authentication.models import HistorialBaja
-from apps.divisas.models import Divisa
+from apps.divisas.models import (
+    CalculoOperacion,
+    CalculoTriangulacion,
+    Divisa,
+    moneda_a_entregar,
+    moneda_a_pagar,
+    monto_a_entregar,
+)
 from .forms import AsociarUsuarioClienteForm, ClienteForm, MetodoPagoForm
 from .models import Cliente, MetodoPago
+from .validacion_sipap import SipapComunicacionError, validar_cuenta
 from apps.users.services import sincronizar_usuarios_desde_keycloak
 
 User = get_user_model()
@@ -432,6 +441,121 @@ def metodo_pago_list(request):
     )
 
 
+def _movimientos_de_metodo_pago(metodo):
+    """Reúne, de más reciente a más antiguo, todo lo que pasó por un método de pago en el sistema.
+
+    No llama a Stripe ni a sipap-sim para esto: Global Exchange ya
+    registra, en su propia base, cada pago (``Pago.metodo_pago``,
+    poblado tanto para Stripe como para SIPAP — ver
+    ``apps.divisas.pagos_stripe``/``pagos_sipap``) y cada entrega
+    recibida (``CalculoOperacion``/``CalculoTriangulacion.medio_destino``,
+    solo para cuentas y billeteras: una tarjeta nunca es un medio de
+    destino). Reconstruir esto llamando a un proveedor externo
+    duplicaría información que ya es exacta de este lado.
+
+    Returns:
+        list[dict]: cada ítem con ``fecha``, ``direccion``
+        (``'pagaste'`` o ``'recibiste'``), ``monto``, ``moneda``,
+        ``estado`` (la etiqueta legible del estado efectivo de la
+        transacción), ``transaccion`` y ``url_detalle`` (ya resuelta,
+        para no tener que distinguir en el template si es una compra/venta
+        o un cambio).
+    """
+    def _url_detalle(transaccion):
+        if isinstance(transaccion, CalculoTriangulacion):
+            return reverse('divisas:detalle_transaccion_cambio', kwargs={'pk': transaccion.pk})
+        return reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': transaccion.pk})
+
+    movimientos = []
+    pagos = metodo.pagos.select_related('calculo_operacion', 'calculo_triangulacion')
+    for pago in pagos:
+        transaccion = pago.transaccion
+        movimientos.append({
+            'fecha': pago.creado_en,
+            'direccion': 'pagaste',
+            'monto': pago.monto,
+            'moneda': moneda_a_pagar(transaccion),
+            'estado': transaccion.get_estado_efectivo_display(),
+            'transaccion': transaccion,
+            'url_detalle': _url_detalle(transaccion),
+            'observado': pago.observado,
+        })
+
+    if metodo.tipo_medio != MetodoPago.TIPO_TARJETA:
+        entregas = list(CalculoOperacion.objects.filter(medio_destino=metodo))
+        entregas += list(CalculoTriangulacion.objects.filter(medio_destino=metodo))
+        for transaccion in entregas:
+            movimientos.append({
+                'fecha': transaccion.confirmado_en or transaccion.creado_en,
+                'direccion': 'recibiste',
+                'monto': monto_a_entregar(transaccion),
+                'moneda': moneda_a_entregar(transaccion),
+                'estado': transaccion.get_estado_efectivo_display(),
+                'transaccion': transaccion,
+                'url_detalle': _url_detalle(transaccion),
+                'observado': False,
+            })
+
+    movimientos.sort(key=lambda movimiento: movimiento['fecha'], reverse=True)
+    return movimientos
+
+
+@requiere_rol('cliente')
+def metodo_pago_movimientos(request, pk):
+    """Muestra los movimientos y, si corresponde, el saldo real de un método de pago propio.
+
+    "Movimientos" se arma siempre con datos propios (ver
+    ``_movimientos_de_metodo_pago``): nunca depende de que sipap-sim o
+    Stripe respondan. El "saldo", en cambio, es información que solo
+    existe del otro lado, así que si no se puede consultar no hay
+    ningún valor local al que recurrir:
+
+    - Cuenta bancaria o billetera: se le vuelve a preguntar a sipap-sim
+      por esa cuenta puntual (``apps.clientes.validacion_sipap.validar_cuenta``,
+      el mismo endpoint que ya se usa al registrarla), para mostrar el
+      saldo real en este momento, no uno guardado que podría haber
+      quedado desactualizado.
+    - Tarjeta: no se muestra ningún saldo. Stripe es un procesador de
+      pagos, no el banco emisor de la tarjeta: no tiene (ni expone) el
+      saldo disponible o el límite de crédito de una tarjeta ajena, así
+      que mostrar un número ahí sería inventado.
+    """
+    roles = request.session.get('keycloak_roles', [])
+    if 'admin' in roles or 'cliente' not in roles:
+        messages.error(request, 'No tenés permiso para acceder a métodos de pago.')
+        return redirect('home')
+
+    cliente_activo = getattr(request, 'cliente_activo', None)
+    if cliente_activo is None:
+        messages.error(request, 'No tenés clientes asociados para gestionar métodos de pago.')
+        return redirect('home')
+
+    metodo = get_object_or_404(MetodoPago, pk=pk)
+    if metodo.cliente_id != cliente_activo.id:
+        messages.error(request, 'Ese método de pago no te pertenece.')
+        return redirect('clientes:metodo_pago_list')
+
+    saldo = None
+    error_saldo = None
+    if metodo.tipo_medio != MetodoPago.TIPO_TARJETA:
+        try:
+            datos = validar_cuenta(metodo.numero_cuenta, metodo.documento_titular)
+        except SipapComunicacionError:
+            error_saldo = 'No se pudo conectar con sipap-sim para consultar el saldo. Intentá nuevamente en unos minutos.'
+        else:
+            if datos.get('valida'):
+                saldo = {'monto': Decimal(str(datos['saldo'])), 'moneda': datos['moneda']}
+            else:
+                error_saldo = 'Esta cuenta ya no se pudo verificar en sipap-sim.'
+
+    return render(request, 'clientes/metodo_pago_movimientos.html', {
+        'metodo': metodo,
+        'saldo': saldo,
+        'error_saldo': error_saldo,
+        'movimientos': _movimientos_de_metodo_pago(metodo),
+    })
+
+
 @requiere_rol('cliente')
 @require_POST
 def metodo_pago_reveal(request, pk):
@@ -527,8 +651,11 @@ def metodo_pago_delete(request, pk):
 @require_POST
 def metodo_pago_set_default(request, pk):
     """
-    Establece un método de pago específico como el predeterminado (Criterio 6).
-    Solo los clientes con un cliente activo seleccionado pueden gestionarlos.
+    Establece un método de pago específico como el predeterminado en su divisa
+    (Criterio 6). El predeterminado es independiente por divisa (ver
+    ``MetodoPago.save``): esto nunca le quita el flag a un método predeterminado
+    en otra divisa distinta. Solo los clientes con un cliente activo
+    seleccionado pueden gestionarlos.
     """
     roles = request.session.get('keycloak_roles', [])
     if 'admin' in roles or 'cliente' not in roles:
@@ -543,7 +670,8 @@ def metodo_pago_set_default(request, pk):
     metodo = get_object_or_404(MetodoPago, pk=pk, cliente=cliente_activo)
     metodo.es_predeterminado = True
     metodo.save()
-    messages.success(request, f'"{metodo}" ha sido establecido como método predeterminado.')
+    divisa = metodo.moneda.codigo if metodo.moneda_id else 'sin divisa confirmada'
+    messages.success(request, f'"{metodo}" ha sido establecido como método predeterminado ({divisa}).')
     return redirect('clientes:metodo_pago_list')
 
 

@@ -1,14 +1,17 @@
 """Pruebas de permisos, validaciones y ciclo de vida de métodos de pago."""
 
+from datetime import timedelta
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import NoReverseMatch, reverse
+from django.utils import timezone
 from apps.clientes.forms import MetodoPagoForm
 from apps.clientes.models import Cliente, MetodoPago
 from apps.clientes.validacion_sipap import SipapComunicacionError
-from apps.divisas.models import Divisa
+from apps.divisas.models import CalculoOperacion, CalculoTriangulacion, Divisa, Pago
 
 User = get_user_model()
 
@@ -488,6 +491,49 @@ class MetodoPagoTestCase(TestCase):
         self.assertFalse(metodo1.es_predeterminado)
         self.assertTrue(metodo2.es_predeterminado)
 
+    def test_predeterminado_es_independiente_por_divisa(self):
+        """Criterio 6: puede haber un predeterminado distinto por cada divisa a la vez."""
+        pyg = Divisa.objects.get(codigo=Divisa.CODIGO_BASE)
+        usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+
+        tarjeta = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Visa Bank',
+            numero_tarjeta='4111111111111111',
+            moneda=pyg,
+        )
+        cuenta_usd_1 = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Banco A',
+            numero_cuenta='111111',
+            moneda=usd,
+        )
+        cuenta_usd_2 = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+            nombre_titular='Juan Pérez',
+            entidad_financiera='Banco B',
+            numero_cuenta='222222',
+            moneda=usd,
+            es_predeterminado=True,
+        )
+
+        tarjeta.refresh_from_db()
+        cuenta_usd_1.refresh_from_db()
+        cuenta_usd_2.refresh_from_db()
+
+        # La tarjeta (primera y única en PYG) sigue siendo predeterminada en PYG:
+        # marcar un predeterminado en USD no le tocó el flag.
+        self.assertTrue(tarjeta.es_predeterminado)
+        # En USD, el flag pasó del primero (predeterminado automático por ser el
+        # primero) al segundo, que se marcó explícitamente.
+        self.assertFalse(cuenta_usd_1.es_predeterminado)
+        self.assertTrue(cuenta_usd_2.es_predeterminado)
+
 
 class MetodoPagoFormStripeTest(TestCase):
     """Verifica que 'Tarjeta' quede reservada al alta vía Stripe (HU 'Pago con tarjeta vía Stripe')."""
@@ -572,3 +618,153 @@ class MetodoPagoEtiquetaCortaTest(TestCase):
 
         self.assertIn('Billetera Digital', etiqueta)
         self.assertIn('Tigo Money', etiqueta)
+
+
+class MetodoPagoMovimientosTest(TestCase):
+    """Verifica la pantalla de movimientos y saldo de un método de pago propio."""
+
+    def setUp(self):
+        """Prepara un cliente logueado con una billetera en USD y una tarjeta."""
+        self.user = User.objects.create_user(username='cliente-movs', password='password123')
+        self.cliente = Cliente.objects.create(
+            user=self.user, identificador='CI-MOVS-001', nombre='Ana', apellido='Movs',
+            email='cliente-movs@test.com', is_active=True,
+        )
+        self.user.clientes.add(self.cliente)
+        self.client.login(username='cliente-movs', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.billetera = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_BILLETERA, nombre_titular='Ana Movs',
+            entidad_financiera='Tigo Money', numero_cuenta='2000000000009999', documento_titular='9998887',
+            moneda=self.usd,
+        )
+        self.tarjeta = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TARJETA, nombre_titular='Ana Movs',
+            entidad_financiera='Visa', numero_tarjeta='4242', proveedor_externo=MetodoPago.PROVEEDOR_STRIPE,
+            referencia_externa='pm_test_999', moneda=Divisa.objects.get(codigo='PYG'),
+        )
+
+    def _crear_compra(self, medio_destino=None):
+        return CalculoOperacion.objects.create(
+            usuario=self.user, cliente=self.cliente, tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('7400.00'), monto_final=Decimal('747400.00'),
+            estado=CalculoOperacion.ESTADO_ACREDITADA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(), medio_destino=medio_destino,
+        )
+
+    def test_billetera_muestra_pagos_y_entregas_recibidas_y_el_saldo_real(self):
+        """Se usó para pagar una compra y para recibir otra: aparecen los dos movimientos, y el saldo real."""
+        compra_pagada_con_ella = self._crear_compra()
+        Pago.objects.create(
+            calculo_operacion=compra_pagada_con_ella, metodo_pago=self.billetera,
+            medio_pago=MetodoPago.TIPO_BILLETERA, proveedor='SIPAP', identificador_externo='SPI-1',
+            monto=Decimal('747400.00'),
+        )
+        self._crear_compra(medio_destino=self.billetera)
+
+        with patch('apps.clientes.views.validar_cuenta') as mock_validar:
+            mock_validar.return_value = {
+                'valida': True, 'moneda': 'USD', 'saldo': '500.00', 'titular': 'Ana Movs', 'proveedor': 'Tigo Money',
+            }
+            response = self.client.get(reverse('clientes:metodo_pago_movimientos', kwargs={'pk': self.billetera.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Pagaste')
+        self.assertContains(response, 'Recibiste')
+        self.assertContains(response, '500,00 USD')
+        mock_validar.assert_called_once_with(self.billetera.numero_cuenta, self.billetera.documento_titular)
+
+    def test_billetera_avisa_si_sipap_sim_no_responde_sin_romper(self):
+        with patch('apps.clientes.views.validar_cuenta') as mock_validar:
+            mock_validar.side_effect = SipapComunicacionError('no se pudo conectar')
+            response = self.client.get(reverse('clientes:metodo_pago_movimientos', kwargs={'pk': self.billetera.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No se pudo conectar con sipap-sim')
+
+    def test_tarjeta_solo_muestra_sus_pagos_sin_consultar_sipap_sim_ni_mostrar_saldo(self):
+        compra = self._crear_compra()
+        Pago.objects.create(
+            calculo_operacion=compra, metodo_pago=self.tarjeta, medio_pago=MetodoPago.TIPO_TARJETA,
+            proveedor='STRIPE', identificador_externo='pi_test_1', monto=Decimal('747400.00'),
+        )
+
+        with patch('apps.clientes.views.validar_cuenta') as mock_validar:
+            response = self.client.get(reverse('clientes:metodo_pago_movimientos', kwargs={'pk': self.tarjeta.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Pagaste')
+        self.assertContains(response, 'no es el banco emisor de la tarjeta')
+        mock_validar.assert_not_called()
+
+    def test_una_tarjeta_nunca_aparece_como_medio_de_destino(self):
+        """Una tarjeta nunca es medio_destino de nada; solo debe listarse lo que se pagó con ella."""
+        compra_propia = self._crear_compra()
+        Pago.objects.create(
+            calculo_operacion=compra_propia, metodo_pago=self.tarjeta, medio_pago=MetodoPago.TIPO_TARJETA,
+            proveedor='STRIPE', identificador_externo='pi_test_2', monto=Decimal('747400.00'),
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_movimientos', kwargs={'pk': self.tarjeta.pk}))
+
+        self.assertEqual(response.context['movimientos'].__len__(), 1)
+        self.assertEqual(response.context['movimientos'][0]['direccion'], 'pagaste')
+
+    def test_sin_ningun_movimiento_muestra_un_mensaje_vacio(self):
+        response = self.client.get(reverse('clientes:metodo_pago_movimientos', kwargs={'pk': self.tarjeta.pk}))
+
+        self.assertContains(response, 'Todavía no hay ningún movimiento')
+
+    def test_un_cambio_entre_divisas_recibido_tambien_cuenta_como_movimiento(self):
+        """Un cambio (CalculoTriangulacion), no solo una compra/venta, también puede entregarse acá."""
+        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+        cambio = CalculoTriangulacion.objects.create(
+            usuario=self.user, cliente=self.cliente, divisa_origen=eur, divisa_destino=self.usd,
+            codigo_divisa_origen='EUR', codigo_divisa_destino='USD', monto_origen=Decimal('100.00'),
+            tasa_compra_aplicada=Decimal('7900.00'), tasa_venta_aplicada=Decimal('7400.00'),
+            tasa_cruzada=Decimal('1.067568'), monto_equivalente_pyg=Decimal('790000.00'),
+            comision_porcentaje=Decimal('1.000'), comision=Decimal('1.00'), monto_final=Decimal('105.77'),
+            estado=CalculoTriangulacion.ESTADO_ACREDITADA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(), medio_destino=self.billetera,
+        )
+
+        with patch('apps.clientes.views.validar_cuenta') as mock_validar:
+            mock_validar.return_value = {'valida': True, 'moneda': 'USD', 'saldo': '0.00'}
+            response = self.client.get(reverse('clientes:metodo_pago_movimientos', kwargs={'pk': self.billetera.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        movimientos = response.context['movimientos']
+        self.assertEqual(len(movimientos), 1)
+        self.assertEqual(movimientos[0]['transaccion'], cambio)
+        self.assertEqual(movimientos[0]['url_detalle'], reverse('divisas:detalle_transaccion_cambio', kwargs={'pk': cambio.pk}))
+
+    def test_no_puede_ver_movimientos_de_un_metodo_ajeno(self):
+        otro_usuario = User.objects.create_user(username='otro-cliente-movs', password='password123')
+        otro_cliente = Cliente.objects.create(
+            user=otro_usuario, identificador='CI-MOVS-002', nombre='Otro', apellido='Cliente',
+            email='otro-cliente-movs@test.com', is_active=True,
+        )
+        otro_usuario.clientes.add(otro_cliente)
+        ajeno = MetodoPago.objects.create(
+            cliente=otro_cliente, tipo_medio=MetodoPago.TIPO_TARJETA, nombre_titular='Otro Cliente',
+            entidad_financiera='Visa', numero_tarjeta='9999', moneda=Divisa.objects.get(codigo='PYG'),
+        )
+
+        response = self.client.get(reverse('clientes:metodo_pago_movimientos', kwargs={'pk': ajeno.pk}))
+
+        self.assertRedirects(response, reverse('clientes:metodo_pago_list'))
+
+    def test_usuario_sin_rol_cliente_no_puede_ver(self):
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+        response = self.client.get(reverse('clientes:metodo_pago_movimientos', kwargs={'pk': self.billetera.pk}))
+
+        self.assertRedirects(response, reverse('home'))

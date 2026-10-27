@@ -308,6 +308,7 @@ class CalculoOperacion(models.Model):
     ESTADO_PAGADA = 'PAGADA'
     ESTADO_ENTREGA_FALLIDA = 'ENTREGA_FALLIDA'
     ESTADO_PAGO_EXPIRADO = 'PAGO_EXPIRADO'
+    ESTADO_ACREDITADA = 'ACREDITADA'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
@@ -319,6 +320,7 @@ class CalculoOperacion(models.Model):
         (ESTADO_PAGADA, 'Pagada'),
         (ESTADO_ENTREGA_FALLIDA, 'Pagada, pero la entrega al cliente falló'),
         (ESTADO_PAGO_EXPIRADO, 'Pago fuera de plazo'),
+        (ESTADO_ACREDITADA, 'Acreditada'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -375,6 +377,24 @@ class CalculoOperacion(models.Model):
             'de "vence_en" (que gobierna solo Pendiente → Confirmar/Cancelar) '
             'para no interferir con ese mecanismo ya existente.'
         ),
+    )
+    acreditado_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Acreditado en',
+        help_text=(
+            'Fecha y hora en que la entrega de una compra (o de un cambio '
+            'entre divisas) se completó con éxito (ver '
+            '``apps.divisas.entrega.realizar_entrega``). Una venta no usa '
+            'este campo: "retirar" lo que deja una venta es una HU aparte '
+            '("Retiro de fondos") todavía no implementada.'
+        ),
+    )
+    referencia_acreditacion = models.CharField(
+        max_length=60,
+        blank=True,
+        verbose_name='Referencia de la acreditación',
+        help_text='La misma referencia con la que se le pidió la transferencia a sipap-sim.',
     )
 
     class Meta:
@@ -637,6 +657,7 @@ class CalculoTriangulacion(models.Model):
     ESTADO_PAGADA = 'PAGADA'
     ESTADO_ENTREGA_FALLIDA = 'ENTREGA_FALLIDA'
     ESTADO_PAGO_EXPIRADO = 'PAGO_EXPIRADO'
+    ESTADO_ACREDITADA = 'ACREDITADA'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
@@ -648,6 +669,7 @@ class CalculoTriangulacion(models.Model):
         (ESTADO_PAGADA, 'Pagada'),
         (ESTADO_ENTREGA_FALLIDA, 'Pagada, pero la entrega al cliente falló'),
         (ESTADO_PAGO_EXPIRADO, 'Pago fuera de plazo'),
+        (ESTADO_ACREDITADA, 'Acreditada'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -707,6 +729,18 @@ class CalculoTriangulacion(models.Model):
             'Ver CalculoOperacion.tasa_vence_en: mismo criterio, aplicado '
             'al cambio entre divisas.'
         ),
+    )
+    acreditado_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Acreditado en',
+        help_text='Ver CalculoOperacion.acreditado_en: mismo criterio, aplicado al cambio entre divisas.',
+    )
+    referencia_acreditacion = models.CharField(
+        max_length=60,
+        blank=True,
+        verbose_name='Referencia de la acreditación',
+        help_text='La misma referencia con la que se le pidió la transferencia a sipap-sim.',
     )
 
     class Meta:

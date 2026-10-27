@@ -2,8 +2,11 @@
 
 Cubre ``CuentaPropia`` (el saldo propio de Global Exchange, llevado en
 esta misma base), ``apps.divisas.entrega`` (la transferencia saliente a
-sipap-sim, seguida del ajuste del saldo propio) y la pantalla de
-administración para reintentar una entrega fallida.
+sipap-sim, seguida del ajuste del saldo propio y, para una compra o un
+cambio entre divisas, el paso a "Acreditada" — HU "Acreditación de
+fondos", GE-23), y las dos pantallas desde las que se puede reintentar
+una entrega fallida: la administrativa ("Entregas pendientes") y el
+detalle de la propia transacción, para el cliente.
 """
 
 from datetime import timedelta
@@ -17,9 +20,10 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.clientes.models import Cliente, MetodoPago
-from apps.divisas.entrega import realizar_entrega
+from apps.divisas.entrega import realizar_entrega, reintentar_entrega
 from apps.divisas.models import (
     CalculoOperacion,
+    CalculoTriangulacion,
     CuentaPropia,
     CuentaPropiaInexistenteError,
     Divisa,
@@ -121,14 +125,19 @@ class RealizarEntregaTest(TestCase):
         )
 
     @patch('apps.divisas.entrega.requests.post')
-    def test_entrega_exitosa_devuelve_true_y_actualiza_el_saldo_propio(self, mock_post):
+    def test_entrega_exitosa_de_una_compra_queda_acreditada(self, mock_post):
+        """HU "Acreditación de fondos" (GE-23): una compra entregada con éxito pasa a 'Acreditada'."""
         mock_post.return_value = _respuesta(201, {'id': 'SPI-1', 'estado': 'acreditada'})
+        antes = timezone.now()
 
         resultado = realizar_entrega(self.transaccion)
 
         self.assertTrue(resultado)
         self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ACREDITADA)
+        self.assertIsNotNone(self.transaccion.acreditado_en)
+        self.assertGreaterEqual(self.transaccion.acreditado_en, antes)
+        self.assertEqual(self.transaccion.referencia_acreditacion, f'ENTREGA-OPERACION-{self.transaccion.pk}')
         self.cuenta_pyg.refresh_from_db()
         self.cuenta_usd.refresh_from_db()
         self.assertEqual(self.cuenta_pyg.saldo, Decimal('10747400.00'))
@@ -138,6 +147,46 @@ class RealizarEntregaTest(TestCase):
         self.assertEqual(kwargs['json']['documento'], self.medio_destino.documento_titular)
         self.assertEqual(kwargs['json']['monto'], '100.00')
         self.assertEqual(kwargs['json']['referencia'], f'ENTREGA-OPERACION-{self.transaccion.pk}')
+
+    @patch('apps.divisas.entrega.requests.post')
+    def test_entrega_exitosa_de_una_venta_se_queda_en_pagada(self, mock_post):
+        """El "Retiro de fondos" de una venta (GE-24) todavía no existe: una venta exitosa sigue "Pagada"."""
+        mock_post.return_value = _respuesta(201, {'id': 'SPI-VENTA', 'estado': 'acreditada'})
+        self.transaccion.tipo = CalculoOperacion.TIPO_VENTA
+        self.transaccion.save(update_fields=['tipo'])
+
+        resultado = realizar_entrega(self.transaccion)
+
+        self.assertTrue(resultado)
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
+        self.assertIsNone(self.transaccion.acreditado_en)
+        self.assertEqual(self.transaccion.referencia_acreditacion, '')
+
+    @patch('apps.divisas.entrega.requests.post')
+    def test_entrega_exitosa_de_un_cambio_queda_acreditada(self, mock_post):
+        """Un cambio entre divisas recibe algo, igual que una compra: también queda 'Acreditada'."""
+        mock_post.return_value = _respuesta(201, {'id': 'SPI-CAMBIO', 'estado': 'acreditada'})
+        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+        CuentaPropia.objects.create(divisa=eur, saldo=Decimal('500.00'))
+        cambio = CalculoTriangulacion.objects.create(
+            usuario=self.transaccion.usuario, cliente=self.cliente,
+            divisa_origen=self.usd, divisa_destino=eur, codigo_divisa_origen='USD', codigo_divisa_destino='EUR',
+            monto_origen=Decimal('100.00'), tasa_compra_aplicada=Decimal('7300.00'),
+            tasa_venta_aplicada=Decimal('8100.00'), tasa_cruzada=Decimal('0.901235'),
+            monto_equivalente_pyg=Decimal('730000.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('0.90'), monto_final=Decimal('89.22'), estado=CalculoTriangulacion.ESTADO_PAGADA,
+            vence_en=timezone.now() + timedelta(seconds=300), confirmado_en=timezone.now(),
+            medio_destino=self.medio_destino,
+        )
+
+        resultado = realizar_entrega(cambio)
+
+        self.assertTrue(resultado)
+        cambio.refresh_from_db()
+        self.assertEqual(cambio.estado, CalculoTriangulacion.ESTADO_ACREDITADA)
+        self.assertIsNotNone(cambio.acreditado_en)
+        self.assertEqual(cambio.referencia_acreditacion, f'ENTREGA-CAMBIO-{cambio.pk}')
 
     @patch('apps.divisas.entrega.requests.post')
     def test_sin_medio_destino_pasa_a_entrega_fallida_sin_tocar_el_saldo(self, mock_post):
@@ -309,7 +358,8 @@ class ReintentarEntregaViewTest(TestCase):
 
         self.assertContains(response, 'se reintentó con éxito')
         self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ACREDITADA)
+        self.assertIsNotNone(self.transaccion.acreditado_en)
 
     @patch('apps.divisas.entrega.requests.post')
     def test_reintentar_que_vuelve_a_fallar_queda_igual(self, mock_post):
@@ -347,5 +397,119 @@ class ReintentarEntregaViewTest(TestCase):
         response = self.client.post(self.url)
 
         self.assertEqual(response.status_code, 403)
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
+
+
+class ReintentarEntregaHelperTest(TestCase):
+    """Verifica directamente ``apps.divisas.entrega.reintentar_entrega``."""
+
+    def setUp(self):
+        """Prepara una compra ya 'Pagada' (sin entrega fallida) y una en 'Entrega fallida'."""
+        usuario = User.objects.create_user(username='cliente-helper-reintento', password='password123')
+        self.cliente = Cliente.objects.create(
+            user=usuario, identificador='HELPER-REINTENTO-001', nombre='Cliente', apellido='Helper',
+            email='cliente-helper-reintento@test.com', is_active=True,
+        )
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.medio_destino = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_BILLETERA, nombre_titular='Cliente Helper',
+            entidad_financiera='Tigo Money', numero_cuenta='2000000000000444', documento_titular='4445556',
+            moneda=self.usd,
+        )
+        self.transaccion = CalculoOperacion.objects.create(
+            usuario=usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('7400.00'), monto_final=Decimal('747400.00'),
+            estado=CalculoOperacion.ESTADO_PAGADA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(), medio_destino=self.medio_destino,
+        )
+
+    def test_devuelve_none_si_la_transaccion_no_esta_en_entrega_fallida(self):
+        """Nada que reintentar: no debe tocar el estado ni llamar a sipap-sim."""
+        with patch('apps.divisas.entrega.requests.post') as mock_post:
+            resultado = reintentar_entrega(self.transaccion)
+
+        self.assertIsNone(resultado)
+        mock_post.assert_not_called()
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
+
+
+class ReintentarEntregaClienteTest(TestCase):
+    """Verifica que el propio cliente pueda reintentar la entrega desde el detalle de su transacción."""
+
+    def setUp(self):
+        """Prepara un cliente logueado, dueño de una compra en 'Entrega fallida'."""
+        self.usuario = User.objects.create_user(username='cliente-detalle-reintento', password='password123')
+        self.cliente = Cliente.objects.create(
+            user=self.usuario, identificador='DETALLE-REINT-001', nombre='Cliente', apellido='Detalle',
+            email='cliente-detalle-reintento@test.com', is_active=True,
+        )
+        self.usuario.clientes.add(self.cliente)
+        self.client.login(username='cliente-detalle-reintento', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        self.pyg = Divisa.objects.get(codigo='PYG')
+        self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.cuenta_pyg = CuentaPropia.objects.get(divisa=self.pyg)
+        self.cuenta_pyg.saldo = Decimal('10000000.00')
+        self.cuenta_pyg.save(update_fields=['saldo'])
+        self.cuenta_usd = CuentaPropia.objects.create(divisa=self.usd, saldo=Decimal('1000.00'))
+        self.medio_destino = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_BILLETERA, nombre_titular='Cliente Detalle',
+            entidad_financiera='Tigo Money', numero_cuenta='2000000000000333', documento_titular='3334445',
+            moneda=self.usd,
+        )
+        self.transaccion = CalculoOperacion.objects.create(
+            usuario=self.usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('7400.00'), monto_final=Decimal('747400.00'),
+            estado=CalculoOperacion.ESTADO_ENTREGA_FALLIDA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(), medio_destino=self.medio_destino,
+        )
+        self.url = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.transaccion.pk})
+
+    @patch('apps.divisas.entrega.requests.post')
+    def test_el_cliente_puede_reintentar_su_propia_entrega_fallida(self, mock_post):
+        mock_post.return_value = _respuesta(201, {'id': 'SPI-CLIENTE', 'estado': 'acreditada'})
+
+        response = self.client.post(self.url, follow=True)
+
+        self.assertContains(response, 'se reintentó con éxito')
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ACREDITADA)
+
+    @patch('apps.divisas.entrega.requests.post')
+    def test_si_vuelve_a_fallar_queda_igual_y_se_informa(self, mock_post):
+        mock_post.side_effect = requests.exceptions.ConnectionError('sipap-sim caído')
+
+        response = self.client.post(self.url, follow=True)
+
+        self.assertContains(response, 'volvió a fallar')
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
+
+    def test_no_puede_reintentar_una_transaccion_de_otro_cliente(self):
+        """Ownership real: ni siquiera puede verla, mucho menos reintentarla."""
+        otro_usuario = User.objects.create_user(username='otro-cliente-detalle', password='password123')
+        otro_cliente = Cliente.objects.create(
+            user=otro_usuario, identificador='OTRO-DETALLE-001', nombre='Otro', apellido='Cliente',
+            email='otro-cliente-detalle@test.com', is_active=True,
+        )
+        otro_usuario.clientes.add(otro_cliente)
+        self.client.logout()
+        self.client.login(username='otro-cliente-detalle', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 404)
         self.transaccion.refresh_from_db()
         self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
