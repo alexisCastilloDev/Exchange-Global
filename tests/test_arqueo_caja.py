@@ -47,12 +47,14 @@ class IniciarArqueoCajaTest(TestCase):
     # --- Criterio 1 ---
 
     def test_arqueo_compara_lo_contado_contra_el_saldo_del_sistema_por_divisa(self):
-        """Criterio 1: el arqueo compara lo contado contra el saldo registrado y muestra la diferencia."""
+        """Criterio 1: el arqueo compara lo contado contra el saldo registrado y muestra sobrante/faltante."""
         response = self.client.post(
             self.url_iniciar, self._datos(pyg='950000.00', usd='520.00'), follow=True,
         )
 
         self.assertContains(response, 'El arqueo se registró correctamente')
+        self.assertContains(response, 'Faltante')
+        self.assertContains(response, 'Sobrante')
         arqueo = ArqueoCaja.objects.get()
         self.assertEqual(arqueo.caja, self.caja)
 
@@ -66,15 +68,6 @@ class IniciarArqueoCajaTest(TestCase):
         self.assertEqual(detalle_usd.monto_contado, Decimal('520.00'))
         self.assertEqual(detalle_usd.diferencia, Decimal('20.00'))  # sobrante
 
-    def test_la_pantalla_de_detalle_muestra_sobrante_y_faltante_por_divisa(self):
-        """Criterio 1: el detalle muestra explícitamente el sobrante/faltante de cada moneda."""
-        response = self.client.post(
-            self.url_iniciar, self._datos(pyg='950000.00', usd='520.00'), follow=True,
-        )
-
-        self.assertContains(response, 'Faltante')
-        self.assertContains(response, 'Sobrante')
-
     def test_un_arqueo_sin_diferencias_lo_indica_explicitamente(self):
         """Cuando lo contado coincide exactamente, el detalle lo muestra sin diferencias."""
         response = self.client.post(self.url_iniciar, self._datos(), follow=True)
@@ -85,8 +78,8 @@ class IniciarArqueoCajaTest(TestCase):
 
     # --- Criterio 2 ---
 
-    def test_una_diferencia_distinta_de_cero_no_bloquea_el_registro(self):
-        """Criterio 2: una diferencia (sobrante o faltante) se registra igual, sin rechazar el arqueo."""
+    def test_una_diferencia_distinta_de_cero_no_bloquea_el_registro_ni_que_la_caja_siga_operando(self):
+        """Criterio 2: una diferencia (sobrante o faltante) se registra igual, y la caja sigue operando."""
         response = self.client.post(
             self.url_iniciar, self._datos(pyg='800000.00', usd='300.00'), follow=True,
         )
@@ -95,10 +88,6 @@ class IniciarArqueoCajaTest(TestCase):
         self.assertContains(response, 'El arqueo se registró correctamente')
         arqueo = ArqueoCaja.objects.get()
         self.assertTrue(arqueo.tiene_diferencias)
-
-    def test_una_diferencia_no_bloquea_que_la_caja_siga_operando(self):
-        """Criterio 2: tras un arqueo con diferencias, la caja sigue aceptando operaciones de ventanilla."""
-        self.client.post(self.url_iniciar, self._datos(pyg='800000.00', usd='300.00'))
 
         url_venta = reverse('caja:registrar_operacion', kwargs={'tipo': 'venta'})
         response = self.client.post(
@@ -109,35 +98,28 @@ class IniciarArqueoCajaTest(TestCase):
 
     # --- Criterio 3 ---
 
-    def test_el_arqueo_registra_fecha_hora_cajero_y_ambos_montos(self):
-        """Criterio 3: el arqueo guardado tiene fecha, hora, cajero y los montos contados y del sistema."""
-        self.client.post(self.url_iniciar, self._datos(pyg='950000.00', usd='520.00'))
-
-        arqueo = ArqueoCaja.objects.get()
-        self.assertEqual(arqueo.cajero, self.cajero)
-        self.assertIsNotNone(arqueo.creado_en)
-        self.assertEqual(arqueo.detalles.count(), 2)
-
-    def test_el_arqueo_queda_disponible_para_consulta_posterior_en_el_detalle(self):
-        """Criterio 3: tras registrarlo, se puede volver a consultar el detalle del arqueo."""
+    def test_el_arqueo_registra_sus_datos_y_queda_disponible_para_consulta_posterior(self):
+        """Criterio 3: fecha, hora, cajero y montos quedan guardados, consultables en el detalle y el historial."""
         self.client.post(self.url_iniciar, self._datos(pyg='950000.00', usd='520.00'))
         arqueo = ArqueoCaja.objects.get()
 
-        response = self.client.get(reverse('caja:detalle_arqueo', kwargs={'pk': arqueo.pk}))
+        with self.subTest('datos guardados'):
+            self.assertEqual(arqueo.cajero, self.cajero)
+            self.assertIsNotNone(arqueo.creado_en)
+            self.assertEqual(arqueo.detalles.count(), 2)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, arqueo.cajero.username)
-        self.assertContains(response, 'USD')
-        self.assertContains(response, 'PYG')
+        with self.subTest('detalle'):
+            response = self.client.get(reverse('caja:detalle_arqueo', kwargs={'pk': arqueo.pk}))
 
-    def test_el_arqueo_aparece_en_el_historial(self):
-        """Criterio 3: el arqueo registrado aparece en el historial de consulta posterior."""
-        self.client.post(self.url_iniciar, self._datos())
-        arqueo = ArqueoCaja.objects.get()
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, arqueo.cajero.username)
+            self.assertContains(response, 'USD')
+            self.assertContains(response, 'PYG')
 
-        response = self.client.get(self.url_historial)
+        with self.subTest('historial'):
+            response = self.client.get(self.url_historial)
 
-        self.assertContains(response, reverse('caja:detalle_arqueo', kwargs={'pk': arqueo.pk}))
+            self.assertContains(response, reverse('caja:detalle_arqueo', kwargs={'pk': arqueo.pk}))
 
     def test_el_saldo_sistema_queda_congelado_aunque_el_saldo_actual_cambie_despues(self):
         """Criterio 3: un arqueo viejo sigue mostrando el saldo del sistema de ese momento, no el actual."""
@@ -153,39 +135,37 @@ class IniciarArqueoCajaTest(TestCase):
 
     # --- Prerequisito: caja abierta ---
 
-    def test_sin_caja_abierta_rechaza_el_arqueo_y_pide_abrir_una(self):
-        """Sin una caja abierta, el arqueo se rechaza e indica abrir una primero."""
+    def test_sin_caja_abierta_rechaza_el_arqueo_y_no_ofrece_el_formulario(self):
+        """Sin una caja abierta, el arqueo se rechaza (POST) y tampoco se ofrece el formulario (GET)."""
         self.caja.delete()
 
-        response = self.client.post(self.url_iniciar, self._datos(), follow=True)
+        with self.subTest('POST rechazado'):
+            response = self.client.post(self.url_iniciar, self._datos(), follow=True)
 
-        self.assertContains(response, 'Necesitás abrir una caja')
-        self.assertFalse(ArqueoCaja.objects.exists())
+            self.assertContains(response, 'Necesitás abrir una caja')
+            self.assertFalse(ArqueoCaja.objects.exists())
 
-    def test_sin_caja_abierta_tampoco_se_ofrece_el_formulario(self):
-        """Sin una caja abierta, tampoco se puede acceder al formulario de arqueo."""
-        self.caja.delete()
+        with self.subTest('formulario no ofrecido'):
+            response = self.client.get(self.url_iniciar, follow=True)
 
-        response = self.client.get(self.url_iniciar, follow=True)
-
-        self.assertContains(response, 'Necesitás abrir una caja')
-        self.assertNotContains(response, 'name="contado_')
+            self.assertContains(response, 'Necesitás abrir una caja')
+            self.assertNotContains(response, 'name="contado_')
 
     # --- Validaciones del formulario ---
 
-    def test_un_monto_negativo_no_registra_el_arqueo(self):
-        """Un monto contado negativo se rechaza con el mismo criterio que el resto del sistema."""
-        response = self.client.post(self.url_iniciar, self._datos(usd='-10.00'))
+    def test_un_monto_contado_invalido_no_registra_el_arqueo(self):
+        """Un monto contado negativo o no numérico se rechaza con el mismo criterio que el resto del sistema."""
+        with self.subTest('negativo'):
+            response = self.client.post(self.url_iniciar, self._datos(usd='-10.00'))
 
-        self.assertContains(response, 'El monto contado no puede ser negativo.')
-        self.assertFalse(ArqueoCaja.objects.exists())
+            self.assertContains(response, 'El monto contado no puede ser negativo.')
+            self.assertFalse(ArqueoCaja.objects.exists())
 
-    def test_un_monto_no_numerico_no_registra_el_arqueo(self):
-        """Un monto contado no numérico se rechaza sin crear nada."""
-        response = self.client.post(self.url_iniciar, self._datos(usd='abc'))
+        with self.subTest('no numérico'):
+            response = self.client.post(self.url_iniciar, self._datos(usd='abc'))
 
-        self.assertContains(response, 'Ingresá un monto válido.')
-        self.assertFalse(ArqueoCaja.objects.exists())
+            self.assertContains(response, 'Ingresá un monto válido.')
+            self.assertFalse(ArqueoCaja.objects.exists())
 
     def test_un_monto_contado_en_cero_es_valido(self):
         """Un monto contado de cero es válido: el cajero no tiene nada físico de esa moneda."""
@@ -197,39 +177,36 @@ class IniciarArqueoCajaTest(TestCase):
 
     # --- Una divisa sin cotización no se puede arquear ---
 
-    def test_una_divisa_activa_sin_cotizacion_no_se_ofrece_para_arquear(self):
-        """Una divisa activa sin cotización vigente no recibe un campo en el formulario de arqueo."""
+    def test_una_divisa_sin_cotizacion_no_se_ofrece_ni_se_puede_forzar_pero_no_bloquea_arquear(self):
+        """Una divisa activa sin cotización no recibe campo, no se puede forzar, y no bloquea el resto."""
         eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
 
-        response = self.client.get(self.url_iniciar)
+        with self.subTest('no se ofrece el campo'):
+            response = self.client.get(self.url_iniciar)
 
-        self.assertNotContains(response, f'name="contado_{eur.pk}"')
-        self.assertContains(response, 'EUR')
-        self.assertContains(response, 'Hace falta cotizar')
-        self.assertContains(response, 'analista cambiario o un administrador')
+            self.assertNotContains(response, f'name="contado_{eur.pk}"')
+            self.assertContains(response, 'EUR')
+            self.assertContains(response, 'Hace falta cotizar')
+            self.assertContains(response, 'analista cambiario o un administrador')
 
-    def test_se_puede_arquear_sin_la_divisa_sin_cotizar(self):
-        """Una divisa sin cotizar no bloquea el arqueo: se registra igual con el resto."""
-        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+        with self.subTest('el arqueo funciona igual sin esa divisa'):
+            response = self.client.post(self.url_iniciar, self._datos(), follow=True)
 
-        response = self.client.post(self.url_iniciar, self._datos(), follow=True)
+            self.assertContains(response, 'El arqueo se registró correctamente')
+            arqueo = ArqueoCaja.objects.get()
+            self.assertEqual(arqueo.detalles.count(), 2)
+            self.assertFalse(arqueo.detalles.filter(divisa=eur).exists())
 
-        self.assertContains(response, 'El arqueo se registró correctamente')
-        arqueo = ArqueoCaja.objects.get()
-        self.assertEqual(arqueo.detalles.count(), 2)
-        self.assertFalse(arqueo.detalles.filter(divisa=eur).exists())
+        with self.subTest('un monto forzado a mano se ignora'):
+            ArqueoCaja.objects.all().delete()
+            datos = self._datos()
+            datos[f'contado_{eur.pk}'] = '1000.00'
 
-    def test_un_monto_contado_enviado_a_mano_para_una_divisa_sin_cotizar_se_ignora(self):
-        """Forzar 'contado_<pk>' de una divisa sin cotizar en el POST no la incluye en el arqueo."""
-        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
-        datos = self._datos()
-        datos[f'contado_{eur.pk}'] = '1000.00'
+            response = self.client.post(self.url_iniciar, datos, follow=True)
 
-        response = self.client.post(self.url_iniciar, datos, follow=True)
-
-        self.assertContains(response, 'El arqueo se registró correctamente')
-        arqueo = ArqueoCaja.objects.get()
-        self.assertFalse(arqueo.detalles.filter(divisa=eur).exists())
+            self.assertContains(response, 'El arqueo se registró correctamente')
+            arqueo = ArqueoCaja.objects.get()
+            self.assertFalse(arqueo.detalles.filter(divisa=eur).exists())
 
     # --- Permisos ---
 
@@ -282,41 +259,41 @@ class ArqueoCajaModeloTest(TestCase):
         self.caja = Caja.objects.create(usuario=self.cajero)
         self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
 
-    def test_diferencia_positiva_es_sobrante(self):
-        """Una diferencia positiva (contado > sistema) es un sobrante."""
-        arqueo = ArqueoCaja.objects.create(caja=self.caja, cajero=self.cajero)
-        detalle = DetalleArqueoCaja.objects.create(
-            arqueo=arqueo, divisa=self.usd, saldo_sistema=Decimal('100.00'), monto_contado=Decimal('120.00'),
-        )
+    def test_el_signo_de_la_diferencia_indica_sobrante_o_faltante(self):
+        """Contado > sistema es un sobrante (positivo); contado < sistema, un faltante (negativo)."""
+        with self.subTest('sobrante'):
+            arqueo = ArqueoCaja.objects.create(caja=self.caja, cajero=self.cajero)
+            detalle = DetalleArqueoCaja.objects.create(
+                arqueo=arqueo, divisa=self.usd, saldo_sistema=Decimal('100.00'), monto_contado=Decimal('120.00'),
+            )
 
-        self.assertEqual(detalle.diferencia, Decimal('20.00'))
+            self.assertEqual(detalle.diferencia, Decimal('20.00'))
 
-    def test_diferencia_negativa_es_faltante(self):
-        """Una diferencia negativa (contado < sistema) es un faltante."""
-        arqueo = ArqueoCaja.objects.create(caja=self.caja, cajero=self.cajero)
-        detalle = DetalleArqueoCaja.objects.create(
-            arqueo=arqueo, divisa=self.usd, saldo_sistema=Decimal('100.00'), monto_contado=Decimal('80.00'),
-        )
+        with self.subTest('faltante'):
+            arqueo = ArqueoCaja.objects.create(caja=self.caja, cajero=self.cajero)
+            detalle = DetalleArqueoCaja.objects.create(
+                arqueo=arqueo, divisa=self.usd, saldo_sistema=Decimal('100.00'), monto_contado=Decimal('80.00'),
+            )
 
-        self.assertEqual(detalle.diferencia, Decimal('-20.00'))
+            self.assertEqual(detalle.diferencia, Decimal('-20.00'))
 
-    def test_tiene_diferencias_es_false_cuando_todo_coincide(self):
-        """'tiene_diferencias' es False si ningún detalle difiere del saldo del sistema."""
-        arqueo = ArqueoCaja.objects.create(caja=self.caja, cajero=self.cajero)
-        DetalleArqueoCaja.objects.create(
-            arqueo=arqueo, divisa=self.usd, saldo_sistema=Decimal('100.00'), monto_contado=Decimal('100.00'),
-        )
+    def test_tiene_diferencias_segun_si_algun_detalle_difiere_del_sistema(self):
+        """'tiene_diferencias' es False si todo coincide, True si al menos una divisa difiere."""
+        with self.subTest('todo coincide'):
+            arqueo = ArqueoCaja.objects.create(caja=self.caja, cajero=self.cajero)
+            DetalleArqueoCaja.objects.create(
+                arqueo=arqueo, divisa=self.usd, saldo_sistema=Decimal('100.00'), monto_contado=Decimal('100.00'),
+            )
 
-        self.assertFalse(arqueo.tiene_diferencias)
+            self.assertFalse(arqueo.tiene_diferencias)
 
-    def test_tiene_diferencias_es_true_si_al_menos_una_divisa_difiere(self):
-        """'tiene_diferencias' es True si al menos una divisa tiene diferencia distinta de cero."""
-        arqueo = ArqueoCaja.objects.create(caja=self.caja, cajero=self.cajero)
-        DetalleArqueoCaja.objects.create(
-            arqueo=arqueo, divisa=self.usd, saldo_sistema=Decimal('100.00'), monto_contado=Decimal('99.00'),
-        )
+        with self.subTest('una divisa difiere'):
+            arqueo = ArqueoCaja.objects.create(caja=self.caja, cajero=self.cajero)
+            DetalleArqueoCaja.objects.create(
+                arqueo=arqueo, divisa=self.usd, saldo_sistema=Decimal('100.00'), monto_contado=Decimal('99.00'),
+            )
 
-        self.assertTrue(arqueo.tiene_diferencias)
+            self.assertTrue(arqueo.tiene_diferencias)
 
     def test_no_se_puede_duplicar_una_divisa_en_el_mismo_arqueo(self):
         """La restricción única impide dos detalles de la misma divisa en un mismo arqueo."""

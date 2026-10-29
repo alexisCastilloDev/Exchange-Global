@@ -62,13 +62,21 @@ Contexto esperado: transaccion.
                     <div class="operation-summary__row"><span class="operation-summary__label">Fecha: </span><strong class="operation-summary__value">{{ transaccion.acreditado_en|date:"d/m/Y H:i" }}</strong></div>
                     <div class="operation-summary__row"><span class="operation-summary__label">Referencia: </span><strong class="operation-summary__value">{{ transaccion.referencia_acreditacion }}</strong></div>
                 </div>
+            {% elif transaccion.estado == 'RETIRADA' %}
+                <div class="ge-card__header mb-3 mt-4">
+                    <h2>Retiro</h2>
+                </div>
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Fecha: </span><strong class="operation-summary__value">{{ transaccion.retirado_en|date:"d/m/Y H:i" }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Referencia: </span><strong class="operation-summary__value">{{ transaccion.referencia_retiro }}</strong></div>
+                </div>
             {% elif transaccion.estado == 'ENTREGA_FALLIDA' %}
                 <div class="operation-expiry mt-3 mb-3">
-                    <i class="bi bi-exclamation-triangle me-1"></i> Tu pago se registró, pero todavía no pudimos completar la entrega.
+                    <i class="bi bi-exclamation-triangle me-1"></i> Tu pago se registró, pero todavía no pudimos completar {% if transaccion.tipo == 'VENTA' %}el retiro{% else %}la entrega{% endif %}.
                 </div>
                 <form method="post">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-clockwise me-1"></i> Reintentar entrega</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-clockwise me-1"></i> Reintentar {% if transaccion.tipo == 'VENTA' %}retiro{% else %}entrega{% endif %}</button>
                 </form>
             {% endif %}
         </div>
