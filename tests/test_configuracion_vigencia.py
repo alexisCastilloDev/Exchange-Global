@@ -105,67 +105,34 @@ class ConfiguracionVigenciaVistaTest(TestCase):
         self.assertEqual(configuracion.confirmacion_vigencia_segundos, 600)
         self.assertEqual(configuracion.pago_vigencia_segundos, 3600)
 
-    def test_analista_cambiario_no_puede_acceder(self):
+    def test_solo_el_admin_puede_acceder(self):
         """A diferencia de las comisiones, esta configuración es exclusiva de admin."""
-        session = self.client.session
-        session['keycloak_roles'] = ['analista_cambiario']
-        session.save()
+        for rol in ('analista_cambiario', 'cliente'):
+            with self.subTest(rol=rol):
+                session = self.client.session
+                session['keycloak_roles'] = [rol]
+                session.save()
 
-        response = self.client.get(reverse('divisas:configuracion_vigencia'))
+                response = self.client.get(reverse('divisas:configuracion_vigencia'))
 
-        self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, 403)
 
-    def test_cliente_no_puede_acceder(self):
-        """Un rol cliente no puede ver ni editar los tiempos de espera."""
-        session = self.client.session
-        session['keycloak_roles'] = ['cliente']
-        session.save()
+    def test_rechaza_cualquier_tiempo_de_espera_no_positivo(self):
+        """No permite configurar en cero o negativo el tiempo de espera del importe, la operación o el pago."""
+        valores_base = {
+            'calculo_vigencia_segundos': '300',
+            'confirmacion_vigencia_segundos': '300',
+            'pago_vigencia_segundos': '1800',
+        }
+        casos = {
+            'importe': {**valores_base, 'calculo_vigencia_segundos': '0'},
+            'operación': {**valores_base, 'confirmacion_vigencia_segundos': '-5'},
+            'pago': {**valores_base, 'pago_vigencia_segundos': '0'},
+        }
+        for etiqueta, datos in casos.items():
+            with self.subTest(campo=etiqueta):
+                response = self.client.post(reverse('divisas:configuracion_vigencia'), datos)
 
-        response = self.client.get(reverse('divisas:configuracion_vigencia'))
-
-        self.assertEqual(response.status_code, 403)
-
-    def test_rechaza_tiempo_de_espera_del_importe_no_positivo(self):
-        """No permite configurar un tiempo de espera del importe en cero o negativo."""
-        response = self.client.post(
-            reverse('divisas:configuracion_vigencia'),
-            {
-                'calculo_vigencia_segundos': '0',
-                'confirmacion_vigencia_segundos': '300',
-                'pago_vigencia_segundos': '1800',
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(ConfiguracionVigencia.objects.exists())
-        self.assertContains(response, 'debe ser mayor que cero')
-
-    def test_rechaza_tiempo_de_espera_de_la_operacion_no_positivo(self):
-        """No permite configurar un tiempo de espera de la operación en cero o negativo."""
-        response = self.client.post(
-            reverse('divisas:configuracion_vigencia'),
-            {
-                'calculo_vigencia_segundos': '300',
-                'confirmacion_vigencia_segundos': '-5',
-                'pago_vigencia_segundos': '1800',
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(ConfiguracionVigencia.objects.exists())
-        self.assertContains(response, 'debe ser mayor que cero')
-
-    def test_rechaza_tiempo_de_espera_del_pago_no_positivo(self):
-        """No permite configurar un tiempo de espera del pago en cero o negativo."""
-        response = self.client.post(
-            reverse('divisas:configuracion_vigencia'),
-            {
-                'calculo_vigencia_segundos': '300',
-                'confirmacion_vigencia_segundos': '300',
-                'pago_vigencia_segundos': '0',
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(ConfiguracionVigencia.objects.exists())
-        self.assertContains(response, 'debe ser mayor que cero')
+                self.assertEqual(response.status_code, 200)
+                self.assertFalse(ConfiguracionVigencia.objects.exists())
+                self.assertContains(response, 'debe ser mayor que cero')

@@ -46,26 +46,27 @@ class RegistrarMovimientoExtraordinarioTest(TestCase):
 
     # --- Criterio 1 ---
 
-    def test_un_ingreso_extraordinario_actualiza_el_saldo_de_la_caja(self):
-        """Criterio 1: un ingreso extraordinario de una divisa suma a su saldo actual."""
-        response = self.client.post(self.url_ingreso, self._datos('100.00'), follow=True)
+    def test_un_ingreso_o_egreso_extraordinario_actualiza_el_saldo_de_la_caja(self):
+        """Criterio 1: un ingreso suma al saldo actual de la divisa; un egreso resta."""
+        with self.subTest('ingreso'):
+            response = self.client.post(self.url_ingreso, self._datos('100.00'), follow=True)
 
-        self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
-        movimiento = MovimientoExtraordinario.objects.get()
-        self.assertEqual(movimiento.tipo, MovimientoExtraordinario.TIPO_INGRESO)
-        self.assertEqual(movimiento.divisa, self.usd)
-        self.assertEqual(movimiento.monto, Decimal('100.00'))
-        self.assertEqual(movimiento.motivo, 'Retiro para gastos de oficina')
-        self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('600.00'))
+            self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
+            movimiento = MovimientoExtraordinario.objects.get()
+            self.assertEqual(movimiento.tipo, MovimientoExtraordinario.TIPO_INGRESO)
+            self.assertEqual(movimiento.divisa, self.usd)
+            self.assertEqual(movimiento.monto, Decimal('100.00'))
+            self.assertEqual(movimiento.motivo, 'Retiro para gastos de oficina')
+            self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('600.00'))
 
-    def test_un_egreso_extraordinario_actualiza_el_saldo_de_la_caja(self):
-        """Criterio 1: un egreso extraordinario de una divisa resta de su saldo actual."""
-        response = self.client.post(self.url_egreso, self._datos('100.00'), follow=True)
+        with self.subTest('egreso'):
+            # El saldo sigue desde el subtest anterior: 500.00 inicial + 100.00 de ingreso = 600.00.
+            response = self.client.post(self.url_egreso, self._datos('100.00'), follow=True)
 
-        self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
-        movimiento = MovimientoExtraordinario.objects.get()
-        self.assertEqual(movimiento.tipo, MovimientoExtraordinario.TIPO_EGRESO)
-        self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('400.00'))
+            self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
+            movimiento = MovimientoExtraordinario.objects.filter(tipo=MovimientoExtraordinario.TIPO_EGRESO).get()
+            self.assertEqual(movimiento.tipo, MovimientoExtraordinario.TIPO_EGRESO)
+            self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('500.00'))
 
     def test_un_movimiento_extraordinario_puede_registrarse_en_guaranies(self):
         """Criterio 1: a diferencia de ventanilla, PYG sí es una divisa operable acá."""
@@ -74,66 +75,56 @@ class RegistrarMovimientoExtraordinarioTest(TestCase):
         self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
         self.assertEqual(self.caja.saldo_actual(self.pyg), Decimal('950000.00'))
 
-    def test_sin_caja_abierta_rechaza_el_movimiento_y_pide_abrir_una(self):
-        """Sin caja abierta, el movimiento se rechaza e indica abrir una primero."""
+    def test_sin_caja_abierta_rechaza_el_movimiento_y_no_ofrece_el_formulario(self):
+        """Sin caja abierta, el movimiento se rechaza (POST) y tampoco se ofrece el formulario (GET)."""
         self.caja.delete()
 
-        response = self.client.post(self.url_ingreso, self._datos(), follow=True)
+        with self.subTest('POST rechazado'):
+            response = self.client.post(self.url_ingreso, self._datos(), follow=True)
 
-        self.assertContains(response, 'Necesitás abrir una caja')
-        self.assertFalse(MovimientoExtraordinario.objects.exists())
+            self.assertContains(response, 'Necesitás abrir una caja')
+            self.assertFalse(MovimientoExtraordinario.objects.exists())
 
-    def test_sin_caja_abierta_tampoco_se_ofrece_el_formulario(self):
-        """Sin caja abierta, no se puede acceder al formulario."""
-        self.caja.delete()
+        with self.subTest('formulario no ofrecido'):
+            response = self.client.get(self.url_ingreso, follow=True)
 
-        response = self.client.get(self.url_ingreso, follow=True)
-
-        self.assertContains(response, 'Necesitás abrir una caja')
-        self.assertNotContains(response, 'name="monto"')
+            self.assertContains(response, 'Necesitás abrir una caja')
+            self.assertNotContains(response, 'name="monto"')
 
     # --- Criterio 2 ---
 
-    def test_un_egreso_mayor_al_saldo_disponible_se_rechaza(self):
-        """Criterio 2: un egreso extraordinario mayor al saldo disponible se rechaza e informa el motivo."""
-        response = self.client.post(self.url_egreso, self._datos('1000.00'), follow=True)
+    def test_el_limite_de_saldo_solo_aplica_al_egreso_y_es_inclusivo(self):
+        """Criterio 2: un egreso mayor al saldo se rechaza; uno igual se acepta; un ingreso nunca tiene límite."""
+        with self.subTest('egreso mayor al saldo disponible'):
+            response = self.client.post(self.url_egreso, self._datos('1000.00'), follow=True)
 
-        self.assertContains(response, 'Saldo insuficiente de USD')
-        self.assertFalse(MovimientoExtraordinario.objects.exists())
-        self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('500.00'))
+            self.assertContains(response, 'Saldo insuficiente de USD')
+            self.assertFalse(MovimientoExtraordinario.objects.exists())
+            self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('500.00'))
 
-    def test_un_egreso_igual_al_saldo_disponible_se_acepta(self):
-        """El límite es inclusivo: un egreso por el saldo exacto disponible se acepta."""
-        response = self.client.post(self.url_egreso, self._datos('500.00'), follow=True)
+        with self.subTest('egreso igual al saldo disponible'):
+            response = self.client.post(self.url_egreso, self._datos('500.00'), follow=True)
 
-        self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
-        self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('0.00'))
+            self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
+            self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('0.00'))
 
-    def test_un_ingreso_nunca_se_rechaza_por_saldo(self):
-        """Un ingreso extraordinario no tiene límite de saldo: siempre puede sumarse."""
-        response = self.client.post(self.url_ingreso, self._datos('999999.00'), follow=True)
+        with self.subTest('ingreso sin límite'):
+            response = self.client.post(self.url_ingreso, self._datos('999999.00'), follow=True)
 
-        self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
+            self.assertContains(response, 'El movimiento extraordinario se registró correctamente')
 
     # --- Criterio 3 ---
 
-    def test_sin_motivo_no_se_registra_el_movimiento(self):
-        """Criterio 3: sin motivo, el sistema exige ese campo antes de permitir el registro."""
-        response = self.client.post(
-            self.url_ingreso, {'divisa': str(self.usd.pk), 'monto': '100.00', 'motivo': ''},
-        )
+    def test_un_motivo_vacio_o_solo_de_espacios_no_registra_el_movimiento(self):
+        """Criterio 3: sin motivo (vacío o solo espacios), el sistema exige ese campo antes de registrar."""
+        for motivo in ('', '   '):
+            with self.subTest(motivo=repr(motivo)):
+                response = self.client.post(
+                    self.url_ingreso, {'divisa': str(self.usd.pk), 'monto': '100.00', 'motivo': motivo},
+                )
 
-        self.assertContains(response, 'Debe indicar el motivo del movimiento.')
-        self.assertFalse(MovimientoExtraordinario.objects.exists())
-
-    def test_un_motivo_compuesto_solo_de_espacios_tampoco_se_acepta(self):
-        """Criterio 3: un motivo que al recortarlo queda vacío tampoco es válido."""
-        response = self.client.post(
-            self.url_ingreso, {'divisa': str(self.usd.pk), 'monto': '100.00', 'motivo': '   '},
-        )
-
-        self.assertContains(response, 'Debe indicar el motivo del movimiento.')
-        self.assertFalse(MovimientoExtraordinario.objects.exists())
+                self.assertContains(response, 'Debe indicar el motivo del movimiento.')
+                self.assertFalse(MovimientoExtraordinario.objects.exists())
 
     # --- Criterio 4 ---
 
@@ -169,32 +160,27 @@ class RegistrarMovimientoExtraordinarioTest(TestCase):
 
     # --- Validaciones del formulario ---
 
-    def test_un_monto_negativo_no_registra_el_movimiento(self):
-        """Un monto negativo se rechaza con el mismo criterio que el resto del sistema."""
-        response = self.client.post(self.url_ingreso, self._datos('-10.00'))
+    def test_un_monto_invalido_no_registra_el_movimiento(self):
+        """Un monto negativo o no numérico se rechaza con el mismo criterio que el resto del sistema."""
+        with self.subTest('negativo'):
+            response = self.client.post(self.url_ingreso, self._datos('-10.00'))
 
-        self.assertContains(response, 'El monto debe ser mayor que cero.')
-        self.assertFalse(MovimientoExtraordinario.objects.exists())
+            self.assertContains(response, 'El monto debe ser mayor que cero.')
+            self.assertFalse(MovimientoExtraordinario.objects.exists())
 
-    def test_un_monto_no_numerico_no_registra_el_movimiento(self):
-        """Un monto no numérico se rechaza sin crear nada."""
-        response = self.client.post(self.url_ingreso, self._datos('abc'))
+        with self.subTest('no numérico'):
+            response = self.client.post(self.url_ingreso, self._datos('abc'))
 
-        self.assertContains(response, 'El monto debe ser un número válido.')
-        self.assertFalse(MovimientoExtraordinario.objects.exists())
+            self.assertContains(response, 'El monto debe ser un número válido.')
+            self.assertFalse(MovimientoExtraordinario.objects.exists())
 
-    def test_pyg_se_ofrece_como_divisa_a_diferencia_de_ventanilla(self):
-        """A diferencia de 'OperacionVentanillaForm', PYG sí aparece como opción acá."""
-        response = self.client.get(self.url_ingreso)
-
-        self.assertContains(response, f'value="{self.pyg.pk}"')
-
-    def test_una_divisa_activa_sin_cotizacion_se_ofrece_igual(self):
-        """A diferencia de ventanilla, una divisa sin cotización vigente sí se puede usar."""
+    def test_pyg_y_una_divisa_sin_cotizacion_se_ofrecen_igual_a_diferencia_de_ventanilla(self):
+        """A diferencia de 'OperacionVentanillaForm', acá PYG y una divisa sin cotizar sí son opciones."""
         eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
 
         response = self.client.get(self.url_ingreso)
 
+        self.assertContains(response, f'value="{self.pyg.pk}"')
         self.assertContains(response, f'value="{eur.pk}"')
 
     def test_tipo_de_movimiento_desconocido_responde_404(self):
@@ -241,23 +227,24 @@ class CajaSaldoActualConMovimientosExtraordinariosTest(TestCase):
         SaldoInicialCaja.objects.create(caja=self.caja, divisa=self.pyg, monto=Decimal('1000000.00'))
         SaldoInicialCaja.objects.create(caja=self.caja, divisa=self.usd, monto=Decimal('200.00'))
 
-    def test_un_ingreso_extraordinario_suma_al_saldo_actual(self):
-        """Un ingreso extraordinario de una divisa suma a su saldo actual."""
-        MovimientoExtraordinario.objects.create(
-            caja=self.caja, cajero=self.cajero, tipo=MovimientoExtraordinario.TIPO_INGRESO,
-            divisa=self.usd, monto=Decimal('50.00'), motivo='Refuerzo de caja',
-        )
+    def test_un_ingreso_suma_y_un_egreso_resta_del_saldo_actual(self):
+        """Un ingreso extraordinario de una divisa suma a su saldo actual; un egreso resta."""
+        with self.subTest('ingreso'):
+            MovimientoExtraordinario.objects.create(
+                caja=self.caja, cajero=self.cajero, tipo=MovimientoExtraordinario.TIPO_INGRESO,
+                divisa=self.usd, monto=Decimal('50.00'), motivo='Refuerzo de caja',
+            )
 
-        self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('250.00'))
+            self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('250.00'))
 
-    def test_un_egreso_extraordinario_resta_del_saldo_actual(self):
-        """Un egreso extraordinario de una divisa resta de su saldo actual."""
-        MovimientoExtraordinario.objects.create(
-            caja=self.caja, cajero=self.cajero, tipo=MovimientoExtraordinario.TIPO_EGRESO,
-            divisa=self.usd, monto=Decimal('50.00'), motivo='Pago de un servicio',
-        )
+        with self.subTest('egreso'):
+            # Sigue desde el subtest anterior: 200.00 inicial + 50.00 de ingreso = 250.00.
+            MovimientoExtraordinario.objects.create(
+                caja=self.caja, cajero=self.cajero, tipo=MovimientoExtraordinario.TIPO_EGRESO,
+                divisa=self.usd, monto=Decimal('50.00'), motivo='Pago de un servicio',
+            )
 
-        self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('150.00'))
+            self.assertEqual(self.caja.saldo_actual(self.usd), Decimal('200.00'))
 
     def test_operaciones_de_ventanilla_y_movimientos_extraordinarios_se_combinan(self):
         """El saldo actual combina correctamente ventanilla y movimientos extraordinarios."""

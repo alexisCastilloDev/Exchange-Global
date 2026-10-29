@@ -26,12 +26,16 @@ lo que realmente se transfirió, nunca adelantado a algo que todavía
 podría fallar.
 
 Una entrega exitosa de una compra o de un cambio entre divisas (HU
-"Acreditación de fondos", GE-23) deja además la transacción en
-"Acreditada" en vez de "Pagada" sin más, con la fecha, hora y
-referencia externa de esa acreditación (ver ``_es_acreditable``). Una
-venta, por ahora, sigue quedando en "Pagada" al entregarse con éxito:
-"retirar" lo obtenido por una venta es la HU "Retiro de fondos" (GE-24),
-todavía no implementada.
+"Acreditación de fondos", GE-23) deja la transacción en "Acreditada" en
+vez de "Pagada" sin más, con la fecha, hora y referencia externa de esa
+acreditación. Una venta exitosa, en cambio, queda "Retirada" (HU
+"Retiro de fondos", GE-24, ver ``_es_retiro``): mismo mecanismo de
+entrega, al mismo momento (apenas se confirma el pago, sin ninguna
+acción extra del cliente — se paga y se recibe, los tres tipos de
+transacción por igual), solo que con un nombre de estado distinto a
+propósito, para que el cliente distinga de un vistazo si lo que pasó
+fue que Global Exchange le entregó algo (compra o cambio) o que él
+retiró lo suyo (venta).
 """
 
 import requests
@@ -89,20 +93,16 @@ def _enviar_transferencia_saliente(medio_destino, monto, referencia):
     respuesta.raise_for_status()
 
 
-def _es_acreditable(transaccion):
-    """Indica si, al entregarse con éxito, la transacción debe pasar a "Acreditada".
+def _es_retiro(transaccion):
+    """Indica si una entrega exitosa de esta transacción debe llamarse "Retirada", no "Acreditada".
 
-    Una compra o un cambio entre divisas reciben algo a cambio del pago
-    (ver HU "Acreditación de fondos", GE-23): si la entrega sale bien,
-    quedan "Acreditada" en vez de "Pagada" sin más, con su propia fecha,
-    hora y referencia. Una venta no, todavía: "retirar" lo obtenido por
-    una venta es la HU "Retiro de fondos" (GE-24), fuera de este
-    alcance — hasta que se implemente, una venta exitosa se sigue
-    quedando en "Pagada", como antes de esta HU.
+    Solo una venta (ver ``CalculoOperacion.ESTADO_RETIRADA``, HU "Retiro
+    de fondos" GE-24): un cambio entre divisas nunca llega a este caso,
+    así que esta función nunca necesita mirar
+    ``CalculoTriangulacion.ESTADO_RETIRADA`` (que, a propósito, ni
+    siquiera existe — ver su ``ESTADO_CHOICES``).
     """
-    if isinstance(transaccion, CalculoTriangulacion):
-        return True
-    return transaccion.tipo == CalculoOperacion.TIPO_COMPRA
+    return not isinstance(transaccion, CalculoTriangulacion) and transaccion.tipo == CalculoOperacion.TIPO_VENTA
 
 
 def realizar_entrega(transaccion):
@@ -125,9 +125,9 @@ def realizar_entrega(transaccion):
 
     Returns:
         bool: ``True`` si la entrega se completó (la transacción queda
-        "Acreditada" para una compra o un cambio, ver ``_es_acreditable``,
-        o sigue "Pagada" para una venta), ``False`` si falló (la
-        transacción ya quedó marcada "Entrega fallida").
+        "Acreditada" para una compra o un cambio, o "Retirada" para una
+        venta, ver ``_es_retiro``), ``False`` si falló (la transacción
+        ya quedó marcada "Entrega fallida").
     """
     medio_destino = transaccion.medio_destino
     if medio_destino is None:
@@ -157,7 +157,12 @@ def realizar_entrega(transaccion):
         transaccion.save(update_fields=['estado'])
         return False
 
-    if _es_acreditable(transaccion):
+    if _es_retiro(transaccion):
+        transaccion.estado = transaccion.ESTADO_RETIRADA
+        transaccion.retirado_en = timezone.now()
+        transaccion.referencia_retiro = referencia
+        transaccion.save(update_fields=['estado', 'retirado_en', 'referencia_retiro'])
+    else:
         transaccion.estado = transaccion.ESTADO_ACREDITADA
         transaccion.acreditado_en = timezone.now()
         transaccion.referencia_acreditacion = referencia

@@ -66,7 +66,7 @@ Contexto esperado: transaccion, form (None si no puede pagarse todavía).
                         <a href="{% url 'metodo_pago_create' %}">Agregá una</a> para poder pagar esta operación.
                     </div>
                 {% endif %}
-            {% elif transaccion.estado_efectivo == 'PAGADA' or transaccion.estado_efectivo == 'ACREDITADA' %}
+            {% elif transaccion.estado_efectivo == 'PAGADA' or transaccion.estado_efectivo == 'ACREDITADA' or transaccion.estado_efectivo == 'RETIRADA' %}
                 <div class="operation-expiry mt-3"><i class="bi bi-check2-circle me-1"></i> Esta operación ya fue pagada.</div>
             {% elif transaccion.estado_efectivo == 'ENTREGA_FALLIDA' %}
                 <div class="operation-expiry mt-3">

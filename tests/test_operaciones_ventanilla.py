@@ -93,23 +93,21 @@ class RegistrarOperacionVentanillaTest(TestCase):
 
     # --- Criterio 2 ---
 
-    def test_sin_caja_abierta_rechaza_la_operacion_y_pide_abrir_una(self):
-        """Criterio 2: sin caja abierta, la operación se rechaza e indica abrir una primero."""
+    def test_sin_caja_abierta_rechaza_la_operacion_y_no_ofrece_el_formulario(self):
+        """Criterio 2: sin caja abierta, la operación se rechaza (POST) y no se ofrece el formulario (GET)."""
         self.caja.delete()
 
-        response = self.client.post(self.url_comprar, self._datos(), follow=True)
+        with self.subTest('POST rechazado'):
+            response = self.client.post(self.url_comprar, self._datos(), follow=True)
 
-        self.assertContains(response, 'Necesitás abrir una caja')
-        self.assertFalse(OperacionVentanilla.objects.exists())
+            self.assertContains(response, 'Necesitás abrir una caja')
+            self.assertFalse(OperacionVentanilla.objects.exists())
 
-    def test_sin_caja_abierta_tampoco_se_ofrece_el_formulario(self):
-        """Criterio 2: tampoco se puede acceder al formulario sin una caja abierta."""
-        self.caja.delete()
+        with self.subTest('formulario no ofrecido'):
+            response = self.client.get(self.url_comprar, follow=True)
 
-        response = self.client.get(self.url_comprar, follow=True)
-
-        self.assertContains(response, 'Necesitás abrir una caja')
-        self.assertNotContains(response, 'name="monto"')
+            self.assertContains(response, 'Necesitás abrir una caja')
+            self.assertNotContains(response, 'name="monto"')
 
     # --- Criterio 3 ---
 
@@ -158,32 +156,27 @@ class RegistrarOperacionVentanillaTest(TestCase):
 
     # --- Validaciones del formulario ---
 
-    def test_un_monto_negativo_no_registra_la_operacion(self):
-        """Un monto negativo se rechaza con el mismo criterio que el resto del sistema."""
-        response = self.client.post(self.url_comprar, self._datos('-10.00'))
+    def test_un_monto_invalido_no_registra_la_operacion(self):
+        """Un monto negativo o no numérico se rechaza con el mismo criterio que el resto del sistema."""
+        with self.subTest('negativo'):
+            response = self.client.post(self.url_comprar, self._datos('-10.00'))
 
-        self.assertContains(response, 'El monto debe ser mayor que cero.')
-        self.assertFalse(OperacionVentanilla.objects.exists())
+            self.assertContains(response, 'El monto debe ser mayor que cero.')
+            self.assertFalse(OperacionVentanilla.objects.exists())
 
-    def test_un_monto_no_numerico_no_registra_la_operacion(self):
-        """Un monto no numérico se rechaza sin crear nada."""
-        response = self.client.post(self.url_comprar, self._datos('abc'))
+        with self.subTest('no numérico'):
+            response = self.client.post(self.url_comprar, self._datos('abc'))
 
-        self.assertContains(response, 'El monto debe ser un número válido.')
-        self.assertFalse(OperacionVentanilla.objects.exists())
+            self.assertContains(response, 'El monto debe ser un número válido.')
+            self.assertFalse(OperacionVentanilla.objects.exists())
 
-    def test_pyg_no_se_ofrece_como_divisa_operable(self):
-        """PYG no aparece como opción: es la moneda contra la que siempre se opera."""
-        response = self.client.get(self.url_comprar)
-
-        self.assertNotContains(response, f'value="{self.pyg.pk}"')
-
-    def test_una_divisa_activa_sin_cotizacion_no_se_ofrece_para_operar(self):
-        """Una divisa sin cotización vigente no se puede operar en ventanilla."""
+    def test_pyg_y_una_divisa_sin_cotizacion_no_se_ofrecen_como_divisa_operable(self):
+        """PYG nunca se ofrece (es la moneda contra la que siempre se opera); una divisa sin cotizar, tampoco."""
         eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
 
         response = self.client.get(self.url_comprar)
 
+        self.assertNotContains(response, f'value="{self.pyg.pk}"')
         self.assertNotContains(response, f'value="{eur.pk}"')
 
     def test_tipo_de_operacion_desconocido_responde_404(self):

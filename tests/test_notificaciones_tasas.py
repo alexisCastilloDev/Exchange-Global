@@ -317,20 +317,17 @@ class ListadoNotificacionesTest(NotificacionesTasasBaseTest):
 
         self.assertContains(response, 'Todavía no tenés notificaciones.')
 
-    def test_requiere_autenticacion(self):
-        """Un usuario anónimo es redirigido al login."""
-        response = self.client.get(self.url)
+    def test_requiere_autenticacion_y_rol_cliente(self):
+        """Un anónimo es redirigido al login; un autenticado sin rol de cliente, rechazado."""
+        with self.subTest('anónimo'):
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn(resolve_url(settings.LOGIN_URL), response.url)
 
-        self.assertEqual(response.status_code, 302)
-        self.assertIn(resolve_url(settings.LOGIN_URL), response.url)
-
-    def test_requiere_rol_cliente(self):
-        """Un usuario autenticado sin rol de cliente no puede acceder."""
-        self._login('analista', ['analista_cambiario'])
-
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 403)
+        with self.subTest('sin rol de cliente'):
+            self._login('analista', ['analista_cambiario'])
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 403)
 
 
 @pytest.mark.django_db
@@ -460,20 +457,17 @@ class MarcarComoLeidaTest(NotificacionesTasasBaseTest):
         self.notificacion.refresh_from_db()
         self.assertEqual(self.notificacion.leida_en, primera_lectura)
 
-    def test_redirige_a_next_si_es_seguro(self):
-        """Vuelve a la página del listado desde la que se marcó."""
-        destino = reverse('divisas:mis_notificaciones') + '?page=2'
+    def test_redirige_segun_el_next_recibido(self):
+        """Respeta un 'next' propio y seguro; ignora uno hacia otro dominio para evitar redirecciones abiertas."""
+        with self.subTest('next propio y seguro'):
+            destino = reverse('divisas:mis_notificaciones') + '?page=2'
+            response = self.client.post(self._url(self.notificacion), {'next': destino})
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.url, destino)
 
-        response = self.client.post(self._url(self.notificacion), {'next': destino})
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, destino)
-
-    def test_ignora_next_externo(self):
-        """Un ``next`` hacia otro dominio se ignora para evitar redirecciones abiertas."""
-        response = self.client.post(self._url(self.notificacion), {'next': 'https://malicioso.example/'})
-
-        self.assertRedirects(response, reverse('divisas:mis_notificaciones'))
+        with self.subTest('next externo, se ignora'):
+            response = self.client.post(self._url(self.otra), {'next': 'https://malicioso.example/'})
+            self.assertRedirects(response, reverse('divisas:mis_notificaciones'))
 
     def test_requiere_rol_cliente(self):
         """Un usuario sin rol de cliente no puede marcar notificaciones."""

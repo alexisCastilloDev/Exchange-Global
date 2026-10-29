@@ -29,10 +29,10 @@ class TestClienteForm:
         assert form.fields['segmento'].choices == Cliente.SEGMENTO_CHOICES
         assert form.fields['segmento'].widget.__class__.__name__ == 'Select'
 
-    def test_registro_persona_fisica_exitoso(self):
-        """Criterio: Registra exitosamente si el documento CI pertenece a un usuario existente."""
+    def test_registro_exitoso_con_o_sin_usuario_previo_fisica_o_juridica(self):
+        """Criterio: registra si el CI/RUC pertenece a un usuario existente, o aunque no exista ninguno."""
         User.objects.create_user(username='1234567', email='juan.perez@test.com')
-        datos = {
+        datos_con_usuario = {
             'tipo_cliente': 'FISICA',
             'nombre': 'Juan',
             'apellido': 'Pérez',
@@ -40,14 +40,12 @@ class TestClienteForm:
             'email': 'juan.perez@test.com',
             'segmento': 'ESTANDAR'
         }
-        form = ClienteForm(data=datos)
+        form = ClienteForm(data=datos_con_usuario)
         assert form.is_valid() is True
         cliente = form.save()
         assert cliente.user.username == '1234567'
 
-    def test_permitir_creacion_cliente_sin_usuario_previo(self):
-        """Criterio: Permite registrar un cliente con documento aunque no exista un usuario asociado."""
-        datos = {
+        datos_sin_usuario = {
             'tipo_cliente': 'FISICA',
             'nombre': 'Carlos',
             'apellido': 'López',
@@ -55,37 +53,31 @@ class TestClienteForm:
             'email': 'carlos@test.com',
             'segmento': 'ESTANDAR'
         }
-        form = ClienteForm(data=datos)
-        assert form.is_valid() is True
+        assert ClienteForm(data=datos_sin_usuario).is_valid() is True
 
-    def test_registro_persona_juridica_exitoso(self):
-        """Criterio: Registra persona jurídica si el RUC coincide con un usuario registrado."""
         User.objects.create_user(username='80012345-6', email='contacto@empresa.com')
-        datos = {
+        datos_juridica = {
             'tipo_cliente': 'JURIDICA',
             'razon_social': 'Empresa SA',
             'identificador': '80012345-6',
             'email': 'contacto@empresa.com',
             'segmento': 'CORPORATIVO'
         }
-        form = ClienteForm(data=datos)
-        assert form.is_valid() is True
+        assert ClienteForm(data=datos_juridica).is_valid() is True
 
-    def test_error_campos_obligatorios_vacios_fisica(self):
-        """Criterio: Dejar campos requeridos vacíos muestra errores de validación."""
+    def test_rechaza_campos_obligatorios_vacios_o_identificador_ya_vinculado(self):
+        """Criterio: campos vacíos, o un CI ya vinculado a otro cliente, muestran sus errores propios."""
         User.objects.create_user(username='1234567', email='inc@test.com')
-        datos = {
+        datos_incompletos = {
             'tipo_cliente': 'FISICA',
             'identificador': '1234567',
             'segmento': 'ESTANDAR'
         }
-        form = ClienteForm(data=datos)
+        form = ClienteForm(data=datos_incompletos)
         assert form.is_valid() is False
         assert 'nombre' in form.errors
         assert 'apellido' in form.errors
 
-    def test_rechazo_registro_usuario_ya_vinculado(self):
-        """Criterio: Rechaza el registro si el usuario con ese documento ya posee perfil de cliente."""
         u1 = User.objects.create_user(username='5555555', email='ana@test.com')
         Cliente.objects.create(
             user=u1,
@@ -96,8 +88,7 @@ class TestClienteForm:
             email='ana@test.com',
             segmento='ESTANDAR'
         )
-
-        datos = {
+        datos_duplicados = {
             'tipo_cliente': 'FISICA',
             'nombre': 'Ana María',
             'apellido': 'Gómez',
@@ -105,7 +96,7 @@ class TestClienteForm:
             'email': 'ana.otra@test.com',
             'segmento': 'ESTANDAR'
         }
-        form = ClienteForm(data=datos)
+        form = ClienteForm(data=datos_duplicados)
         assert form.is_valid() is False
         assert 'identificador' in form.errors
 
@@ -144,8 +135,8 @@ class TestClienteView:
     y eliminación (baja lógica) de Clientes.
     """
 
-    def test_acceso_denegado_a_usuario_comun(self, client):
-        """Valida que un usuario común reciba un HTTP 403 al intentar acceder al alta."""
+    def test_acceso_al_alta_segun_el_rol(self, client):
+        """Un usuario común recibe 403 al intentar acceder al alta; un administrador, 200."""
         usuario = User.objects.create_user(
             username='user_normal',
             email='user@test.com',
@@ -155,8 +146,6 @@ class TestClienteView:
         response = client.get('/clientes/nuevo/')
         assert response.status_code == 403
 
-    def test_acceso_permitido_a_administrador(self, client):
-        """Valida que un administrador pueda ingresar al formulario de alta."""
         admin = User.objects.create_user(
             username='admin_user',
             email='admin@test.com',
@@ -300,8 +289,8 @@ class TestClienteView:
         cliente.refresh_from_db()
         assert cliente.segmento == 'VIP'
 
-    def test_asignar_comision_personalizada_a_un_cliente(self, client):
-        """Un administrador puede definir una comisión preferencial para un cliente."""
+    def test_comision_personalizada_se_puede_definir_o_dejar_vacia(self, client):
+        """Un administrador puede definir una comisión preferencial; si no la define, queda vacía."""
         admin = User.objects.create_user(username='admin_comision', is_staff=True)
         user_cliente = User.objects.create_user(username='6666666', email='pref@test.com')
         cliente = Cliente.objects.create(
@@ -327,16 +316,12 @@ class TestClienteView:
             'comision_personalizada': '0.500',
         })
         assert response.status_code == 302
-
         cliente.refresh_from_db()
         assert cliente.comision_personalizada == pytest.approx(0.5)
 
-    def test_comision_personalizada_es_opcional(self, client):
-        """No definir una comisión personalizada deja el campo vacío."""
-        admin = User.objects.create_user(username='admin_sin_comision', is_staff=True)
-        user_cliente = User.objects.create_user(username='6666667', email='sinpref@test.com')
-        cliente = Cliente.objects.create(
-            user=user_cliente,
+        user_cliente_2 = User.objects.create_user(username='6666667', email='sinpref@test.com')
+        cliente_2 = Cliente.objects.create(
+            user=user_cliente_2,
             tipo_cliente='FISICA',
             nombre='Regular',
             apellido='Cliente',
@@ -344,11 +329,9 @@ class TestClienteView:
             email='sinpref@test.com',
             segmento='ESTANDAR',
         )
+        url_2 = reverse('cliente_update', kwargs={'pk': cliente_2.pk})
 
-        client.force_login(admin)
-        url = reverse('cliente_update', kwargs={'pk': cliente.pk})
-
-        response = client.post(url, data={
+        response = client.post(url_2, data={
             'tipo_cliente': 'FISICA',
             'nombre': 'Regular',
             'apellido': 'Cliente',
@@ -357,9 +340,8 @@ class TestClienteView:
             'segmento': 'ESTANDAR',
         })
         assert response.status_code == 302
-
-        cliente.refresh_from_db()
-        assert cliente.comision_personalizada is None
+        cliente_2.refresh_from_db()
+        assert cliente_2.comision_personalizada is None
 
     def test_listado_clientes_es_paginado_y_muestra_datos_principales(self, client):
         """El listado administrativo pagina los clientes y muestra sus datos principales."""
@@ -513,19 +495,20 @@ class TestClienteView:
         assert historial.status_code == 200
         assert 'Solicitud del cliente' in historial.content.decode()
 
-    def test_listado_general_oculta_inactivos_por_defecto(self, client):
+    def test_listado_general_oculta_inactivos_siempre(self, client):
         """
         HU GE-63 - Criterio 2:
-        Dado que un cliente está dado de baja, cuando consulto el listado general,
-        entonces el sistema no lo muestra entre los clientes activos por defecto.
+        Un cliente dado de baja no aparece en el listado general por defecto, ni
+        aunque se envíe el antiguo filtro histórico ('incluir_inactivos'): se
+        conserva en la base, pero nunca en el listado operativo.
         """
         admin = User.objects.create_user(username='admin_ge63_2', is_superuser=True)
-        
+
         u1 = User.objects.create_user(username='444', email='4@test.com')
         cliente_activo = Cliente.objects.create(
             user=u1, tipo_cliente='FISICA', nombre='Activo', apellido='A', identificador='444'
         )
-        
+
         u2 = User.objects.create_user(username='555', email='5@test.com')
         cliente_inactivo = Cliente.objects.create(
             user=u2, tipo_cliente='FISICA', nombre='Inactivo', apellido='I', identificador='555', is_active=False
@@ -537,31 +520,13 @@ class TestClienteView:
 
         assert response.status_code == 200
         clientes_en_contexto = response.context['clientes']
-        
-        # El cliente activo debe estar, el inactivo debe ocultarse
         assert cliente_activo in clientes_en_contexto
         assert cliente_inactivo not in clientes_en_contexto
 
-    def test_listado_clientes_oculta_bajas_logicas(self, client):
-        """
-        Los clientes dados de baja se conservan en PostgreSQL, pero no aparecen
-        en el listado operativo aunque se envíe el antiguo filtro histórico.
-        """
-        admin = User.objects.create_user(username='admin_ge63_3', is_superuser=True)
-        u1 = User.objects.create_user(username='666', email='6@test.com')
-        cliente_inactivo = Cliente.objects.create(
-            user=u1, tipo_cliente='FISICA', nombre='Inactivo', apellido='I', identificador='666', is_active=False
-        )
-
-        client.force_login(admin)
-        url = reverse('panel_admin')
-        
         response = client.get(url, {'incluir_inactivos': '1'})
 
         assert response.status_code == 200
-        clientes_en_contexto = response.context['clientes']
-
-        assert cliente_inactivo not in clientes_en_contexto
+        assert cliente_inactivo not in response.context['clientes']
 
 
 @pytest.mark.django_db

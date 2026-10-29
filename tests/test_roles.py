@@ -64,33 +64,25 @@ def _login_con_roles(client, user, roles):
 # ============================================================================
 
 @pytest.mark.django_db
-def test_usuario_no_autenticado_es_redirigido_al_login(client):
-    """Redirige al login a quien intenta consultar usuarios sin sesión."""
+def test_acceso_a_lista_usuarios_segun_sesion_y_rol(client, usuario_cliente, usuario_con_permiso_usuarios, usuario_admin):
+    """Sin sesión, redirige; con rol 'cliente', deniega; con 'usuarios' o 'admin', permite."""
+    # Redirige al login a quien intenta consultar usuarios sin sesión.
     response = client.get(reverse('lista_usuarios'))
     assert response.status_code == 302
 
-
-@pytest.mark.django_db
-def test_usuario_sin_rol_usuarios_es_denegado(client, usuario_cliente):
-    """Deniega el acceso cuando falta el rol de usuarios."""
+    # Deniega el acceso cuando falta el rol de usuarios.
     _login_con_roles(client, usuario_cliente, roles=['cliente'])
     response = client.get(reverse('lista_usuarios'), follow=True)
     assert response.status_code == 200  # terminó en 'home' tras el redirect
     mensajes = [str(m) for m in response.context['messages']]
     assert any('permiso' in m.lower() for m in mensajes)
 
-
-@pytest.mark.django_db
-def test_usuario_con_rol_usuarios_accede_a_la_lista(client, usuario_con_permiso_usuarios):
-    """Permite listar usuarios al rol autorizado."""
+    # Permite listar usuarios al rol autorizado.
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
     response = client.get(reverse('lista_usuarios'))
     assert response.status_code == 200
 
-
-@pytest.mark.django_db
-def test_admin_accede_a_la_lista_sin_tener_el_rol_especifico(client, usuario_admin):
-    """El rol 'admin' siempre pasa el decorador, sin importar el código de recurso."""
+    # El rol 'admin' siempre pasa el decorador, sin importar el código de recurso.
     _login_con_roles(client, usuario_admin, roles=['admin'])
     response = client.get(reverse('lista_usuarios'))
     assert response.status_code == 200
@@ -107,16 +99,16 @@ def test_busqueda_filtra_por_nombre_apellido_o_email(mock_sync, client, usuario_
 
 
 @pytest.mark.django_db
-def test_editar_usuario_actualiza_datos_locales_y_en_keycloak(client, usuario_con_permiso_usuarios, usuario_objetivo):
-    """Sincroniza la edición local con la API de Keycloak."""
+def test_editar_usuario_segun_si_keycloak_responde(client, usuario_con_permiso_usuarios, usuario_objetivo):
+    """Si Keycloak responde, sincroniza los datos locales; si falla, no guarda nada localmente."""
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
 
+    # Sincroniza la edición local con la API de Keycloak.
     with patch('apps.users.views.actualizar_usuario_en_keycloak') as mock_actualizar:
         response = client.post(
             reverse('editar_usuario', args=[usuario_objetivo.id]),
             {'first_name': 'Ana María', 'last_name': 'Gómez', 'is_active': 'on'},
         )
-
     mock_actualizar.assert_called_once_with(
         email=usuario_objetivo.email,
         first_name='Ana María',
@@ -127,23 +119,17 @@ def test_editar_usuario_actualiza_datos_locales_y_en_keycloak(client, usuario_co
     assert usuario_objetivo.first_name == 'Ana María'
     assert response.status_code == 302
 
-
-@pytest.mark.django_db
-def test_editar_usuario_muestra_error_si_keycloak_falla(client, usuario_con_permiso_usuarios, usuario_objetivo):
-    """Muestra un error y conserva datos locales si Keycloak falla."""
-    _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
-
+    # Muestra un error y conserva datos locales si Keycloak falla.
     with patch('apps.users.views.actualizar_usuario_en_keycloak', side_effect=Exception('timeout')):
         response = client.post(
             reverse('editar_usuario', args=[usuario_objetivo.id]),
-            {'first_name': 'Ana María', 'last_name': 'Gómez'},
+            {'first_name': 'Ana María Dos', 'last_name': 'Gómez'},
             follow=True,
         )
-
     mensajes = [str(m) for m in response.context['messages']]
     assert any('error' in m.lower() for m in mensajes)
     usuario_objetivo.refresh_from_db()
-    assert usuario_objetivo.first_name == 'Ana'  # no se guardó nada localmente si Keycloak falló
+    assert usuario_objetivo.first_name == 'Ana María'  # no se guardó nada localmente si Keycloak falló
 
 
 # ============================================================================
@@ -151,23 +137,19 @@ def test_editar_usuario_muestra_error_si_keycloak_falla(client, usuario_con_perm
 # ============================================================================
 
 @pytest.mark.django_db
-def test_usuario_con_rol_usuarios_no_puede_gestionar_roles(client, usuario_con_permiso_usuarios, usuario_objetivo):
-    """'usuarios' no alcanza para /roles/: son permisos distintos."""
+def test_acceso_a_editar_roles_segun_rol(client, usuario_con_permiso_usuarios, usuario_gestor_roles, usuario_objetivo):
+    """'usuarios' no alcanza para /roles/ (son permisos distintos); 'gestion_roles' sí ve el formulario."""
+    # 'usuarios' no alcanza para /roles/: son permisos distintos.
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
     response = client.get(reverse('editar_roles', args=[usuario_objetivo.id]), follow=True)
     mensajes = [str(m) for m in response.context['messages']]
     assert any('permiso' in m.lower() for m in mensajes)
 
-
-@pytest.mark.django_db
-def test_usuario_con_rol_gestion_roles_ve_el_formulario(client, usuario_gestor_roles, usuario_objetivo):
-    """Muestra el formulario a quien posee el rol de gestión de roles."""
+    # Muestra el formulario a quien posee el rol de gestión de roles.
     _login_con_roles(client, usuario_gestor_roles, roles=['gestion_roles'])
-
     with patch('apps.users.views.obtener_roles_disponibles', return_value=['admin', 'cajero', 'usuarios']), \
          patch('apps.users.views.obtener_roles_de_usuario', return_value=['cajero']):
         response = client.get(reverse('editar_roles', args=[usuario_objetivo.id]))
-
     assert response.status_code == 200
     assert response.context['roles_disponibles'] == ['admin', 'cajero', 'usuarios']
     assert response.context['roles_actuales'] == ['cajero']

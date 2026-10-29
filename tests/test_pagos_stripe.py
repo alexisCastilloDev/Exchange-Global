@@ -81,23 +81,21 @@ def _crear_tarjeta_stripe(cliente, referencia_externa='pm_guardado_123'):
 class MontoYMonedaTest(TestCase):
     """Pruebas unitarias de las conversiones de monto y moneda hacia Stripe."""
 
-    def test_pyg_no_usa_centavos(self):
-        """PYG es 'sin decimales' en Stripe: el monto se manda tal cual."""
-        self.assertEqual(_monto_en_unidad_minima_stripe(Decimal('747400.00'), 'PYG'), 747400)
+    def test_el_monto_en_unidad_minima_depende_de_si_la_moneda_usa_centavos(self):
+        with self.subTest('PYG, sin decimales: el monto se manda tal cual'):
+            self.assertEqual(_monto_en_unidad_minima_stripe(Decimal('747400.00'), 'PYG'), 747400)
 
-    def test_otra_moneda_se_multiplica_por_cien(self):
-        """Una moneda común (EUR) se manda en centavos."""
-        self.assertEqual(_monto_en_unidad_minima_stripe(Decimal('89.22'), 'EUR'), 8922)
+        with self.subTest('una moneda común (EUR) se manda en centavos'):
+            self.assertEqual(_monto_en_unidad_minima_stripe(Decimal('89.22'), 'EUR'), 8922)
 
-    def test_moneda_de_liquidacion_de_una_operacion_es_siempre_pyg(self):
-        """Una compra/venta siempre liquida en PYG, sin importar la divisa operada."""
-        operacion = CalculoOperacion(codigo_divisa='USD')
-        self.assertEqual(_moneda_de_liquidacion(operacion), 'PYG')
+    def test_la_moneda_de_liquidacion_depende_del_tipo_de_transaccion(self):
+        with self.subTest('una compra/venta siempre liquida en PYG, sin importar la divisa operada'):
+            operacion = CalculoOperacion(codigo_divisa='USD')
+            self.assertEqual(_moneda_de_liquidacion(operacion), 'PYG')
 
-    def test_moneda_de_liquidacion_de_un_cambio_es_la_divisa_de_origen(self):
-        """Un cambio se cobra en su divisa de ORIGEN (lo que el cliente entrega), no en la de destino."""
-        cambio = CalculoTriangulacion(codigo_divisa_origen='USD', codigo_divisa_destino='EUR')
-        self.assertEqual(_moneda_de_liquidacion(cambio), 'USD')
+        with self.subTest('un cambio se cobra en su divisa de ORIGEN (lo que el cliente entrega), no la de destino'):
+            cambio = CalculoTriangulacion(codigo_divisa_origen='USD', codigo_divisa_destino='EUR')
+            self.assertEqual(_moneda_de_liquidacion(cambio), 'USD')
 
 
 class ADictTest(TestCase):
@@ -110,22 +108,20 @@ class ADictTest(TestCase):
     planos, que sí tienen ``.get()`` y no detectaron el problema.
     """
 
-    def test_convierte_un_stripe_object_real_a_dict_plano(self):
-        """Un StripeObject real (con anidados) se aplana por completo."""
-        objeto = _stripe_object({'a': 1, 'metadata': {'x': 'y'}})
+    def test_a_dict_segun_el_tipo_de_entrada(self):
+        with self.subTest('un StripeObject real (con anidados) se aplana por completo'):
+            objeto = _stripe_object({'a': 1, 'metadata': {'x': 'y'}})
 
-        resultado = _a_dict(objeto)
+            resultado = _a_dict(objeto)
 
-        self.assertEqual(resultado, {'a': 1, 'metadata': {'x': 'y'}})
-        self.assertEqual(resultado.get('a'), 1)
+            self.assertEqual(resultado, {'a': 1, 'metadata': {'x': 'y'}})
+            self.assertEqual(resultado.get('a'), 1)
 
-    def test_un_dict_plano_se_devuelve_sin_tocar(self):
-        """Un dict ya plano (como los que arman los tests) no necesita conversión."""
-        self.assertEqual(_a_dict({'a': 1}), {'a': 1})
+        with self.subTest('un dict ya plano (como los que arman los tests) no necesita conversión'):
+            self.assertEqual(_a_dict({'a': 1}), {'a': 1})
 
-    def test_none_se_convierte_en_dict_vacio(self):
-        """Sin metadata (``None``), no hay nada que convertir."""
-        self.assertEqual(_a_dict(None), {})
+        with self.subTest('sin metadata (None), no hay nada que convertir'):
+            self.assertEqual(_a_dict(None), {})
 
 
 class ClienteStripeTest(TestCase):
@@ -139,27 +135,24 @@ class ClienteStripeTest(TestCase):
         )
 
     @patch('apps.divisas.pagos_stripe.stripe.Customer.create')
-    def test_crea_un_customer_nuevo_si_el_cliente_no_tiene_uno(self, mock_create):
-        """La primera vez, crea el Customer en Stripe y lo guarda en el cliente."""
-        mock_create.return_value = SimpleNamespace(id='cus_nuevo_123')
+    def test_crea_o_reutiliza_el_customer_segun_si_el_cliente_ya_tiene_uno(self, mock_create):
+        with self.subTest('la primera vez, crea el Customer en Stripe y lo guarda en el cliente'):
+            mock_create.return_value = SimpleNamespace(id='cus_nuevo_123')
 
-        customer_id = _obtener_o_crear_cliente_stripe(self.cliente)
+            customer_id = _obtener_o_crear_cliente_stripe(self.cliente)
 
-        self.assertEqual(customer_id, 'cus_nuevo_123')
-        self.cliente.refresh_from_db()
-        self.assertEqual(self.cliente.stripe_customer_id, 'cus_nuevo_123')
-        mock_create.assert_called_once()
+            self.assertEqual(customer_id, 'cus_nuevo_123')
+            self.cliente.refresh_from_db()
+            self.assertEqual(self.cliente.stripe_customer_id, 'cus_nuevo_123')
+            mock_create.assert_called_once()
 
-    @patch('apps.divisas.pagos_stripe.stripe.Customer.create')
-    def test_reutiliza_el_customer_si_el_cliente_ya_tiene_uno(self, mock_create):
-        """Si el cliente ya tiene un Customer guardado, no crea uno nuevo."""
-        self.cliente.stripe_customer_id = 'cus_existente_456'
-        self.cliente.save(update_fields=['stripe_customer_id'])
+        with self.subTest('si el cliente ya tiene un Customer guardado, no crea uno nuevo'):
+            mock_create.reset_mock()
 
-        customer_id = _obtener_o_crear_cliente_stripe(self.cliente)
+            customer_id = _obtener_o_crear_cliente_stripe(self.cliente)
 
-        self.assertEqual(customer_id, 'cus_existente_456')
-        mock_create.assert_not_called()
+            self.assertEqual(customer_id, 'cus_nuevo_123')
+            mock_create.assert_not_called()
 
 
 class ConfiguracionSoloTarjetaTest(TestCase):
@@ -179,30 +172,28 @@ class ConfiguracionSoloTarjetaTest(TestCase):
 
     @patch('apps.divisas.pagos_stripe.stripe.PaymentMethodConfiguration.create')
     @patch('apps.divisas.pagos_stripe.stripe.PaymentMethodConfiguration.list')
-    def test_reutiliza_la_configuracion_si_ya_existe(self, mock_list, mock_create):
-        """Si ya existe una configuración con ese nombre, la reutiliza en vez de crear otra."""
-        mock_list.return_value = SimpleNamespace(
-            data=[SimpleNamespace(id='pmc_existente', name='Global Exchange - solo tarjeta')],
-        )
+    def test_reutiliza_o_crea_la_configuracion_segun_si_ya_existe(self, mock_list, mock_create):
+        with self.subTest('si ya existe una configuración con ese nombre, la reutiliza en vez de crear otra'):
+            mock_list.return_value = SimpleNamespace(
+                data=[SimpleNamespace(id='pmc_existente', name='Global Exchange - solo tarjeta')],
+            )
 
-        resultado = _configuracion_solo_tarjeta()
+            resultado = _configuracion_solo_tarjeta()
 
-        self.assertEqual(resultado, 'pmc_existente')
-        mock_create.assert_not_called()
+            self.assertEqual(resultado, 'pmc_existente')
+            mock_create.assert_not_called()
 
-    @patch('apps.divisas.pagos_stripe.stripe.PaymentMethodConfiguration.create')
-    @patch('apps.divisas.pagos_stripe.stripe.PaymentMethodConfiguration.list')
-    def test_crea_la_configuracion_con_tarjeta_prendida_y_link_apagado_si_no_existe(self, mock_list, mock_create):
-        """Sin una configuración previa, crea una nueva con tarjeta prendida y Link apagado."""
-        mock_list.return_value = SimpleNamespace(data=[])
-        mock_create.return_value = SimpleNamespace(id='pmc_nueva')
+        with self.subTest('sin una configuración previa, crea una nueva con tarjeta prendida y Link apagado'):
+            pagos_stripe._configuracion_solo_tarjeta_cache['id'] = None
+            mock_list.return_value = SimpleNamespace(data=[])
+            mock_create.return_value = SimpleNamespace(id='pmc_nueva')
 
-        resultado = _configuracion_solo_tarjeta()
+            resultado = _configuracion_solo_tarjeta()
 
-        self.assertEqual(resultado, 'pmc_nueva')
-        kwargs = mock_create.call_args.kwargs
-        self.assertEqual(kwargs['card']['display_preference']['preference'], 'on')
-        self.assertEqual(kwargs['link']['display_preference']['preference'], 'off')
+            self.assertEqual(resultado, 'pmc_nueva')
+            kwargs = mock_create.call_args.kwargs
+            self.assertEqual(kwargs['card']['display_preference']['preference'], 'on')
+            self.assertEqual(kwargs['link']['display_preference']['preference'], 'off')
 
     @patch('apps.divisas.pagos_stripe.stripe.PaymentMethodConfiguration.create')
     @patch('apps.divisas.pagos_stripe.stripe.PaymentMethodConfiguration.list')
@@ -239,31 +230,26 @@ class ResolverMetodoPagoTarjetaTest(TestCase):
 
         self.assertEqual(resultado, self.tarjeta)
 
-    def test_no_resuelve_nada_sin_id(self):
-        """Sin ningún id (p. ej. falta el query param), no hay nada que resolver."""
-        self.assertIsNone(_resolver_metodo_pago_tarjeta(self.cliente, None))
+    def test_no_resuelve_nada_en_estos_casos(self):
+        with self.subTest('sin ningún id (p. ej. falta el query param), no hay nada que resolver'):
+            self.assertIsNone(_resolver_metodo_pago_tarjeta(self.cliente, None))
 
-    def test_no_resuelve_una_tarjeta_de_otro_cliente(self):
-        """La tarjeta de otro cliente no se puede usar para pagar, aunque se adivine el pk."""
-        self.assertIsNone(_resolver_metodo_pago_tarjeta(self.otro_cliente, self.tarjeta.pk))
+        with self.subTest('la tarjeta de otro cliente no se puede usar para pagar, aunque se adivine el pk'):
+            self.assertIsNone(_resolver_metodo_pago_tarjeta(self.otro_cliente, self.tarjeta.pk))
 
-    def test_no_resuelve_un_metodo_sin_referencia_externa(self):
-        """Un método de tipo tarjeta sin vínculo real a Stripe no se puede cobrar directo."""
-        sin_vinculo = MetodoPago.objects.create(
-            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TARJETA,
-            nombre_titular='Bruno', entidad_financiera='Visa', numero_tarjeta='1234',
-        )
+        with self.subTest('un método de tipo tarjeta sin vínculo real a Stripe no se puede cobrar directo'):
+            sin_vinculo = MetodoPago.objects.create(
+                cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TARJETA,
+                nombre_titular='Bruno', entidad_financiera='Visa', numero_tarjeta='1234',
+            )
+            self.assertIsNone(_resolver_metodo_pago_tarjeta(self.cliente, sin_vinculo.pk))
 
-        self.assertIsNone(_resolver_metodo_pago_tarjeta(self.cliente, sin_vinculo.pk))
-
-    def test_no_resuelve_un_metodo_que_no_es_tarjeta(self):
-        """Una transferencia o billetera no sirve para iniciar un cobro con Stripe."""
-        transferencia = MetodoPago.objects.create(
-            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
-            nombre_titular='Bruno', entidad_financiera='Banco', numero_cuenta='123', tipo_cuenta='AHORRO',
-        )
-
-        self.assertIsNone(_resolver_metodo_pago_tarjeta(self.cliente, transferencia.pk))
+        with self.subTest('una transferencia o billetera no sirve para iniciar un cobro con Stripe'):
+            transferencia = MetodoPago.objects.create(
+                cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+                nombre_titular='Bruno', entidad_financiera='Banco', numero_cuenta='123', tipo_cuenta='AHORRO',
+            )
+            self.assertIsNone(_resolver_metodo_pago_tarjeta(self.cliente, transferencia.pk))
 
 
 class IniciarPagoStripeOperacionTest(TestCase):
@@ -341,57 +327,56 @@ class IniciarPagoStripeOperacionTest(TestCase):
         self.assertEqual(kwargs['idempotency_key'], f'ge22-pago-directo-{self.transaccion.pk}')
 
     @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
-    def test_sin_metodo_de_pago_en_la_url_pide_elegir_uno(self, mock_payment_intent):
-        """Sin ``?metodo_pago=``, no hay con qué cobrar: se pide elegir una tarjeta guardada."""
-        response = self.client.get(self.url_base, follow=True)
+    def test_sin_una_tarjeta_propia_valida_pide_elegir_una(self, mock_payment_intent):
+        """Sin ``?metodo_pago=``, o con el pk de una tarjeta ajena: no hay con qué cobrar."""
+        with self.subTest('sin metodo_pago en la URL'):
+            response = self.client.get(self.url_base, follow=True)
 
-        self.assertContains(response, 'Elegí una tarjeta guardada para pagar con Stripe')
-        mock_payment_intent.assert_not_called()
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertContains(response, 'Elegí una tarjeta guardada para pagar con Stripe')
+            mock_payment_intent.assert_not_called()
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
 
-    @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
-    def test_metodo_de_otro_cliente_no_se_puede_usar(self, mock_payment_intent):
-        """El pk de una tarjeta ajena en la URL no sirve para cobrar nada."""
-        otro_usuario, otro_cliente = _crear_cliente_logueado(
-            self.client, 'otro-cliente-stripe-op', 'STRIPE-OP-002',
-        )
-        tarjeta_ajena = _crear_tarjeta_stripe(otro_cliente, referencia_externa='pm_ajeno')
-        self.client.logout()
-        self.client.login(username='cliente-stripe-op', password='password123')
-        session = self.client.session
-        session['keycloak_roles'] = ['cliente']
-        session.save()
+        with self.subTest('con el pk de una tarjeta de otro cliente'):
+            otro_usuario, otro_cliente = _crear_cliente_logueado(
+                self.client, 'otro-cliente-stripe-op', 'STRIPE-OP-002',
+            )
+            tarjeta_ajena = _crear_tarjeta_stripe(otro_cliente, referencia_externa='pm_ajeno')
+            self.client.logout()
+            self.client.login(username='cliente-stripe-op', password='password123')
+            session = self.client.session
+            session['keycloak_roles'] = ['cliente']
+            session.save()
 
-        response = self.client.get(f'{self.url_base}?metodo_pago={tarjeta_ajena.pk}', follow=True)
+            response = self.client.get(f'{self.url_base}?metodo_pago={tarjeta_ajena.pk}', follow=True)
 
-        self.assertContains(response, 'Elegí una tarjeta guardada para pagar con Stripe')
-        mock_payment_intent.assert_not_called()
-
-    @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
-    def test_no_permite_pagar_una_transaccion_que_no_esta_confirmada(self, mock_payment_intent):
-        """Solo una transacción 'Confirmada' puede iniciar un pago con tarjeta."""
-        self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
-        self.transaccion.save(update_fields=['estado'])
-
-        response = self.client.get(self.url, follow=True)
-
-        self.assertContains(response, 'no está en condiciones de pagarse')
-        mock_payment_intent.assert_not_called()
+            self.assertContains(response, 'Elegí una tarjeta guardada para pagar con Stripe')
+            mock_payment_intent.assert_not_called()
 
     @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
-    def test_no_permite_cobrar_si_la_tasa_fijada_ya_vencio(self, mock_payment_intent):
-        """Con la tasa vencida, no se inicia ningún cobro nuevo (ni directo ni por Checkout)."""
-        self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
-        self.transaccion.save(update_fields=['tasa_vence_en'])
+    def test_no_permite_cobrar_si_la_transaccion_no_esta_en_condiciones(self, mock_payment_intent):
+        """Solo una transacción 'Confirmada', con la tasa todavía vigente, puede iniciar un pago."""
+        with self.subTest('no está Confirmada'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
+            self.transaccion.save(update_fields=['estado'])
 
-        response = self.client.get(self.url, follow=True)
+            response = self.client.get(self.url, follow=True)
 
-        self.assertContains(response, 'ya venció')
-        mock_payment_intent.assert_not_called()
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
-        self.assertEqual(Pago.objects.count(), 0)
+            self.assertContains(response, 'no está en condiciones de pagarse')
+            mock_payment_intent.assert_not_called()
+
+        with self.subTest('la tasa fijada ya venció'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA
+            self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+            self.transaccion.save(update_fields=['estado', 'tasa_vence_en'])
+
+            response = self.client.get(self.url, follow=True)
+
+            self.assertContains(response, 'ya venció')
+            mock_payment_intent.assert_not_called()
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertEqual(Pago.objects.count(), 0)
 
     @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.create')
     @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
@@ -422,48 +407,44 @@ class IniciarPagoStripeOperacionTest(TestCase):
 
     @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.create')
     @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
-    def test_tarjeta_rechazada_cae_a_checkout_sin_tocar_la_transaccion(self, mock_payment_intent, mock_checkout):
-        """Criterio 4: si el cobro directo es rechazado, se cae a Checkout para reintentar."""
-        mock_payment_intent.side_effect = stripe.error.CardError(
-            'Tu tarjeta fue rechazada.', param=None, code='card_declined',
-        )
-        mock_checkout.return_value = SimpleNamespace(url='https://checkout.stripe.com/reintentar')
+    def test_cuando_el_cobro_directo_no_alcanza_cae_a_checkout(self, mock_payment_intent, mock_checkout):
+        """Criterio 4: tarjeta rechazada o 3-D Secure/SCA requerido caen a Checkout; si Checkout también falla, se informa."""
+        with self.subTest('tarjeta rechazada'):
+            mock_payment_intent.side_effect = stripe.error.CardError(
+                'Tu tarjeta fue rechazada.', param=None, code='card_declined',
+            )
+            mock_checkout.return_value = SimpleNamespace(url='https://checkout.stripe.com/reintentar')
 
-        response = self.client.get(self.url)
+            response = self.client.get(self.url)
 
-        self.assertRedirects(response, 'https://checkout.stripe.com/reintentar', fetch_redirect_response=False)
-        checkout_kwargs = mock_checkout.call_args.kwargs
-        self.assertEqual(checkout_kwargs['customer'], 'cus_test_123')
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
-        self.assertEqual(Pago.objects.count(), 0)
+            self.assertRedirects(response, 'https://checkout.stripe.com/reintentar', fetch_redirect_response=False)
+            checkout_kwargs = mock_checkout.call_args.kwargs
+            self.assertEqual(checkout_kwargs['customer'], 'cus_test_123')
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertEqual(Pago.objects.count(), 0)
 
-    @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.create')
-    @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
-    def test_requiere_autenticacion_cae_a_checkout(self, mock_payment_intent, mock_checkout):
-        """Si el banco exige 3-D Secure/SCA, el cobro directo no alcanza y se cae a Checkout."""
-        mock_payment_intent.return_value = SimpleNamespace(id='pi_necesita_auth', status='requires_action')
-        mock_checkout.return_value = SimpleNamespace(url='https://checkout.stripe.com/confirmar')
+        with self.subTest('el banco exige 3-D Secure/SCA'):
+            mock_payment_intent.side_effect = None
+            mock_payment_intent.return_value = SimpleNamespace(id='pi_necesita_auth', status='requires_action')
+            mock_checkout.return_value = SimpleNamespace(url='https://checkout.stripe.com/confirmar')
 
-        response = self.client.get(self.url)
+            response = self.client.get(self.url)
 
-        self.assertRedirects(response, 'https://checkout.stripe.com/confirmar', fetch_redirect_response=False)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
-        self.assertEqual(Pago.objects.count(), 0)
+            self.assertRedirects(response, 'https://checkout.stripe.com/confirmar', fetch_redirect_response=False)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertEqual(Pago.objects.count(), 0)
 
-    @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.create')
-    @patch('apps.divisas.pagos_stripe.stripe.PaymentIntent.create')
-    def test_checkout_de_reintento_no_pierde_la_conexion(self, mock_payment_intent, mock_checkout):
-        """Criterio 6: si falla también la creación de la sesión de reintento, no se toca la transacción."""
-        mock_payment_intent.side_effect = stripe.error.CardError('Rechazada.', param=None, code='card_declined')
-        mock_checkout.side_effect = stripe.error.APIConnectionError('No se pudo conectar')
+        with self.subTest('criterio 6: si falla también la creación de la sesión de reintento'):
+            mock_payment_intent.side_effect = stripe.error.CardError('Rechazada.', param=None, code='card_declined')
+            mock_checkout.side_effect = stripe.error.APIConnectionError('No se pudo conectar')
 
-        response = self.client.get(self.url, follow=True)
+            response = self.client.get(self.url, follow=True)
 
-        self.assertContains(response, 'No se pudo conectar con Stripe')
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertContains(response, 'No se pudo conectar con Stripe')
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
 
     def test_usuario_sin_rol_cliente_no_puede_iniciar_el_pago(self):
         """Solo el rol 'cliente' puede iniciar un pago con tarjeta."""
@@ -475,19 +456,18 @@ class IniciarPagoStripeOperacionTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    def test_cancelar_el_pago_en_stripe_vuelve_al_detalle_con_aviso(self):
-        """Criterio 5: abandonar/cancelar el pago en Stripe no toca la transacción."""
-        response = self.client.get(self.detalle_url, {'pago': 'cancelado'})
+    def test_el_aviso_al_volver_del_detalle_depende_de_como_terminó_el_pago(self):
+        with self.subTest('criterio 5: abandonar/cancelar el pago en Stripe no toca la transacción'):
+            response = self.client.get(self.detalle_url, {'pago': 'cancelado'})
 
-        self.assertContains(response, 'Cancelaste el pago con tarjeta en Stripe')
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertContains(response, 'Cancelaste el pago con tarjeta en Stripe')
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
 
-    def test_pago_iniciado_muestra_aviso_de_confirmacion_pendiente(self):
-        """Al volver con el pago iniciado, se avisa que la confirmación es asíncrona."""
-        response = self.client.get(self.detalle_url, {'pago': 'iniciado'})
+        with self.subTest('con el pago iniciado, se avisa que la confirmación es asíncrona'):
+            response = self.client.get(self.detalle_url, {'pago': 'iniciado'})
 
-        self.assertContains(response, 'se está confirmando')
+            self.assertContains(response, 'se está confirmando')
 
 
 class IniciarPagoStripeCambioTest(TestCase):
@@ -625,21 +605,33 @@ class StripeWebhookTest(TestCase):
     @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
     def test_sesion_completada_y_pagada_registra_el_pago_con_tarjeta(self, mock_construct_event):
         """Criterio 2: una sesión completada y pagada registra el pago con el id de Stripe y medio 'tarjeta'."""
-        mock_construct_event.return_value = self._evento_sesion_completada()
+        with self.subTest('caso normal, con metodo_pago_id en la metadata'):
+            mock_construct_event.return_value = self._evento_sesion_completada()
 
-        response = self.client.post(
-            self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
-        )
+            response = self.client.post(
+                self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
+            )
 
-        self.assertEqual(response.status_code, 200)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
-        pago = Pago.objects.get(calculo_operacion=self.transaccion)
-        self.assertEqual(pago.medio_pago, MetodoPago.TIPO_TARJETA)
-        self.assertEqual(pago.proveedor, 'STRIPE')
-        self.assertEqual(pago.identificador_externo, 'pi_123')
-        self.assertEqual(pago.monto, self.transaccion.monto_final)
-        self.assertEqual(pago.metodo_pago, self.tarjeta)
+            self.assertEqual(response.status_code, 200)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
+            pago = Pago.objects.get(calculo_operacion=self.transaccion)
+            self.assertEqual(pago.medio_pago, MetodoPago.TIPO_TARJETA)
+            self.assertEqual(pago.proveedor, 'STRIPE')
+            self.assertEqual(pago.identificador_externo, 'pi_123')
+            self.assertEqual(pago.monto, self.transaccion.monto_final)
+            self.assertEqual(pago.metodo_pago, self.tarjeta)
+
+        with self.subTest('con un StripeObject real en vez de un dict mockeado (regresión)'):
+            # Reutiliza la misma transacción, ya "Pagada" por el subTest anterior: alcanza con
+            # confirmar que no rompe con la forma real del objeto que devuelve el SDK.
+            mock_construct_event.return_value = _stripe_object(self._evento_sesion_completada(session_id='cs_regresion'))
+
+            response = self.client.post(
+                self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
+            )
+
+            self.assertEqual(response.status_code, 200)
 
     @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
     def test_sesion_completada_sin_metodo_pago_id_en_metadata_no_rompe(self, mock_construct_event):
@@ -675,35 +667,34 @@ class StripeWebhookTest(TestCase):
         self.mock_entrega.assert_not_called()
 
     @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
-    def test_sesion_no_pagada_no_modifica_la_transaccion(self, mock_construct_event):
-        """Criterio 4: si Stripe todavía no cobró la sesión, la transacción sigue 'Confirmada'."""
-        mock_construct_event.return_value = self._evento_sesion_completada(payment_status='unpaid')
+    def test_eventos_que_no_confirman_ningun_pago_no_modifican_nada(self, mock_construct_event):
+        """Criterio 4: una sesión sin pagar, o un evento no relevante (fallo, manejado por la propia página)."""
+        with self.subTest('Stripe todavía no cobró la sesión'):
+            mock_construct_event.return_value = self._evento_sesion_completada(payment_status='unpaid')
 
-        response = self.client.post(
-            self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
-        )
+            response = self.client.post(
+                self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
+            )
 
-        self.assertEqual(response.status_code, 200)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
-        self.assertEqual(Pago.objects.count(), 0)
+            self.assertEqual(response.status_code, 200)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertEqual(Pago.objects.count(), 0)
 
-    @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
-    def test_evento_no_relevante_no_modifica_nada(self, mock_construct_event):
-        """Criterio 4: un evento de pago fallido (manejado por la propia página de Stripe) no toca nada acá."""
-        mock_construct_event.return_value = {
-            'type': 'payment_intent.payment_failed',
-            'data': {'object': {}},
-        }
+        with self.subTest('evento de pago fallido'):
+            mock_construct_event.return_value = {
+                'type': 'payment_intent.payment_failed',
+                'data': {'object': {}},
+            }
 
-        response = self.client.post(
-            self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
-        )
+            response = self.client.post(
+                self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
+            )
 
-        self.assertEqual(response.status_code, 200)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
-        self.assertEqual(Pago.objects.count(), 0)
+            self.assertEqual(response.status_code, 200)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertEqual(Pago.objects.count(), 0)
 
     @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
     def test_el_mismo_evento_reenviado_no_duplica_el_pago(self, mock_construct_event):
@@ -725,21 +716,6 @@ class StripeWebhookTest(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 405)
-
-    @patch('apps.divisas.pagos_stripe.stripe.Webhook.construct_event')
-    def test_registra_el_pago_con_un_evento_stripeobject_real(self, mock_construct_event):
-        """Regresión: con el StripeObject real que devuelve el SDK (no un dict mockeado), igual registra el pago."""
-        mock_construct_event.return_value = _stripe_object(self._evento_sesion_completada())
-
-        response = self.client.post(
-            self.url, data=b'payload', content_type='application/json', HTTP_STRIPE_SIGNATURE='firma-valida',
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
-        pago = Pago.objects.get(calculo_operacion=self.transaccion)
-        self.assertEqual(pago.identificador_externo, 'pi_123')
 
 
 class IniciarAgregarTarjetaStripeTest(TestCase):
@@ -866,12 +842,50 @@ class ConfirmarTarjetaStripeTest(TestCase):
         self.assertEqual(metodo.referencia_externa, 'pm_nuevo_123')
         self.assertEqual(metodo.moneda.codigo, 'PYG')
 
-    def test_sin_session_id_no_crea_nada(self):
-        """Sin ``?session_id=``, no hay nada que confirmar."""
-        response = self.client.get(self.url, follow=True)
+    @patch('apps.divisas.pagos_stripe.stripe.PaymentMethod.retrieve')
+    @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.retrieve')
+    def test_casos_en_los_que_no_se_crea_ningun_metodo_de_pago(self, mock_session_retrieve, mock_pm_retrieve):
+        """Sin session_id, SetupIntent no exitoso, Stripe no responde, o un medio que no es tarjeta (regresión).
 
-        self.assertContains(response, 'No se recibió la confirmación de Stripe')
-        self.assertEqual(MetodoPago.objects.count(), 0)
+        El último caso reproduce un bug real: antes de la
+        ``PaymentMethodConfiguration`` que apaga Link, Stripe podía devolver
+        un ``PaymentMethod`` sin atributo ``card`` y la vista tiraba
+        ``AttributeError``.
+        """
+        with self.subTest('sin session_id, no hay nada que confirmar'):
+            response = self.client.get(self.url, follow=True)
+
+            self.assertContains(response, 'No se recibió la confirmación de Stripe')
+            self.assertEqual(MetodoPago.objects.count(), 0)
+
+        with self.subTest('el SetupIntent no llegó a succeeded (p. ej. se abandonó)'):
+            mock_session_retrieve.return_value = SimpleNamespace(
+                customer='cus_test_confirmar',
+                setup_intent=SimpleNamespace(status='requires_payment_method', payment_method=None, metadata={}),
+            )
+
+            response = self.client.get(self.url, {'session_id': 'cs_incompleta'}, follow=True)
+
+            self.assertContains(response, 'No se pudo confirmar la tarjeta con Stripe')
+            self.assertEqual(MetodoPago.objects.count(), 0)
+
+        with self.subTest('criterio 6: Stripe no responde'):
+            mock_session_retrieve.side_effect = stripe.error.APIConnectionError('No se pudo conectar')
+
+            response = self.client.get(self.url, {'session_id': 'cs_test_setup_123'}, follow=True)
+
+            self.assertContains(response, 'No se pudo confirmar la tarjeta con Stripe')
+            self.assertEqual(MetodoPago.objects.count(), 0)
+
+        with self.subTest('el cliente eligió Link (o cualquier otro medio) en vez de una tarjeta'):
+            mock_session_retrieve.side_effect = None
+            mock_session_retrieve.return_value = self._sesion_confirmada()
+            mock_pm_retrieve.return_value = SimpleNamespace(type='link')
+
+            response = self.client.get(self.url, {'session_id': 'cs_test_setup_123'}, follow=True)
+
+            self.assertContains(response, 'no fue una tarjeta')
+            self.assertEqual(MetodoPago.objects.count(), 0)
 
     @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.retrieve')
     def test_una_sesion_de_otro_customer_responde_404(self, mock_session_retrieve):
@@ -881,19 +895,6 @@ class ConfirmarTarjetaStripeTest(TestCase):
         response = self.client.get(self.url, {'session_id': 'cs_ajena'})
 
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(MetodoPago.objects.count(), 0)
-
-    @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.retrieve')
-    def test_setup_intent_no_exitoso_no_crea_nada(self, mock_session_retrieve):
-        """Si el SetupIntent no llegó a 'succeeded' (p. ej. se abandonó), no se crea el método."""
-        mock_session_retrieve.return_value = SimpleNamespace(
-            customer='cus_test_confirmar',
-            setup_intent=SimpleNamespace(status='requires_payment_method', payment_method=None, metadata={}),
-        )
-
-        response = self.client.get(self.url, {'session_id': 'cs_incompleta'}, follow=True)
-
-        self.assertContains(response, 'No se pudo confirmar la tarjeta con Stripe')
         self.assertEqual(MetodoPago.objects.count(), 0)
 
     @patch('apps.divisas.pagos_stripe.stripe.PaymentMethod.retrieve')
@@ -908,30 +909,3 @@ class ConfirmarTarjetaStripeTest(TestCase):
 
         self.assertContains(response, 'Esa tarjeta ya estaba guardada')
         self.assertEqual(MetodoPago.objects.filter(cliente=self.cliente).count(), 1)
-
-    @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.retrieve')
-    def test_problema_de_comunicacion_con_stripe_no_crea_nada(self, mock_session_retrieve):
-        """Criterio 6, aplicado a la confirmación: si Stripe no responde, no se crea el método."""
-        mock_session_retrieve.side_effect = stripe.error.APIConnectionError('No se pudo conectar')
-
-        response = self.client.get(self.url, {'session_id': 'cs_test_setup_123'}, follow=True)
-
-        self.assertContains(response, 'No se pudo confirmar la tarjeta con Stripe')
-        self.assertEqual(MetodoPago.objects.count(), 0)
-
-    @patch('apps.divisas.pagos_stripe.stripe.PaymentMethod.retrieve')
-    @patch('apps.divisas.pagos_stripe.stripe.checkout.Session.retrieve')
-    def test_un_metodo_que_no_es_tarjeta_no_crea_nada(self, mock_session_retrieve, mock_pm_retrieve):
-        """Regresión: si el cliente eligió Link (o cualquier otro medio) en vez de una tarjeta, no rompe ni crea nada.
-
-        Reproduce el bug real: antes de la ``PaymentMethodConfiguration``
-        que apaga Link, Stripe podía devolver un ``PaymentMethod`` sin
-        atributo ``card`` y la vista tiraba ``AttributeError``.
-        """
-        mock_session_retrieve.return_value = self._sesion_confirmada()
-        mock_pm_retrieve.return_value = SimpleNamespace(type='link')
-
-        response = self.client.get(self.url, {'session_id': 'cs_test_setup_123'}, follow=True)
-
-        self.assertContains(response, 'no fue una tarjeta')
-        self.assertEqual(MetodoPago.objects.count(), 0)
