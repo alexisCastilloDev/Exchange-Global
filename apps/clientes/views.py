@@ -453,6 +453,14 @@ def _movimientos_de_metodo_pago(metodo):
     destino). Reconstruir esto llamando a un proveedor externo
     duplicaría información que ya es exacta de este lado.
 
+    Un "recibiste" solo cuenta si la entrega ya se completó
+    (``ESTADO_ACREDITADA``/``ESTADO_RETIRADA``), nunca solo porque
+    ``medio_destino`` ya quedó elegido: ese campo se fija al pagar, para
+    los tres tipos de transacción por igual, un instante antes de que
+    ``apps.divisas.entrega.realizar_entrega`` intente la transferencia
+    de verdad — mostrarlo como recibido antes de que esa transferencia
+    se resuelva sería un movimiento inventado.
+
     Returns:
         list[dict]: cada ítem con ``fecha``, ``direccion``
         (``'pagaste'`` o ``'recibiste'``), ``monto``, ``moneda``,
@@ -482,11 +490,27 @@ def _movimientos_de_metodo_pago(metodo):
         })
 
     if metodo.tipo_medio != MetodoPago.TIPO_TARJETA:
-        entregas = list(CalculoOperacion.objects.filter(medio_destino=metodo))
-        entregas += list(CalculoTriangulacion.objects.filter(medio_destino=metodo))
+        entregas = list(CalculoOperacion.objects.filter(
+            medio_destino=metodo,
+            estado__in=(CalculoOperacion.ESTADO_ACREDITADA, CalculoOperacion.ESTADO_RETIRADA),
+        ))
+        entregas += list(CalculoTriangulacion.objects.filter(
+            medio_destino=metodo, estado=CalculoTriangulacion.ESTADO_ACREDITADA,
+        ))
         for transaccion in entregas:
+            # "retirado_en" solo existe en CalculoOperacion (una venta);
+            # getattr con default evita el AttributeError en un cambio. Si
+            # ninguna de las dos quedó registrada (fixtures de prueba
+            # antiguas que fuerzan el estado a mano), cae a una fecha
+            # igual de razonable en vez de dejar la ordenación sin fecha.
+            fecha = (
+                getattr(transaccion, 'retirado_en', None)
+                or transaccion.acreditado_en
+                or transaccion.confirmado_en
+                or transaccion.creado_en
+            )
             movimientos.append({
-                'fecha': transaccion.confirmado_en or transaccion.creado_en,
+                'fecha': fecha,
                 'direccion': 'recibiste',
                 'monto': monto_a_entregar(transaccion),
                 'moneda': moneda_a_entregar(transaccion),

@@ -50,6 +50,7 @@ from apps.divisas.models import (
     Divisa,
     NotificacionTasa,
     divisa_a_entregar,
+    estados_con_pago_ya_registrado,
     moneda_a_entregar,
     moneda_a_pagar,
     monto_a_entregar,
@@ -625,8 +626,10 @@ class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, V
     monto, tasa aplicada, comisión, importe final, estado y fecha, sin
     importar en qué estado se encuentre la transacción. La única acción que
     sí ofrece es "Reintentar" cuando la entrega quedó fallida (ver
-    ``post``, HU "Acreditación de fondos" GE-23): el cliente no depende
-    solo de un administrador para resolverlo.
+    ``post``, HU "Acreditación de fondos" GE-23 y "Retiro de fondos" GE-24
+    — ambas comparten el mismo mecanismo de entrega, automático apenas se
+    confirma el pago, sin ninguna acción extra del cliente): el cliente no
+    depende solo de un administrador para resolverlo.
     """
 
     def test_func(self):
@@ -772,7 +775,7 @@ class PagarTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, Vie
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo in (CalculoOperacion.ESTADO_PAGADA, CalculoOperacion.ESTADO_ACREDITADA):
+            if transaccion.estado_efectivo in estados_con_pago_ya_registrado(CalculoOperacion):
                 messages.error(request, 'Esta transacción ya fue pagada.')
             elif transaccion.tasa_vencida:
                 messages.error(
@@ -874,7 +877,7 @@ class PagarTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View):
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo in (CalculoTriangulacion.ESTADO_PAGADA, CalculoTriangulacion.ESTADO_ACREDITADA):
+            if transaccion.estado_efectivo in estados_con_pago_ya_registrado(CalculoTriangulacion):
                 messages.error(request, 'Esta transacción ya fue pagada.')
             elif transaccion.tasa_vencida:
                 messages.error(

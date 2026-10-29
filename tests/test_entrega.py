@@ -4,9 +4,12 @@ Cubre ``CuentaPropia`` (el saldo propio de Global Exchange, llevado en
 esta misma base), ``apps.divisas.entrega`` (la transferencia saliente a
 sipap-sim, seguida del ajuste del saldo propio y, para una compra o un
 cambio entre divisas, el paso a "Acreditada" — HU "Acreditación de
-fondos", GE-23), y las dos pantallas desde las que se puede reintentar
-una entrega fallida: la administrativa ("Entregas pendientes") y el
-detalle de la propia transacción, para el cliente.
+fondos", GE-23 — o, para una venta, a "Retirada" — HU "Retiro de
+fondos", GE-24, mismo mecanismo automático que una compra: se paga y se
+recibe, sin ninguna acción extra del cliente), y las pantallas desde
+las que se puede reintentar una entrega fallida: la administrativa
+("Entregas pendientes") y el detalle de la propia transacción, para el
+cliente.
 """
 
 from datetime import timedelta
@@ -124,121 +127,135 @@ class RealizarEntregaTest(TestCase):
             confirmado_en=timezone.now(), medio_destino=self.medio_destino,
         )
 
-    @patch('apps.divisas.entrega.requests.post')
-    def test_entrega_exitosa_de_una_compra_queda_acreditada(self, mock_post):
-        """HU "Acreditación de fondos" (GE-23): una compra entregada con éxito pasa a 'Acreditada'."""
-        mock_post.return_value = _respuesta(201, {'id': 'SPI-1', 'estado': 'acreditada'})
-        antes = timezone.now()
+    def test_entrega_exitosa_segun_el_tipo_de_transaccion(self):
+        """Una compra o un cambio quedan 'Acreditada' (GE-23); una venta, 'Retirada' (GE-24)."""
+        with self.subTest('compra'):
+            antes = timezone.now()
+            with patch('apps.divisas.entrega.requests.post') as mock_post:
+                mock_post.return_value = _respuesta(201, {'id': 'SPI-1', 'estado': 'acreditada'})
+                resultado = realizar_entrega(self.transaccion)
+                kwargs = mock_post.call_args.kwargs
 
-        resultado = realizar_entrega(self.transaccion)
+            self.assertTrue(resultado)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ACREDITADA)
+            self.assertIsNotNone(self.transaccion.acreditado_en)
+            self.assertGreaterEqual(self.transaccion.acreditado_en, antes)
+            self.assertEqual(self.transaccion.referencia_acreditacion, f'ENTREGA-OPERACION-{self.transaccion.pk}')
+            self.cuenta_pyg.refresh_from_db()
+            self.cuenta_usd.refresh_from_db()
+            self.assertEqual(self.cuenta_pyg.saldo, Decimal('10747400.00'))
+            self.assertEqual(self.cuenta_usd.saldo, Decimal('900.00'))
+            self.assertEqual(kwargs['json']['cuenta_destino'], self.medio_destino.numero_cuenta)
+            self.assertEqual(kwargs['json']['documento'], self.medio_destino.documento_titular)
+            self.assertEqual(kwargs['json']['monto'], '100.00')
+            self.assertEqual(kwargs['json']['referencia'], f'ENTREGA-OPERACION-{self.transaccion.pk}')
 
-        self.assertTrue(resultado)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ACREDITADA)
-        self.assertIsNotNone(self.transaccion.acreditado_en)
-        self.assertGreaterEqual(self.transaccion.acreditado_en, antes)
-        self.assertEqual(self.transaccion.referencia_acreditacion, f'ENTREGA-OPERACION-{self.transaccion.pk}')
-        self.cuenta_pyg.refresh_from_db()
-        self.cuenta_usd.refresh_from_db()
-        self.assertEqual(self.cuenta_pyg.saldo, Decimal('10747400.00'))
-        self.assertEqual(self.cuenta_usd.saldo, Decimal('900.00'))
-        kwargs = mock_post.call_args.kwargs
-        self.assertEqual(kwargs['json']['cuenta_destino'], self.medio_destino.numero_cuenta)
-        self.assertEqual(kwargs['json']['documento'], self.medio_destino.documento_titular)
-        self.assertEqual(kwargs['json']['monto'], '100.00')
-        self.assertEqual(kwargs['json']['referencia'], f'ENTREGA-OPERACION-{self.transaccion.pk}')
+        with self.subTest('venta'):
+            medio_destino_pyg = MetodoPago.objects.create(
+                cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TRANSFERENCIA, nombre_titular='Cliente Entrega',
+                entidad_financiera='Banco Itaú', numero_cuenta='2000000000000111', documento_titular='1234567',
+                moneda=self.pyg,
+            )
+            venta = CalculoOperacion.objects.create(
+                usuario=self.transaccion.usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_VENTA,
+                divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+                tasa_aplicada=Decimal('7300.00'), comision_porcentaje=Decimal('1.000'),
+                comision=Decimal('73.00'), monto_final=Decimal('747400.00'), estado=CalculoOperacion.ESTADO_PAGADA,
+                vence_en=timezone.now() + timedelta(seconds=300), confirmado_en=timezone.now(),
+                medio_destino=medio_destino_pyg,
+            )
+            antes = timezone.now()
+            with patch('apps.divisas.entrega.requests.post') as mock_post:
+                mock_post.return_value = _respuesta(201, {'id': 'SPI-VENTA', 'estado': 'acreditada'})
+                resultado = realizar_entrega(venta)
 
-    @patch('apps.divisas.entrega.requests.post')
-    def test_entrega_exitosa_de_una_venta_se_queda_en_pagada(self, mock_post):
-        """El "Retiro de fondos" de una venta (GE-24) todavía no existe: una venta exitosa sigue "Pagada"."""
-        mock_post.return_value = _respuesta(201, {'id': 'SPI-VENTA', 'estado': 'acreditada'})
-        self.transaccion.tipo = CalculoOperacion.TIPO_VENTA
-        self.transaccion.save(update_fields=['tipo'])
+            self.assertTrue(resultado)
+            venta.refresh_from_db()
+            self.assertEqual(venta.estado, CalculoOperacion.ESTADO_RETIRADA)
+            self.assertIsNotNone(venta.retirado_en)
+            self.assertGreaterEqual(venta.retirado_en, antes)
+            self.assertEqual(venta.referencia_retiro, f'ENTREGA-OPERACION-{venta.pk}')
+            self.assertIsNone(venta.acreditado_en)
+            self.assertEqual(venta.referencia_acreditacion, '')
 
-        resultado = realizar_entrega(self.transaccion)
+        with self.subTest('cambio'):
+            eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+            CuentaPropia.objects.create(divisa=eur, saldo=Decimal('500.00'))
+            cambio = CalculoTriangulacion.objects.create(
+                usuario=self.transaccion.usuario, cliente=self.cliente,
+                divisa_origen=self.usd, divisa_destino=eur, codigo_divisa_origen='USD', codigo_divisa_destino='EUR',
+                monto_origen=Decimal('100.00'), tasa_compra_aplicada=Decimal('7300.00'),
+                tasa_venta_aplicada=Decimal('8100.00'), tasa_cruzada=Decimal('0.901235'),
+                monto_equivalente_pyg=Decimal('730000.00'), comision_porcentaje=Decimal('1.000'),
+                comision=Decimal('0.90'), monto_final=Decimal('89.22'), estado=CalculoTriangulacion.ESTADO_PAGADA,
+                vence_en=timezone.now() + timedelta(seconds=300), confirmado_en=timezone.now(),
+                medio_destino=self.medio_destino,
+            )
+            with patch('apps.divisas.entrega.requests.post') as mock_post:
+                mock_post.return_value = _respuesta(201, {'id': 'SPI-CAMBIO', 'estado': 'acreditada'})
+                resultado = realizar_entrega(cambio)
 
-        self.assertTrue(resultado)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
-        self.assertIsNone(self.transaccion.acreditado_en)
-        self.assertEqual(self.transaccion.referencia_acreditacion, '')
+            self.assertTrue(resultado)
+            cambio.refresh_from_db()
+            self.assertEqual(cambio.estado, CalculoTriangulacion.ESTADO_ACREDITADA)
+            self.assertIsNotNone(cambio.acreditado_en)
+            self.assertEqual(cambio.referencia_acreditacion, f'ENTREGA-CAMBIO-{cambio.pk}')
 
-    @patch('apps.divisas.entrega.requests.post')
-    def test_entrega_exitosa_de_un_cambio_queda_acreditada(self, mock_post):
-        """Un cambio entre divisas recibe algo, igual que una compra: también queda 'Acreditada'."""
-        mock_post.return_value = _respuesta(201, {'id': 'SPI-CAMBIO', 'estado': 'acreditada'})
-        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
-        CuentaPropia.objects.create(divisa=eur, saldo=Decimal('500.00'))
-        cambio = CalculoTriangulacion.objects.create(
-            usuario=self.transaccion.usuario, cliente=self.cliente,
-            divisa_origen=self.usd, divisa_destino=eur, codigo_divisa_origen='USD', codigo_divisa_destino='EUR',
-            monto_origen=Decimal('100.00'), tasa_compra_aplicada=Decimal('7300.00'),
-            tasa_venta_aplicada=Decimal('8100.00'), tasa_cruzada=Decimal('0.901235'),
-            monto_equivalente_pyg=Decimal('730000.00'), comision_porcentaje=Decimal('1.000'),
-            comision=Decimal('0.90'), monto_final=Decimal('89.22'), estado=CalculoTriangulacion.ESTADO_PAGADA,
-            vence_en=timezone.now() + timedelta(seconds=300), confirmado_en=timezone.now(),
-            medio_destino=self.medio_destino,
-        )
+    def test_fallas_en_la_entrega_pasan_a_entrega_fallida_sin_tocar_el_saldo(self):
+        """Sin medio de destino, sipap-sim caído, rechazando, o sin saldo propio: siempre 'Entrega fallida'."""
+        with self.subTest('sin medio de destino'):
+            self.transaccion.medio_destino = None
+            self.transaccion.save(update_fields=['medio_destino'])
+            with patch('apps.divisas.entrega.requests.post') as mock_post:
+                resultado = realizar_entrega(self.transaccion)
+                mock_post.assert_not_called()
 
-        resultado = realizar_entrega(cambio)
+            self.assertFalse(resultado)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
+            self.cuenta_usd.refresh_from_db()
+            self.assertEqual(self.cuenta_usd.saldo, Decimal('1000.00'))
+            # Se restaura para los casos siguientes, que sí necesitan un medio de destino.
+            self.transaccion.medio_destino = self.medio_destino
+            self.transaccion.save(update_fields=['medio_destino'])
 
-        self.assertTrue(resultado)
-        cambio.refresh_from_db()
-        self.assertEqual(cambio.estado, CalculoTriangulacion.ESTADO_ACREDITADA)
-        self.assertIsNotNone(cambio.acreditado_en)
-        self.assertEqual(cambio.referencia_acreditacion, f'ENTREGA-CAMBIO-{cambio.pk}')
+        with self.subTest('sipap-sim no responde'):
+            with patch('apps.divisas.entrega.requests.post') as mock_post:
+                mock_post.side_effect = requests.exceptions.ConnectionError('sipap-sim caído')
+                resultado = realizar_entrega(self.transaccion)
 
-    @patch('apps.divisas.entrega.requests.post')
-    def test_sin_medio_destino_pasa_a_entrega_fallida_sin_tocar_el_saldo(self, mock_post):
-        self.transaccion.medio_destino = None
-        self.transaccion.save(update_fields=['medio_destino'])
+            self.assertFalse(resultado)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
+            self.cuenta_usd.refresh_from_db()
+            self.assertEqual(self.cuenta_usd.saldo, Decimal('1000.00'))
 
-        resultado = realizar_entrega(self.transaccion)
+        with self.subTest('sipap-sim rechaza la transferencia'):
+            with patch('apps.divisas.entrega.requests.post') as mock_post:
+                mock_post.return_value = _respuesta(
+                    404, {'detalle': 'No se encontró una cuenta con ese número y documento.'},
+                )
+                resultado = realizar_entrega(self.transaccion)
 
-        self.assertFalse(resultado)
-        mock_post.assert_not_called()
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
-        self.cuenta_usd.refresh_from_db()
-        self.assertEqual(self.cuenta_usd.saldo, Decimal('1000.00'))
+            self.assertFalse(resultado)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
+            self.cuenta_usd.refresh_from_db()
+            self.assertEqual(self.cuenta_usd.saldo, Decimal('1000.00'))
 
-    @patch('apps.divisas.entrega.requests.post')
-    def test_sipap_sim_no_responde_pasa_a_entrega_fallida_sin_tocar_el_saldo(self, mock_post):
-        mock_post.side_effect = requests.exceptions.ConnectionError('sipap-sim caído')
+        with self.subTest('la transferencia ya salió pero no hay saldo propio'):
+            # La transferencia a sipap-sim ya ocurrió (es real); lo que falla es solo el espejo interno.
+            self.cuenta_usd.saldo = Decimal('1.00')
+            self.cuenta_usd.save(update_fields=['saldo'])
+            with patch('apps.divisas.entrega.requests.post') as mock_post:
+                mock_post.return_value = _respuesta(201, {'id': 'SPI-1', 'estado': 'acreditada'})
+                resultado = realizar_entrega(self.transaccion)
+                mock_post.assert_called_once()
 
-        resultado = realizar_entrega(self.transaccion)
-
-        self.assertFalse(resultado)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
-        self.cuenta_usd.refresh_from_db()
-        self.assertEqual(self.cuenta_usd.saldo, Decimal('1000.00'))
-
-    @patch('apps.divisas.entrega.requests.post')
-    def test_sipap_sim_rechaza_la_transferencia_pasa_a_entrega_fallida(self, mock_post):
-        mock_post.return_value = _respuesta(404, {'detalle': 'No se encontró una cuenta con ese número y documento.'})
-
-        resultado = realizar_entrega(self.transaccion)
-
-        self.assertFalse(resultado)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
-        self.cuenta_usd.refresh_from_db()
-        self.assertEqual(self.cuenta_usd.saldo, Decimal('1000.00'))
-
-    @patch('apps.divisas.entrega.requests.post')
-    def test_si_la_transferencia_ya_salio_pero_no_hay_saldo_propio_igual_pasa_a_entrega_fallida(self, mock_post):
-        """La transferencia a sipap-sim ya ocurrió (es real); lo que falla es solo el espejo interno."""
-        mock_post.return_value = _respuesta(201, {'id': 'SPI-1', 'estado': 'acreditada'})
-        self.cuenta_usd.saldo = Decimal('1.00')
-        self.cuenta_usd.save(update_fields=['saldo'])
-
-        resultado = realizar_entrega(self.transaccion)
-
-        self.assertFalse(resultado)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
-        mock_post.assert_called_once()
+            self.assertFalse(resultado)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
 
     @patch('apps.divisas.entrega.requests.post')
     def test_la_referencia_es_siempre_la_misma_entre_llamadas(self, mock_post):
@@ -288,19 +305,16 @@ class EntregasPendientesListViewTest(TestCase):
         )
         self.url = reverse('divisas:entregas_pendientes')
 
-    def test_lista_muestra_la_entrega_fallida_con_el_boton_de_reintentar(self):
+    def test_la_lista_muestra_solo_las_entregas_fallidas(self):
+        """Una entrega fallida aparece con su botón de reintentar; una ya resuelta, no."""
         response = self.client.get(self.url)
-
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, str(self.cliente))
         self.assertContains(response, 'Reintentar')
 
-    def test_una_entrega_exitosa_no_aparece_en_la_lista(self):
         self.transaccion.estado = CalculoOperacion.ESTADO_PAGADA
         self.transaccion.save(update_fields=['estado'])
-
         response = self.client.get(self.url)
-
         self.assertNotContains(response, str(self.cliente))
 
     def test_un_cliente_no_puede_acceder(self):
@@ -351,7 +365,7 @@ class ReintentarEntregaViewTest(TestCase):
         self.url = reverse('divisas:reintentar_entrega', kwargs={'tipo': 'operacion', 'pk': self.transaccion.pk})
 
     @patch('apps.divisas.entrega.requests.post')
-    def test_reintentar_con_exito_completa_la_entrega(self, mock_post):
+    def test_reintentar_con_exito_completa_la_entrega_y_mantiene_la_misma_referencia(self, mock_post):
         mock_post.return_value = _respuesta(201, {'id': 'SPI-REINTENTO', 'estado': 'acreditada'})
 
         response = self.client.post(self.url, follow=True)
@@ -360,6 +374,17 @@ class ReintentarEntregaViewTest(TestCase):
         self.transaccion.refresh_from_db()
         self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ACREDITADA)
         self.assertIsNotNone(self.transaccion.acreditado_en)
+        primera_referencia = mock_post.call_args.kwargs['json']['referencia']
+
+        # Un segundo reintento (doble clic, o una entrega fallida posterior) nunca
+        # genera una referencia distinta: sipap-sim la reconoce como la misma.
+        self.transaccion.estado = CalculoOperacion.ESTADO_ENTREGA_FALLIDA
+        self.transaccion.save(update_fields=['estado'])
+        mock_post.return_value = _respuesta(201, {'id': 'SPI-REINTENTO-2', 'estado': 'acreditada'})
+        self.client.post(self.url)
+        segunda_referencia = mock_post.call_args.kwargs['json']['referencia']
+
+        self.assertEqual(primera_referencia, segunda_referencia)
 
     @patch('apps.divisas.entrega.requests.post')
     def test_reintentar_que_vuelve_a_fallar_queda_igual(self, mock_post):
@@ -370,24 +395,6 @@ class ReintentarEntregaViewTest(TestCase):
         self.assertContains(response, 'volvió a fallar')
         self.transaccion.refresh_from_db()
         self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_ENTREGA_FALLIDA)
-
-    def test_la_referencia_sigue_siendo_la_misma_al_reintentar(self):
-        """Dos reintentos (o un doble clic) nunca generan una transferencia distinta."""
-        with patch('apps.divisas.entrega.requests.post') as mock_post:
-            mock_post.return_value = _respuesta(201, {'id': 'SPI-1', 'estado': 'acreditada'})
-            self.client.post(self.url)
-            primera_referencia = mock_post.call_args.kwargs['json']['referencia']
-
-        self.transaccion.refresh_from_db()
-        self.transaccion.estado = CalculoOperacion.ESTADO_ENTREGA_FALLIDA
-        self.transaccion.save(update_fields=['estado'])
-
-        with patch('apps.divisas.entrega.requests.post') as mock_post:
-            mock_post.return_value = _respuesta(201, {'id': 'SPI-2', 'estado': 'acreditada'})
-            self.client.post(self.url)
-            segunda_referencia = mock_post.call_args.kwargs['json']['referencia']
-
-        self.assertEqual(primera_referencia, segunda_referencia)
 
     def test_un_cliente_no_puede_reintentar(self):
         session = self.client.session
@@ -405,7 +412,7 @@ class ReintentarEntregaHelperTest(TestCase):
     """Verifica directamente ``apps.divisas.entrega.reintentar_entrega``."""
 
     def setUp(self):
-        """Prepara una compra ya 'Pagada' (sin entrega fallida) y una en 'Entrega fallida'."""
+        """Prepara una compra ya 'Pagada' (sin entrega fallida)."""
         usuario = User.objects.create_user(username='cliente-helper-reintento', password='password123')
         self.cliente = Cliente.objects.create(
             user=usuario, identificador='HELPER-REINTENTO-001', nombre='Cliente', apellido='Helper',

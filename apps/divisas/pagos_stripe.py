@@ -84,6 +84,7 @@ from apps.divisas.models import (
     Divisa,
     Pago,
     PagoRechazadoError,
+    estados_con_pago_ya_registrado,
     moneda_a_pagar,
     monto_a_pagar,
 )
@@ -308,7 +309,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo in (self.model.ESTADO_PAGADA, self.model.ESTADO_ACREDITADA):
+            if transaccion.estado_efectivo in estados_con_pago_ya_registrado(self.model):
                 messages.error(request, 'Esta transacción ya fue pagada.')
             elif transaccion.tasa_vencida:
                 messages.error(

@@ -56,40 +56,38 @@ class AperturaCajaTest(TestCase):
         saldos = {s.divisa.codigo: s.monto for s in caja.saldos_iniciales.all()}
         self.assertEqual(saldos, {'PYG': Decimal('500000.00'), 'USD': Decimal('100.00')})
 
-    def test_no_se_puede_abrir_una_segunda_caja_sin_cerrar_la_actual(self):
-        """Criterio 2: con una caja ya abierta, rechaza abrir otra."""
+    def test_con_una_caja_ya_abierta_no_se_puede_abrir_ni_ofrecer_otra(self):
+        """Criterio 2: con una caja ya abierta, rechaza abrir otra, tanto por POST como por GET."""
         self.client.post(self.url_abrir, self._datos())
         self.assertEqual(Caja.objects.count(), 1)
 
-        response = self.client.post(self.url_abrir, self._datos(), follow=True)
+        with self.subTest('POST rechazado'):
+            response = self.client.post(self.url_abrir, self._datos(), follow=True)
 
-        self.assertContains(response, 'Ya tenés una caja abierta')
-        self.assertEqual(Caja.objects.count(), 1)
+            self.assertContains(response, 'Ya tenés una caja abierta')
+            self.assertEqual(Caja.objects.count(), 1)
 
-    def test_el_formulario_de_apertura_no_se_ofrece_si_ya_hay_una_caja_abierta(self):
-        """Criterio 2: tampoco se puede acceder al formulario con una caja ya abierta."""
-        self.client.post(self.url_abrir, self._datos())
+        with self.subTest('formulario no ofrecido'):
+            response = self.client.get(self.url_abrir, follow=True)
 
-        response = self.client.get(self.url_abrir, follow=True)
+            self.assertContains(response, 'Ya tenés una caja abierta')
+            self.assertNotContains(response, 'name="saldo_')
 
-        self.assertContains(response, 'Ya tenés una caja abierta')
-        self.assertNotContains(response, 'name="saldo_')
+    def test_un_saldo_inicial_invalido_no_crea_la_caja(self):
+        """Criterio 3: un saldo negativo o no numérico rechaza la apertura sin crear nada."""
+        with self.subTest('negativo'):
+            response = self.client.post(self.url_abrir, self._datos(saldo_usd='-1.00'))
 
-    def test_saldo_inicial_negativo_no_crea_la_caja(self):
-        """Criterio 3: un saldo negativo en alguna moneda rechaza la apertura sin crear nada."""
-        response = self.client.post(self.url_abrir, self._datos(saldo_usd='-1.00'))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'no puede ser negativo')
+            self.assertFalse(Caja.objects.exists())
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'no puede ser negativo')
-        self.assertFalse(Caja.objects.exists())
+        with self.subTest('formato inválido'):
+            response = self.client.post(self.url_abrir, self._datos(saldo_usd='abc'))
 
-    def test_saldo_inicial_con_formato_invalido_no_crea_la_caja(self):
-        """Criterio 3: un saldo no numérico rechaza la apertura sin crear nada."""
-        response = self.client.post(self.url_abrir, self._datos(saldo_usd='abc'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Ingresá un monto válido')
-        self.assertFalse(Caja.objects.exists())
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'Ingresá un monto válido')
+            self.assertFalse(Caja.objects.exists())
 
     def test_saldo_inicial_en_cero_es_valido(self):
         """Criterio 3: un saldo inicial de cero es válido y sí crea la caja."""
@@ -102,27 +100,25 @@ class AperturaCajaTest(TestCase):
             Decimal('0.00'),
         )
 
-    def test_una_divisa_activa_sin_cotizacion_no_se_ofrece_para_registrar_saldo(self):
-        """Una divisa activa sin ninguna cotización vigente no recibe un campo de saldo."""
+    def test_una_divisa_sin_cotizacion_no_ofrece_campo_pero_no_bloquea_la_apertura(self):
+        """Una divisa activa sin ninguna cotización vigente no recibe campo de saldo, ni bloquea abrir con el resto."""
         eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
 
-        response = self.client.get(self.url_abrir)
+        with self.subTest('no se ofrece el campo'):
+            response = self.client.get(self.url_abrir)
 
-        self.assertNotContains(response, f'name="saldo_{eur.pk}"')
-        self.assertContains(response, 'EUR')
-        self.assertContains(response, 'Hace falta cotizar')
-        self.assertContains(response, 'analista cambiario o un administrador')
+            self.assertNotContains(response, f'name="saldo_{eur.pk}"')
+            self.assertContains(response, 'EUR')
+            self.assertContains(response, 'Hace falta cotizar')
+            self.assertContains(response, 'analista cambiario o un administrador')
 
-    def test_se_puede_abrir_la_caja_sin_la_divisa_sin_cotizar(self):
-        """Una divisa sin cotizar no bloquea la apertura: se abre con el resto, sin ese saldo."""
-        eur = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+        with self.subTest('la apertura funciona igual sin esa divisa'):
+            response = self.client.post(self.url_abrir, self._datos(), follow=True)
 
-        response = self.client.post(self.url_abrir, self._datos(), follow=True)
-
-        self.assertContains(response, 'La caja fue abierta correctamente')
-        caja = Caja.objects.get()
-        self.assertEqual(caja.saldos_iniciales.count(), 2)
-        self.assertFalse(caja.saldos_iniciales.filter(divisa=eur).exists())
+            self.assertContains(response, 'La caja fue abierta correctamente')
+            caja = Caja.objects.get()
+            self.assertEqual(caja.saldos_iniciales.count(), 2)
+            self.assertFalse(caja.saldos_iniciales.filter(divisa=eur).exists())
 
     def test_el_panel_muestra_el_saldo_inicial_tal_como_se_registro(self):
         """Criterio 4: tras abrir, el panel muestra el saldo inicial por moneda registrado."""
@@ -143,29 +139,29 @@ class AperturaCajaTest(TestCase):
         self.assertContains(response, 'Todavía no tenés una caja abierta')
         self.assertContains(response, self.url_abrir)
 
-    def test_usuario_sin_rol_cajero_no_puede_abrir_ni_ver_el_panel(self):
-        """Criterio 5: sin rol cajero, se niega el acceso a abrir caja y al panel."""
-        session = self.client.session
-        session['keycloak_roles'] = ['cliente']
-        session.save()
+    def test_sin_rol_cajero_no_se_puede_abrir_ni_ver_el_panel(self):
+        """Criterio 5: sin rol cajero (ni ningún otro rol), se niega el acceso a abrir caja y al panel."""
+        with self.subTest('rol cliente'):
+            session = self.client.session
+            session['keycloak_roles'] = ['cliente']
+            session.save()
 
-        response_get_abrir = self.client.get(self.url_abrir)
-        response_post_abrir = self.client.post(self.url_abrir, self._datos())
-        response_panel = self.client.get(self.url_panel)
+            response_get_abrir = self.client.get(self.url_abrir)
+            response_post_abrir = self.client.post(self.url_abrir, self._datos())
+            response_panel = self.client.get(self.url_panel)
 
-        self.assertEqual(response_get_abrir.status_code, 403)
-        self.assertEqual(response_post_abrir.status_code, 403)
-        self.assertEqual(response_panel.status_code, 403)
-        self.assertFalse(Caja.objects.exists())
+            self.assertEqual(response_get_abrir.status_code, 403)
+            self.assertEqual(response_post_abrir.status_code, 403)
+            self.assertEqual(response_panel.status_code, 403)
+            self.assertFalse(Caja.objects.exists())
 
-    def test_usuario_sin_ningun_rol_no_puede_abrir_ni_ver_el_panel(self):
-        """Criterio 5: un usuario autenticado sin ningún rol tampoco accede a caja."""
-        session = self.client.session
-        session['keycloak_roles'] = []
-        session.save()
+        with self.subTest('sin ningún rol'):
+            session = self.client.session
+            session['keycloak_roles'] = []
+            session.save()
 
-        self.assertEqual(self.client.get(self.url_abrir).status_code, 403)
-        self.assertEqual(self.client.get(self.url_panel).status_code, 403)
+            self.assertEqual(self.client.get(self.url_abrir).status_code, 403)
+            self.assertEqual(self.client.get(self.url_panel).status_code, 403)
 
     def test_usuario_no_autenticado_es_redirigido_al_login(self):
         """Sin sesión iniciada, se redirige al login en vez de mostrar la caja."""
