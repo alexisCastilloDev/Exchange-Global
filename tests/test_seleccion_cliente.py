@@ -136,8 +136,8 @@ class TestSeleccionClienteActivo:
         assert response.status_code == 302
         assert response.url == reverse('seleccionar_cliente')
 
-    def test_cambiar_cliente_desde_el_detalle_de_una_transaccion_vuelve_al_historial(self, client):
-        """Cambiar de cliente desde el detalle de una transacción no repite esa URL (404)."""
+    def test_cambiar_cliente_respeta_si_la_pantalla_anterior_depende_del_cliente_previo(self, client):
+        """Desde el detalle de una transacción del cliente anterior, o desde una pantalla genérica, vuelve al historial."""
         usuario = User.objects.create_user(username='operador-detalle-transaccion')
         cliente_uno = crear_cliente('Cliente Uno', '6001')
         cliente_dos = crear_cliente('Cliente Dos', '6002')
@@ -160,28 +160,19 @@ class TestSeleccionClienteActivo:
             monto_final=Decimal('747400.00'),
             vence_en=timezone.now() + timedelta(seconds=300),
         )
-        referer = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': transaccion.pk})
+        referer_detalle = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': transaccion.pk})
 
         response = client.get(
             reverse('cambiar_cliente', kwargs={'cliente_id': cliente_dos.pk}),
-            HTTP_REFERER=referer,
+            HTTP_REFERER=referer_detalle,
         )
 
         assert response.status_code == 302
         assert response.url == reverse('divisas:mis_transacciones')
         assert client.session['cliente_activo_id'] == cliente_dos.pk
 
-    def test_cambiar_cliente_desde_una_pantalla_sin_registro_propio_vuelve_ahi(self, client):
-        """Cambiar de cliente desde una pantalla que no depende del cliente anterior vuelve ahí."""
-        usuario = User.objects.create_user(username='operador-cambio-generico')
-        cliente_uno = crear_cliente('Cliente Uno', '6003')
-        cliente_dos = crear_cliente('Cliente Dos', '6004')
-        usuario.clientes.add(cliente_uno, cliente_dos)
-        client.force_login(usuario)
-        client.post(reverse('seleccionar_cliente'), {'cliente_id': cliente_uno.pk})
-
         response = client.get(
-            reverse('cambiar_cliente', kwargs={'cliente_id': cliente_dos.pk}),
+            reverse('cambiar_cliente', kwargs={'cliente_id': cliente_uno.pk}),
             HTTP_REFERER=reverse('divisas:mis_transacciones'),
         )
 

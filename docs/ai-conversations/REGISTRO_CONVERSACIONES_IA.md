@@ -36,6 +36,7 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 20. [Sesión 20 — 12/10/2026 — GE-56 — Cierre de Caja](#sesión-20--12102026--ge-56--cierre-de-caja)
 21. [Sesión 21 — 26/10/2026 — GE-23 — Acreditación de fondos](#sesión-21--26102026--ge-23--acreditación-de-fondos)
 22. [Sesión 22 — 26/10/2026 — GE-19 — Movimientos y saldo de los métodos de pago](#sesión-22--26102026--ge-19--movimientos-y-saldo-de-los-métodos-de-pago)
+23. [Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos](#sesión-23--27102026--ge-24--retiro-de-fondos)
 23. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
@@ -3097,6 +3098,155 @@ agregó la aserción de `saldo` al test existente de `validar_cuenta`.
   ni ningún otro sistema de este proyecto) de la que obtenerlo sin inventarlo.
 - No se creó ningún ticket de Jira para esta mejora; si corresponde, habría que darla de alta bajo
   GE-19 (Gestión de métodos de pago del cliente), la epic más cercana a lo que pide.
+
+## Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-24
+**Rama:** `develop`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Retiro de fondos" (GE-24), con tests, docstrings, Sphinx actualizado y esta
+documentación de la conversación.
+
+> Como usuario cliente quiero retirar los fondos obtenidos mediante una operación de venta para
+> recibirlos en mi cuenta bancaria o billetera electrónica.
+
+Criterios de aceptación:
+
+1. Dado que tengo una transacción de venta pagada/confirmada con fondos disponibles, cuando
+   solicito el retiro, entonces el sistema procesa la transferencia hacia la cuenta bancaria o
+   billetera que indico, usando Stripe o SIPAP según el medio elegido.
+2. Dado que el retiro se confirma exitosamente, cuando se completa, entonces la transacción pasa a
+   estado "Retirada" y queda registrada con fecha, hora y referencia externa.
+3. Dado que el retiro falla, cuando ocurre, entonces la transacción no cambia a "Retirada", se
+   notifica el error al usuario y se permite reintentar.
+4. Dado que intento retirar fondos de una transacción ya retirada, cuando lo intento, entonces el
+   sistema rechaza la operación e informa que ya fue procesada.
+5. Dado que el monto a retirar excede el disponible de esa operación, cuando se valida, entonces el
+   sistema rechaza el retiro antes de iniciar cualquier transferencia externa.
+
+### Diagnóstico inicial
+
+GE-24 es la mitad que le faltaba a GE-23: desde que existe `apps.divisas.entrega.realizar_entrega`,
+una venta exitosa se entrega automáticamente apenas se confirma el pago, igual que una compra o un
+cambio, pero se queda en "Pagada" sin más (``_es_acreditable`` devolvía `False` para una venta a
+propósito, dejando esto anotado como "HU aparte, todavía no implementada").
+
+El criterio 1 dice "cuando solicito el retiro", lo que en una primera lectura sugiere un pedido
+explícito y aparte del cliente, distinto de cómo ya funciona una compra (automático, sin ninguna
+acción extra). Esa lectura se intentó primero y se corrigió dos veces durante esta sesión (ver "Dos
+correcciones de diseño" más abajo): el diseño final, confirmado con el usuario, es que **el retiro
+de una venta es tan automático como la acreditación de una compra** — se paga y se recibe, al mismo
+momento, sin ningún paso aparte. Lo único que GE-24 agrega de verdad sobre lo que ya hacía GE-23 es
+el **nombre** del estado final ("Retirada" en vez de "Acreditada", para que el cliente distinga de
+un vistazo si fue Global Exchange quien le entregó algo o si fue él quien retiró lo suyo).
+
+Sobre "Stripe o SIPAP según el medio elegido" del criterio 1: en la práctica, el destino de un
+retiro siempre es una cuenta o billetera (nunca una tarjeta, Stripe no puede depositarle a una), así
+que siempre sale por SIPAP — la misma precisión que ya se había hecho notar para GE-23.
+
+Sobre el criterio 5 ("antes de iniciar cualquier transferencia externa"): se cubre con el mismo
+chequeo que ya existía para una compra, sin agregar nada — `_verificar_saldo_casa_de_cambio` ya se
+llama, para los dos tipos de `CalculoOperacion` por igual, en el momento de "Confirmar" (antes de
+que exista ningún pago), y vuelve a confirmarse de forma pesimista dentro de la misma
+`realizar_entrega` (vía `CuentaPropia.ajustar_saldos`) antes de tocar el saldo. Nada de esto es
+nuevo de GE-24: ya estaba ahí desde GE-23.
+
+### Diseño (versión final)
+
+- **Nuevo estado `ESTADO_RETIRADA`**, con `retirado_en` y `referencia_retiro`, agregado **solo** a
+  `CalculoOperacion` — a diferencia de todos los estados anteriores, deliberadamente no se espeja en
+  `CalculoTriangulacion` (un cambio entre divisas nunca es una venta, así que nunca podría llegar a
+  "Retirada"; espejarlo ahí solo agregaría una columna y una opción muertas).
+- **`apps.divisas.entrega._es_acreditable` renombrada a `_es_retiro`**, con el sentido invertido
+  (antes decía si correspondía "Acreditada"; ahora dice si corresponde "Retirada", solo para una
+  venta). `realizar_entrega()` elige entre `acreditado_en`/`referencia_acreditacion` o
+  `retirado_en`/`referencia_retiro` según el resultado, pero el resto de la función —cuándo se
+  llama, en qué orden, cómo falla— es exactamente el mismo mecanismo que ya tenía GE-23, sin ninguna
+  rama nueva por tipo de transacción.
+- **`estados_con_pago_ya_registrado(modelo)` (nueva, en `models.py`)**: los mensajes de "esta
+  transacción ya fue pagada" (en pago con tarjeta, por SIPAP, y al intentar pagar de nuevo) ahora
+  también reconocen "Retirada" como ya pagada, sin que ese chequeo rompa para
+  `CalculoTriangulacion` (que no tiene ese estado) — encapsula el `hasattr` necesario en un solo
+  lugar en vez de repetirlo en los cuatro puntos que lo usan.
+- **Plantilla `detalle_transaccion_operacion.html`**: sección "Retiro" (fecha y referencia), paralela
+  a la sección "Acreditación" que ya existía; el bloque de "Entrega fallida" distingue "reintentar
+  retiro" de "reintentar entrega" solo en el texto, usando el mismo botón y el mismo `post()` que ya
+  existían para GE-23 — ninguna acción nueva, ninguna pantalla nueva.
+- **Migración** `0026_calculooperacion_retirada_and_more.py` (sin datos que migrar: los campos
+  nacen vacíos).
+
+### Dos correcciones de diseño, hasta llegar a "se paga y se recibe"
+
+La primera versión trató el retiro como un pedido explícito y aparte: agregaba una vista/acción
+nueva (`_retirar_fondos`, con `accion="retirar"` en `DetalleTransaccionOperacionView`), una función
+`es_entrega_automatica()` para que una venta pagada se quedara en "Pagada" en vez de entregarse
+sola, y un formulario nuevo (`RetirarFondosForm`) para elegir la cuenta de destino en ese momento,
+sacando ese mismo campo de `PagarTransaccionForm` para no pedirlo dos veces.
+
+El usuario señaló dos problemas reales de esa primera versión: rompía la simetría con una compra
+(donde el medio de destino se elige al pagar, no después) y, además, `_movimientos_de_metodo_pago`
+(HU "Movimientos y saldo de los métodos de pago") mostraba la cuenta de destino como "Recibiste" en
+cuanto `medio_destino` quedaba asignado, sin importar si la transacción ya estaba "Acreditada"/
+"Retirada" de verdad.
+
+Primera corrección (todavía con retiro explícito): `PagarTransaccionForm` vuelve a pedir
+`medio_destino` siempre, para los tres tipos de transacción por igual; se elimina `RetirarFondosForm`
+y `_retirar_fondos` pasa a ser un botón de confirmación simple que usa la cuenta ya guardada al
+pagar, sin volver a pedirla.
+
+Segunda corrección (la definitiva): el usuario aclaró que el retiro no debería ser un paso aparte en
+absoluto — "se paga y se recibe", igual que una compra. Se eliminó por completo la noción de un
+pedido explícito: `es_entrega_automatica()` desaparece (y con ella, la condición que agregaba en los
+tres puntos donde se llama a `realizar_entrega()` tras un pago), y `DetalleTransaccionOperacionView`
+vuelve a tener una sola acción por `POST` ("Reintentar", igual que en GE-23) — ninguna "Retirar
+fondos" aparte. Una venta pagada ahora se entrega sola, en el mismo instante que una compra o un
+cambio, y queda "Retirada" en vez de "Pagada" sin que el cliente haga nada más.
+
+En las dos correcciones, `_movimientos_de_metodo_pago` quedó igual: filtra por `estado` en
+`ACREDITADA`/`RETIRADA`, nunca solo por `medio_destino`, así que un "Recibiste" nunca aparece antes
+de que la transferencia se haya resuelto de verdad — esa parte era correcta independientemente de
+cuándo se elige la cuenta o de si el retiro es automático o explícito.
+
+### Tests
+
+`tests/test_entrega.py`: se corrigió el test que asumía que una venta exitosa se quedaba en
+"Pagada" (ahora pasa a "Retirada", con una cuenta de destino en PYG propia del escenario, ya elegida
+al pagar). La clase `RetirarFondosVentaTest` (de la primera versión, con retiro explícito) se
+eliminó por completo al no existir más esa acción. `tests/test_operaciones.py`: un test confirma que
+pagar una venta pide y guarda `medio_destino` igual que una compra. `tests/test_pagos_sipap.py`: un
+test confirma que una venta pagada por SIPAP dispara `realizar_entrega` automáticamente, igual que
+una compra (antes de la segunda corrección, probaba lo contrario). `tests/test_metodos_pago.py`: un
+test confirma que una venta "Pagada" (con `medio_destino` ya asignado) todavía no aparece como
+"Recibiste" en movimientos, y que sí aparece apenas pasa a "Retirada".
+
+### Resultado final
+
+- Suite completa (`tests/`, incluido el cluster de caja consolidado en la sesión de reducción de
+  tests): **383/383** verde.
+- `makemigrations --check --dry-run`: sin cambios pendientes.
+- Sphinx (`-W`): se agregó `_es_retiro` a `apps.divisas.entrega.rst` (en lugar de `_es_acreditable`)
+  y `estados_con_pago_ya_registrado` a `apps.divisas.models.rst`. `es_entrega_automatica` y
+  `RetirarFondosForm` se agregaron y se volvieron a sacar de sus `.rst` al eliminarse ambos. Sin
+  advertencias nuevas; sigue la única preexistente y ajena a esta HU ya señalada en la Sesión 21
+  (`templates.rst`/`metodo_pago_list.html`).
+- De paso, se encontró y corrigió un bug preexistente y ajeno a esta HU en
+  `tests/test_cierre_caja.py` (de la sesión de reducción de tests): comparaba
+  `Caja.abierta_en`/`cerrada_en` (en UTC) con `.strftime()` directo contra lo que el template
+  muestra en hora local, así que fallaba cerca de medianoche. Se corrigió con
+  `timezone.localtime(...)` antes de formatear.
+
+### Pendiente / fuera de alcance
+
+- No se creó ningún ticket de verificación en Jira para cerrar GE-24 como "Listo"; queda a criterio
+  del equipo actualizar su estado ahí.
+- El criterio 5 se sigue cubriendo con el mismo chequeo optimista que ya usa el paso de "Confirmar"
+  (verificar antes de intentar, sin reservar el saldo): dos operaciones que compitieran por el mismo
+  saldo escaso podrían, en teoría, pasar los dos ese chequeo antes de que `realizar_entrega` ajuste
+  el saldo real. Es la misma limitación ya aceptada para GE-23, no algo nuevo de esta HU.
 
 ## Enlaces externos (conversaciones completas)
 

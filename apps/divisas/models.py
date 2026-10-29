@@ -309,6 +309,12 @@ class CalculoOperacion(models.Model):
     ESTADO_ENTREGA_FALLIDA = 'ENTREGA_FALLIDA'
     ESTADO_PAGO_EXPIRADO = 'PAGO_EXPIRADO'
     ESTADO_ACREDITADA = 'ACREDITADA'
+    # A diferencia de todos los demás estados de esta lista, este no se
+    # espejea en CalculoTriangulacion: un cambio entre divisas nunca es una
+    # venta, así que nunca podría llegar a "Retirada" — espejarlo ahí solo
+    # agregaría una columna y una opción muertas, sin ningún caso que las
+    # use. Ver HU "Retiro de fondos" (GE-24).
+    ESTADO_RETIRADA = 'RETIRADA'
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, 'Pendiente de confirmación'),
         (ESTADO_CONFIRMADA, 'Confirmada'),
@@ -321,6 +327,7 @@ class CalculoOperacion(models.Model):
         (ESTADO_ENTREGA_FALLIDA, 'Pagada, pero la entrega al cliente falló'),
         (ESTADO_PAGO_EXPIRADO, 'Pago fuera de plazo'),
         (ESTADO_ACREDITADA, 'Acreditada'),
+        (ESTADO_RETIRADA, 'Retirada'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -383,17 +390,34 @@ class CalculoOperacion(models.Model):
         blank=True,
         verbose_name='Acreditado en',
         help_text=(
-            'Fecha y hora en que la entrega de una compra (o de un cambio '
-            'entre divisas) se completó con éxito (ver '
-            '``apps.divisas.entrega.realizar_entrega``). Una venta no usa '
-            'este campo: "retirar" lo que deja una venta es una HU aparte '
-            '("Retiro de fondos") todavía no implementada.'
+            'Fecha y hora en que la entrega de una compra se completó con '
+            'éxito (ver ``apps.divisas.entrega.realizar_entrega``). Una '
+            'venta no usa este campo: lo que deja una venta no se entrega '
+            'sola, el cliente lo retira explícitamente (ver '
+            '``retirado_en``, HU "Retiro de fondos", GE-24).'
         ),
     )
     referencia_acreditacion = models.CharField(
         max_length=60,
         blank=True,
         verbose_name='Referencia de la acreditación',
+        help_text='La misma referencia con la que se le pidió la transferencia a sipap-sim.',
+    )
+    retirado_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Retirado en',
+        help_text=(
+            'Fecha y hora en que el retiro de una venta se completó con '
+            'éxito (ver ``apps.divisas.entrega.realizar_entrega``, HU '
+            '"Retiro de fondos", GE-24). Una compra no usa este campo: su '
+            'entrega es automática y usa ``acreditado_en``.'
+        ),
+    )
+    referencia_retiro = models.CharField(
+        max_length=60,
+        blank=True,
+        verbose_name='Referencia del retiro',
         help_text='La misma referencia con la que se le pidió la transferencia a sipap-sim.',
     )
 
@@ -902,6 +926,23 @@ def divisa_a_entregar(transaccion):
     if transaccion.tipo == CalculoOperacion.TIPO_VENTA:
         return Divisa.objects.get(codigo=Divisa.CODIGO_BASE)
     return transaccion.divisa
+
+
+def estados_con_pago_ya_registrado(modelo):
+    """Devuelve los estados de ``modelo`` que implican que ya existe un pago vinculado.
+
+    Se usa para armar el mensaje "ya fue pagada" sin repetir, en cada
+    lugar que lo necesita (``apps.divisas.views``/``pagos_stripe``/
+    ``pagos_sipap``), la lista exacta de estados — que no es la misma
+    para los dos modelos: ``ESTADO_RETIRADA`` (HU "Retiro de fondos",
+    GE-24) solo existe en ``CalculoOperacion``, nunca en
+    ``CalculoTriangulacion`` (ver su ``ESTADO_CHOICES``), así que
+    acceder a él sin este chequeo rompería con un cambio entre divisas.
+    """
+    estados = [modelo.ESTADO_PAGADA, modelo.ESTADO_ACREDITADA]
+    if hasattr(modelo, 'ESTADO_RETIRADA'):
+        estados.append(modelo.ESTADO_RETIRADA)
+    return tuple(estados)
 
 
 class PagoRechazadoError(Exception):

@@ -288,6 +288,13 @@ class PagarTransaccionForm(forms.Form):
     se deriva de ``medio_origen.tipo_medio`` en la vista; este
     formulario no decide nada de proveedor, identificador externo ni
     monto, que son responsabilidad de ``Pago.registrar_pago``.
+
+    Para una venta, ``medio_destino`` se pide acá igual que para una
+    compra o un cambio, en la misma pantalla y en el mismo momento: su
+    entrega (HU "Retiro de fondos", GE-24) se intenta sola apenas se
+    confirma el pago, exactamente igual que una compra o un cambio (HU
+    "Acreditación de fondos", GE-23) — no hay ningún paso aparte en el
+    que haga falta volver a elegirla.
     """
 
     medio_origen = _MetodoPagoChoiceField(

@@ -107,6 +107,7 @@ from apps.divisas.models import (
     Pago,
     PagoRechazadoError,
     SolicitudPagoSipap,
+    estados_con_pago_ya_registrado,
     moneda_a_pagar,
     monto_a_pagar,
 )
@@ -374,7 +375,7 @@ class _IniciarPagoSipapBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo in (self.model.ESTADO_PAGADA, self.model.ESTADO_ACREDITADA):
+            if transaccion.estado_efectivo in estados_con_pago_ya_registrado(self.model):
                 messages.error(request, 'Esta transacción ya fue pagada.')
             elif transaccion.tasa_vencida:
                 messages.error(
@@ -507,11 +508,11 @@ def _procesar_confirmacion_sipap(solicitud, datos):
             # otro medio la pagó mientras tanto). No hay más que hacer.
             return
         if creado and transaccion.estado == transaccion.ESTADO_PAGADA:
-            # Entrega lo que corresponda (la divisa comprada/cambiada, o
-            # los guaraníes de una venta) recién ahora, la primera vez que
-            # se registra este pago, nunca en una repetición idempotente
-            # del mismo webhook, y nunca si llegó fuera de plazo (ver
-            # Pago.registrar_pago).
+            # Entrega lo que corresponda (la divisa comprada, el resultado
+            # de un cambio, o los guaraníes de una venta) recién ahora, la
+            # primera vez que se registra este pago, nunca en una
+            # repetición idempotente del mismo webhook, y nunca si llegó
+            # fuera de plazo (ver Pago.registrar_pago).
             realizar_entrega(transaccion)
         solicitud.pago = pago
         solicitud.estado = SolicitudPagoSipap.ESTADO_ACREDITADA
