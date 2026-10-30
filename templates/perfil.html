@@ -19,9 +19,9 @@ Contexto esperado: user, roles y cliente_activo.
 
 <div class="ge-card" style="max-width: 640px;">
     <div class="d-flex align-items-center gap-3 mb-4">
-        <span class="ge-avatar" style="width:56px; height:56px; font-size:18px;">{{ user.get_full_name|default:user.email|iniciales }}</span>
+        <span class="ge-avatar" style="width:56px; height:56px; font-size:18px;">{{ cliente_activo.nombre_completo|default:user.get_full_name|default:user.username|iniciales }}</span>
         <div>
-            <h2 style="font-size:18px; margin:0;">{{ user.first_name }} {{ user.last_name }}</h2>
+            <h2 style="font-size:18px; margin:0;">{{ cliente_activo.nombre_completo|default:user.get_full_name|default:user.username }}</h2>
             <p style="color: var(--ge-text-muted); margin:0; font-size: 14px;">{{ user.email }}</p>
         </div>
     </div>

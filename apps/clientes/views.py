@@ -1,6 +1,7 @@
 """
 Módulo de vistas para la aplicación de clientes.
 """
+import logging
 from decimal import Decimal
 from urllib.parse import urlparse
 
@@ -9,10 +10,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.mail import send_mail
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.response import TemplateResponse
 from django.urls import Resolver404, resolve, reverse, reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.decorators.http import require_POST  # Agregado para Metodos de Pago
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
@@ -28,12 +31,24 @@ from apps.divisas.models import (
     moneda_a_pagar,
     monto_a_entregar,
 )
-from .forms import AsociarUsuarioClienteForm, ClienteForm, MetodoPagoForm
-from .models import Cliente, MetodoPago
+from .forms import (
+    AsociarUsuarioClienteForm,
+    ClienteForm,
+    MetodoPagoForm,
+    RechazarSolicitudClienteForm,
+    SolicitudClienteForm,
+    _error_identificador_en_uso,
+)
+from .models import Cliente, MetodoPago, SolicitudCliente
 from .validacion_sipap import SipapComunicacionError, validar_cuenta
-from apps.users.services import sincronizar_usuarios_desde_keycloak
+from apps.users.services import (
+    actualizar_roles_de_usuario,
+    obtener_roles_de_usuario,
+    sincronizar_usuarios_desde_keycloak,
+)
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -315,6 +330,229 @@ class AsociarUsuariosClienteView(
         return render(
             request, self.template_name, {'form': form, 'cliente': cliente}
         )
+
+
+class SolicitarClienteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Autoservicio: cualquier usuario sin ningún ``Cliente`` asociado todavía pide darse de alta.
+
+    No depende del rol ``cliente`` de Keycloak: un usuario recién
+    registrado puede no tener ningún rol de negocio todavía (dárselo
+    de alta como cliente es justamente el paso que lo lleva a tener
+    uno). Mientras no tenga ningún ``Cliente`` asociado, esta es la
+    única pantalla operativa que tiene sentido ofrecerle. Si ya tiene
+    una ``SolicitudCliente`` en ``PENDIENTE``, no vuelve a mostrar el
+    formulario: solo el aviso de que se está gestionando. Si la última
+    fue ``RECHAZADA``, muestra el motivo y permite reintentar.
+    """
+
+    template_name = 'clientes/solicitar_cliente.html'
+
+    def test_func(self):
+        """Solo quien no tiene ningún rol de negocio distinto de 'cliente' puede solicitar — ver ``puede_solicitar_cliente``."""
+        roles = self.request.session.get('keycloak_roles', [])
+        es_admin = 'admin' in roles or self.request.user.is_staff or self.request.user.is_superuser
+        return not (set(roles) - {'cliente'}) and not es_admin
+
+    def get(self, request, *args, **kwargs):
+        """Muestra el formulario, el aviso de 'en gestión', o redirige si ya tiene cliente."""
+        if request.user.clientes.filter(is_active=True).exists():
+            messages.info(request, 'Ya tenés un cliente asociado: no necesitás solicitar otro.')
+            return redirect('home')
+
+        solicitud_pendiente = SolicitudCliente.objects.filter(
+            usuario=request.user, estado=SolicitudCliente.ESTADO_PENDIENTE,
+        ).first()
+        if solicitud_pendiente:
+            return render(request, self.template_name, {'solicitud_pendiente': solicitud_pendiente})
+
+        ultima_rechazada = SolicitudCliente.objects.filter(
+            usuario=request.user, estado=SolicitudCliente.ESTADO_RECHAZADA,
+        ).first()
+        return render(request, self.template_name, {
+            'form': SolicitudClienteForm(), 'ultima_rechazada': ultima_rechazada,
+        })
+
+    def post(self, request, *args, **kwargs):
+        """Crea la solicitud si el usuario todavía no tiene cliente ni una pendiente."""
+        if request.user.clientes.filter(is_active=True).exists():
+            messages.info(request, 'Ya tenés un cliente asociado: no necesitás solicitar otro.')
+            return redirect('home')
+        if SolicitudCliente.objects.filter(usuario=request.user, estado=SolicitudCliente.ESTADO_PENDIENTE).exists():
+            messages.error(request, 'Ya tenés una solicitud pendiente de revisión.')
+            return redirect('clientes:solicitar_cliente')
+
+        form = SolicitudClienteForm(request.POST)
+        if form.is_valid():
+            solicitud = form.save(commit=False)
+            solicitud.usuario = request.user
+            solicitud.save()
+            messages.success(request, 'Tu solicitud fue enviada. Un administrador la va a revisar.')
+            return redirect('home')
+
+        ultima_rechazada = SolicitudCliente.objects.filter(
+            usuario=request.user, estado=SolicitudCliente.ESTADO_RECHAZADA,
+        ).first()
+        return render(request, self.template_name, {'form': form, 'ultima_rechazada': ultima_rechazada})
+
+
+class SolicitudesClienteListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista, para un administrador, todas las solicitudes de alta de cliente."""
+
+    model = SolicitudCliente
+    template_name = 'clientes/solicitudes_cliente.html'
+    context_object_name = 'solicitudes'
+
+    def test_func(self):
+        """Comprueba que el usuario pueda administrar solicitudes de cliente."""
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_queryset(self):
+        """Trae de una sola vez al usuario solicitante, más recientes primero (orden del modelo)."""
+        return SolicitudCliente.objects.select_related('usuario')
+
+    def get_context_data(self, **kwargs):
+        """Agrega el formulario de rechazo, reutilizado inline en cada fila pendiente."""
+        context = super().get_context_data(**kwargs)
+        context['form_rechazo'] = RechazarSolicitudClienteForm()
+        return context
+
+
+def _notificar_resultado_solicitud(solicitud, *, aprobada):
+    """Avisa por email al usuario si su ``SolicitudCliente`` fue aprobada o rechazada.
+
+    Usa ``django.core.mail.send_mail`` con el ``EMAIL_BACKEND`` que
+    tenga configurado el proyecto (``console`` por defecto, nunca manda
+    nada real; ``smtp`` si se configuró uno real en el ``.env`` —ver
+    ``global_exchange.settings.base``). Nunca rompe la aprobación o el
+    rechazo en sí si el envío falla (SMTP caído, sin configurar, etc.):
+    mismo criterio de contención que ``_asignar_rol_cliente_en_keycloak``.
+    """
+    if not solicitud.usuario.email:
+        return
+    if aprobada:
+        asunto = 'Tu solicitud de cliente fue aprobada'
+        cuerpo = (
+            f'Hola {solicitud.usuario.username},\n\n'
+            'Tu solicitud para ser cliente de Global Exchange fue aprobada. '
+            'Ya podés ingresar al sistema para operar.\n\n'
+            'Saludos,\nGlobal Exchange'
+        )
+    else:
+        asunto = 'Tu solicitud de cliente fue rechazada'
+        cuerpo = (
+            f'Hola {solicitud.usuario.username},\n\n'
+            'Tu solicitud para ser cliente de Global Exchange fue rechazada.\n\n'
+            f'Motivo: {solicitud.motivo_rechazo}\n\n'
+            'Podés volver a solicitarlo corrigiendo el dato indicado.\n\n'
+            'Saludos,\nGlobal Exchange'
+        )
+    try:
+        send_mail(asunto, cuerpo, None, [solicitud.usuario.email])
+    except Exception:
+        logger.exception('No se pudo enviar el email de %s a %s.', 'aprobación' if aprobada else 'rechazo', solicitud.usuario.email)
+
+
+class AprobarSolicitudClienteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Aprueba una solicitud: crea el ``Cliente`` (física o jurídica) y lo asocia al usuario solicitante."""
+
+    def test_func(self):
+        """Comprueba que el usuario pueda administrar solicitudes de cliente."""
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def post(self, request, pk):
+        """Crea el cliente y marca la solicitud como aprobada, o informa el error sin romper."""
+        solicitud = get_object_or_404(SolicitudCliente, pk=pk)
+        if solicitud.estado != SolicitudCliente.ESTADO_PENDIENTE:
+            messages.error(request, 'Esta solicitud ya fue revisada.')
+            return redirect('clientes:solicitudes_cliente')
+
+        error = _error_identificador_en_uso(solicitud.identificador, excluir_solicitud_pk=solicitud.pk)
+        if error:
+            messages.error(request, f'No se pudo aprobar: {error}')
+            return redirect('clientes:solicitudes_cliente')
+
+        cliente = Cliente.objects.create(
+            tipo_cliente=solicitud.tipo_cliente,
+            nombre=solicitud.nombre,
+            apellido=solicitud.apellido,
+            razon_social=solicitud.razon_social,
+            identificador=solicitud.identificador,
+        )
+        cliente.usuarios.add(solicitud.usuario)
+        self._asignar_rol_cliente_en_keycloak(request, solicitud.usuario)
+
+        solicitud.estado = SolicitudCliente.ESTADO_APROBADA
+        solicitud.revisado_en = timezone.now()
+        solicitud.revisado_por = request.user
+        solicitud.cliente_creado = cliente
+        solicitud.save(update_fields=['estado', 'revisado_en', 'revisado_por', 'cliente_creado'])
+        _notificar_resultado_solicitud(solicitud, aprobada=True)
+
+        messages.success(request, f'Se creó el cliente {cliente} y se asoció a {solicitud.usuario}.')
+        return redirect('clientes:solicitudes_cliente')
+
+    @staticmethod
+    def _asignar_rol_cliente_en_keycloak(request, usuario):
+        """Le agrega el rol 'cliente' en Keycloak al usuario aprobado, sin romper la aprobación si falla.
+
+        Sin esto, el ``Cliente`` queda creado y asociado en Django, pero
+        el usuario sigue sin poder operar nada (comprar, vender, ver su
+        historial, etc.) hasta que alguien le agregue el rol a mano en
+        la consola de Keycloak — la asociación por sí sola no alcanza,
+        porque casi todos los permisos de este sistema exigen además el
+        rol ``'cliente'`` de Keycloak en la sesión. Igual que
+        ``AsociarUsuariosClienteView._usuarios_cliente_ids``, cualquier
+        falla (Keycloak caído, el email no coincide, etc.) se contiene
+        acá: la aprobación en sí ya es válida en Django, y un
+        administrador puede agregar el rol a mano si esto no funciona.
+        """
+        if not usuario.email:
+            messages.warning(
+                request,
+                f'El cliente se creó, pero {usuario} no tiene email: no se le pudo asignar '
+                'el rol "cliente" en Keycloak. Agregáselo a mano desde la gestión de roles.',
+            )
+            return
+        try:
+            roles_actuales = obtener_roles_de_usuario(usuario.email)
+            actualizar_roles_de_usuario(usuario.email, set(roles_actuales) | {'cliente'})
+        except Exception:
+            logger.exception('No se pudo asignar el rol "cliente" en Keycloak a %s.', usuario.email)
+            messages.warning(
+                request,
+                f'El cliente se creó, pero no se pudo asignar el rol "cliente" en Keycloak a '
+                f'{usuario}. Agregáselo a mano desde la gestión de roles.',
+            )
+
+
+class RechazarSolicitudClienteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Rechaza una solicitud, con un motivo obligatorio, sin crear ningún ``Cliente``."""
+
+    def test_func(self):
+        """Comprueba que el usuario pueda administrar solicitudes de cliente."""
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def post(self, request, pk):
+        """Marca la solicitud como rechazada con el motivo indicado."""
+        solicitud = get_object_or_404(SolicitudCliente, pk=pk)
+        if solicitud.estado != SolicitudCliente.ESTADO_PENDIENTE:
+            messages.error(request, 'Esta solicitud ya fue revisada.')
+            return redirect('clientes:solicitudes_cliente')
+
+        form = RechazarSolicitudClienteForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, 'Hay que indicar un motivo para rechazar la solicitud.')
+            return redirect('clientes:solicitudes_cliente')
+
+        solicitud.estado = SolicitudCliente.ESTADO_RECHAZADA
+        solicitud.motivo_rechazo = form.cleaned_data['motivo']
+        solicitud.revisado_en = timezone.now()
+        solicitud.revisado_por = request.user
+        solicitud.save(update_fields=['estado', 'motivo_rechazo', 'revisado_en', 'revisado_por'])
+        _notificar_resultado_solicitud(solicitud, aprobada=False)
+
+        messages.success(request, 'La solicitud fue rechazada.')
+        return redirect('clientes:solicitudes_cliente')
 
 
 class ClienteSoftDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):

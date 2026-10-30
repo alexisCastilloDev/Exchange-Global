@@ -105,7 +105,21 @@ MESSAGE_TAGS = {
     messages_constants.ERROR: 'danger',
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Por defecto, "console" (imprime el correo en la terminal, no manda nada
+# real) — así venía desde el principio de este proyecto. Para que se manden
+# correos de verdad (p. ej. al aprobar/rechazar una "Solicitud de cliente",
+# ver apps.clientes.views), hay que sobrescribir estas variables en el .env
+# con un SMTP real (mismo criterio que FACTURASEGURA_*: nunca se completa
+# un valor real acá, solo el default seguro). Django reemplaza esto por su
+# propio backend en memoria durante los tests, sin importar lo que diga
+# este setting, así que nunca se manda un correo real al correr la suite.
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'Global Exchange <no-reply@globalexchange.com.py>')
 
 AUTHENTICATION_BACKENDS = (
     'apps.authentication.backends.KeycloakOIDCAuthenticationBackend',

@@ -3858,6 +3858,189 @@ nada más a mano (su email ya está en el lugar correcto, `usuarios`).
 
 35/35 en el módulo, `manage.py check` y Sphinx limpios, suite completa corrida de nuevo.
 
+## Sesión 25 — 30/10/2026 — Autoservicio de alta: "Solicitud de cliente"
+
+### Pedido
+
+Tras las pruebas en vivo de la HU de facturación electrónica, el usuario pidió, aparte, un ajuste al
+flujo de alta de clientes: hoy un administrador tiene que crear el `Cliente` a mano
+(`ClienteCreateView`) y asociarlo después a un usuario existente (`AsociarUsuariosClienteView`), sin
+que el usuario mismo inicie nada. Pidió que un usuario nuevo pueda solicitar ser cliente (nombre,
+apellido, cédula/RUC), que un administrador la gestione, y que, mientras no tenga cliente asociado,
+lo único que vea sea esa pantalla (o el aviso de que ya la envió) y un vistazo de las tasas.
+
+También pidió, como parte del mismo pedido, cambiar el formulario de registro de usuarios (quitar la
+contraseña, pedirla recién después de verificar el email).
+
+### Hallazgo que redefinió el alcance
+
+Investigando antes de planificar (con dos agentes de exploración en paralelo), se confirmó que **el
+registro de usuarios está 100% delegado a Keycloak**: no existe ningún `RegisterView`/formulario
+propio dentro de este Django, ni verificación de email en el código (`apps/authentication/views.py`
+solo tiene `CustomOIDCLogoutView`/`CustomOIDCCallbackView`; `LOGIN_URL` apunta directo a
+`oidc_authentication_init`; no hay `send_mail` en ningún lugar del proyecto). El formulario de
+registro con el que se queja el usuario es la pantalla hospedada por Keycloak, fuera de este
+repositorio. Se le preguntó al usuario cómo manejar esto, y eligió configurarlo él mismo en Keycloak
+(que ya soporta nativamente ese patrón vía Required Actions) — esta sesión se limitó a la parte que
+sí vive en el código: la solicitud de cliente.
+
+### Diseño e implementación
+
+- **Modelo `SolicitudCliente`** (`apps/clientes/models.py`): `usuario` (FK), `nombre`, `apellido`,
+  `identificador`, `estado` (`PENDIENTE`/`APROBADA`/`RECHAZADA`, mismo patrón que el resto del
+  proyecto), `motivo_rechazo`, `creado_en`, `revisado_en`/`revisado_por`, `cliente_creado`
+  (`OneToOneField` a `Cliente`, se completa al aprobar). Una `UniqueConstraint` condicional
+  (`estado='PENDIENTE'`) garantiza a nivel de base de datos que un usuario no tenga dos solicitudes
+  pendientes a la vez — mismo criterio de "la base de datos lo impide" que ya usa `DocumentoElectronico`.
+  Solo cubre clientes físicos; uno jurídico sigue dándose de alta por un administrador, sin cambios.
+- **`SolicitudClienteForm`** (`apps/clientes/forms.py`): pide solo nombre/apellido/identificador (el
+  usuario lo fija siempre la vista, nunca el formulario). Se extrajo `_error_identificador_en_uso`
+  (función compartida) de la lógica que ya tenía `ClienteForm.clean_identificador`, y se le agregó
+  también el chequeo contra una `SolicitudCliente` pendiente de otro usuario — beneficio colateral:
+  ahora tampoco un administrador puede crear a mano un `Cliente` con un identificador que ya está
+  pendiente de aprobación por autoservicio.
+- **Vistas nuevas** (`apps/clientes/views.py`): `SolicitarClienteView` (el propio usuario; redirige si
+  ya tiene cliente, muestra el aviso de "en gestión" si hay una pendiente, el motivo + formulario si
+  la última fue rechazada), `SolicitudesClienteListView`/`AprobarSolicitudClienteView`/
+  `RechazarSolicitudClienteView` (admin, mismo criterio `is_staff`/`is_superuser` que
+  `ClienteCreateView`). Aprobar crea el `Cliente` y hace `cliente.usuarios.add(solicitud.usuario)`
+  (la relación real que usan los permisos, no el `OneToOneField user`, casi sin uso en la práctica).
+- **UI**: nuevo booleano `puede_solicitar_cliente` en `apps.authentication.context_processors`
+  (`'cliente' in roles and not es_admin and not tiene_clientes_asociados`), tarjeta en `home.html` y
+  link en el sidebar de `base.html`, visibles solo para quien corresponde. No hizo falta tocar nada de
+  "tasas vigentes": `puede_ver_tasas` ya no exige tener un `Cliente` asociado, solo el rol Keycloak.
+- **Templates nuevos**: `solicitar_cliente.html`, `solicitudes_cliente.html` (lista admin con
+  aprobar/rechazar inline, el rechazo con un `motivo` obligatorio en un `<textarea>` colapsable).
+
+### Hallazgo adicional durante la verificación
+
+Al correr los tests nuevos con `manage.py test`, aparecía "NO TESTS RAN": se descubrió que
+`tests/test_clientes.py` (y otros 6 archivos: `test_auth.py`, `test_divisas.py`,
+`test_notificaciones_tasas.py`, `test_roles.py`, `test_seleccion_cliente.py`, `test_users.py`) están
+escritos en estilo `pytest` (`@pytest.mark.django_db`), no `django.test.TestCase` — el runner de
+Django nunca los descubre. Hay un `pytest.ini` en la raíz del proyecto preparado exactamente para
+correr estos archivos vía `pytest`, separado de `manage.py test`. Esto significa que **ninguna de las
+"suites completas" corridas en sesiones anteriores de este proyecto (incluidas todas las de esta
+misma sesión, antes de este hallazgo) incluyó estos 7 archivos** — no es un problema introducido
+ahora, es una laguna de verificación preexistente que convendría tener en cuenta de acá en adelante:
+el chequeo completo de este proyecto requiere correr tanto `manage.py test tests` como
+`pytest tests/test_auth.py tests/test_clientes.py tests/test_divisas.py
+tests/test_notificaciones_tasas.py tests/test_roles.py tests/test_seleccion_cliente.py
+tests/test_users.py` (o `pytest tests/` entero, con cuidado de no correrlo en paralelo con
+`manage.py test`, porque ambos compiten por la misma base de datos de test).
+
+### Verificación
+
+`manage.py makemigrations --check --dry-run` limpio, `manage.py check` limpio, Sphinx sin
+advertencias nuevas (los tres `.rst` de `apps.clientes` usan `automodule` genérico, documentan lo
+nuevo sin tocar ningún archivo). 27/27 tests nuevos y existentes en `test_clientes.py` (pytest),
+131/131 en los 7 archivos pytest en conjunto (sin regresión), suite completa de `manage.py test`
+corrida de nuevo para la confirmación final.
+
+### Ajustes al registro: tema de Keycloak, bug del username, y redirección directa
+
+Tras implementar "Solicitud de cliente", el usuario probó el registro completo contra su Keycloak
+local (`C:\herramientas_IS2\keycloak`, instalación standalone, realm `global-exchange`) y aparecieron
+varios problemas reales, cada uno investigado con evidencia concreta (logs de Keycloak, la API de
+administración, el jar de Keycloak) antes de corregir:
+
+- **El registro seguía pidiendo nombre/apellido**: `register.ftl` (el tema propio
+  `keycloak/themes/global-exchange`) usaba `userProfileCommons.userProfileFormFields`, que renderiza
+  todos los atributos de User Profile sin excepción. Se reemplazó por un loop propio que excluye
+  `firstName`/`lastName` explícitamente. **Primer intento fallido**: se copió el patrón de macro del
+  tema `keycloak.v2` (que depende de `field.ftl`), pero la cadena de herencia real de este tema es
+  `global-exchange → keycloak → base` (confirmado leyendo `theme.properties` de cada uno dentro del
+  jar `keycloak-themes-26.7.2.jar`) — nunca pasa por `keycloak.v2`, así que `field.ftl` no existía en
+  esa cadena (`TemplateNotFoundException`). Se corrigió usando el patrón real de `base`
+  (autocontenido, sin `field.ftl`), extraído del jar con Python/zipfile para no adivinar.
+- **La contraseña diferida no funcionaba**: `keycloak/instalar-tema.ps1` (ya existente en el repo)
+  fijaba `always_set_password_on_register_form=true`, anulando a propósito el comportamiento nativo
+  de Keycloak 26 (diferir la contraseña hasta verificar el email). Se invirtió a `false`.
+- **El correo de verificación no se enviaba**: `535-5.7.8 Username and Password not accepted` de
+  Gmail — la contraseña SMTP configurada era la contraseña normal de la cuenta, no una "contraseña de
+  aplicación" (obligatoria para SMTP con 2FA activo). Se le indicó al usuario generar una en
+  `myaccount.google.com/apppasswords` y cargarla en `Realm settings → Email`.
+- **El rol `cliente` no se asigna a cuentas nuevas**: confirmado por la API de administración de
+  Keycloak que `default-roles-global-exchange` (el rol que se asigna solo a cualquier cuenta nueva)
+  no incluye el rol de negocio `cliente` como componente — es config de Keycloak, no bug de código. Un
+  intento de arreglarlo vía API (POST a `.../composites`) quedó bloqueado por el modo de permisos de
+  la sesión; se le dieron los pasos para hacerlo a mano en la consola.
+- **Bug real encontrado y corregido**: `apps/authentication/backends.py` nunca sobrescribía
+  `get_username`, así que `mozilla_django_oidc` usaba su algoritmo por defecto — un hash SHA1 en
+  base64 del email — como `User.username` local, en vez del username real de Keycloak. Se confirmó
+  consultando la base real (`'U4Qc8ATyulSxHM7b6ZFlivqu_DI'` para la cuenta nueva de prueba, vs.
+  usernames limpios para cuentas más viejas). Esto afectaba la UI (mostraba un hash/el email en vez
+  de un nombre) y, potencialmente, `ClienteForm.save()` (que busca
+  `User.objects.filter(username=identificador)` asumiendo que el username es real). Se agregó
+  `get_username` (usa `preferred_username` del token), se corrigió a mano el registro ya afectado, y
+  se sumó `test_get_username_usa_preferred_username_no_un_hash_del_email`.
+- **Nombre mostrado en la UI**: `home.html`/`base.html`/`perfil.html` caían a `user.email` cuando no
+  había `first_name` (ahora el caso normal, al no pedirse en el registro). Se corrigió la prioridad a
+  `cliente_activo.nombre_completo` (el nombre real del `Cliente`, cuando lo tiene) → `user.first_name`
+  (cuentas viejas/admin) → `user.username` (último recurso, nunca el email).
+- **Redirección directa a "Solicitar cliente"**: un usuario con rol `cliente` sin ningún `Cliente`
+  asociado ahora es redirigido desde `home` directo a `clientes:solicitar_cliente`
+  (`global_exchange/views.py`), en vez de aterrizar en un panel general casi vacío con solo un link
+  para hacer clic. Mismo criterio exacto que `puede_solicitar_cliente`, sin crear loops (un usuario ya
+  con cliente nunca cumple la condición de redirección). Se actualizó
+  `test_el_link_para_solicitar_aparece_solo_para_quien_corresponde` (ya no se prueba en `home`, que
+  ahora redirige, sino en `tasas_vigentes`) y se agregaron
+  `test_home_redirige_directo_a_solicitar_cliente_si_no_tiene_ninguno` y
+  `test_home_no_redirige_a_un_admin_ni_a_quien_ya_tiene_cliente`.
+
+Toda esta investigación se hizo con evidencia real en cada paso: lectura directa del jar de temas de
+Keycloak, consultas a su API de administración (autenticado con las credenciales que compartió el
+usuario — se le señaló explícitamente el riesgo de reusar la misma contraseña que su base de datos
+Postgres), y los stack traces reales de la consola de Keycloak para cada error, nunca suposiciones.
+
+29/29 en `test_clientes.py`, 12/12 en `test_auth.py`, Sphinx y `manage.py check` limpios, suite
+completa de Django corrida de nuevo para la confirmación final.
+
+### Ampliación de "Solicitud de cliente": jurídica, rol en Keycloak, aviso por email
+
+Tres pedidos más sobre la misma feature, cada uno investigado antes de tocar código:
+
+- **Soporte para persona jurídica**: `SolicitudCliente` ganó `tipo_cliente` y `razon_social` (mismos
+  campos/validación condicional que `Cliente`/`ClienteForm`, con el mismo toggle JS en el formulario).
+  `AprobarSolicitudClienteView` crea el `Cliente` del tipo correspondiente.
+- **Bug real: el rol `cliente` nunca se asignaba en Keycloak al aprobar**. La aprobación asociaba el
+  usuario al `Cliente` en Django (`cliente.usuarios.add(...)`), pero casi todos los permisos del
+  sistema exigen además el rol `'cliente'` de Keycloak en la sesión — sin ese rol, el usuario queda
+  con un `Cliente` asociado pero sin poder operar nada. Se reusó
+  `apps.users.services.obtener_roles_de_usuario`/`actualizar_roles_de_usuario` (ya existente, usado
+  por la pantalla de gestión de roles) para agregarle el rol al aprobar, contenido en un
+  `try/except` que nunca rompe la aprobación si Keycloak falla o el usuario no tiene email — mismo
+  criterio que `AsociarUsuariosClienteView._usuarios_cliente_ids`.
+- **Pregunta sobre cierre de sesión**: los roles de Keycloak solo se sincronizan a la sesión de
+  Django en el login (no hay `mozilla_django_oidc.middleware.SessionRefresh` instalado) — confirmado
+  revisando `MIDDLEWARE` en `settings/base.py`. Se le explicó la opción real
+  (`SessionRefresh` + `OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS`, revalidación periódica silenciosa) y el
+  usuario eligió **no** agregarla por ahora — el fix del rol ya resuelve lo más importante.
+- **Email de aviso al aprobar/rechazar**: se activó (el usuario pidió implementarlo). Nuevo
+  `EMAIL_BACKEND` configurable vía `.env` en `global_exchange/settings/base.py` (sigue en "console"
+  por defecto, igual que antes — nunca se completa una credencial real en el repo, mismo criterio que
+  `FACTURASEGURA_*`). Nuevo `_notificar_resultado_solicitud` en `apps/clientes/views.py`, llamado
+  desde ambas vistas, con el mismo criterio de contención de errores que el resto de esta HU. Django
+  reemplaza el backend por uno en memoria durante los tests automáticamente, así que nunca se manda
+  un correo real al correr la suite, sin importar la configuración real.
+
+**Dos regresiones propias, encontradas y corregidas por la propia suite de tests** (no reportadas
+por el usuario): la condición `puede_solicitar_cliente`, al ampliarla para no depender del rol
+`'cliente'`, quedó dos veces mal calibrada en el camino — primero excluyendo solo a `admin` (lo que
+mandaba erróneamente a "Solicitar cliente" a un `analista_cambiario` sin cliente, rol de personal, no
+de cliente en potencia; detectado por `test_divisas.py`), después un ajuste intermedio que exigía
+"ningún rol en absoluto" (lo que rompía el caso original: alguien con el rol `'cliente'` pero sin
+`Cliente` todavía). La condición final, correcta: califica quien no tiene **ningún rol de negocio
+distinto de `'cliente'`** (`not (set(roles) - {'cliente'}) and not es_admin and not tiene_cliente`) —
+cubre tanto a quien no tiene ningún rol todavía como a quien ya tiene `'cliente'` sin `Cliente`
+asociado, sin capturar a ningún otro rol de personal. También se ajustó `test_metodos_pago.py`
+(`fetch_redirect_response=False`) porque el nuevo redirect de `home` hace que un "redirige a home"
+ya no implique "home devuelve 200" para un usuario sin cliente.
+
+Verificado en capas: 37/37 en `test_clientes.py`, 142/142 en los 7 archivos pytest, 137/137 en
+`test_metodos_pago`/`test_operaciones` (los más expuestos a la regresión), `manage.py check` y
+Sphinx limpios, suite completa de Django corrida de nuevo para la confirmación final.
+
 ## Enlaces externos (conversaciones completas)
 
 Extraído de `ia-CONVERSATION.TXT`. Son enlaces a conversaciones completas alojadas en claude.ai (no narrativas resumidas como las sesiones anteriores):

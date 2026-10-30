@@ -1,0 +1,78 @@
+<!--
+Lista, para un administrador, las solicitudes de alta de cliente y permite aprobarlas/rechazarlas.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: solicitudes, form_rechazo.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Solicitudes de cliente - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Solicitudes de cliente</h1>
+        <p>Pedidos de usuarios para darse de alta como cliente.</p>
+    </div>
+    <span class="badge bg-secondary">{{ solicitudes|length }} solicitudes</span>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Cédula/RUC</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in solicitudes %}
+                <tr>
+                    <td>{{ solicitud.creado_en }}</td>
+                    <td>{{ solicitud.usuario.username }}</td>
+                    <td>{{ solicitud.nombre_completo }} <span class="text-muted small">({{ solicitud.get_tipo_cliente_display }})</span></td>
+                    <td>{{ solicitud.identificador }}</td>
+                    <td>
+                        {% if solicitud.estado == 'PENDIENTE' %}
+                            <span class="badge bg-info text-dark">{{ solicitud.get_estado_display }}</span>
+                        {% elif solicitud.estado == 'APROBADA' %}
+                            <span class="badge bg-success">{{ solicitud.get_estado_display }}</span>
+                        {% else %}
+                            <span class="badge bg-danger">{{ solicitud.get_estado_display }}</span>
+                            <div class="small text-muted">{{ solicitud.motivo_rechazo }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if solicitud.estado == 'PENDIENTE' %}
+                        <form method="post" action="{% url 'clientes:aprobar_solicitud_cliente' pk=solicitud.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Aprobar
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#rechazo-{{ solicitud.pk }}">
+                            <i class="bi bi-x-lg me-1"></i>Rechazar
+                        </button>
+                        <div class="collapse mt-2 text-start" id="rechazo-{{ solicitud.pk }}">
+                            <form method="post" action="{% url 'clientes:rechazar_solicitud_cliente' pk=solicitud.pk %}">
+                                {% csrf_token %}
+                                {{ form_rechazo.motivo }}
+                                <button type="submit" class="btn btn-sm btn-danger mt-2">Confirmar rechazo</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">No hay ninguna solicitud de cliente todavía.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
