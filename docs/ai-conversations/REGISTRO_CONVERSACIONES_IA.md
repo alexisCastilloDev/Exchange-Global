@@ -38,7 +38,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 22. [Sesión 22 — 26/10/2026 — GE-19 — Movimientos y saldo de los métodos de pago](#sesión-22--26102026--ge-19--movimientos-y-saldo-de-los-métodos-de-pago)
 23. [Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos](#sesión-23--27102026--ge-24--retiro-de-fondos)
 24. [Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)](#sesión-27--30102026--generación-de-factura-electrónica-hu-del-cliente)
-25. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+25. [Sesión 28 — 30/10/2026 — Consulta de facturas electrónicas](#sesión-28--30102026--consulta-de-facturas-electrónicas)
+26. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4190,6 +4191,104 @@ Se agregaron 14 tests a `tests/test_factura_electronica.py` (de 43 a 57): `Fecha
 "Pendiente de generación" cubre tanto el fallo al generar como el rechazo posterior de SIFEN. Un
 `RECHAZADO` de SIFEN no tiene hoy reintento desde la UI (solo `ERROR_GENERACION`); queda como mejora si
 el equipo quiere emitir un documento nuevo para esa transacción.
+
+## Sesión 28 — 30/10/2026 — Consulta de facturas electrónicas
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Consulta de facturas electrónicas
+**Rama:** `develop`
+**Participantes:** Ruth, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar (o mejorar, si ya existía) la HU "Consulta de facturas electrónicas", cumpliendo cada
+criterio de aceptación, con docstrings, Sphinx actualizado, tests y esta documentación. Condición
+explícita: **los tests no deben generar ninguna factura real** (ninguna llamada a Factura Segura/SIFEN).
+
+> Como usuario cliente quiero consultar mis facturas electrónicas para revisar los comprobantes
+> asociados a mis operaciones.
+
+Criterios de aceptación:
+
+1. Dado que soy un usuario cliente con un cliente activo seleccionado, cuando accedo a la sección de
+   facturas, entonces veo un listado paginado de las facturas electrónicas emitidas para ese cliente.
+2. Dado que estoy viendo el listado, cuando cada factura se muestra, entonces incluye: número/CDC,
+   transacción asociada, fecha de emisión, monto y estado.
+3. Dado que quiero encontrar una factura específica, cuando filtro por rango de fechas, entonces el
+   listado se actualiza mostrando solo las que coinciden.
+4. Dado que selecciono una factura del listado, cuando hago clic en ella, entonces accedo al detalle
+   completo del comprobante.
+5. Dado que el cliente activo no tiene facturas emitidas, cuando accedo a la sección, entonces el
+   sistema muestra un mensaje indicando que no hay comprobantes, sin error.
+
+### Auditoría de los 5 criterios contra lo ya implementado
+
+La pantalla ya existía: `apps.divisas.views.MisFacturasElectronicasListView`
+(`/divisas/transacciones/mias/facturas/`) viene de la HU "Integración con API de facturación
+electrónica" (Sesión 24) y se ajustó en la Sesión 27 ("Generación de factura electrónica") para
+mostrar la fecha de emisión y la insignia "Pendiente de generación". Se contrastó criterio por
+criterio:
+
+| Criterio | Estado previo | Resultado |
+|---|---|---|
+| 1. Listado paginado | Cumplido (`ListView` con `paginate_by = 20`) | Sin cambios |
+| 2. Número/CDC, transacción, fecha de emisión, monto, estado | Parcial: la tabla mostraba todo salvo el **monto** | Se agregó la columna "Monto" (`documento.transaccion.monto_final`) |
+| 3. Filtro por rango de fechas | **Incumplido**: no existía ningún filtro en la vista ni en la plantilla | Se agregó el filtro `fecha_desde`/`fecha_hasta` sobre `emitida_en` |
+| 4. Clic accede al detalle completo | Cumplido de hecho (la columna "Operación" ya enlazaba al detalle de la transacción, que incluye la sección "Factura electrónica"), pero poco visible como acción | Se reforzó con un botón explícito "Ver detalle" |
+| 5. Sin facturas → mensaje sin error | Cumplido parcialmente: había un `{% empty %}` genérico, pero no distinguía "no tengo ninguna" de "ninguna coincide con el filtro" | Se separaron ambos mensajes |
+
+### Diseño
+
+- **`MisFacturasElectronicasListView.get_queryset`**: agrega el filtro de fecha sobre `emitida_en`
+  (``emitida_en__date__gte``/``__lte``) directamente en el `QuerySet`, a diferencia de
+  `MiHistorialTransaccionesView` (que filtra en Python sobre filas ya normalizadas, porque mezcla dos
+  modelos y necesita comparar contra un estado *efectivo* que no es un campo real). Acá no hace falta
+  esa complejidad: es un único modelo y un campo de fecha real, así que el filtro vive en la base.
+  Un documento sin `emitida_en` (pendiente o rechazado) nunca coincide con ningún filtro de fecha —no
+  hay ninguna fecha de emisión real contra la que comparar— así que solo aparece en el listado sin
+  filtrar.
+- **`_parsear_fecha`** (el parseo de `'YYYY-MM-DD'` a `date`) estaba duplicado como `@staticmethod`
+  dentro de `MiHistorialTransaccionesView`. Se extrajo a una función de módulo en
+  `apps.divisas.views` y ambas vistas pasaron a usar la misma, en vez de mantener dos copias.
+- **`get_context_data`**: agrega `tiene_facturas` (si el cliente tiene alguna factura sin filtrar, para
+  distinguir el Criterio 5 de "ninguna coincide con el filtro"), `fecha_desde_actual`/`fecha_hasta_actual`
+  y `querystring` (para que la paginación no pierda el filtro activo al cambiar de página) — mismo
+  patrón que `MiHistorialTransaccionesView` ya usa para su propio filtro.
+- **`mis_facturas_electronicas.html`**: se agregó el formulario de filtro por fecha (mismo diseño que
+  `mis_transacciones.html`, sin el selector de estado porque esta HU no lo pide), la columna "Monto", un
+  botón "Ver detalle" explícito por fila, y se separaron los dos mensajes del estado vacío.
+
+### Tests
+
+Se agregaron 9 tests a `MisFacturasElectronicasListViewTest` en `tests/test_factura_electronica.py`
+(de 57 a 64, incluyendo los de Sesión 24/27): uno por cada aspecto de los 5 criterios (número, CDC,
+transacción, fecha de emisión y monto en una misma fila; paginación con 26 facturas; filtro de fechas
+que incluye la reciente y excluye la vieja y la sin fecha; un rango sin coincidencias informa un
+mensaje distinto al de "no tengo ninguna"; limpiar el filtro vuelve a mostrar todo; clic en "Ver
+detalle" lleva a la pantalla que ya tiene el comprobante completo; sin ninguna factura, el mensaje
+correcto sin error). **Ninguno crea una factura a través de la emisión real**: todas usan
+`DocumentoElectronico.objects.create(...)` directo contra el modelo, igual que los tests ya existentes
+de Sesión 24/27 — nunca se llama a `emitir_documento_electronico` ni se mockea `requests.post` en esta
+sesión.
+
+### Resultado final
+
+- `tests/test_factura_electronica.py`: 64/64. Suite completa del proyecto: sin regresiones (se corrió
+  además `tests/test_operaciones.py`/`test_seleccion_cliente.py` en particular, por el refactor
+  compartido de `_parsear_fecha`).
+- `manage.py check` y `makemigrations --check --dry-run`: sin problemas (esta sesión no tocó modelos).
+- Sphinx recompilado con `-W`: la sección nueva "Consulta de facturas electrónicas" en `guia.rst` no
+  agrega ninguna advertencia. Se detectó, al recompilar, una advertencia preexistente y ajena a esta
+  sesión (`templates.rst:88`, al resaltar el literalinclude de `metodo_pago_list.html`) — confirmado
+  con `git log` que ese archivo no se tocó en esta sesión (último commit 27/10, de otro integrante), así
+  que se dejó sin tocar en vez de arreglar algo fuera del alcance de esta HU.
+
+### Pendiente / fuera de alcance
+
+- La advertencia preexistente de `templates.rst:88` (ajena a esta HU) queda para quien toque esa
+  plantilla.
+- No se agregó un filtro por estado (como sí tiene `mis_transacciones.html`): ningún criterio de esta
+  HU lo pide, solo el rango de fechas.
 
 ## Enlaces externos (conversaciones completas)
 
