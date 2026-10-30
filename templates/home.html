@@ -185,6 +185,15 @@ Contexto esperado: user, cliente_activo y permisos de UI.
             </div>
         </a>
     </div>
+    <div class="col-md-4">
+        <a href="{% url 'divisas:mis_facturas_electronicas' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-receipt" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Mis facturas electrónicas</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá las facturas emitidas ante SIFEN por tus operaciones.</p>
+            </div>
+        </a>
+    </div>
     {% endif %}
     {% if puede_ver_divisas or puede_ver_tasas %}
     <div class="col-md-4">

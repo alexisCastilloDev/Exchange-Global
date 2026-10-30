@@ -1,0 +1,84 @@
+<!--
+Lista las Facturas Electrónicas emitidas ante SIFEN, para auditarlas y reintentar las que fallaron.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: documentos.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Documentos electrónicos - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Documentos electrónicos</h1>
+        <p>Facturas Electrónicas emitidas ante SIFEN a través de Factura Segura, para cada transacción pagada.</p>
+    </div>
+    <span class="badge bg-secondary">{{ documentos|length }} documentos</span>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Número</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>CDC</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for documento in documentos %}
+                <tr>
+                    <td>{{ documento.creado_en }}</td>
+                    <td>{{ documento.numero_documento }}</td>
+                    <td>{{ documento.transaccion.cliente }}</td>
+                    <td>
+                        {% if documento.estado == 'ERROR_GENERACION' %}
+                            <span class="badge bg-danger">{{ documento.get_estado_display }}</span>
+                        {% elif documento.estado == 'RECHAZADO' or documento.estado == 'ERROR_SIFEN' %}
+                            <span class="badge bg-warning text-dark">{{ documento.get_estado_display }}</span>
+                        {% elif documento.es_definitivo %}
+                            <span class="badge bg-success">{{ documento.get_estado_display }}</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">{{ documento.get_estado_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ documento.cdc|default:"—" }}</td>
+                    <td class="text-end">
+                        {% if documento.estado == 'ERROR_GENERACION' %}
+                        <form method="post" action="{% url 'divisas:reintentar_emision_documento_electronico' pk=documento.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
+                            </button>
+                        </form>
+                        {% elif documento.cdc and not documento.es_definitivo %}
+                        <form method="post" action="{% url 'divisas:consultar_estado_sifen_documento_electronico' pk=documento.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-search me-1"></i>Consultar estado SIFEN
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% if documento.cdc %}
+                        <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='kude' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-file-pdf me-1"></i>KuDE
+                        </a>
+                        <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='xml' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-filetype-xml me-1"></i>XML
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">No hay ningún documento electrónico emitido todavía.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

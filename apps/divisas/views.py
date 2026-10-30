@@ -7,7 +7,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.http import Http404
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -27,6 +29,12 @@ from apps.divisas.casa_de_cambio import (
     designar_cuenta_casa_de_cambio,
 )
 from apps.divisas.entrega import reintentar_entrega
+from apps.divisas.factura_electronica import (
+    consultar_estado_sifen,
+    descargar_kude,
+    descargar_xml,
+    reintentar_emision,
+)
 from apps.divisas.forms import (
     CalculoOperacionForm,
     ConfiguracionComisionForm,
@@ -48,6 +56,7 @@ from apps.divisas.models import (
     Cotizacion,
     CuentaPropia,
     Divisa,
+    DocumentoElectronico,
     NotificacionTasa,
     divisa_a_entregar,
     estados_con_pago_ya_registrado,
@@ -614,6 +623,46 @@ class MiHistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, List
         querystring.pop('page', None)
         context['querystring'] = querystring.urlencode()
         return context
+
+
+class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista las Facturas Electrónicas emitidas para las transacciones del cliente activo.
+
+    Simétrica a ``MiHistorialTransaccionesView``, pero para el documento
+    electrónico de cada transacción (ver ``DocumentosElectronicosListView``
+    para el equivalente de administración, con todos los clientes). Es de
+    solo lectura: el cliente no puede reintentar ni consultar el estado
+    SIFEN por su cuenta, esas son acciones de administrador.
+    """
+
+    model = DocumentoElectronico
+    template_name = 'divisas/mis_facturas_electronicas.html'
+    context_object_name = 'documentos'
+    paginate_by = 20
+
+    def test_func(self):
+        """Permite consultar las facturas propias a los mismos roles que ``MiHistorialTransaccionesView``."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return (
+            'cliente' in roles
+            and not self.request.user.is_staff
+            and self.request.user.clientes.filter(is_active=True).exists()
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Exige un cliente activo seleccionado antes de listar sus facturas."""
+        cliente_activo = getattr(request, 'cliente_activo', None)
+        if cliente_activo is None:
+            messages.error(request, 'No tenés un cliente activo seleccionado para operar.')
+            return redirect('home')
+        self.cliente_activo = cliente_activo
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        """Documentos de las transacciones (compra/venta o cambio) del cliente activo, el más reciente primero."""
+        return DocumentoElectronico.objects.filter(
+            Q(calculo_operacion__cliente=self.cliente_activo) | Q(calculo_triangulacion__cliente=self.cliente_activo)
+        ).select_related('calculo_operacion', 'calculo_triangulacion').order_by('-creado_en')
 
 
 class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -1887,6 +1936,120 @@ class ReintentarEntregaView(AdminDivisasMixin, View):
                 'La entrega volvió a fallar. Revisá el medio de destino y el saldo propio antes de reintentar de nuevo.',
             )
         return redirect('divisas:entregas_pendientes')
+
+
+class DocumentosElectronicosListView(AdminDivisasMixin, ListView):
+    """Lista los documentos electrónicos emitidos ante SIFEN, el más reciente primero.
+
+    Solo lectura: permite a un administrador ver de un vistazo el CDC
+    y el estado de cada Factura Electrónica, y detectar cuáles quedaron
+    en "Error al generar" (ver ``ReintentarEmisionDocumentoElectronicoView``)
+    sin tener que abrir cada transacción una por una.
+    """
+    model = DocumentoElectronico
+    template_name = 'divisas/documentos_electronicos.html'
+    context_object_name = 'documentos'
+
+    def get_queryset(self):
+        """Trae de una sola vez el cliente de cada transacción facturada, para no repetir consultas."""
+        return DocumentoElectronico.objects.select_related(
+            'calculo_operacion__cliente', 'calculo_triangulacion__cliente',
+        )
+
+
+class ReintentarEmisionDocumentoElectronicoView(AdminDivisasMixin, View):
+    """Reintenta, a pedido explícito de un administrador, un documento en 'Error al generar'.
+
+    Antes de usar esta acción, el administrador debe haber verificado
+    con soporte de Factura Segura que el documento no llegó a generarse
+    con ese número la vez anterior (ver ``apps.divisas.
+    factura_electronica.reintentar_emision``): esta vista no hace esa
+    verificación por sí sola, solo dispara el reintento.
+    """
+
+    def post(self, request, pk):
+        """Vuelve a llamar a ``generar_de`` reutilizando el mismo número de documento."""
+        documento = get_object_or_404(DocumentoElectronico, pk=pk)
+        if reintentar_emision(documento):
+            messages.success(request, 'El documento electrónico se generó correctamente.')
+        else:
+            messages.error(
+                request,
+                'El documento electrónico volvió a fallar, o ya no estaba en condiciones de reintentarse.',
+            )
+        return redirect('divisas:documentos_electronicos')
+
+
+class ConsultarEstadoSifenDocumentoElectronicoView(AdminDivisasMixin, View):
+    """Dispara, a pedido de un administrador, la consulta de estado real ante SIFEN (``get_estado_sifen``).
+
+    ``generar_de`` solo confirma que Factura Segura recibió y encoló la
+    solicitud (criterio 1), nunca la aprobación de SIFEN en sí
+    (criterio 2): esa aprobación/rechazo solo se conoce a través de
+    esta consulta, que no se dispara sola en ningún lado (no hay cron
+    ni tarea periódica en esta entrega) — esta vista es, por ahora, la
+    única forma de completar los criterios 2 y 3 para un documento ya
+    generado.
+    """
+
+    def post(self, request, pk):
+        """Llama a ``consultar_estado_sifen`` y refleja el resultado en un mensaje."""
+        documento = get_object_or_404(DocumentoElectronico, pk=pk)
+        if not documento.cdc:
+            messages.error(request, 'Este documento todavía no tiene un CDC: no se generó correctamente.')
+        elif consultar_estado_sifen(documento):
+            documento.refresh_from_db()
+            messages.success(request, f'Estado consultado: {documento.get_estado_display()}.')
+        else:
+            messages.error(request, 'No se pudo consultar el estado ante SIFEN (sin respuesta de Factura Segura).')
+        return redirect('divisas:documentos_electronicos')
+
+
+class DescargarDocumentoElectronicoView(LoginRequiredMixin, View):
+    """Descarga el KuDE (PDF) o el XML firmado de un documento, bajo demanda, sin guardar nada.
+
+    Accesible para un administrador (cualquier documento) o para el
+    propio cliente (solo el de sus transacciones) — mismo criterio de
+    acceso que ``DocumentosElectronicosListView``/
+    ``MisFacturasElectronicasListView``, las dos pantallas desde donde
+    se linkea esta descarga. Cada clic vuelve a pedirle el archivo a
+    Factura Segura (``descargar_kude``/``descargar_xml``): no se
+    almacena ninguna copia en el servidor.
+    """
+
+    FORMATOS = {
+        'kude': (descargar_kude, 'application/pdf', 'pdf'),
+        'xml': (descargar_xml, 'application/xml', 'xml'),
+    }
+
+    def get(self, request, pk, formato):
+        """Resuelve permisos y devuelve el archivo pedido, o un error claro si no se puede."""
+        documento = get_object_or_404(DocumentoElectronico, pk=pk)
+        if not self._puede_ver(request, documento):
+            raise PermissionDenied
+        if formato not in self.FORMATOS:
+            raise Http404('Formato de descarga desconocido.')
+        if not documento.cdc:
+            return HttpResponseBadRequest('Este documento todavía no tiene un CDC.')
+
+        funcion, content_type, extension = self.FORMATOS[formato]
+        contenido = funcion(documento)
+        if contenido is None:
+            return HttpResponse('No se pudo descargar el archivo desde Factura Segura.', status=502)
+
+        respuesta = HttpResponse(contenido, content_type=content_type)
+        respuesta['Content-Disposition'] = f'attachment; filename="{documento.numero_documento}.{extension}"'
+        return respuesta
+
+    @staticmethod
+    def _puede_ver(request, documento):
+        """Un administrador ve cualquier documento; un cliente, solo el de sus propias transacciones."""
+        roles = request.session.get('keycloak_roles', [])
+        if 'admin' in roles:
+            return True
+        if 'cliente' in roles and not request.user.is_staff:
+            return request.user.clientes.filter(pk=documento.transaccion.cliente_id, is_active=True).exists()
+        return False
 
 
 class DivisaListView(AdminDivisasMixin, ListView):
