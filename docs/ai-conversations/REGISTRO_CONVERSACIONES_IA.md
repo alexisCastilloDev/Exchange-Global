@@ -4041,6 +4041,62 @@ Verificado en capas: 37/37 en `test_clientes.py`, 142/142 en los 7 archivos pyte
 `test_metodos_pago`/`test_operaciones` (los más expuestos a la regresión), `manage.py check` y
 Sphinx limpios, suite completa de Django corrida de nuevo para la confirmación final.
 
+## Sesión 26 — 30/10/2026 — La comisión se factura gravada al 10% de IVA (no exenta)
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Integración con API de facturación electrónica (ver Sesión 24)
+**Rama:** `feature/GE-41`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Durante una revisión posterior a la Sesión 24, el usuario preguntó si la comisión de Global Exchange
+se estaba incluyendo en el total facturado en compra, venta y cambio, y si esa comisión debía ir
+gravada al 10% de IVA en vez de exenta. Antes de tocar código se investigó `_grupo_item_resumido`
+original (un único ítem exento, `_monto_en_pyg`) y las funciones de cálculo de comisión en
+`apps/divisas/views.py` (`_calcular_importe_operacion`, `_calcular_triangulacion`), y se reportaron
+dos hallazgos, dejando la decisión tributaria (una cuestión real de legislación paraguaya, con
+consecuencias fiscales) al usuario, no a una suposición propia:
+
+1. En compra y venta, `monto_final` (lo ya facturado) **sí** incluye el efecto de la comisión (sumada
+   en una compra, restada en una venta) — no había bug ahí.
+2. En un cambio, sí había un bug real: se facturaba `monto_equivalente_pyg` (el bruto triangulado del
+   Paso A, calculado en `_calcular_triangulacion`, **antes** de restar la comisión), en vez del monto
+   ya neto de comisión — un cambio se facturaba de más, por el valor íntegro de la comisión.
+
+El usuario confirmó ambos puntos: corregir el bug del cambio, y facturar la comisión como ítem
+separado gravado al 10% de IVA (no exenta) en los tres tipos de operación.
+
+### Diseño e implementación
+
+`apps/divisas/factura_electronica.py`:
+
+- `_monto_en_pyg` → renombrada `_total_en_pyg` y corregida para un cambio: ahora convierte
+  `monto_final` (divisa de destino, ya neto de comisión) a PYG con `tasa_venta_aplicada` — la misma
+  tasa del Paso B de `_calcular_triangulacion` — en vez de usar `monto_equivalente_pyg`.
+- `_comision_en_pyg` (nueva): la comisión en PYG. En compra/venta ya está en PYG directamente
+  (`comision`); en un cambio, `comision` está en la divisa de **destino** (Paso B), así que se
+  convierte con la misma `tasa_venta_aplicada`.
+- `_grupo_item_resumido` (un único ítem) → `_grupo_item` (un ítem genérico, exento o gravado al 10%
+  según `afecta_iva`) + `_grupos_item_resumido` (arma la lista: comisión gravada + el resto exento,
+  `base = total - comisión`, nunca el bruto calculado aparte, para que ambos ítems sumen exactamente
+  el total ya corregido sin descuadres de redondeo). Si la comisión del cliente es 0% queda un único
+  ítem exento, igual que antes de este cambio. El precio de un ítem gravado se manda tal cual
+  (`dPUniProSer` = comisión, IVA incluido): es `calcular_de` quien calcula cuánto de ese precio es
+  base y cuánto es IVA (`dBasGravIVA`/`dLiqIVAItem`), no hay que sumarle nada encima.
+- `_armar_resumido_de` actualizada para usar `_grupos_item_resumido` (ahora una lista de ítems, no
+  uno solo) en `gCamItem`.
+
+`tests/test_factura_electronica.py`: nueva clase `ComisionGravadaAl10PorCientoTest` (4 casos) — compra
+y venta separan correctamente la comisión del resto exento; el cambio usa el monto neto de comisión,
+no el bruto triangulado (se verifica explícitamente que el total ya **no** coincide con
+`monto_equivalente_pyg`); sin comisión (0%) sigue quedando un único ítem exento, sin romper ese caso
+ya existente.
+
+Sphinx (`docs/source/reference/apps.divisas.factura_electronica.rst`) actualizado con los símbolos
+nuevos/renombrados. Verificado con `tests.test_factura_electronica` (39/39), `manage.py check` y la
+suite completa de Django.
+
 ## Enlaces externos (conversaciones completas)
 
 Extraído de `ia-CONVERSATION.TXT`. Son enlaces a conversaciones completas alojadas en claude.ai (no narrativas resumidas como las sesiones anteriores):

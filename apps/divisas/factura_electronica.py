@@ -47,10 +47,13 @@ cualquier camino, no solo por el chequeo explícito al principio de la
 función.
 
 Armado del documento (``_armar_resumido_de``/``_calcular``): se
-factura siempre con un único ítem "Exento" de IVA (no hay IVA sobre el
-tipo de cambio) y receptor modelado siempre como "No
-Contribuyente"/consumidor final por cédula, con **moneda de la
-factura siempre PYG** (``_monto_en_pyg``) — Factura Segura solo admite
+factura con dos ítems (``_grupos_item_resumido``) — el valor de la
+operación cambiaria en sí, Exento de IVA (no hay IVA sobre el tipo de
+cambio), y la comisión de Global Exchange como ítem separado, Gravado
+al 10% de IVA (decisión confirmada con el usuario: la comisión es un
+servicio propio, no parte del cambio de divisa exento) — y receptor
+modelado siempre como "No Contribuyente"/consumidor final por cédula,
+con **moneda de la factura siempre PYG** (``_total_en_pyg``) — Factura Segura solo admite
 ``cMoneOpe`` ``PYG`` o ``USD``, y la mayoría de las divisas de este
 sistema no son ninguna de esas dos, así que facturar siempre en PYG
 evita mezclar monedas según el tipo de transacción (decisión tomada
@@ -138,7 +141,7 @@ def _primer_resultado(cuerpo):
     return resultados[0] if resultados else {}
 
 
-def _monto_en_pyg(transaccion):
+def _total_en_pyg(transaccion):
     """Valor total de la operación, siempre en PYG y redondeado a entero (el Guaraní no tiene subunidad).
 
     Factura Segura solo admite ``cMoneOpe`` ``PYG`` o ``USD`` — ninguna
@@ -147,31 +150,64 @@ def _monto_en_pyg(transaccion):
     PYG, sin importar la moneda realmente entregada (decisión tomada
     con el usuario). Tanto en una compra como en una venta,
     ``monto_final`` ya está en PYG (ver ``apps.divisas.models.
-    monto_a_pagar``/``monto_a_entregar``); en un cambio entre divisas,
-    ``monto_equivalente_pyg`` es el valor ya triangulado por PYG. El
-    redondeo a entero reutiliza el mismo criterio que
+    monto_a_pagar``/``monto_a_entregar``) y ya incluye el efecto de la
+    comisión (sumada en una compra, restada en una venta). En un
+    cambio entre divisas, ``monto_final`` está en la divisa de
+    **destino** (Paso B de ``apps.divisas.views._calcular_triangulacion``)
+    y también ya tiene la comisión restada: se convierte a PYG con
+    ``tasa_venta_aplicada``, la misma tasa de ese Paso B. No se usa
+    ``monto_equivalente_pyg`` (el bruto triangulado del Paso A, antes
+    de la comisión): facturar ese valor ignoraba por completo el
+    efecto de la comisión en un cambio, a diferencia de lo que ya
+    hacía ``monto_final`` para una compra/venta (bug corregido).
+    El redondeo a entero reutiliza el mismo criterio que
     ``apps.divisas.pagos_stripe`` ya usa para cobrar en PYG (moneda sin
     decimales, tanto en Stripe como en SIFEN).
     """
-    monto = transaccion.monto_equivalente_pyg if isinstance(transaccion, CalculoTriangulacion) else transaccion.monto_final
+    if isinstance(transaccion, CalculoTriangulacion):
+        monto = transaccion.monto_final * transaccion.tasa_venta_aplicada
+    else:
+        monto = transaccion.monto_final
     return monto.to_integral_value(rounding=ROUND_HALF_UP)
 
 
-def _grupo_item_resumido(transaccion, monto):
-    """Único ítem del ``JSON_RESUMIDO_DE`` (entrada de ``calcular_de``): sin ningún campo calculado.
+def _comision_en_pyg(transaccion):
+    """Comisión de Global Exchange en la operación, siempre en PYG y redondeada a entero.
 
-    ``iAfecIVA='3'`` (Exento) y ``cUniMed='77'`` son, de las opciones
-    que documenta la guía, las únicas plausibles para una operación de
-    cambio de divisas: no hay IVA sobre el tipo de cambio, y ``'77'``
-    es el único código de unidad que la API admite para este tipo de
-    ítem. Sin descuentos ni anticipos (no aplican a esta operación).
-    Los totales derivados (``dTotBruOpeItem``, ``dTotOpeItem``,
-    ``dBasGravIVA``, etc.) no se calculan a mano: los completa
-    ``calcular_de`` (ver ``_calcular``).
+    En una compra o venta, ``comision`` ya está en PYG (todo
+    ``apps.divisas.views._calcular_importe_operacion`` opera en PYG).
+    En un cambio, ``comision`` se calculó en la divisa de **destino**
+    (Paso B de ``_calcular_triangulacion``): se convierte a PYG con la
+    misma tasa usada en ese paso (``tasa_venta_aplicada``), igual que
+    ``_total_en_pyg``.
     """
+    if isinstance(transaccion, CalculoTriangulacion):
+        comision = transaccion.comision * transaccion.tasa_venta_aplicada
+    else:
+        comision = transaccion.comision
+    return comision.to_integral_value(rounding=ROUND_HALF_UP)
+
+
+def _grupo_item(codigo, descripcion, monto, *, afecta_iva):
+    """Un ítem del ``JSON_RESUMIDO_DE`` (entrada de ``calcular_de``): sin ningún campo calculado.
+
+    ``cUniMed='77'`` es, de las opciones que documenta la guía, la
+    única plausible para un ítem de este tipo de operación. Sin
+    descuentos ni anticipos (no aplican a esta operación). Los totales
+    derivados (``dTotBruOpeItem``, ``dTotOpeItem``, ``dBasGravIVA``,
+    etc.) no se calculan a mano: los completa ``calcular_de`` (ver
+    ``_calcular``). Si el ítem está gravado, ``monto`` ya es el precio
+    final con IVA incluido (así factura SIFEN: ``calcular_de`` extrae
+    cuánto de ese precio es base y cuánto es IVA, no hay que sumarle
+    nada encima).
+    """
+    if afecta_iva:
+        iva = {'iAfecIVA': '1', 'dPropIVA': '100', 'dTasaIVA': '10'}
+    else:
+        iva = {'iAfecIVA': '3', 'dPropIVA': '0', 'dTasaIVA': '0'}
     return {
-        'dCodInt': 'CAMBIO-DIVISA',
-        'dDesProSer': _descripcion_operacion(transaccion),
+        'dCodInt': codigo,
+        'dDesProSer': descripcion,
         'cUniMed': '77',
         'dCantProSer': '1',
         'dPUniProSer': str(monto),
@@ -179,10 +215,31 @@ def _grupo_item_resumido(transaccion, monto):
         'dDescGloItem': '0',
         'dAntPreUniIt': '0',
         'dAntGloPreUniIt': '0',
-        'iAfecIVA': '3',
-        'dPropIVA': '0',
-        'dTasaIVA': '0',
+        **iva,
     }
+
+
+def _grupos_item_resumido(transaccion, total):
+    """Ítems del ``JSON_RESUMIDO_DE``: separa la comisión (gravada al 10% IVA) del resto de la operación (exento).
+
+    Confirmado con el usuario: la comisión de Global Exchange es un
+    servicio propio, gravado al 10% de IVA, no parte del cambio de
+    divisa en sí (que sigue exento, no hay IVA sobre el tipo de
+    cambio). El ítem exento es siempre ``total - comisión``
+    (``_total_en_pyg``/``_comision_en_pyg``), nunca el bruto de la
+    operación calculado aparte, para que los dos ítems sumen
+    exactamente el total ya correcto, sin descuadres de redondeo. Si
+    la comisión del cliente es 0% (``ConfiguracionComision``), queda
+    un único ítem exento, igual que antes de este cambio.
+    """
+    comision = _comision_en_pyg(transaccion)
+    base = total - comision
+    items = []
+    if base > 0:
+        items.append(_grupo_item('CAMBIO-DIVISA', _descripcion_operacion(transaccion), base, afecta_iva=False))
+    if comision > 0:
+        items.append(_grupo_item('COMISION', 'Comisión por el servicio de cambio de divisas', comision, afecta_iva=True))
+    return items
 
 
 def _descripcion_operacion(transaccion):
@@ -222,7 +279,7 @@ def _info_adicional(transaccion):
     para "la tasa de cambio que usó Global Exchange en esta
     operación" (``dTiCam`` es la tasa de la propia factura cuando
     ``cMoneOpe`` no es PYG, que en este módulo siempre es PYG, ver
-    ``_monto_en_pyg``): ``dInfAdic`` es, según la guía, el único lugar
+    ``_total_en_pyg``): ``dInfAdic`` es, según la guía, el único lugar
     pensado para texto libre impreso en el comprobante sin formar parte
     del XML firmado, así que es donde se deja la tasa para que el
     criterio de "información completa de la operación" (cliente,
@@ -240,7 +297,7 @@ def _grupo_pago(transaccion, monto):
     """Mapea el medio de pago real (``Pago.medio_pago``) al tipo de pago que espera la API.
 
     Un único pago por el total de la operación, ya en PYG (ver
-    ``_monto_en_pyg``): esta HU no reparte el cobro en más de un medio.
+    ``_total_en_pyg``): esta HU no reparte el cobro en más de un medio.
     """
     base = {'dMonTiPag': str(monto), 'cMoneTiPag': 'PYG', 'dTiCamTiPag': '1'}
     if transaccion.pago.medio_pago == MetodoPago.TIPO_TARJETA:
@@ -252,8 +309,9 @@ def _armar_resumido_de(documento, transaccion, monto):
     """Arma el ``JSON_RESUMIDO_DE``: la entrada de ``calcular_de``, sin ningún campo calculado.
 
     Se factura siempre en PYG (``cMoneOpe='PYG'``, ver
-    ``_monto_en_pyg``) y con un único ítem "Exento" de IVA: no hay IVA
-    sobre el tipo de cambio en una operación de casa de cambio.
+    ``_total_en_pyg``) y con dos ítems (``_grupos_item_resumido``): el
+    cambio de divisa en sí, exento de IVA (no hay IVA sobre el tipo de
+    cambio), y la comisión de Global Exchange, gravada al 10%.
     Receptor modelado siempre como "No Contribuyente"/consumidor final
     por cédula (``iNatRec='2'``), lo que a su vez implica
     ``iTiOpe='2'`` (B2C): un "No Contribuyente" nunca es la contraparte
@@ -305,7 +363,7 @@ def _armar_resumido_de(documento, transaccion, monto):
         'gPaConEIni': [_grupo_pago(transaccion, monto)],
         'iCondCred': '1',
         'dPlazoCre': '0',
-        'gCamItem': [_grupo_item_resumido(transaccion, monto)],
+        'gCamItem': _grupos_item_resumido(transaccion, monto),
         'CDC': '0',
         'dCodSeg': '0',
         'dDVId': '0',
@@ -365,7 +423,7 @@ def _generar(documento, transaccion):
         documento.save(update_fields=['estado', 'error_generacion', 'actualizado_en'])
         return
 
-    monto = _monto_en_pyg(transaccion)
+    monto = _total_en_pyg(transaccion)
     try:
         de_completo = _calcular(documento, transaccion, monto)
         cuerpo = _solicitar('generar_de', {'DE': de_completo})
