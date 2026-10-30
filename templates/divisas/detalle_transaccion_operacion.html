@@ -80,13 +80,23 @@ Contexto esperado: transaccion.
                 </form>
             {% endif %}
 
-            {% if transaccion.documento_electronico %}
+            {% if factura_pendiente %}
+                <div class="ge-card__header mb-3 mt-4">
+                    <h2>Factura electrónica</h2>
+                </div>
+                <div class="operation-expiry mb-3">
+                    <i class="bi bi-hourglass-split me-1"></i> Tu factura electrónica está pendiente de generación. Tu operación no se ve afectada y vamos a generarla a la brevedad.
+                </div>
+            {% elif transaccion.documento_electronico %}
                 <div class="ge-card__header mb-3 mt-4">
                     <h2>Factura electrónica</h2>
                 </div>
                 <div class="operation-summary">
                     <div class="operation-summary__row"><span class="operation-summary__label">Número: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.numero_documento }}</strong></div>
                     <div class="operation-summary__row"><span class="operation-summary__label">Estado: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.get_estado_display }}</strong></div>
+                    {% if transaccion.documento_electronico.emitida_en %}
+                    <div class="operation-summary__row"><span class="operation-summary__label">Fecha de emisión: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.emitida_en|date:"d/m/Y H:i" }}</strong></div>
+                    {% endif %}
                     {% if transaccion.documento_electronico.cdc %}
                     <div class="operation-summary__row"><span class="operation-summary__label">CDC: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.cdc }}</strong></div>
                     {% endif %}

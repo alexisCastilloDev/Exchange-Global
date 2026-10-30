@@ -1760,12 +1760,36 @@ class DocumentoElectronico(models.Model):
     consultado_en = models.DateTimeField(
         null=True, blank=True, verbose_name='Último estado consultado a SIFEN',
     )
+    emitida_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha y hora de emisión',
+        help_text=(
+            'Momento en que la factura se generó correctamente (Factura Segura devolvió el CDC). '
+            'Vacío mientras la factura siga pendiente de generación; a diferencia de "creado_en" '
+            '(cuando se reservó el número), no se completa si la generación falló.'
+        ),
+    )
+
+    # Estados en los que la factura todavía no existe para el cliente: se
+    # le informa como "pendiente de generación" (criterio 3), no como un
+    # error técnico.
+    ESTADOS_PENDIENTES = (ESTADO_ERROR_GENERACION, ESTADO_RECHAZADO, ESTADO_ERROR_SIFEN)
 
     class Meta:
-        """Ordena por fecha de creación y define las etiquetas administrativas."""
+        """Ordena por fecha de creación, define las etiquetas y exige exactamente una transacción asociada."""
         verbose_name = 'Documento electrónico'
         verbose_name_plural = 'Documentos electrónicos'
         ordering = ['-creado_en']
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(calculo_operacion__isnull=False, calculo_triangulacion__isnull=True)
+                    | models.Q(calculo_operacion__isnull=True, calculo_triangulacion__isnull=False)
+                ),
+                name='documento_electronico_exactamente_una_transaccion',
+            ),
+        ]
 
     def __str__(self):
         """Identifica el documento por tipo, número y estado actual."""
@@ -1780,6 +1804,17 @@ class DocumentoElectronico(models.Model):
     def transaccion(self):
         """Devuelve la compra/venta o el cambio al que pertenece este documento."""
         return self.calculo_operacion or self.calculo_triangulacion
+
+    @property
+    def factura_pendiente(self):
+        """Indica si la factura todavía no se generó o fue rechazada (criterio 3: "pendiente de generación").
+
+        Cubre tanto el rechazo/falla al generar en Factura Segura
+        (``ESTADO_ERROR_GENERACION``) como el rechazo o error posterior de
+        SIFEN (``ESTADO_RECHAZADO``/``ESTADO_ERROR_SIFEN``). Es lo que se
+        le muestra al cliente en lugar del estado técnico.
+        """
+        return self.estado in self.ESTADOS_PENDIENTES
 
     @property
     def es_definitivo(self):

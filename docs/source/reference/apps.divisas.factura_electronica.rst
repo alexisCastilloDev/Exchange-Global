@@ -34,6 +34,8 @@ apps.divisas.factura_electronica module
 
 .. autofunction:: apps.divisas.factura_electronica._generar
 
+.. autofunction:: apps.divisas.factura_electronica.factura_pendiente_de_generacion
+
 .. autofunction:: apps.divisas.factura_electronica.emitir_documento_electronico
 
 .. autofunction:: apps.divisas.factura_electronica.intentar_emitir_documento_electronico

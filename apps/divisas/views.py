@@ -31,6 +31,7 @@ from apps.divisas.casa_de_cambio import (
 from apps.divisas.entrega import reintentar_entrega
 from apps.divisas.factura_electronica import (
     consultar_estado_sifen,
+    factura_pendiente_de_generacion,
     descargar_kude,
     descargar_xml,
     reintentar_emision,
@@ -696,7 +697,10 @@ class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, V
         if redireccion is not None:
             return redireccion
         _avisar_resultado_pago_stripe(request)
-        return render(request, 'divisas/detalle_transaccion_operacion.html', {'transaccion': transaccion})
+        return render(request, 'divisas/detalle_transaccion_operacion.html', {
+            'transaccion': transaccion,
+            'factura_pendiente': factura_pendiente_de_generacion(transaccion),
+        })
 
     def post(self, request, *args, **kwargs):
         """Reintenta la entrega de la propia transacción, si quedó en "Entrega fallida"."""
@@ -745,7 +749,10 @@ class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View
         if redireccion is not None:
             return redireccion
         _avisar_resultado_pago_stripe(request)
-        return render(request, 'divisas/detalle_transaccion_cambio.html', {'transaccion': transaccion})
+        return render(request, 'divisas/detalle_transaccion_cambio.html', {
+            'transaccion': transaccion,
+            'factura_pendiente': factura_pendiente_de_generacion(transaccion),
+        })
 
     def post(self, request, *args, **kwargs):
         """Reintenta la entrega del propio cambio, si quedó en "Entrega fallida"."""
