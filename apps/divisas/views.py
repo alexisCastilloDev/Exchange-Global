@@ -481,6 +481,20 @@ class HistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListVi
         return sorted(filas, key=lambda fila: fila['creado_en'], reverse=True)
 
 
+def _parsear_fecha(valor):
+    """Convierte ``'YYYY-MM-DD'`` a ``date``, o ``None`` si falta o no es válido.
+
+    Usada por los filtros de rango de fechas de ``MiHistorialTransaccionesView``
+    y ``MisFacturasElectronicasListView`` para no duplicar el mismo parseo.
+    """
+    if not valor:
+        return None
+    try:
+        return datetime.strptime(valor, '%Y-%m-%d').date()
+    except ValueError:
+        return None
+
+
 class MiHistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """Lista, paginadas y filtrables, las transacciones del cliente activo.
 
@@ -559,16 +573,6 @@ class MiHistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, List
             'moneda_final': cambio.codigo_divisa_destino,
         }
 
-    @staticmethod
-    def _parsear_fecha(valor):
-        """Convierte ``'YYYY-MM-DD'`` a ``date``, o ``None`` si falta o no es válido."""
-        if not valor:
-            return None
-        try:
-            return datetime.strptime(valor, '%Y-%m-%d').date()
-        except ValueError:
-            return None
-
     def _filtrar(self, filas):
         """Aplica sobre las filas normalizadas los filtros de fecha y estado de la URL.
 
@@ -582,11 +586,11 @@ class MiHistorialTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, List
         if estado:
             filas = [fila for fila in filas if fila['estado_codigo'] == estado]
 
-        desde = self._parsear_fecha(self.request.GET.get('fecha_desde'))
+        desde = _parsear_fecha(self.request.GET.get('fecha_desde'))
         if desde:
             filas = [fila for fila in filas if timezone.localtime(fila['creado_en']).date() >= desde]
 
-        hasta = self._parsear_fecha(self.request.GET.get('fecha_hasta'))
+        hasta = _parsear_fecha(self.request.GET.get('fecha_hasta'))
         if hasta:
             filas = [fila for fila in filas if timezone.localtime(fila['creado_en']).date() <= hasta]
 
@@ -634,6 +638,18 @@ class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, L
     para el equivalente de administración, con todos los clientes). Es de
     solo lectura: el cliente no puede reintentar ni consultar el estado
     SIFEN por su cuenta, esas son acciones de administrador.
+
+    Implementa la HU "Consulta de facturas electrónicas": el listado es
+    paginado (Criterio 1); cada fila muestra número, CDC, la transacción
+    asociada, la fecha de emisión y el monto —de ``documento.transaccion``,
+    ya que el documento no duplica ese dato— junto con el estado
+    (Criterio 2); admite filtrar por rango de fechas de emisión mediante
+    ``fecha_desde``/``fecha_hasta`` en la URL, mismo patrón que
+    ``MiHistorialTransaccionesView`` (Criterio 3); cada fila enlaza al
+    detalle de su transacción, que ya incluye la sección "Factura
+    electrónica" con el comprobante completo (Criterio 4); y sin ninguna
+    factura emitida, la plantilla muestra un mensaje en vez de una tabla
+    vacía o un error (Criterio 5).
     """
 
     model = DocumentoElectronico
@@ -660,10 +676,39 @@ class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, L
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        """Documentos de las transacciones (compra/venta o cambio) del cliente activo, el más reciente primero."""
-        return DocumentoElectronico.objects.filter(
+        """Documentos del cliente activo, filtrados por fecha de emisión y ordenados del más reciente al más antiguo.
+
+        Un documento sin ``emitida_en`` (todavía no generado, o rechazado)
+        nunca coincide con un filtro de fecha: no hay ninguna fecha de
+        emisión real contra la que comparar, así que solo aparece en el
+        listado sin filtrar (Criterio 1).
+        """
+        queryset = DocumentoElectronico.objects.filter(
             Q(calculo_operacion__cliente=self.cliente_activo) | Q(calculo_triangulacion__cliente=self.cliente_activo)
-        ).select_related('calculo_operacion', 'calculo_triangulacion').order_by('-creado_en')
+        ).select_related('calculo_operacion', 'calculo_triangulacion')
+
+        desde = _parsear_fecha(self.request.GET.get('fecha_desde'))
+        if desde:
+            queryset = queryset.filter(emitida_en__date__gte=desde)
+
+        hasta = _parsear_fecha(self.request.GET.get('fecha_hasta'))
+        if hasta:
+            queryset = queryset.filter(emitida_en__date__lte=hasta)
+
+        return queryset.order_by('-creado_en')
+
+    def get_context_data(self, **kwargs):
+        """Agrega si el cliente tiene alguna factura sin filtrar y el estado de los filtros de fecha (Criterio 3)."""
+        context = super().get_context_data(**kwargs)
+        context['tiene_facturas'] = DocumentoElectronico.objects.filter(
+            Q(calculo_operacion__cliente=self.cliente_activo) | Q(calculo_triangulacion__cliente=self.cliente_activo)
+        ).exists()
+        context['fecha_desde_actual'] = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta_actual'] = self.request.GET.get('fecha_hasta', '')
+        querystring = self.request.GET.copy()
+        querystring.pop('page', None)
+        context['querystring'] = querystring.urlencode()
+        return context
 
 
 class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):
