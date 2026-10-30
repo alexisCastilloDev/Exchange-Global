@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -429,6 +430,57 @@ ni eliminar transacciones (ver <code class="docutils literal notranslate"><span 
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MisFacturasElectronicasListView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisFacturasElectronicasListView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Lista las Facturas Electrónicas emitidas para las transacciones del cliente activo.</p>
+<p>Simétrica a <code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code>, pero para el documento
+electrónico de cada transacción (ver <code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView</span></code>
+para el equivalente de administración, con todos los clientes). Es de
+solo lectura: el cliente no puede reintentar ni consultar el estado
+SIFEN por su cuenta, esas son acciones de administrador.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'documentos'</span></span><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisFacturasElectronicasListView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.get" title="Link to this definition"></a></dt>
+<dd><p>Exige un cliente activo seleccionado antes de listar sus facturas.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisFacturasElectronicasListView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Documentos de las transacciones (compra/venta o cambio) del cliente activo, el más reciente primero.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico"><code class="xref py py-class docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.paginate_by">
+<span class="sig-name descname"><span class="pre">paginate_by</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.paginate_by" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/mis_facturas_electronicas.html'</span></span><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisFacturasElectronicasListView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Permite consultar las facturas propias a los mismos roles que <code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionOperacionView">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DetalleTransaccionOperacionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionOperacionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionOperacionView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
@@ -438,11 +490,22 @@ ni eliminar transacciones (ver <code class="docutils literal notranslate"><span 
 de <code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionOperacionView</span></code>, no ofrece ningún botón para
 confirmar, cancelar ni recalcular: solo expone tipo de operación, divisa,
 monto, tasa aplicada, comisión, importe final, estado y fecha, sin
-importar en qué estado se encuentre la transacción.</p>
+importar en qué estado se encuentre la transacción. La única acción que
+sí ofrece es «Reintentar» cuando la entrega quedó fallida (ver
+<code class="docutils literal notranslate"><span class="pre">post</span></code>, HU «Acreditación de fondos» GE-23 y «Retiro de fondos» GE-24
+— ambas comparten el mismo mecanismo de entrega, automático apenas se
+confirma el pago, sin ninguna acción extra del cliente): el cliente no
+depende solo de un administrador para resolverlo.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionOperacionView.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionOperacionView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionOperacionView.get" title="Link to this definition"></a></dt>
 <dd><p>Recupera la transacción propia, o informa por qué no se puede continuar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionOperacionView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionOperacionView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionOperacionView.post" title="Link to this definition"></a></dt>
+<dd><p>Reintenta la entrega de la propia transacción, si quedó en «Entrega fallida».</p>
 </dd></dl>
 
 <dl class="py method">
@@ -463,11 +526,19 @@ importar en qué estado se encuentre la transacción.</p>
 «Cambio». A diferencia de <code class="docutils literal notranslate"><span class="pre">ConfirmarTransaccionCambioView</span></code>, no ofrece
 ningún botón para confirmar, cancelar ni recalcular: solo expone las
 divisas, el monto, las tasas aplicadas, la comisión, el importe final, el
-estado y la fecha, sin importar en qué estado se encuentre el cambio.</p>
+estado y la fecha, sin importar en qué estado se encuentre el cambio. La
+única acción que sí ofrece es «Reintentar» cuando la entrega quedó
+fallida (ver <code class="docutils literal notranslate"><span class="pre">post</span></code>, HU «Acreditación de fondos» GE-23).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionCambioView.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionCambioView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionCambioView.get" title="Link to this definition"></a></dt>
 <dd><p>Recupera el cambio propio, o informa por qué no se puede continuar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleTransaccionCambioView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleTransaccionCambioView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleTransaccionCambioView.post" title="Link to this definition"></a></dt>
+<dd><p>Reintenta la entrega del propio cambio, si quedó en «Entrega fallida».</p>
 </dd></dl>
 
 <dl class="py method">
@@ -502,15 +573,16 @@ comparten el mismo flujo).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionOperacionView.post">
 <span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionOperacionView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionOperacionView.post" title="Link to this definition"></a></dt>
-<dd><p>Registra el pago con el método elegido, o inicia el cobro con Stripe.</p>
+<dd><p>Guarda el medio de destino elegido y registra el pago, o inicia el cobro con Stripe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parámetros<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con el campo <code class="docutils literal notranslate"><span class="pre">metodo_pago</span></code>.</p>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con los campos
+<code class="docutils literal notranslate"><span class="pre">medio_origen</span></code> y <code class="docutils literal notranslate"><span class="pre">medio_destino</span></code>.</p>
 </dd>
 <dt class="field-even">Devuelve<span class="colon">:</span></dt>
-<dd class="field-even"><p>Redirección a Stripe si el método es «tarjeta», o
-al detalle de la transacción con el resultado en cualquier otro
-caso.</p>
+<dd class="field-even"><p>Redirección a Stripe si el medio de origen es
+«tarjeta», o al detalle de la transacción con el resultado en
+cualquier otro caso.</p>
 </dd>
 <dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
 <dd class="field-odd"><p>HttpResponse</p>
@@ -546,14 +618,16 @@ que entrega.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.PagarTransaccionCambioView.post">
 <span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#PagarTransaccionCambioView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.PagarTransaccionCambioView.post" title="Link to this definition"></a></dt>
-<dd><p>Registra el pago con el método elegido, o inicia el cobro con Stripe.</p>
+<dd><p>Guarda el medio de destino elegido y registra el pago, o inicia el cobro con Stripe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parámetros<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con el campo <code class="docutils literal notranslate"><span class="pre">metodo_pago</span></code>.</p>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud POST con los campos
+<code class="docutils literal notranslate"><span class="pre">medio_origen</span></code> y <code class="docutils literal notranslate"><span class="pre">medio_destino</span></code>.</p>
 </dd>
 <dt class="field-even">Devuelve<span class="colon">:</span></dt>
-<dd class="field-even"><p>Redirección a Stripe si el método es «tarjeta», o
-al detalle del cambio con el resultado en cualquier otro caso.</p>
+<dd class="field-even"><p>Redirección a Stripe si el medio de origen es
+«tarjeta», o al detalle del cambio con el resultado en
+cualquier otro caso.</p>
 </dd>
 <dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
 <dd class="field-odd"><p>HttpResponse</p>
@@ -1094,7 +1168,11 @@ procesar la acción.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.DivisaCreateView.form_valid">
 <span class="sig-name descname"><span class="pre">form_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaCreateView.form_valid"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaCreateView.form_valid" title="Link to this definition"></a></dt>
-<dd><p>Marca como activa la divisa recién creada.</p>
+<dd><p>Marca como activa la divisa recién creada y le crea su cuenta propia en cero.</p>
+<p>Sin esto, ninguna operación en la divisa nueva podría
+confirmarse nunca: el chequeo de saldo, al no encontrar ninguna
+cuenta propia, la trataría siempre como «sin fondos» (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views._verificar_saldo_casa_de_cambio</span></code>).</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1181,6 +1259,144 @@ dependen de eso).</p>
 <dt class="sig sig-object py" id="apps.divisas.views.DivisaSoftDeleteView.post">
 <span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DivisaSoftDeleteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DivisaSoftDeleteView.post" title="Link to this definition"></a></dt>
 <dd><p>Valida la causa y registra la baja lógica de la divisa.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ReintentarEntregaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ReintentarEntregaView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReintentarEntregaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReintentarEntregaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Reintenta, a pedido de un administrador, la entrega de una transacción en “Entrega fallida”.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ReintentarEntregaView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tipo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReintentarEntregaView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReintentarEntregaView.post" title="Link to this definition"></a></dt>
+<dd><p>Vuelve a llamar a <code class="docutils literal notranslate"><span class="pre">realizar_entrega</span></code> (vía <code class="docutils literal notranslate"><span class="pre">reintentar_entrega</span></code>); si falla, queda igual en la lista.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DocumentosElectronicosListView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DocumentosElectronicosListView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DocumentosElectronicosListView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DocumentosElectronicosListView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Lista los documentos electrónicos emitidos ante SIFEN, el más reciente primero.</p>
+<p>Solo lectura: permite a un administrador ver de un vistazo el CDC
+y el estado de cada Factura Electrónica, y detectar cuáles quedaron
+en «Error al generar» (ver <code class="docutils literal notranslate"><span class="pre">ReintentarEmisionDocumentoElectronicoView</span></code>)
+sin tener que abrir cada transacción una por una.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DocumentosElectronicosListView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'documentos'</span></span><a class="headerlink" href="#apps.divisas.views.DocumentosElectronicosListView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DocumentosElectronicosListView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DocumentosElectronicosListView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DocumentosElectronicosListView.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Trae de una sola vez el cliente de cada transacción facturada, para no repetir consultas.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DocumentosElectronicosListView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.divisas.views.DocumentosElectronicosListView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico"><code class="xref py py-class docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DocumentosElectronicosListView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/documentos_electronicos.html'</span></span><a class="headerlink" href="#apps.divisas.views.DocumentosElectronicosListView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ReintentarEmisionDocumentoElectronicoView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ReintentarEmisionDocumentoElectronicoView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReintentarEmisionDocumentoElectronicoView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReintentarEmisionDocumentoElectronicoView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Reintenta, a pedido explícito de un administrador, un documento en “Error al generar”.</p>
+<p>Antes de usar esta acción, el administrador debe haber verificado
+con soporte de Factura Segura que el documento no llegó a generarse
+con ese número la vez anterior (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.</span>
+<span class="pre">factura_electronica.reintentar_emision</span></code>): esta vista no hace esa
+verificación por sí sola, solo dispara el reintento.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ReintentarEmisionDocumentoElectronicoView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReintentarEmisionDocumentoElectronicoView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReintentarEmisionDocumentoElectronicoView.post" title="Link to this definition"></a></dt>
+<dd><p>Vuelve a llamar a <code class="docutils literal notranslate"><span class="pre">generar_de</span></code> reutilizando el mismo número de documento.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ConsultarEstadoSifenDocumentoElectronicoView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenDocumentoElectronicoView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Dispara, a pedido de un administrador, la consulta de estado real ante SIFEN (<code class="docutils literal notranslate"><span class="pre">get_estado_sifen</span></code>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">generar_de</span></code> solo confirma que Factura Segura recibió y encoló la
+solicitud (criterio 1), nunca la aprobación de SIFEN en sí
+(criterio 2): esa aprobación/rechazo solo se conoce a través de
+esta consulta, que no se dispara sola en ningún lado (no hay cron
+ni tarea periódica en esta entrega) — esta vista es, por ahora, la
+única forma de completar los criterios 2 y 3 para un documento ya
+generado.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenDocumentoElectronicoView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView.post" title="Link to this definition"></a></dt>
+<dd><p>Llama a <code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code> y refleja el resultado en un mensaje.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarDocumentoElectronicoView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DescargarDocumentoElectronicoView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarDocumentoElectronicoView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarDocumentoElectronicoView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Descarga el KuDE (PDF) o el XML firmado de un documento, bajo demanda, sin guardar nada.</p>
+<p>Implementa la HU «Descarga de facturas electrónicas» (GE-86).
+Accesible para un administrador (cualquier documento) o para el
+cliente, solo si el documento pertenece a su <strong>cliente activo</strong>
+(criterio 4). Solo se descarga una factura aprobada por SIFEN
+(criterios 1 y 2; ver <code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.descargable</span></code>). Cada
+clic vuelve a pedirle el archivo a Factura Segura
+(<code class="docutils literal notranslate"><span class="pre">descargar_kude</span></code>/<code class="docutils literal notranslate"><span class="pre">descargar_xml</span></code>) y lo entrega sin modificarlo,
+con el CDC en el nombre: no se almacena ninguna copia en el servidor
+(criterio 3).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarDocumentoElectronicoView.FORMATOS">
+<span class="sig-name descname"><span class="pre">FORMATOS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'kude':</span> <span class="pre">(&lt;function</span> <span class="pre">descargar_kude&gt;,</span> <span class="pre">'application/pdf',</span> <span class="pre">'pdf'),</span> <span class="pre">'xml':</span> <span class="pre">(&lt;function</span> <span class="pre">descargar_xml&gt;,</span> <span class="pre">'application/xml',</span> <span class="pre">'xml')}</span></span><a class="headerlink" href="#apps.divisas.views.DescargarDocumentoElectronicoView.FORMATOS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarDocumentoElectronicoView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formato</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarDocumentoElectronicoView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarDocumentoElectronicoView.get" title="Link to this definition"></a></dt>
+<dd><p>Valida el permiso y el estado de la factura, y entrega el archivo o explica por qué no se puede.</p>
+<p>Si la factura espera la respuesta de SIFEN, primero se consulta
+su estado (<code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code>, una simple lectura que
+nunca emite nada): ninguna tarea periódica lo actualiza, así que
+sin esto una factura ya aprobada seguiría figurando como
+pendiente hasta que un administrador la consultara.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – Solicitud del usuario autenticado.</p></li>
+<li><p><strong>pk</strong> (<em>int</em>) – Identificador del <code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code>.</p></li>
+<li><p><strong>formato</strong> (<em>str</em>) – <code class="docutils literal notranslate"><span class="pre">'kude'</span></code> (PDF) o <code class="docutils literal notranslate"><span class="pre">'xml'</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El archivo como adjunto, o una redirección a la
+lista de facturas con el motivo si no se pudo descargar.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+<dt class="field-even">Muestra<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>PermissionDenied</strong> – El usuario no puede acceder a este documento.</p></li>
+<li><p><strong>Http404</strong> – El documento o el formato no existen.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

@@ -1776,6 +1776,11 @@ class DocumentoElectronico(models.Model):
     # error técnico.
     ESTADOS_PENDIENTES = (ESTADO_ERROR_GENERACION, ESTADO_RECHAZADO, ESTADO_ERROR_SIFEN)
 
+    # Únicos estados en los que la factura es un comprobante válido ante
+    # SIFEN y, por lo tanto, se puede descargar (HU "Descarga de facturas
+    # electrónicas", GE-86).
+    ESTADOS_DESCARGABLES = (ESTADO_APROBADO, ESTADO_APROBADO_OBS)
+
     class Meta:
         """Ordena por fecha de creación, define las etiquetas y exige exactamente una transacción asociada."""
         verbose_name = 'Documento electrónico'
@@ -1820,3 +1825,28 @@ class DocumentoElectronico(models.Model):
     def es_definitivo(self):
         """Indica si ya no hace falta volver a consultar su estado a SIFEN (llegó a un estado terminal)."""
         return self.estado in (self.ESTADO_APROBADO, self.ESTADO_APROBADO_OBS, self.ESTADO_RECHAZADO)
+
+    @property
+    def descargable(self):
+        """Indica si la factura ya se puede descargar: SIFEN la aprobó y tiene CDC (GE-86, criterios 1 y 2)."""
+        return bool(self.cdc) and self.estado in self.ESTADOS_DESCARGABLES
+
+    @property
+    def motivo_no_descargable(self):
+        """Explica por qué la factura no se puede descargar (GE-86, criterio 2).
+
+        Returns:
+            str: Mensaje para mostrarle al usuario, sin detalles técnicos
+            del error; vacío si la factura sí es descargable.
+        """
+        if self.descargable:
+            return ''
+        if self.factura_pendiente:
+            return (
+                'No podés descargar esta factura porque todavía está pendiente de generación. '
+                'Tu operación no se ve afectada y vamos a generarla a la brevedad.'
+            )
+        return (
+            'No podés descargar esta factura porque todavía está pendiente de aprobación por SIFEN. '
+            'Vas a poder descargarla en cuanto sea aprobada.'
+        )

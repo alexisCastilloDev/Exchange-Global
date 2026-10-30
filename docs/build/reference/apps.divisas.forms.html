@@ -22,7 +22,7 @@
     <link rel="index" title="Índice" href="../genindex.html" />
     <link rel="search" title="Búsqueda" href="../search.html" />
     <link rel="next" title="apps.divisas.models module" href="apps.divisas.models.html" />
-    <link rel="prev" title="apps.divisas.context_processors module" href="apps.divisas.context_processors.html" /> 
+    <link rel="prev" title="apps.divisas.factura_electronica module" href="apps.divisas.factura_electronica.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -347,27 +348,45 @@ transacción.</p>
 <dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">PagarTransaccionForm</span></span><a class="reference internal" href="../_modules/apps/divisas/forms.html#PagarTransaccionForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
-<p>Elige con qué método de pago guardado se paga una transacción confirmada.</p>
-<p>Es deliberadamente simple: solo pide un <code class="docutils literal notranslate"><span class="pre">MetodoPago</span></code> ya existente del
-cliente activo (<code class="docutils literal notranslate"><span class="pre">apps.clientes.models.MetodoPago</span></code>, de GE-19). El medio
-de pago efectivo (<code class="docutils literal notranslate"><span class="pre">Pago.medio_pago</span></code>) se deriva de
-<code class="docutils literal notranslate"><span class="pre">metodo_pago.tipo_medio</span></code> en la vista; este formulario no decide nada
-de proveedor, identificador externo ni monto, que son responsabilidad de
-<code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code>.</p>
+<p>Elige con qué medio se paga una transacción confirmada y a cuál se le entrega el resultado.</p>
+<p><code class="docutils literal notranslate"><span class="pre">medio_origen</span></code> es de dónde sale el pago del cliente: tu cuenta
+bancaria, tu billetera digital o tu tarjeta, según corresponda;
+<code class="docutils literal notranslate"><span class="pre">medio_destino</span></code> es tu cuenta bancaria o billetera propia (nunca
+una tarjeta: Stripe no puede depositarle a una) a la que Global
+Exchange le transfiere lo que corresponde a cambio. Ambos se
+restringen, en el <code class="docutils literal notranslate"><span class="pre">__init__</span></code>, a los medios guardados del cliente
+activo (<code class="docutils literal notranslate"><span class="pre">apps.clientes.models.MetodoPago</span></code>, de GE-19) que están en
+la moneda correcta para esta transacción específica
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.moneda_a_pagar</span></code>/<code class="docutils literal notranslate"><span class="pre">moneda_a_entregar</span></code>) —
+así, por ejemplo, una venta nunca ofrece pagar con tarjeta (que
+solo existe en PYG) ni recibir en una cuenta que no sea del cliente
+o que esté en otra moneda. Cada opción del desplegable se identifica
+con tipo, entidad, identificador enmascarado y divisa (ver
+<code class="docutils literal notranslate"><span class="pre">MetodoPago.etiqueta_corta</span></code>), para que quede claro de cuál cuenta
+o billetera se trata. El medio de pago efectivo (<code class="docutils literal notranslate"><span class="pre">Pago.medio_pago</span></code>)
+se deriva de <code class="docutils literal notranslate"><span class="pre">medio_origen.tipo_medio</span></code> en la vista; este
+formulario no decide nada de proveedor, identificador externo ni
+monto, que son responsabilidad de <code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code>.</p>
+<p>Para una venta, <code class="docutils literal notranslate"><span class="pre">medio_destino</span></code> se pide acá igual que para una
+compra o un cambio, en la misma pantalla y en el mismo momento: su
+entrega (HU «Retiro de fondos», GE-24) se intenta sola apenas se
+confirma el pago, exactamente igual que una compra o un cambio (HU
+«Acreditación de fondos», GE-23) — no hay ningún paso aparte en el
+que haga falta volver a elegirla.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#PagarTransaccionForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.__init__" title="Link to this definition"></a></dt>
-<dd><p>Restringe las opciones a los métodos de pago del cliente activo.</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaccion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/forms.html#PagarTransaccionForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.__init__" title="Link to this definition"></a></dt>
+<dd><p>Restringe cada campo a los medios del cliente activo en la moneda que corresponde.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm.base_fields">
-<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'metodo_pago':</span> <span class="pre">&lt;django.forms.models.ModelChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.base_fields" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'medio_destino':</span> <span class="pre">&lt;apps.divisas.forms._MetodoPagoChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'medio_origen':</span> <span class="pre">&lt;apps.divisas.forms._MetodoPagoChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.base_fields" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.forms.PagarTransaccionForm.declared_fields">
-<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'metodo_pago':</span> <span class="pre">&lt;django.forms.models.ModelChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.declared_fields" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'medio_destino':</span> <span class="pre">&lt;apps.divisas.forms._MetodoPagoChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'medio_origen':</span> <span class="pre">&lt;apps.divisas.forms._MetodoPagoChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.divisas.forms.PagarTransaccionForm.declared_fields" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
@@ -637,7 +656,7 @@ este formulario.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
-        <a href="apps.divisas.context_processors.html" class="btn btn-neutral float-left" title="apps.divisas.context_processors module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.factura_electronica.html" class="btn btn-neutral float-left" title="apps.divisas.factura_electronica module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
         <a href="apps.divisas.models.html" class="btn btn-neutral float-right" title="apps.divisas.models module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

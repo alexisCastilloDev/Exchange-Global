@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -244,6 +245,19 @@ many-to-one relation.</p>
 class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.Divisa.cuenta_propia">
+<span class="sig-name descname"><span class="pre">cuenta_propia</span></span><a class="headerlink" href="#apps.divisas.models.Divisa.cuenta_propia" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'restaurant'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.models.Divisa.delete">
 <span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#Divisa.delete"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.Divisa.delete" title="Link to this definition"></a></dt>
@@ -261,6 +275,21 @@ class built by <code class="docutils literal notranslate"><span class="pre">crea
 <span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.divisas.models.Divisa.id" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.Divisa.metodos_pago">
+<span class="sig-name descname"><span class="pre">metodos_pago</span></span><a class="headerlink" href="#apps.divisas.models.Divisa.metodos_pago" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -550,6 +579,11 @@ alguien con permiso visite esa transacción.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_ACREDITADA">
+<span class="sig-name descname"><span class="pre">ESTADO_ACREDITADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ACREDITADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_ACREDITADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA">
 <span class="sig-name descname"><span class="pre">ESTADO_CANCELADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CANCELADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -560,8 +594,18 @@ alguien con permiso visite esa transacción.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA_FONDOS_CLIENTE">
+<span class="sig-name descname"><span class="pre">ESTADO_CANCELADA_FONDOS_CLIENTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CANCELADA_FONDOS_CLIENTE'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA_FONDOS_CLIENTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE">
+<span class="sig-name descname"><span class="pre">ESTADO_CANCELADA_SALDO_INSUFICIENTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CANCELADA_SALDO_INSUFICIENTE'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_CHOICES">
-<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación'),</span> <span class="pre">('CONFIRMADA',</span> <span class="pre">'Confirmada'),</span> <span class="pre">('CANCELADA',</span> <span class="pre">'Cancelada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida'),</span> <span class="pre">('CANCELADA_COTIZACION',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">cambio</span> <span class="pre">de</span> <span class="pre">cotización'),</span> <span class="pre">('PAGADA',</span> <span class="pre">'Pagada')]</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación'),</span> <span class="pre">('CONFIRMADA',</span> <span class="pre">'Confirmada'),</span> <span class="pre">('CANCELADA',</span> <span class="pre">'Cancelada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida'),</span> <span class="pre">('CANCELADA_COTIZACION',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">cambio</span> <span class="pre">de</span> <span class="pre">cotización'),</span> <span class="pre">('CANCELADA_SALDO_INSUFICIENTE',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">saldo</span> <span class="pre">insuficiente</span> <span class="pre">de</span> <span class="pre">Global</span> <span class="pre">Exchange'),</span> <span class="pre">('CANCELADA_FONDOS_CLIENTE',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">fondos</span> <span class="pre">insuficientes</span> <span class="pre">del</span> <span class="pre">cliente'),</span> <span class="pre">('PAGADA',</span> <span class="pre">'Pagada'),</span> <span class="pre">('ENTREGA_FALLIDA',</span> <span class="pre">'Pagada,</span> <span class="pre">pero</span> <span class="pre">la</span> <span class="pre">entrega</span> <span class="pre">al</span> <span class="pre">cliente</span> <span class="pre">falló'),</span> <span class="pre">('PAGO_EXPIRADO',</span> <span class="pre">'Pago</span> <span class="pre">fuera</span> <span class="pre">de</span> <span class="pre">plazo'),</span> <span class="pre">('ACREDITADA',</span> <span class="pre">'Acreditada'),</span> <span class="pre">('RETIRADA',</span> <span class="pre">'Retirada')]</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_CHOICES" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -570,13 +614,28 @@ alguien con permiso visite esa transacción.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_ENTREGA_FALLIDA">
+<span class="sig-name descname"><span class="pre">ESTADO_ENTREGA_FALLIDA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ENTREGA_FALLIDA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_ENTREGA_FALLIDA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_PAGADA">
 <span class="sig-name descname"><span class="pre">ESTADO_PAGADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PAGADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_PAGADA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_PAGO_EXPIRADO">
+<span class="sig-name descname"><span class="pre">ESTADO_PAGO_EXPIRADO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PAGO_EXPIRADO'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_PAGO_EXPIRADO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_PENDIENTE">
 <span class="sig-name descname"><span class="pre">ESTADO_PENDIENTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PENDIENTE_CONFIRMACION'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_PENDIENTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.ESTADO_RETIRADA">
+<span class="sig-name descname"><span class="pre">ESTADO_RETIRADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'RETIRADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.ESTADO_RETIRADA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -610,6 +669,13 @@ alguien con permiso visite esa transacción.</p>
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.TIPO_VENTA">
 <span class="sig-name descname"><span class="pre">TIPO_VENTA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'VENTA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.TIPO_VENTA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.acreditado_en">
+<span class="sig-name descname"><span class="pre">acreditado_en</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.acreditado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.cliente">
@@ -681,6 +747,19 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.divisa_id">
 <span class="sig-name descname"><span class="pre">divisa_id</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.divisa_id" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.documento_electronico">
+<span class="sig-name descname"><span class="pre">documento_electronico</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.documento_electronico" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'restaurant'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.esta_vencido">
@@ -770,6 +849,24 @@ interactúa con el registro).</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.medio_destino">
+<span class="sig-name descname"><span class="pre">medio_destino</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.medio_destino" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.medio_destino_id">
+<span class="sig-name descname"><span class="pre">medio_destino_id</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.medio_destino_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.monto_final">
 <span class="sig-name descname"><span class="pre">monto_final</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.monto_final" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
@@ -802,6 +899,27 @@ relation.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.referencia_acreditacion">
+<span class="sig-name descname"><span class="pre">referencia_acreditacion</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.referencia_acreditacion" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.referencia_retiro">
+<span class="sig-name descname"><span class="pre">referencia_retiro</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.referencia_retiro" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.retirado_en">
+<span class="sig-name descname"><span class="pre">retirado_en</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.retirado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.solicitud_sipap">
 <span class="sig-name descname"><span class="pre">solicitud_sipap</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.solicitud_sipap" title="Link to this definition"></a></dt>
 <dd><p>Accessor to the related object on the reverse side of a one-to-one
@@ -819,6 +937,26 @@ relation.</p>
 <span class="sig-name descname"><span class="pre">tasa_aplicada</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.tasa_aplicada" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.tasa_vence_en">
+<span class="sig-name descname"><span class="pre">tasa_vence_en</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.tasa_vence_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.tasa_vencida">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tasa_vencida</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.tasa_vencida" title="Link to this definition"></a></dt>
+<dd><p>Indica si la tasa fijada al confirmar ya venció sin que se haya pagado.</p>
+<p>Solo aplica a una transacción «Confirmada»: una vez pagada (o
+cancelada, por cualquier motivo), la tasa ya no está «vigente o
+vencida» — ya se usó o ya no corresponde. Se usa para bloquear un
+cobro nuevo (<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code>/<code class="docutils literal notranslate"><span class="pre">pagos_sipap</span></code>) antes
+de intentarlo, y como red de seguridad en
+<code class="docutils literal notranslate"><span class="pre">Pago.registrar_pago</span></code> si de todos modos llega una confirmación
+tardía.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -896,6 +1034,11 @@ operación que muestra el historial.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_ACREDITADA">
+<span class="sig-name descname"><span class="pre">ESTADO_ACREDITADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ACREDITADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_ACREDITADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA">
 <span class="sig-name descname"><span class="pre">ESTADO_CANCELADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CANCELADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -906,8 +1049,18 @@ operación que muestra el historial.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA_FONDOS_CLIENTE">
+<span class="sig-name descname"><span class="pre">ESTADO_CANCELADA_FONDOS_CLIENTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CANCELADA_FONDOS_CLIENTE'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA_FONDOS_CLIENTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE">
+<span class="sig-name descname"><span class="pre">ESTADO_CANCELADA_SALDO_INSUFICIENTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CANCELADA_SALDO_INSUFICIENTE'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_CHOICES">
-<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación'),</span> <span class="pre">('CONFIRMADA',</span> <span class="pre">'Confirmada'),</span> <span class="pre">('CANCELADA',</span> <span class="pre">'Cancelada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida'),</span> <span class="pre">('CANCELADA_COTIZACION',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">cambio</span> <span class="pre">de</span> <span class="pre">cotización'),</span> <span class="pre">('PAGADA',</span> <span class="pre">'Pagada')]</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación'),</span> <span class="pre">('CONFIRMADA',</span> <span class="pre">'Confirmada'),</span> <span class="pre">('CANCELADA',</span> <span class="pre">'Cancelada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida'),</span> <span class="pre">('CANCELADA_COTIZACION',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">cambio</span> <span class="pre">de</span> <span class="pre">cotización'),</span> <span class="pre">('CANCELADA_SALDO_INSUFICIENTE',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">saldo</span> <span class="pre">insuficiente</span> <span class="pre">de</span> <span class="pre">Global</span> <span class="pre">Exchange'),</span> <span class="pre">('CANCELADA_FONDOS_CLIENTE',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">fondos</span> <span class="pre">insuficientes</span> <span class="pre">del</span> <span class="pre">cliente'),</span> <span class="pre">('PAGADA',</span> <span class="pre">'Pagada'),</span> <span class="pre">('ENTREGA_FALLIDA',</span> <span class="pre">'Pagada,</span> <span class="pre">pero</span> <span class="pre">la</span> <span class="pre">entrega</span> <span class="pre">al</span> <span class="pre">cliente</span> <span class="pre">falló'),</span> <span class="pre">('PAGO_EXPIRADO',</span> <span class="pre">'Pago</span> <span class="pre">fuera</span> <span class="pre">de</span> <span class="pre">plazo'),</span> <span class="pre">('ACREDITADA',</span> <span class="pre">'Acreditada')]</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_CHOICES" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -916,8 +1069,18 @@ operación que muestra el historial.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_ENTREGA_FALLIDA">
+<span class="sig-name descname"><span class="pre">ESTADO_ENTREGA_FALLIDA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ENTREGA_FALLIDA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_ENTREGA_FALLIDA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_PAGADA">
 <span class="sig-name descname"><span class="pre">ESTADO_PAGADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PAGADA'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_PAGADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.ESTADO_PAGO_EXPIRADO">
+<span class="sig-name descname"><span class="pre">ESTADO_PAGO_EXPIRADO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PAGO_EXPIRADO'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.ESTADO_PAGO_EXPIRADO" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -946,6 +1109,13 @@ operación que muestra el historial.</p>
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.TIPO_DISPLAY">
 <span class="sig-name descname"><span class="pre">TIPO_DISPLAY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Cambio'</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.TIPO_DISPLAY" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.acreditado_en">
+<span class="sig-name descname"><span class="pre">acreditado_en</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.acreditado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.cliente">
@@ -1043,6 +1213,19 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 <span class="sig-name descname"><span class="pre">divisa_origen_id</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.divisa_origen_id" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.documento_electronico">
+<span class="sig-name descname"><span class="pre">documento_electronico</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.documento_electronico" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'restaurant'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.esta_vencido">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">esta_vencido</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.esta_vencido" title="Link to this definition"></a></dt>
@@ -1119,6 +1302,24 @@ perezoso, aplicado al cambio entre divisas.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.medio_destino">
+<span class="sig-name descname"><span class="pre">medio_destino</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.medio_destino" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.medio_destino_id">
+<span class="sig-name descname"><span class="pre">medio_destino_id</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.medio_destino_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.monto_equivalente_pyg">
 <span class="sig-name descname"><span class="pre">monto_equivalente_pyg</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.monto_equivalente_pyg" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
@@ -1158,6 +1359,13 @@ relation.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.referencia_acreditacion">
+<span class="sig-name descname"><span class="pre">referencia_acreditacion</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.referencia_acreditacion" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.solicitud_sipap">
 <span class="sig-name descname"><span class="pre">solicitud_sipap</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.solicitud_sipap" title="Link to this definition"></a></dt>
 <dd><p>Accessor to the related object on the reverse side of a one-to-one
@@ -1182,6 +1390,24 @@ object the first time, the query is executed.</p>
 <span class="sig-name descname"><span class="pre">tasa_cruzada</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.tasa_cruzada" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.tasa_vence_en">
+<span class="sig-name descname"><span class="pre">tasa_vence_en</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.tasa_vence_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.tasa_vencida">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tasa_vencida</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.tasa_vencida" title="Link to this definition"></a></dt>
+<dd><p>mismo criterio, aplicado al cambio entre divisas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Ver <code class="docutils literal notranslate"><span class="pre">CalculoOperacion.tasa_vencida</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1232,23 +1458,38 @@ object the first time, the query is executed.</p>
 <dt class="sig sig-object py" id="apps.divisas.models.monto_a_pagar">
 <span class="sig-name descname"><span class="pre">monto_a_pagar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#monto_a_pagar"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.monto_a_pagar" title="Link to this definition"></a></dt>
 <dd><p>Devuelve lo que el cliente entrega de verdad para esta transacción.</p>
-<p>Una compra o venta (<code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>) liquida siempre en PYG:
-<code class="docutils literal notranslate"><span class="pre">monto_final</span></code> ya es ese valor, lo que el cliente paga (compra) o
-recibe (venta) en guaraníes. Un cambio entre divisas
-(<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>) usa PYG solo como paso intermedio de la
-triangulación: lo que el cliente entrega de verdad es
-<code class="docutils literal notranslate"><span class="pre">monto_origen</span></code>, en su propia divisa de origen. <code class="docutils literal notranslate"><span class="pre">monto_final</span></code> ahí
-es lo que el cliente <em>recibe</em> a cambio, no lo que paga — por eso no
-sirve como «monto a cobrar» para un cambio, aunque sí lo sea para una
-compra/venta.</p>
+<p>Una <strong>compra</strong> se paga en PYG: <code class="docutils literal notranslate"><span class="pre">monto_final</span></code> es lo que el cliente
+entrega a cambio de la divisa que compra. Una <strong>venta</strong> se paga
+entregando la propia divisa vendida, no PYG: ahí lo que el cliente
+entrega es <code class="docutils literal notranslate"><span class="pre">monto_origen</span></code>, en <code class="docutils literal notranslate"><span class="pre">codigo_divisa</span></code> — <code class="docutils literal notranslate"><span class="pre">monto_final</span></code>
+es lo que <em>recibe</em> en guaraníes, no lo que paga. Un <strong>cambio</strong> entre
+divisas (<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>) usa PYG solo como paso intermedio
+de la triangulación, nunca lo toca el cliente: lo que entrega de
+verdad es <code class="docutils literal notranslate"><span class="pre">monto_origen</span></code>, en su propia divisa de origen.</p>
+<p>Ver <code class="docutils literal notranslate"><span class="pre">monto_a_entregar</span></code> para el lado contrario (lo que Global
+Exchange le transfiere al cliente a cambio).</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="apps.divisas.models.moneda_a_pagar">
 <span class="sig-name descname"><span class="pre">moneda_a_pagar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#moneda_a_pagar"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.moneda_a_pagar" title="Link to this definition"></a></dt>
 <dd><p>Devuelve el código de la moneda en la que el cliente paga esta transacción.</p>
-<p>Ver <code class="docutils literal notranslate"><span class="pre">monto_a_pagar</span></code>: una compra/venta siempre se paga en PYG; un
+<p>Ver <code class="docutils literal notranslate"><span class="pre">monto_a_pagar</span></code>: una compra se paga en PYG; una venta se paga
+en la propia divisa vendida (<code class="docutils literal notranslate"><span class="pre">codigo_divisa</span></code>), nunca en PYG; un
 cambio se paga en su divisa de origen, no en la de destino.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.models.estados_con_pago_ya_registrado">
+<span class="sig-name descname"><span class="pre">estados_con_pago_ya_registrado</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#estados_con_pago_ya_registrado"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.estados_con_pago_ya_registrado" title="Link to this definition"></a></dt>
+<dd><p>Devuelve los estados de <code class="docutils literal notranslate"><span class="pre">modelo</span></code> que implican que ya existe un pago vinculado.</p>
+<p>Se usa para armar el mensaje «ya fue pagada» sin repetir, en cada
+lugar que lo necesita (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views</span></code>/<code class="docutils literal notranslate"><span class="pre">pagos_stripe</span></code>/
+<code class="docutils literal notranslate"><span class="pre">pagos_sipap</span></code>), la lista exacta de estados — que no es la misma
+para los dos modelos: <code class="docutils literal notranslate"><span class="pre">ESTADO_RETIRADA</span></code> (HU «Retiro de fondos»,
+GE-24) solo existe en <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>, nunca en
+<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code> (ver su <code class="docutils literal notranslate"><span class="pre">ESTADO_CHOICES</span></code>), así que
+acceder a él sin este chequeo rompería con un cambio entre divisas.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -1462,6 +1703,13 @@ object the first time, the query is executed.</p>
 object the first time, the query is executed.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.Pago.fuera_de_plazo">
+<span class="sig-name descname"><span class="pre">fuera_de_plazo</span></span><a class="headerlink" href="#apps.divisas.models.Pago.fuera_de_plazo" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.models.Pago.get_medio_pago_display">
 <span class="sig-name descname"><span class="pre">get_medio_pago_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">medio_pago&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.Pago.get_medio_pago_display" title="Link to this definition"></a></dt>
@@ -1583,6 +1831,15 @@ recién en esta llamada.</p>
     ya registrado.</p>
 </dd>
 </dl>
+<dl class="simple">
+<dt>Nota:</dt><dd><p>Si la tasa fijada al confirmar ya venció (<code class="docutils literal notranslate"><span class="pre">tasa_vencida</span></code>) en
+el momento en que llega el pago, el pago NUNCA se pierde ni se
+rechaza: se registra igual, con <code class="docutils literal notranslate"><span class="pre">fuera_de_plazo=True</span></code>, pero
+la transacción pasa a «Pago fuera de plazo»
+(<code class="docutils literal notranslate"><span class="pre">ESTADO_PAGO_EXPIRADO</span></code>) en vez de «Pagada», porque ya no
+corresponde liquidarla a esa tasa.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -1689,7 +1946,7 @@ reutiliza la misma fila en vez de crear otra — ver
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.SolicitudPagoSipap.ESTADO_CHOICES">
-<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE',</span> <span class="pre">'Pendiente'),</span> <span class="pre">('ACREDITADA',</span> <span class="pre">'Acreditada'),</span> <span class="pre">('OBSERVADA',</span> <span class="pre">'Observada'),</span> <span class="pre">('RECHAZADA',</span> <span class="pre">'Rechazada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida')]</span></span><a class="headerlink" href="#apps.divisas.models.SolicitudPagoSipap.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('PENDIENTE',</span> <span class="pre">'Pendiente'),</span> <span class="pre">('ACREDITADA',</span> <span class="pre">'Acreditada'),</span> <span class="pre">('OBSERVADA',</span> <span class="pre">'Observada'),</span> <span class="pre">('RECHAZADA',</span> <span class="pre">'Rechazada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida'),</span> <span class="pre">('SALDO_INSUFICIENTE',</span> <span class="pre">'Saldo</span> <span class="pre">insuficiente</span> <span class="pre">del</span> <span class="pre">cliente')]</span></span><a class="headerlink" href="#apps.divisas.models.SolicitudPagoSipap.ESTADO_CHOICES" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1705,6 +1962,11 @@ reutiliza la misma fila en vez de crear otra — ver
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.SolicitudPagoSipap.ESTADO_RECHAZADA">
 <span class="sig-name descname"><span class="pre">ESTADO_RECHAZADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'RECHAZADA'</span></span><a class="headerlink" href="#apps.divisas.models.SolicitudPagoSipap.ESTADO_RECHAZADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.SolicitudPagoSipap.ESTADO_SALDO_INSUFICIENTE">
+<span class="sig-name descname"><span class="pre">ESTADO_SALDO_INSUFICIENTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SALDO_INSUFICIENTE'</span></span><a class="headerlink" href="#apps.divisas.models.SolicitudPagoSipap.ESTADO_SALDO_INSUFICIENTE" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2206,6 +2468,453 @@ operar en nombre de un cliente.</p>
 <dt class="sig sig-object py" id="apps.divisas.models.NotificacionTasa.variacion">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">variacion</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionTasa.variacion" title="Link to this definition"></a></dt>
 <dd><p>Diferencia entre la tasa nueva y la anterior (negativa si bajó).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.RangoDocumentosAgotadoError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">RangoDocumentosAgotadoError</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#RangoDocumentosAgotadoError"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.RangoDocumentosAgotadoError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>No quedan números disponibles en el rango de documento electrónico habilitado para este tipo.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ContadorDocumentoElectronico</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#ContadorDocumentoElectronico"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<p>Lleva, para cada tipo de documento, el próximo número a asignar dentro del rango habilitado.</p>
+<p>Factura Segura (HU «Integración con API de facturación electrónica»,
+ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.factura_electronica</span></code>) no asigna el número de
+documento (<code class="docutils literal notranslate"><span class="pre">dNumDoc</span></code>) por sí sola: lo elige quien emite, dentro
+del rango que el administrador de Factura Segura habilitó para este
+ESI (un establecimiento y punto de expedición fijos — ver
+<code class="docutils literal notranslate"><span class="pre">settings.FACTURASEGURA_ESTABLECIMIENTO</span></code>/<code class="docutils literal notranslate"><span class="pre">FACTURASEGURA_PUNTO_EXPEDICION</span></code>
+— con un rango de números por tipo de documento). Ese rango es
+finito y real: a diferencia de SIPAP o Stripe, acá no hay ningún
+sandbox que lo reponga solo, así que este modelo es el único lugar
+donde se decide el próximo número (<code class="docutils literal notranslate"><span class="pre">siguiente_numero</span></code>), nunca se
+calcula «al vuelo» al armar el JSON — eso permitiría que dos
+emisiones simultáneas eligieran el mismo número.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.NotUpdated">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotUpdated</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.NotUpdated" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectNotUpdated</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseError</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.TIPO_DOCUMENTO_CHOICES">
+<span class="sig-name descname"><span class="pre">TIPO_DOCUMENTO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('1',</span> <span class="pre">'Factura</span> <span class="pre">electrónica'),</span> <span class="pre">('5',</span> <span class="pre">'Nota</span> <span class="pre">de</span> <span class="pre">crédito</span> <span class="pre">electrónica')]</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.TIPO_DOCUMENTO_CHOICES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.TIPO_FACTURA">
+<span class="sig-name descname"><span class="pre">TIPO_FACTURA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1'</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.TIPO_FACTURA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.TIPO_NOTA_CREDITO">
+<span class="sig-name descname"><span class="pre">TIPO_NOTA_CREDITO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'5'</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.TIPO_NOTA_CREDITO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.desde">
+<span class="sig-name descname"><span class="pre">desde</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.desde" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.get_tipo_documento_display">
+<span class="sig-name descname"><span class="pre">get_tipo_documento_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">tipo_documento&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.get_tipo_documento_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.hasta">
+<span class="sig-name descname"><span class="pre">hasta</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.hasta" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.siguiente_numero">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">siguiente_numero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tipo_documento</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#ContadorDocumentoElectronico.siguiente_numero"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.siguiente_numero" title="Link to this definition"></a></dt>
+<dd><p>Reserva y devuelve, de forma atómica, el próximo número disponible para ese tipo.</p>
+<p>Bloquea la fila del contador con <code class="docutils literal notranslate"><span class="pre">select_for_update()</span></code> para
+que dos emisiones concurrentes nunca reciban el mismo número,
+ni siquiera si llegan en el mismo instante. El número se marca
+como asignado acá, antes de llamar a Factura Segura: si la
+emisión después falla, ese número queda «quemado» (nunca se
+reutiliza para un documento distinto) — es preferible perder un
+número del rango a arriesgarse a emitir dos documentos con el
+mismo <code class="docutils literal notranslate"><span class="pre">dNumDoc</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tipo_documento</strong> (<em>str</em>) – Uno de <code class="docutils literal notranslate"><span class="pre">TIPO_DOCUMENTO_CHOICES</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El número de 7 dígitos, con ceros a la izquierda
+(p. ej. <code class="docutils literal notranslate"><span class="pre">&quot;0000623&quot;</span></code>), listo para usar como <code class="docutils literal notranslate"><span class="pre">dNumDoc</span></code>.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Muestra<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#apps.divisas.models.RangoDocumentosAgotadoError" title="apps.divisas.models.RangoDocumentosAgotadoError"><strong>RangoDocumentosAgotadoError</strong></a> – Si ya se asignó el último
+    número del rango habilitado para ese tipo.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.tipo_documento">
+<span class="sig-name descname"><span class="pre">tipo_documento</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.tipo_documento" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.ContadorDocumentoElectronico.ultimo_asignado">
+<span class="sig-name descname"><span class="pre">ultimo_asignado</span></span><a class="headerlink" href="#apps.divisas.models.ContadorDocumentoElectronico.ultimo_asignado" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DocumentoElectronico</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#DocumentoElectronico"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<p>Documento tributario electrónico (Factura) emitido ante SIFEN por una transacción pagada.</p>
+<p>Implementa la HU «Integración con API de facturación electrónica»:
+apenas una compra, venta o cambio queda «Pagada», Global Exchange le
+emite una Factura Electrónica al cliente a través de Factura Segura
+(ESI de SIFEN) — ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.factura_electronica.generar_documento_electronico</span></code>,
+llamada desde los mismos puntos que ya disparan
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.entrega.realizar_entrega</span></code>. Es un proceso
+independiente de la entrega del dinero: una falla acá nunca bloquea
+ni revierte el pago ya confirmado, y viceversa (criterio 3).</p>
+<p>Puede asociarse tanto a una compra/venta (<code class="docutils literal notranslate"><span class="pre">calculo_operacion</span></code>)
+como a un cambio entre divisas (<code class="docutils literal notranslate"><span class="pre">calculo_triangulacion</span></code>):
+exactamente una de las dos, nunca ambas ni ninguna (mismo patrón
+que <code class="docutils literal notranslate"><span class="pre">Pago</span></code> — ver <code class="docutils literal notranslate"><span class="pre">clean</span></code>). Cada una es un <code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code>, así
+que la base de datos garantiza por sí sola que una transacción no
+puede tener más de un documento (criterio 5: nunca se duplica).</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADOS_DESCARGABLES">
+<span class="sig-name descname"><span class="pre">ESTADOS_DESCARGABLES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('APROBADO',</span> <span class="pre">'APROBADO_OBS')</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADOS_DESCARGABLES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADOS_PENDIENTES">
+<span class="sig-name descname"><span class="pre">ESTADOS_PENDIENTES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('ERROR_GENERACION',</span> <span class="pre">'RECHAZADO',</span> <span class="pre">'ERROR_SIFEN')</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADOS_PENDIENTES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_APROBADO">
+<span class="sig-name descname"><span class="pre">ESTADO_APROBADO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'APROBADO'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_APROBADO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_APROBADO_OBS">
+<span class="sig-name descname"><span class="pre">ESTADO_APROBADO_OBS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'APROBADO_OBS'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_APROBADO_OBS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_CHOICES">
+<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('GENERADO',</span> <span class="pre">'Generado,</span> <span class="pre">esperando</span> <span class="pre">aprobación</span> <span class="pre">de</span> <span class="pre">SIFEN'),</span> <span class="pre">('APROBADO',</span> <span class="pre">'Aprobado'),</span> <span class="pre">('APROBADO_OBS',</span> <span class="pre">'Aprobado</span> <span class="pre">con</span> <span class="pre">observación'),</span> <span class="pre">('RECHAZADO',</span> <span class="pre">'Rechazado</span> <span class="pre">por</span> <span class="pre">SIFEN'),</span> <span class="pre">('ERROR_SIFEN',</span> <span class="pre">'Error</span> <span class="pre">de</span> <span class="pre">SIFEN</span> <span class="pre">al</span> <span class="pre">procesarlo'),</span> <span class="pre">('ERROR_GENERACION',</span> <span class="pre">'No</span> <span class="pre">se</span> <span class="pre">pudo</span> <span class="pre">generar</span> <span class="pre">(Factura</span> <span class="pre">Segura</span> <span class="pre">no</span> <span class="pre">respondió,</span> <span class="pre">o</span> <span class="pre">lo</span> <span class="pre">rechazó)')]</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_ERROR_GENERACION">
+<span class="sig-name descname"><span class="pre">ESTADO_ERROR_GENERACION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ERROR_GENERACION'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_ERROR_GENERACION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_ERROR_SIFEN">
+<span class="sig-name descname"><span class="pre">ESTADO_ERROR_SIFEN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ERROR_SIFEN'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_ERROR_SIFEN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_GENERADO">
+<span class="sig-name descname"><span class="pre">ESTADO_GENERADO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GENERADO'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_GENERADO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_RECHAZADO">
+<span class="sig-name descname"><span class="pre">ESTADO_RECHAZADO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'RECHAZADO'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_RECHAZADO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.NotUpdated">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotUpdated</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.NotUpdated" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectNotUpdated</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseError</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.actualizado_en">
+<span class="sig-name descname"><span class="pre">actualizado_en</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.actualizado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.calculo_operacion">
+<span class="sig-name descname"><span class="pre">calculo_operacion</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.calculo_operacion" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'restaurant'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Restaurant.place</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.calculo_operacion_id">
+<span class="sig-name descname"><span class="pre">calculo_operacion_id</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.calculo_operacion_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.calculo_triangulacion">
+<span class="sig-name descname"><span class="pre">calculo_triangulacion</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.calculo_triangulacion" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'restaurant'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Restaurant.place</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.calculo_triangulacion_id">
+<span class="sig-name descname"><span class="pre">calculo_triangulacion_id</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.calculo_triangulacion_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.cdc">
+<span class="sig-name descname"><span class="pre">cdc</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.cdc" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.clean">
+<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#DocumentoElectronico.clean"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.clean" title="Link to this definition"></a></dt>
+<dd><p>Valida que el documento pertenezca a exactamente una transacción.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.consultado_en">
+<span class="sig-name descname"><span class="pre">consultado_en</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.consultado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.creado_en">
+<span class="sig-name descname"><span class="pre">creado_en</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.creado_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.desc_sifen">
+<span class="sig-name descname"><span class="pre">desc_sifen</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.desc_sifen" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.descargable">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">descargable</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.descargable" title="Link to this definition"></a></dt>
+<dd><p>SIFEN la aprobó y tiene CDC (GE-86, criterios 1 y 2).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Indica si la factura ya se puede descargar</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.emitida_en">
+<span class="sig-name descname"><span class="pre">emitida_en</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.emitida_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.error_generacion">
+<span class="sig-name descname"><span class="pre">error_generacion</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.error_generacion" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.error_sifen">
+<span class="sig-name descname"><span class="pre">error_sifen</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.error_sifen" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.es_definitivo">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">es_definitivo</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.es_definitivo" title="Link to this definition"></a></dt>
+<dd><p>Indica si ya no hace falta volver a consultar su estado a SIFEN (llegó a un estado terminal).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.estado">
+<span class="sig-name descname"><span class="pre">estado</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.estado" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.estado_sifen">
+<span class="sig-name descname"><span class="pre">estado_sifen</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.estado_sifen" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.factura_pendiente">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">factura_pendiente</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.factura_pendiente" title="Link to this definition"></a></dt>
+<dd><p>«pendiente de generación»).</p>
+<p>Cubre tanto el rechazo/falla al generar en Factura Segura
+(<code class="docutils literal notranslate"><span class="pre">ESTADO_ERROR_GENERACION</span></code>) como el rechazo o error posterior de
+SIFEN (<code class="docutils literal notranslate"><span class="pre">ESTADO_RECHAZADO</span></code>/<code class="docutils literal notranslate"><span class="pre">ESTADO_ERROR_SIFEN</span></code>). Es lo que se
+le muestra al cliente en lugar del estado técnico.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Indica si la factura todavía no se generó o fue rechazada (criterio 3</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.get_estado_display">
+<span class="sig-name descname"><span class="pre">get_estado_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">estado&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.get_estado_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.get_next_by_actualizado_en">
+<span class="sig-name descname"><span class="pre">get_next_by_actualizado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">actualizado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.get_next_by_actualizado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.get_next_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_next_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.get_next_by_creado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.get_previous_by_actualizado_en">
+<span class="sig-name descname"><span class="pre">get_previous_by_actualizado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">actualizado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.get_previous_by_actualizado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.get_previous_by_creado_en">
+<span class="sig-name descname"><span class="pre">get_previous_by_creado_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creado_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.get_previous_by_creado_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.get_tipo_documento_display">
+<span class="sig-name descname"><span class="pre">get_tipo_documento_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">tipo_documento&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.get_tipo_documento_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.motivo_no_descargable">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">motivo_no_descargable</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.motivo_no_descargable" title="Link to this definition"></a></dt>
+<dd><p>Explica por qué la factura no se puede descargar (GE-86, criterio 2).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mensaje para mostrarle al usuario, sin detalles técnicos
+del error; vacío si la factura sí es descargable.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.numero_documento">
+<span class="sig-name descname"><span class="pre">numero_documento</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.numero_documento" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.operation_id">
+<span class="sig-name descname"><span class="pre">operation_id</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.operation_id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.tipo_documento">
+<span class="sig-name descname"><span class="pre">tipo_documento</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.tipo_documento" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.transaccion">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">transaccion</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.transaccion" title="Link to this definition"></a></dt>
+<dd><p>Devuelve la compra/venta o el cambio al que pertenece este documento.</p>
 </dd></dl>
 
 </dd></dl>

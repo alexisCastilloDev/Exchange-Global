@@ -89,6 +89,10 @@ Clientes y bajas
    :language: html
    :lines: 1-7
 
+.. literalinclude:: ../../templates/clientes/metodo_pago_movimientos.html
+   :language: html
+   :lines: 1-7
+
 .. literalinclude:: ../../templates/clientes/metodo_pago_form.html
    :language: html
    :lines: 1-7

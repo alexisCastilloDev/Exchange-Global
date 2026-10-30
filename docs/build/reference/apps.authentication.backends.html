@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -205,6 +206,23 @@ actual de roles en Keycloak.</p>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.authentication.backends.KeycloakOIDCAuthenticationBackend.get_username">
+<span class="sig-name descname"><span class="pre">get_username</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claims</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/authentication/backends.html#KeycloakOIDCAuthenticationBackend.get_username"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.get_username" title="Link to this definition"></a></dt>
+<dd><p>Usa el <code class="docutils literal notranslate"><span class="pre">preferred_username</span></code> real de Keycloak como <code class="docutils literal notranslate"><span class="pre">User.username</span></code> local.</p>
+<p>Sin este método, <code class="docutils literal notranslate"><span class="pre">mozilla_django_oidc</span></code> cae en su algoritmo por
+defecto (<code class="docutils literal notranslate"><span class="pre">default_username_algo</span></code>), que genera un hash SHA1 en
+base64 del email — un identificador opaco, no el nombre de
+usuario que la persona eligió al registrarse en Keycloak. Esto
+rompía tanto la UI (mostraba ese hash en vez de un nombre
+legible) como <code class="docutils literal notranslate"><span class="pre">ClienteForm.save()</span></code>, que busca
+<code class="docutils literal notranslate"><span class="pre">User.objects.filter(username=identificador)</span></code> esperando que
+el username sea un identificador real, no un hash. Solo aplica
+a un usuario <em>nuevo</em> (<code class="docutils literal notranslate"><span class="pre">create_user</span></code>): a uno ya existente,
+<code class="docutils literal notranslate"><span class="pre">filter_users_by_claims</span></code> lo encuentra por email y nunca pasa
+por acá.</p>
 </dd></dl>
 
 <dl class="py method">

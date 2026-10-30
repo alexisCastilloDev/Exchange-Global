@@ -38,7 +38,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 22. [Sesión 22 — 26/10/2026 — GE-19 — Movimientos y saldo de los métodos de pago](#sesión-22--26102026--ge-19--movimientos-y-saldo-de-los-métodos-de-pago)
 23. [Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos](#sesión-23--27102026--ge-24--retiro-de-fondos)
 24. [Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)](#sesión-27--30102026--generación-de-factura-electrónica-hu-del-cliente)
-25. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+25. [Sesión 28 — 30/10/2026 — GE-86 — Descarga de facturas electrónicas](#sesión-28--30102026--ge-86--descarga-de-facturas-electrónicas)
+26. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4190,6 +4191,55 @@ Se agregaron 14 tests a `tests/test_factura_electronica.py` (de 43 a 57): `Fecha
 "Pendiente de generación" cubre tanto el fallo al generar como el rechazo posterior de SIFEN. Un
 `RECHAZADO` de SIFEN no tiene hoy reintento desde la UI (solo `ERROR_GENERACION`); queda como mejora si
 el equipo quiere emitir un documento nuevo para esa transacción.
+
+## Sesión 28 — 30/10/2026 — GE-86 — Descarga de facturas electrónicas
+
+**Herramienta:** Claude Code (Anthropic, modelo Opus 5.5)
+**HU relacionada:** GE-86 — Descarga de facturas electrónicas (Epic GE-15: Facturación Electrónica)
+**Rama:** `feature/GE-86`
+**Participantes:** Alexis Castillo, integrante del equipo Global Exchange
+
+### Pedido
+
+Leer la HU GE-86 desde Jira e implementarla en su rama de feature, o mejorarla si ya existía, cumpliendo
+cada criterio de aceptación: docstrings, Sphinx actualizado, esta conversación documentada y tests.
+Condición explícita: **los tests no deben generar ninguna factura**.
+
+### Auditoría de los 4 criterios de aceptación
+
+La descarga ya existía parcialmente (`DescargarDocumentoElectronicoView`, Sesión 24). Se contrastó criterio
+por criterio:
+
+| Criterio | Estado previo | Resultado |
+|---|---|---|
+| 1. Factura aprobada → entrega PDF/XML con datos completos | Parcial: funcionaba, pero solo desde los listados | Botones de descarga también en el detalle de la transacción |
+| 2. Factura "Pendiente" → no se descarga y se explica el motivo | **Incumplido**: bastaba tener CDC, así que se descargaban facturas sin aprobar o rechazadas; los errores eran texto plano sin diseño | `DocumentoElectronico.descargable`/`motivo_no_descargable`; se redirige al listado con el motivo |
+| 3. Mismo CDC y mismos datos, sin alterarlos | Parcial: se entregaba sin modificar, pero sin validar lo recibido | El XML debe contener el CDC y el KuDE debe ser un PDF; el nombre del archivo lleva el CDC |
+| 4. Factura ajena al cliente activo → acceso denegado | **Incumplido**: se aceptaba cualquier cliente asociado al usuario, no solo el activo | `_puede_ver` compara contra `request.cliente_activo` |
+
+### Decisiones
+
+- **Regla de aprobación también para administradores:** el criterio no distingue roles, y una factura no
+  aprobada no es un comprobante válido.
+- **Consulta de estado previa a la descarga:** ninguna tarea periódica actualiza el estado SIFEN. Sin
+  consultarlo, una factura ya aprobada seguiría bloqueada hasta que un administrador la revisara. Por eso,
+  si está en `GENERADO`, la vista llama primero a `consultar_estado_sifen`, una lectura que no emite nada.
+  Los botones siguen visibles en ese estado para poder hacer ese intento; se ocultan si la factura está
+  rechazada o con error.
+- **Errores de descarga como mensaje en pantalla:** los antiguos 400 y 502 en texto plano se reemplazaron por
+  una redirección al listado, con el motivo visible para el usuario.
+
+### Limitación conocida
+
+La verificación del CDC dentro del archivo solo es directa en el XML. El texto de un PDF suele estar comprimido,
+por lo que en el KuDE se valida que sea un PDF y se confía en que Factura Segura lo devuelve para el CDC pedido.
+
+### Tests
+
+`DescargarDocumentoElectronicoViewTest` se reescribió por criterio y `DescargarArchivosTest` sumó la validación
+del contenido. Ninguno genera una factura: los documentos se crean directo en la base de pruebas, `requests` está
+mockeado y cada test de la vista comprueba al terminar que no se llamó a `calcular_de`/`generar_de` ni se
+reservó un número del rango.
 
 ## Enlaces externos (conversaciones completas)
 
