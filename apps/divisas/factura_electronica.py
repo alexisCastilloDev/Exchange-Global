@@ -62,11 +62,15 @@ con el usuario). Los totales de la factura (IVA, descuentos, etc.)
 mínimo y se usa tal cual el ``DE`` completo que devuelve
 ``calcular_de`` como entrada de ``generar_de`` — así ninguna fórmula
 propia puede quedar mal calculada, SIFEN/Factura Segura hace esa
-cuenta. Quedan con el valor más plausible según la guía, no una
-verificación campo por campo contra el Manual Técnico de SIFEN 150
-completo, algunos códigos de clasificación que la guía solo describe
-como "ver Manual SIFEN" (``iTipEmi``, ``iTipTra``, ``iTImp``,
-``iIndPres``): revisar antes de la primera emisión real.
+cuenta. ``iTipTra``/``dDesTipTra`` (tipo de transacción, ver
+``_tipo_transaccion``) ya está verificado contra la tabla real del
+Manual Técnico SIFEN (``5``="Venta de divisas", ``6``="Compra de
+divisas", específicos para una casa de cambio). Otros códigos de
+clasificación que la guía solo describe como "ver Manual SIFEN"
+(``iTipEmi``, ``iTImp``, ``iIndPres``) quedan con el valor más
+plausible según la guía, no una verificación campo por campo contra el
+Manual Técnico de SIFEN 150 completo: revisar antes de la primera
+emisión real.
 """
 
 import logging
@@ -242,6 +246,33 @@ def _grupos_item_resumido(transaccion, total):
     return items
 
 
+def _tipo_transaccion(transaccion):
+    """Código y descripción de ``iTipTra``/``dDesTipTra`` (Manual Técnico SIFEN, campo D011).
+
+    Confirmado con la tabla real de códigos (compartida por el usuario):
+    ``5``="Venta de divisas" y ``6``="Compra de divisas" son los códigos
+    propios de una casa de cambio — no ``1`` ("Venta de mercadería"), el
+    valor que se usaba antes sin verificar (bug corregido). Una compra
+    (Global Exchange le compra la divisa al cliente) es código ``6``;
+    una venta (Global Exchange le vende la divisa al cliente) es código
+    ``5``. Un cambio entre divisas combina ambas piernas en una sola
+    operación (Global Exchange recibe la divisa origen y entrega la
+    divisa destino) y no tiene un código propio en la tabla: decisión
+    tomada con el usuario, se factura siempre como "Venta de divisas",
+    consistente con lo que Global Exchange finalmente le entrega al
+    cliente (la divisa de destino), igual criterio que ya usa
+    ``_descripcion_operacion`` ("Cambio de X a Y").
+
+    ``dDesTipTra`` es obligatorio siempre que se envíe ``iTipTra``: no
+    alcanza con mandar el código solo, hay que mandar también su texto.
+    """
+    if isinstance(transaccion, CalculoTriangulacion):
+        return '5', 'Venta de divisas'
+    if transaccion.tipo == CalculoOperacion.TIPO_COMPRA:
+        return '6', 'Compra de divisas'
+    return '5', 'Venta de divisas'
+
+
 def _descripcion_operacion(transaccion):
     """Descripción legible del ítem, distinta para una compra/venta o un cambio entre divisas."""
     if isinstance(transaccion, CalculoTriangulacion):
@@ -318,14 +349,16 @@ def _armar_resumido_de(documento, transaccion, monto):
     de una operación B2B.
 
     Nota: varios códigos de clasificación documentados solo como
-    "ver Manual SIFEN" (``iTipEmi``, ``iTipTra``, ``iTImp``,
-    ``iIndPres``) quedan con el valor más plausible según la guía de
-    Factura Segura, no una verificación campo por campo contra el
-    Manual Técnico de SIFEN 150 completo — revisar antes de la primera
-    emisión real.
+    "ver Manual SIFEN" (``iTipEmi``, ``iTImp``, ``iIndPres``) quedan
+    con el valor más plausible según la guía de Factura Segura, no una
+    verificación campo por campo contra el Manual Técnico de SIFEN 150
+    completo — revisar antes de la primera emisión real. ``iTipTra``/
+    ``dDesTipTra`` (ver ``_tipo_transaccion``) sí están verificados
+    contra la tabla real del manual.
     """
     cliente = transaccion.cliente
     ahora = timezone.localtime(timezone.now())
+    tipo_transaccion, descripcion_tipo_transaccion = _tipo_transaccion(transaccion)
     return {
         'iTipEmi': '1',
         'iTiDE': documento.tipo_documento,
@@ -335,7 +368,8 @@ def _armar_resumido_de(documento, transaccion, monto):
         'dPunExp': settings.FACTURASEGURA_PUNTO_EXPEDICION,
         'dNumDoc': documento.numero_documento,
         'dFeEmiDE': ahora.strftime('%Y-%m-%dT%H:%M:%S'),
-        'iTipTra': '1',
+        'iTipTra': tipo_transaccion,
+        'dDesTipTra': descripcion_tipo_transaccion,
         'iTImp': '1',
         'cMoneOpe': 'PYG',
         'dRucEm': settings.FACTURASEGURA_EMISOR_RUC,

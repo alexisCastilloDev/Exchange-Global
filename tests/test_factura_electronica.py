@@ -34,6 +34,7 @@ from apps.clientes.models import Cliente, MetodoPago
 from apps.divisas.factura_electronica import (
     _comision_en_pyg,
     _grupos_item_resumido,
+    _tipo_transaccion,
     _total_en_pyg,
     consultar_estado_sifen,
     descargar_kude,
@@ -342,6 +343,58 @@ class ComisionGravadaAl10PorCientoTest(FacturaElectronicaTestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]['iAfecIVA'], '3')
         self.assertEqual(items[0]['dPUniProSer'], '740000')
+
+
+class TipoTransaccionTest(FacturaElectronicaTestCase):
+    """``iTipTra``/``dDesTipTra``: códigos propios de una casa de cambio, no 'Venta de mercadería'.
+
+    Bug corregido: el código se mandaba fijo en ``'1'`` ("Venta de
+    mercadería", sin verificar contra el manual) y ``dDesTipTra`` ni
+    siquiera se mandaba, pese a ser obligatorio junto con ``iTipTra``.
+    """
+
+    def test_compra_usa_el_codigo_de_compra_de_divisas(self):
+        self.assertEqual(_tipo_transaccion(self.transaccion), ('6', 'Compra de divisas'))
+
+    def test_venta_usa_el_codigo_de_venta_de_divisas(self):
+        usuario = User.objects.create_user(username='cliente-fe-venta-tipotra', password='password123')
+        venta = CalculoOperacion.objects.create(
+            usuario=usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_VENTA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('7400.00'), monto_final=Decimal('732600.00'),
+            estado=CalculoOperacion.ESTADO_PAGADA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(), medio_destino=self.medio_destino,
+        )
+        self.assertEqual(_tipo_transaccion(venta), ('5', 'Venta de divisas'))
+
+    def test_cambio_usa_el_codigo_de_venta_de_divisas(self):
+        """Decisión tomada con el usuario: un cambio se factura como lo que Global Exchange entrega."""
+        usuario = User.objects.create_user(username='cliente-fe-cambio-tipotra', password='password123')
+        ars = Divisa.objects.create(codigo='ARS', nombre='Peso argentino', simbolo='$', activa=True)
+        cambio = CalculoTriangulacion.objects.create(
+            usuario=usuario, cliente=self.cliente, divisa_origen=self.usd, divisa_destino=ars,
+            codigo_divisa_origen='USD', codigo_divisa_destino='ARS', monto_origen=Decimal('100.00'),
+            tasa_compra_aplicada=Decimal('7400.00'), tasa_venta_aplicada=Decimal('20.00'),
+            tasa_cruzada=Decimal('370.000000'), monto_equivalente_pyg=Decimal('740000.00'),
+            comision_porcentaje=Decimal('1.000'), comision=Decimal('370.00'),
+            monto_final=Decimal('36630.00'), estado=CalculoTriangulacion.ESTADO_PAGADA,
+            vence_en=timezone.now() + timedelta(seconds=300), confirmado_en=timezone.now(),
+        )
+        self.assertEqual(_tipo_transaccion(cambio), ('5', 'Venta de divisas'))
+
+    def test_el_resumido_de_manda_itiptra_y_su_descripcion(self):
+        """Integración: el ``DE`` real enviado a calcular_de lleva ambos campos, no solo el código."""
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            mock_post.side_effect = [
+                _respuesta_calculo(de={'dNumDoc': '0000900'}),
+                _respuesta(code=0, results={'CDC': 'CDC-1'}),
+            ]
+            emitir_documento_electronico(self.transaccion)
+
+        de_resumido = mock_post.call_args_list[0].kwargs['json']['params']['DE']
+        self.assertEqual(de_resumido['iTipTra'], '6')
+        self.assertEqual(de_resumido['dDesTipTra'], 'Compra de divisas')
 
 
 class ConsultarEstadoSifenTest(FacturaElectronicaTestCase):
