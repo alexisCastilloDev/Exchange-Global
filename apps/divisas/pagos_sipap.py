@@ -101,6 +101,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from apps.clientes.models import MetodoPago
 from apps.divisas.entrega import realizar_entrega
+from apps.divisas.factura_electronica import intentar_emitir_documento_electronico
 from apps.divisas.models import (
     CalculoOperacion,
     CalculoTriangulacion,
@@ -514,6 +515,7 @@ def _procesar_confirmacion_sipap(solicitud, datos):
             # repetición idempotente del mismo webhook, y nunca si llegó
             # fuera de plazo (ver Pago.registrar_pago).
             realizar_entrega(transaccion)
+            intentar_emitir_documento_electronico(transaccion)
         solicitud.pago = pago
         solicitud.estado = SolicitudPagoSipap.ESTADO_ACREDITADA
     else:

@@ -78,6 +78,7 @@ from django.views.decorators.csrf import csrf_exempt
 from apps.clientes.forms import AgregarTarjetaStripeForm
 from apps.clientes.models import MetodoPago
 from apps.divisas.entrega import realizar_entrega
+from apps.divisas.factura_electronica import intentar_emitir_documento_electronico
 from apps.divisas.models import (
     CalculoOperacion,
     CalculoTriangulacion,
@@ -463,6 +464,10 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
             # ya se entregó la primera vez), y nunca si el pago llegó
             # fuera de plazo (ver Pago.registrar_pago).
             realizar_entrega(transaccion)
+            # Emite la Factura Electrónica en paralelo a la entrega, nunca
+            # en su lugar: una falla acá no debe revertir ni bloquear un
+            # pago ya confirmado (ver apps.divisas.factura_electronica).
+            intentar_emitir_documento_electronico(transaccion)
 
         if transaccion.estado == transaccion.ESTADO_PAGO_EXPIRADO:
             messages.warning(
@@ -723,6 +728,7 @@ def _procesar_sesion_completada(session):
         # primera vez que se registra este pago, nunca en una repetición,
         # y nunca si llegó fuera de plazo (ver Pago.registrar_pago).
         realizar_entrega(transaccion)
+        intentar_emitir_documento_electronico(transaccion)
 
 
 @csrf_exempt

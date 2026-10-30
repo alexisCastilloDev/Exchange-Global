@@ -76,6 +76,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                         </a>
                     </li>
                     <li>
+                        <a href="{% url 'divisas:documentos_electronicos' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'documentos_electronicos' %}is-active{% endif %}">
+                            <i class="bi bi-receipt"></i> Documentos electrónicos
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'documentacion' %}" class="ge-sidebar__link" target="_blank" rel="noopener">
                             <i class="bi bi-book"></i> Documentación
                         </a>
@@ -142,6 +147,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                     <li>
                         <a href="{% url 'divisas:mis_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'mis_transacciones,detalle_transaccion_operacion,detalle_transaccion_cambio' %}is-active{% endif %}">
                             <i class="bi bi-clock-history"></i> Mi historial de transacciones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:mis_facturas_electronicas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'mis_facturas_electronicas' %}is-active{% endif %}">
+                            <i class="bi bi-receipt"></i> Mis facturas electrónicas
                         </a>
                     </li>
                     {% endif %}

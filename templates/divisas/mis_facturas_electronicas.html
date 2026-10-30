@@ -1,0 +1,95 @@
+<!--
+Lista las Facturas Electrónicas emitidas para las transacciones del cliente activo, de solo lectura.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: documentos (paginado), cliente_activo (vía context processor).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Mis facturas electrónicas - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Mis facturas electrónicas</h1>
+        <p>Facturas emitidas ante SIFEN por tus compras, ventas y cambios de divisa.</p>
+    </div>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Número</th>
+                    <th>Operación</th>
+                    <th>Estado</th>
+                    <th>CDC</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for documento in documentos %}
+                <tr>
+                    <td>{{ documento.creado_en }}</td>
+                    <td>{{ documento.numero_documento }}</td>
+                    <td>
+                        {% if documento.calculo_operacion %}
+                            <a href="{% url 'divisas:detalle_transaccion_operacion' pk=documento.calculo_operacion.pk %}">
+                                {{ documento.calculo_operacion.get_tipo_display }} {{ documento.calculo_operacion.codigo_divisa }}
+                            </a>
+                        {% else %}
+                            <a href="{% url 'divisas:detalle_transaccion_cambio' pk=documento.calculo_triangulacion.pk %}">
+                                Cambio {{ documento.calculo_triangulacion.codigo_divisa_origen }} → {{ documento.calculo_triangulacion.codigo_divisa_destino }}
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if documento.estado == 'ERROR_GENERACION' or documento.estado == 'RECHAZADO' or documento.estado == 'ERROR_SIFEN' %}
+                            <span class="badge bg-warning text-dark">En proceso</span>
+                        {% elif documento.es_definitivo %}
+                            <span class="badge bg-success">{{ documento.get_estado_display }}</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">{{ documento.get_estado_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ documento.cdc|default:"—" }}</td>
+                    <td class="text-end">
+                        {% if documento.cdc %}
+                        <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='kude' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-file-pdf me-1"></i>KuDE
+                        </a>
+                        <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='xml' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-filetype-xml me-1"></i>XML
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">Todavía no tenés ninguna factura electrónica emitida.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación de mis facturas electrónicas">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}
