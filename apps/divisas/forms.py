@@ -4,7 +4,15 @@ from django import forms
 from django.core.validators import RegexValidator
 
 from apps.clientes.models import MetodoPago
-from .models import CalculoOperacion, ConfiguracionComision, ConfiguracionVigencia, Cotizacion, Divisa
+from .models import (
+    CalculoOperacion,
+    ConfiguracionComision,
+    ConfiguracionVigencia,
+    Cotizacion,
+    Divisa,
+    moneda_a_entregar,
+    moneda_a_pagar,
+)
 
 
 class DivisaSelect(forms.Select):
@@ -244,31 +252,89 @@ class ConfirmarTriangulacionForm(forms.Form):
         return cleaned_data
 
 
-class PagarTransaccionForm(forms.Form):
-    """Elige con qué método de pago guardado se paga una transacción confirmada.
+class _MetodoPagoChoiceField(forms.ModelChoiceField):
+    """Un ``ModelChoiceField`` de ``MetodoPago`` que identifica cada opción sin ambigüedad.
 
-    Es deliberadamente simple: solo pide un ``MetodoPago`` ya existente del
-    cliente activo (``apps.clientes.models.MetodoPago``, de GE-19). El medio
-    de pago efectivo (``Pago.medio_pago``) se deriva de
-    ``metodo_pago.tipo_medio`` en la vista; este formulario no decide nada
-    de proveedor, identificador externo ni monto, que son responsabilidad de
-    ``Pago.registrar_pago``.
+    Por defecto, un ``ModelChoiceField`` muestra ``str(instancia)`` en
+    cada ``<option>`` (``MetodoPago.__str__``: solo tipo y entidad), lo
+    que no alcanza para distinguir, por ejemplo, dos billeteras del
+    mismo proveedor en distinta divisa. Usa en cambio
+    ``MetodoPago.etiqueta_corta``, que agrega el identificador
+    enmascarado y la divisa.
     """
 
-    metodo_pago = forms.ModelChoiceField(
+    def label_from_instance(self, obj):
+        return obj.etiqueta_corta
+
+
+class PagarTransaccionForm(forms.Form):
+    """Elige con qué medio se paga una transacción confirmada y a cuál se le entrega el resultado.
+
+    ``medio_origen`` es de dónde sale el pago del cliente: tu cuenta
+    bancaria, tu billetera digital o tu tarjeta, según corresponda;
+    ``medio_destino`` es tu cuenta bancaria o billetera propia (nunca
+    una tarjeta: Stripe no puede depositarle a una) a la que Global
+    Exchange le transfiere lo que corresponde a cambio. Ambos se
+    restringen, en el ``__init__``, a los medios guardados del cliente
+    activo (``apps.clientes.models.MetodoPago``, de GE-19) que están en
+    la moneda correcta para esta transacción específica
+    (``apps.divisas.models.moneda_a_pagar``/``moneda_a_entregar``) —
+    así, por ejemplo, una venta nunca ofrece pagar con tarjeta (que
+    solo existe en PYG) ni recibir en una cuenta que no sea del cliente
+    o que esté en otra moneda. Cada opción del desplegable se identifica
+    con tipo, entidad, identificador enmascarado y divisa (ver
+    ``MetodoPago.etiqueta_corta``), para que quede claro de cuál cuenta
+    o billetera se trata. El medio de pago efectivo (``Pago.medio_pago``)
+    se deriva de ``medio_origen.tipo_medio`` en la vista; este
+    formulario no decide nada de proveedor, identificador externo ni
+    monto, que son responsabilidad de ``Pago.registrar_pago``.
+
+    Para una venta, ``medio_destino`` se pide acá igual que para una
+    compra o un cambio, en la misma pantalla y en el mismo momento: su
+    entrega (HU "Retiro de fondos", GE-24) se intenta sola apenas se
+    confirma el pago, exactamente igual que una compra o un cambio (HU
+    "Acreditación de fondos", GE-23) — no hay ningún paso aparte en el
+    que haga falta volver a elegirla.
+    """
+
+    medio_origen = _MetodoPagoChoiceField(
         queryset=MetodoPago.objects.none(),
-        label='Método de pago',
+        label='Pagás con',
         empty_label=None,
+        widget=forms.Select(attrs={'class': 'form-select ge-form-control'}),
         error_messages={
-            'required': 'Elegí un método de pago.',
-            'invalid_choice': 'El método de pago elegido no es válido.',
+            'required': 'Elegí con qué medio pagás.',
+            'invalid_choice': 'El medio de pago elegido no es válido para esta transacción.',
+        },
+    )
+    medio_destino = _MetodoPagoChoiceField(
+        queryset=MetodoPago.objects.none(),
+        label='Recibís en',
+        empty_label=None,
+        widget=forms.Select(attrs={'class': 'form-select ge-form-control'}),
+        error_messages={
+            'required': 'Elegí en qué cuenta o billetera querés recibir el resultado.',
+            'invalid_choice': 'El medio de destino elegido no es válido para esta transacción.',
         },
     )
 
-    def __init__(self, *args, cliente=None, **kwargs):
-        """Restringe las opciones a los métodos de pago del cliente activo."""
+    def __init__(self, *args, cliente=None, transaccion=None, **kwargs):
+        """Restringe cada campo a los medios del cliente activo en la moneda que corresponde."""
         super().__init__(*args, **kwargs)
-        self.fields['metodo_pago'].queryset = MetodoPago.objects.filter(cliente=cliente)
+        moneda_origen = moneda_a_pagar(transaccion)
+        moneda_destino = moneda_a_entregar(transaccion)
+        self.fields['medio_origen'].queryset = MetodoPago.objects.filter(
+            cliente=cliente, moneda__codigo=moneda_origen,
+        ).select_related('moneda')
+        self.fields['medio_origen'].help_text = (
+            f'Tu cuenta bancaria, billetera digital o tarjeta guardada en {moneda_origen}.'
+        )
+        self.fields['medio_destino'].queryset = MetodoPago.objects.filter(
+            cliente=cliente, moneda__codigo=moneda_destino,
+        ).exclude(tipo_medio=MetodoPago.TIPO_TARJETA).select_related('moneda')
+        self.fields['medio_destino'].help_text = (
+            f'Tu cuenta bancaria o billetera digital en {moneda_destino}, donde vas a recibir el resultado.'
+        )
 
 
 class SimulacionDivisasForm(forms.Form):
@@ -396,16 +462,20 @@ class ConfiguracionVigenciaForm(forms.ModelForm):
     class Meta:
         """Define el modelo y los campos editables de la configuración de vigencia."""
         model = ConfiguracionVigencia
-        fields = ['calculo_vigencia_segundos', 'confirmacion_vigencia_segundos']
+        fields = ['calculo_vigencia_segundos', 'confirmacion_vigencia_segundos', 'pago_vigencia_segundos']
         labels = {
             'calculo_vigencia_segundos': 'Tiempo de espera para confirmar el importe (segundos)',
             'confirmacion_vigencia_segundos': 'Tiempo de espera para confirmar la operación (segundos)',
+            'pago_vigencia_segundos': 'Tiempo de espera para pagar con la tasa fijada (segundos)',
         }
         widgets = {
             'calculo_vigencia_segundos': forms.NumberInput(
                 attrs={'step': '1', 'min': '1', 'class': 'form-control ge-form-control'}
             ),
             'confirmacion_vigencia_segundos': forms.NumberInput(
+                attrs={'step': '1', 'min': '1', 'class': 'form-control ge-form-control'}
+            ),
+            'pago_vigencia_segundos': forms.NumberInput(
                 attrs={'step': '1', 'min': '1', 'class': 'form-control ge-form-control'}
             ),
         }
@@ -420,6 +490,13 @@ class ConfiguracionVigenciaForm(forms.ModelForm):
     def clean_confirmacion_vigencia_segundos(self):
         """Rechaza un tiempo de espera para la operación menor o igual a cero."""
         valor = self.cleaned_data['confirmacion_vigencia_segundos']
+        if valor <= 0:
+            raise forms.ValidationError('El tiempo de espera debe ser mayor que cero.')
+        return valor
+
+    def clean_pago_vigencia_segundos(self):
+        """Rechaza un tiempo de espera para pagar menor o igual a cero."""
+        valor = self.cleaned_data['pago_vigencia_segundos']
         if valor <= 0:
             raise forms.ValidationError('El tiempo de espera debe ser mayor que cero.')
         return valor
@@ -512,3 +589,24 @@ class CotizacionForm(forms.ModelForm):
                 'El precio de compra no puede ser mayor que el precio de venta.'
             )
         return cleaned_data
+
+
+class DesignarCuentaPropiaForm(forms.Form):
+    """Identifica, por número y documento, cuál cuenta de sipap-sim designar como la casa de cambio.
+
+    Mismos dos datos con los que ya se valida cualquier cuenta bancaria
+    o billetera al registrar un método de pago (ver
+    ``apps.clientes.validacion_sipap``): sipap-sim es quien confirma que
+    existe y de qué moneda es, no este formulario.
+    """
+
+    numero_cuenta = forms.CharField(
+        label='Número de cuenta',
+        widget=forms.TextInput(attrs={'class': 'form-control ge-form-control', 'placeholder': 'Tal como está en sipap-sim'}),
+        error_messages={'required': 'Ingresá el número de la cuenta.'},
+    )
+    documento_titular = forms.CharField(
+        label='CI o RUC del titular',
+        widget=forms.TextInput(attrs={'class': 'form-control ge-form-control'}),
+        error_messages={'required': 'Ingresá el CI o RUC del titular de la cuenta.'},
+    )

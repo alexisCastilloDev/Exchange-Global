@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>SIPAP (simulado) · Cuentas</title>
+    <style>
+        body { font-family: sans-serif; max-width: 760px; margin: 40px auto; color: #222; }
+        h1 { font-size: 1.2rem; }
+        a.volver { color: #1565c0; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9rem; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+        .casa { font-weight: bold; color: #2e7d32; }
+        .mensajes { list-style: none; padding: 0; margin: 16px 0; }
+        .mensajes li { padding: 10px; border-radius: 6px; margin-bottom: 8px; }
+        .mensajes .success { background: #e8f5e9; color: #2e7d32; }
+        .mensajes .error { background: #fdecea; color: #b00020; }
+        .acciones { display: flex; gap: 6px; }
+        .acciones a, .acciones button {
+            padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+            text-decoration: none; display: inline-block;
+        }
+        .acciones a { background: #1565c0; color: white; }
+        .acciones button { background: #b00020; color: white; }
+        .formulario { background: #f3f3f3; border-radius: 6px; padding: 16px; margin-top: 24px; }
+        label { display: block; font-weight: bold; margin-top: 12px; }
+        select, input[type="text"], input[type="number"] {
+            width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box;
+            border: 1px solid #ccc; border-radius: 4px;
+        }
+        input[type="checkbox"] { width: auto; margin-top: 8px; }
+        .errorlist { color: #b00020; list-style: none; padding: 0; margin: 4px 0 0; font-size: 0.9rem; }
+        .nonfield { color: #b00020; list-style: none; padding: 0; margin: 0 0 12px; }
+        button {
+            margin-top: 16px; padding: 10px 16px; border: none; border-radius: 4px;
+            cursor: pointer; font-size: 1rem; background: #2e7d32; color: white;
+        }
+    </style>
+</head>
+<body>
+    <p><a class="volver" href="{% url 'panel' %}">&larr; Volver al panel</a></p>
+    <h1>Cuentas bancarias y de billetera</h1>
+
+    {% if messages %}
+        <ul class="mensajes">
+            {% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr><th>Número</th><th>Proveedor</th><th>Titular</th><th>Documento</th><th>Moneda</th><th>Saldo</th><th></th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for cuenta in cuentas %}
+            <tr>
+                <td>{{ cuenta.numero }}</td>
+                <td>{{ cuenta.proveedor.nombre }}</td>
+                <td>{{ cuenta.titular }}</td>
+                <td>{{ cuenta.documento }}</td>
+                <td>{{ cuenta.moneda }}</td>
+                <td>{{ cuenta.saldo }}</td>
+                <td>{% if cuenta.es_cuenta_casa_de_cambio %}<span class="casa">Casa de cambio</span>{% endif %}</td>
+                <td class="acciones">
+                    <a href="{% url 'editar_cuenta' cuenta.pk %}">Editar</a>
+                    <form method="post" action="{% url 'eliminar_cuenta' cuenta.pk %}"
+                          onsubmit="return confirm('¿Eliminar la cuenta {{ cuenta.numero }}?');">
+                        {% csrf_token %}
+                        <button type="submit">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8">Todavía no hay ninguna cuenta cargada.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="formulario">
+        <h2>Agregar cuenta</h2>
+        {% if form.non_field_errors %}
+            <ul class="nonfield">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                {% if field.errors %}<ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            {% endfor %}
+            <button type="submit">Agregar</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.casa_de_cambio &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.divisas.casa_de_cambio</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.divisas.casa_de_cambio</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Consulta a sipap-sim el saldo real de la cuenta de la casa de cambio.</span>
+
+<span class="sd">Global Exchange lleva su propio espejo del saldo propio</span>
+<span class="sd">(``apps.divisas.models.CuentaPropia``), actualizado en cada entrega,</span>
+<span class="sd">para que confirmar una operación sea una consulta local, sin depender</span>
+<span class="sd">de que sipap-sim esté arriba en ese instante (ver</span>
+<span class="sd">``apps.divisas.views._verificar_saldo_casa_de_cambio``). Este módulo es</span>
+<span class="sd">para el otro uso: mantener esa cuenta propia sincronizada con la</span>
+<span class="sd">cuenta real en sipap-sim (``apps.divisas.views.CuentaPropiaListView``),</span>
+<span class="sd">donde un administrador gestiona las cuentas bancarias/billeteras de</span>
+<span class="sd">verdad — así el saldo que ve un administrador en "Fondos propios"</span>
+<span class="sd">nunca se desincroniza de lo que hay realmente cargado en sipap-sim.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+
+
+<div class="viewcode-block" id="SipapComunicacionError">
+<a class="viewcode-back" href="../../../reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.SipapComunicacionError">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SipapComunicacionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Señala que no se pudo consultar el saldo real: sipap-sim no respondió o la conexión falló."""</span></div>
+
+
+
+<div class="viewcode-block" id="DesignacionCuentaPropiaError">
+<a class="viewcode-back" href="../../../reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.DesignacionCuentaPropiaError">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DesignacionCuentaPropiaError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Señala que sipap-sim rechazó la designación (cuenta inexistente o de otra moneda), con su motivo."""</span></div>
+
+
+
+<div class="viewcode-block" id="consultar_saldo_casa_de_cambio">
+<a class="viewcode-back" href="../../../reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.consultar_saldo_casa_de_cambio">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">consultar_saldo_casa_de_cambio</span><span class="p">(</span><span class="n">moneda</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Consulta a sipap-sim el saldo real de la cuenta de la casa de cambio en una moneda.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        moneda (str): Código de la moneda (p. ej. ``'PYG'``, ``'USD'``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Decimal | None: El saldo real, o ``None`` si esa moneda todavía</span>
+<span class="sd">        no tiene ninguna cuenta de la casa de cambio cargada en</span>
+<span class="sd">        sipap-sim.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        SipapComunicacionError: Si sipap-sim no responde o la conexión falla.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_BASE_URL</span><span class="si">}</span><span class="s1">/api/casa-de-cambio/</span><span class="si">{</span><span class="n">moneda</span><span class="si">}</span><span class="s1">/'</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Bearer </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_API_KEY</span><span class="si">}</span><span class="s1">'</span><span class="p">},</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">respuesta</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="n">datos</span> <span class="o">=</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SipapComunicacionError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+    <span class="k">return</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">datos</span><span class="p">[</span><span class="s1">'saldo'</span><span class="p">]))</span></div>
+
+
+
+<div class="viewcode-block" id="consultar_cuenta_casa_de_cambio">
+<a class="viewcode-back" href="../../../reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.consultar_cuenta_casa_de_cambio">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">consultar_cuenta_casa_de_cambio</span><span class="p">(</span><span class="n">moneda</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Consulta a sipap-sim qué cuenta real está designada como la casa de cambio en una moneda.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        moneda (str): Código de la moneda (p. ej. ``'PYG'``, ``'USD'``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict | None: ``{'numero', 'titular', 'proveedor'}`` de la cuenta</span>
+<span class="sd">        designada, o ``None`` si todavía no hay ninguna en esa moneda.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        SipapComunicacionError: Si sipap-sim no responde o la conexión falla.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_BASE_URL</span><span class="si">}</span><span class="s1">/api/casa-de-cambio/</span><span class="si">{</span><span class="n">moneda</span><span class="si">}</span><span class="s1">/cuenta/'</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Bearer </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_API_KEY</span><span class="si">}</span><span class="s1">'</span><span class="p">},</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">respuesta</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="n">datos</span> <span class="o">=</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SipapComunicacionError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'numero'</span><span class="p">:</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'numero'</span><span class="p">],</span> <span class="s1">'titular'</span><span class="p">:</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'titular'</span><span class="p">],</span> <span class="s1">'proveedor'</span><span class="p">:</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'proveedor'</span><span class="p">]}</span></div>
+
+
+
+<div class="viewcode-block" id="designar_cuenta_casa_de_cambio">
+<a class="viewcode-back" href="../../../reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.designar_cuenta_casa_de_cambio">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">designar_cuenta_casa_de_cambio</span><span class="p">(</span><span class="n">moneda</span><span class="p">,</span> <span class="n">numero_cuenta</span><span class="p">,</span> <span class="n">documento_titular</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Le pide a sipap-sim que designe una cuenta suya como la casa de cambio en una moneda.</span>
+
+<span class="sd">    sipap-sim ya no decide esto por sí solo desde su propio panel (ver</span>
+<span class="sd">    ``core.forms.CuentaForm`` del lado de sipap-sim): la cuenta se crea</span>
+<span class="sd">    ahí como una más, pero es Global Exchange —acá, desde "Fondos</span>
+<span class="sd">    propios"— quien le indica cuál cuenta puntual, identificada igual</span>
+<span class="sd">    que al validar un método de pago (número y documento), le</span>
+<span class="sd">    corresponde a cada moneda.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        moneda (str): Código de la moneda a designar.</span>
+<span class="sd">        numero_cuenta (str): Número de la cuenta en sipap-sim.</span>
+<span class="sd">        documento_titular (str): CI o RUC del titular de esa cuenta.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: ``{'numero', 'titular', 'proveedor'}`` de la cuenta recién designada.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        DesignacionCuentaPropiaError: Si no existe ninguna cuenta con ese</span>
+<span class="sd">            número y documento, o si es de otra moneda (con el motivo</span>
+<span class="sd">            que informó sipap-sim).</span>
+<span class="sd">        SipapComunicacionError: Si sipap-sim no responde o la conexión falla.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_BASE_URL</span><span class="si">}</span><span class="s1">/api/casa-de-cambio/</span><span class="si">{</span><span class="n">moneda</span><span class="si">}</span><span class="s1">/designar/'</span><span class="p">,</span>
+            <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s1">'numero'</span><span class="p">:</span> <span class="n">numero_cuenta</span><span class="p">,</span> <span class="s1">'documento'</span><span class="p">:</span> <span class="n">documento_titular</span><span class="p">},</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Bearer </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_API_KEY</span><span class="si">}</span><span class="s1">'</span><span class="p">},</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">404</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">DesignacionCuentaPropiaError</span><span class="p">(</span><span class="n">respuesta</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'detalle'</span><span class="p">,</span> <span class="s1">'No se pudo designar la cuenta.'</span><span class="p">))</span>
+        <span class="n">respuesta</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="n">datos</span> <span class="o">=</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SipapComunicacionError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'numero'</span><span class="p">:</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'numero'</span><span class="p">],</span> <span class="s1">'titular'</span><span class="p">:</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'titular'</span><span class="p">],</span> <span class="s1">'proveedor'</span><span class="p">:</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'proveedor'</span><span class="p">]}</span></div>
+
+
+
+<div class="viewcode-block" id="consultar_movimientos_casa_de_cambio">
+<a class="viewcode-back" href="../../../reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.consultar_movimientos_casa_de_cambio">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">consultar_movimientos_casa_de_cambio</span><span class="p">(</span><span class="n">moneda</span><span class="p">,</span> <span class="n">limite</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Consulta a sipap-sim el historial real de movimientos de la cuenta propia en una moneda.</span>
+
+<span class="sd">    En vez de llevar un registro propio de movimientos (que duplicaría</span>
+<span class="sd">    algo que sipap-sim ya guarda, con más detalle), Global Exchange</span>
+<span class="sd">    muestra este historial directamente desde ahí (ver</span>
+<span class="sd">    ``apps.divisas.views.HistorialCuentaPropiaView``), con el estilo</span>
+<span class="sd">    propio del sistema en vez de linkear al admin de sipap-sim.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        moneda (str): Código de la moneda (p. ej. ``'PYG'``, ``'USD'``).</span>
+<span class="sd">        limite (int): Cantidad máxima de movimientos a traer, los más</span>
+<span class="sd">            recientes primero.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[dict]: Cada movimiento con ``direccion`` (``'entrada'`` o</span>
+<span class="sd">        ``'salida'``), ``estado_display``, ``contraparte``, los montos</span>
+<span class="sd">        ya convertidos a ``Decimal``, y las fechas ya convertidas a</span>
+<span class="sd">        ``datetime``.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        SipapComunicacionError: Si sipap-sim no responde o la conexión falla.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_BASE_URL</span><span class="si">}</span><span class="s1">/api/casa-de-cambio/</span><span class="si">{</span><span class="n">moneda</span><span class="si">}</span><span class="s1">/movimientos/'</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Bearer </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_API_KEY</span><span class="si">}</span><span class="s1">'</span><span class="p">},</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">'limite'</span><span class="p">:</span> <span class="n">limite</span><span class="p">},</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">respuesta</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="n">datos</span> <span class="o">=</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SipapComunicacionError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+
+    <span class="n">movimientos</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">movimiento</span> <span class="ow">in</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'movimientos'</span><span class="p">]:</span>
+        <span class="n">movimientos</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="o">**</span><span class="n">movimiento</span><span class="p">,</span>
+            <span class="s1">'monto_solicitado'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">movimiento</span><span class="p">[</span><span class="s1">'monto_solicitado'</span><span class="p">])),</span>
+            <span class="s1">'monto_acreditado'</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">movimiento</span><span class="p">[</span><span class="s1">'monto_acreditado'</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">movimiento</span><span class="p">[</span><span class="s1">'monto_acreditado'</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">movimiento</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">]),</span>
+            <span class="s1">'resuelto_en'</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">movimiento</span><span class="p">[</span><span class="s1">'resuelto_en'</span><span class="p">])</span> <span class="k">if</span> <span class="n">movimiento</span><span class="p">[</span><span class="s1">'resuelto_en'</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+        <span class="p">})</span>
+    <span class="k">return</span> <span class="n">movimientos</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

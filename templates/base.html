@@ -61,8 +61,28 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                         </a>
                     </li>
                     <li>
+                        <a href="{% url 'clientes:solicitudes_cliente' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'solicitudes_cliente' %}is-active{% endif %}">
+                            <i class="bi bi-person-check"></i> Solicitudes de cliente
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'divisas:configuracion_vigencia' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'configuracion_vigencia' %}is-active{% endif %}">
                             <i class="bi bi-stopwatch"></i> Tiempos de espera
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:lista_cuentas_propias' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'lista_cuentas_propias' %}is-active{% endif %}">
+                            <i class="bi bi-safe"></i> Fondos propios
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:entregas_pendientes' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'entregas_pendientes' %}is-active{% endif %}">
+                            <i class="bi bi-arrow-clockwise"></i> Entregas pendientes
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:documentos_electronicos' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'documentos_electronicos' %}is-active{% endif %}">
+                            <i class="bi bi-receipt"></i> Documentos electrónicos
                         </a>
                     </li>
                     <li>
@@ -111,6 +131,13 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                         </a>
                     </li>
                     {% endif %}
+                    {% if puede_solicitar_cliente %}
+                    <li>
+                        <a href="{% url 'clientes:solicitar_cliente' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'solicitar_cliente' %}is-active{% endif %}">
+                            <i class="bi bi-person-plus"></i> Solicitar ser cliente
+                        </a>
+                    </li>
+                    {% endif %}
                     {% if puede_operar_divisas %}
                     <li>
                         <a href="{% url 'divisas:operar' 'compra' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'operar' and request.resolver_match.kwargs.tipo == 'compra' %}is-active{% endif %}">
@@ -132,6 +159,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                     <li>
                         <a href="{% url 'divisas:mis_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'mis_transacciones,detalle_transaccion_operacion,detalle_transaccion_cambio' %}is-active{% endif %}">
                             <i class="bi bi-clock-history"></i> Mi historial de transacciones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:mis_facturas_electronicas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'mis_facturas_electronicas' %}is-active{% endif %}">
+                            <i class="bi bi-receipt"></i> Mis facturas electrónicas
                         </a>
                     </li>
                     {% endif %}
@@ -258,9 +290,9 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                 {% endif %}
                 <div class="dropdown">
                     <a href="#" class="ge-usuario-actual dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="ge-avatar">{{ user.get_full_name|default:user.email|iniciales }}</span>
+                        <span class="ge-avatar">{{ cliente_activo.nombre_completo|default:user.get_full_name|default:user.username|iniciales }}</span>
                         <span>
-                            <span class="ge-usuario-actual__nombre d-block">{{ user.first_name|default:user.email }} {{ user.last_name }}</span>
+                            <span class="ge-usuario-actual__nombre d-block">{% if cliente_activo.nombre_completo %}{{ cliente_activo.nombre_completo }}{% else %}{{ user.first_name|default:user.username }} {{ user.last_name }}{% endif %}</span>
                             <span class="ge-usuario-actual__rol d-block">{% if es_admin %}Administrador{% else %}Operador{% endif %}</span>
                         </span>
                     </a>

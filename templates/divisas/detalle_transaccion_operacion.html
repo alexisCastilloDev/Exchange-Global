@@ -13,7 +13,7 @@ Contexto esperado: transaccion.
     <div>
         <span class="ge-eyebrow"><i class="bi bi-receipt"></i> Mi historial de transacciones</span>
         <h1>Detalle de la transacción</h1>
-        <p>Consulta de solo lectura: esta pantalla no permite confirmar, cancelar ni reprocesar la operación.</p>
+        <p>Consulta de solo lectura: esta pantalla no permite confirmar, cancelar ni reprocesar la operación (salvo reintentar una entrega fallida).</p>
     </div>
     <a href="{% url 'divisas:mis_transacciones' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver al historial</a>
 </div>
@@ -51,6 +51,65 @@ Contexto esperado: transaccion.
                 <p class="text-muted">Todavía no tiene un pago registrado.</p>
                 {% if transaccion.estado_efectivo == 'CONFIRMADA' %}
                     <a href="{% url 'divisas:pagar_transaccion' transaccion.pk %}" class="btn btn-primary"><i class="bi bi-credit-card me-1"></i> Pagar ahora</a>
+                {% endif %}
+            {% endif %}
+
+            {% if transaccion.estado == 'ACREDITADA' %}
+                <div class="ge-card__header mb-3 mt-4">
+                    <h2>Acreditación</h2>
+                </div>
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Fecha: </span><strong class="operation-summary__value">{{ transaccion.acreditado_en|date:"d/m/Y H:i" }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Referencia: </span><strong class="operation-summary__value">{{ transaccion.referencia_acreditacion }}</strong></div>
+                </div>
+            {% elif transaccion.estado == 'RETIRADA' %}
+                <div class="ge-card__header mb-3 mt-4">
+                    <h2>Retiro</h2>
+                </div>
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Fecha: </span><strong class="operation-summary__value">{{ transaccion.retirado_en|date:"d/m/Y H:i" }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Referencia: </span><strong class="operation-summary__value">{{ transaccion.referencia_retiro }}</strong></div>
+                </div>
+            {% elif transaccion.estado == 'ENTREGA_FALLIDA' %}
+                <div class="operation-expiry mt-3 mb-3">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Tu pago se registró, pero todavía no pudimos completar {% if transaccion.tipo == 'VENTA' %}el retiro{% else %}la entrega{% endif %}.
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-clockwise me-1"></i> Reintentar {% if transaccion.tipo == 'VENTA' %}retiro{% else %}entrega{% endif %}</button>
+                </form>
+            {% endif %}
+
+            {% if factura_pendiente %}
+                <div class="ge-card__header mb-3 mt-4">
+                    <h2>Factura electrónica</h2>
+                </div>
+                <div class="operation-expiry mb-3">
+                    <i class="bi bi-hourglass-split me-1"></i> Tu factura electrónica está pendiente de generación. Tu operación no se ve afectada y vamos a generarla a la brevedad.
+                </div>
+            {% elif transaccion.documento_electronico %}
+                <div class="ge-card__header mb-3 mt-4">
+                    <h2>Factura electrónica</h2>
+                </div>
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Número: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.numero_documento }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Estado: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.get_estado_display }}</strong></div>
+                    {% if transaccion.documento_electronico.emitida_en %}
+                    <div class="operation-summary__row"><span class="operation-summary__label">Fecha de emisión: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.emitida_en|date:"d/m/Y H:i" }}</strong></div>
+                    {% endif %}
+                    {% if transaccion.documento_electronico.cdc %}
+                    <div class="operation-summary__row"><span class="operation-summary__label">CDC: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.cdc }}</strong></div>
+                    {% endif %}
+                </div>
+                {% if transaccion.documento_electronico.cdc %}
+                <div class="mt-3">
+                    <a href="{% url 'divisas:descargar_documento_electronico' pk=transaccion.documento_electronico.pk formato='kude' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-file-pdf me-1"></i>Descargar PDF
+                    </a>
+                    <a href="{% url 'divisas:descargar_documento_electronico' pk=transaccion.documento_electronico.pk formato='xml' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-filetype-xml me-1"></i>Descargar XML
+                    </a>
+                </div>
                 {% endif %}
             {% endif %}
         </div>

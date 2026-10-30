@@ -83,6 +83,16 @@ TIME_ZONE = 'America/Asuncion'
 USE_I18N = True
 USE_TZ = True
 
+# Separador de miles en todos los montos que se muestran en pantalla
+# (saldos, montos solicitados/acreditados): "." para miles y "," para
+# decimales, igual que en Paraguay/Argentina. El locale "es" de Django
+# ya usa "," de decimales, pero separa los miles con un espacio fino en
+# vez de un punto, así que se sobreescribe puntualmente con un módulo de
+# formato propio en sipap_sim/formats/es/formats.py, sin tocar
+# LANGUAGE_CODE. Mismo patrón que global_exchange/settings/base.py.
+USE_THOUSAND_SEPARATOR = True
+FORMAT_MODULE_PATH = ['sipap_sim.formats']
+
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -94,6 +104,35 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 FORCE_SCRIPT_NAME = os.environ.get('SIPAP_SCRIPT_NAME') or None
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# El panel administrativo (alta de proveedores de pago y cuentas, ver
+# core/views.py) requiere iniciar sesión con un usuario de staff
+# (``python manage.py createsuperuser``, o cualquier usuario con
+# ``is_staff=True``); no hay autoregistro.
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'panel'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Nombres de cookie propios, distintos de los de Global Exchange
+# ("sessionid"/"csrftoken", los mismos por defecto que usaría este
+# proyecto si no se los cambiara). Son dos proyectos Django
+# independientes, pero comparten navegador en quien los prueba a los
+# dos (y, en producción, el mismo dominio): sin nombres distintos, la
+# cookie de uno pisa la del otro y rompe el login o la verificación
+# CSRF del que se haya visitado más recientemente, aunque corran en
+# puertos distintos (el navegador no separa cookies por puerto).
+SESSION_COOKIE_NAME = 'sipap_sessionid'
+CSRF_COOKIE_NAME = 'sipap_csrftoken'
+
+# En producción (DEBUG=False), las cookies de sesión y de CSRF del panel
+# solo viajan por HTTPS. SECURE_PROXY_SSL_HEADER le avisa a Django que la
+# conexión original es HTTPS aunque Gunicorn la reciba en texto plano
+# detrás de Nginx, que termina TLS y reenvía con
+# "X-Forwarded-Proto https" (ver deploy/aws/nginx/nginx.conf).
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- Específico de sipap-sim ---
 

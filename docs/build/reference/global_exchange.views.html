@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -184,7 +185,17 @@ detalles internos de implementación a clientes ni a roles operativos.</p>
 <span class="sig-name descname"><span class="pre">home</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/global_exchange/views.html#home"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#global_exchange.views.home" title="Link to this definition"></a></dt>
 <dd><p>Vista pública de bienvenida.</p>
 <p>Para visitantes sin sesión iniciada, muestra las tasas vigentes de las
-divisas activas del sistema en lugar de valores de ejemplo.</p>
+divisas activas del sistema en lugar de valores de ejemplo. Un usuario
+logueado cuyos roles de Keycloak sean, como mucho, “cliente” (sin
+ningún otro rol de negocio) y que todavía no tenga ningún <code class="docutils literal notranslate"><span class="pre">Cliente</span></code>
+asociado (recién registrado, ver
+<code class="docutils literal notranslate"><span class="pre">apps.clientes.views.SolicitarClienteView</span></code>) no tiene nada útil que
+hacer en este panel general: se lo redirige directo a pedir su alta,
+mismo criterio que <code class="docutils literal notranslate"><span class="pre">puede_solicitar_cliente</span></code> en
+<code class="docutils literal notranslate"><span class="pre">apps.authentication.context_processors</span></code>. Un usuario con otro rol de
+negocio (analista_cambiario, cajero, etc.) nunca entra en esta
+condición, aunque tampoco tenga cliente — es personal, no alguien que
+deba pedir ser cliente.</p>
 </dd></dl>
 
 <dl class="py function">

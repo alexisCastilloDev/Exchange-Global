@@ -68,7 +68,11 @@ Diseño elegido para cada criterio de aceptación:
   ``CalculoOperacion.marcar_vencida_si_corresponde``). En ambos casos la
   transacción sigue "Confirmada" y volver a iniciar el pago genera una
   solicitud nueva (misma fila, nueva referencia y nuevo link de pago)
-  para reintentar.
+  para reintentar. Un evento ``"saldo_insuficiente"`` es distinto a
+  propósito: sipap-sim ya detectó que la cuenta elegida no tenía fondos
+  (lo detecta solo, sin que el cliente apruebe o rechace nada), así que
+  no tiene sentido dejar la transacción abierta para reintentar con la
+  misma cuenta — se cancela directamente (``ESTADO_CANCELADA_FONDOS_CLIENTE``).
 - Criterio 6 (SIPAP no responde): ``_crear_solicitud_cobro_en_sipap`` es
   el único punto donde este módulo le habla a sipap-sim por HTTP; un
   timeout, una conexión rechazada (contenedor apagado) o una respuesta de
@@ -86,6 +90,7 @@ import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db import IntegrityError, transaction
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -95,12 +100,15 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from apps.clientes.models import MetodoPago
+from apps.divisas.entrega import realizar_entrega
+from apps.divisas.factura_electronica import intentar_emitir_documento_electronico
 from apps.divisas.models import (
     CalculoOperacion,
     CalculoTriangulacion,
     Pago,
     PagoRechazadoError,
     SolicitudPagoSipap,
+    estados_con_pago_ya_registrado,
     moneda_a_pagar,
     monto_a_pagar,
 )
@@ -274,6 +282,12 @@ def _obtener_o_crear_solicitud(transaccion, tipo_transaccion, metodo_pago, url_r
     monto = monto_a_pagar(transaccion)
     moneda = moneda_a_pagar(transaccion)
     vence_en = timezone.now() + timedelta(seconds=settings.SIPAP_SOLICITUD_VIGENCIA_SEGUNDOS)
+    if transaccion.tasa_vence_en is not None and transaccion.tasa_vence_en < vence_en:
+        # La solicitud de cobro nunca puede durar más que la tasa que la
+        # respalda: no tiene sentido dejarla "Pendiente" en sipap-sim
+        # después de que, del lado de Global Exchange, ya no corresponde
+        # liquidarla a esa tasa.
+        vence_en = transaccion.tasa_vence_en
 
     if solicitud is None:
         solicitud = SolicitudPagoSipap(
@@ -282,7 +296,20 @@ def _obtener_o_crear_solicitud(transaccion, tipo_transaccion, metodo_pago, url_r
             vence_en=vence_en, **{campo: transaccion},
         )
         _crear_solicitud_cobro_en_sipap(solicitud, url_retorno)
-        solicitud.save()
+        try:
+            with transaction.atomic():
+                solicitud.save()
+        except IntegrityError:
+            # Carrera entre dos solicitudes simultáneas para la misma
+            # transacción (por ejemplo, un doble clic o dos pestañas):
+            # la otra ya ganó y creó la fila (``OneToOneField``, nunca
+            # dos solicitudes para la misma transacción). La de sipap-sim
+            # que se acaba de generar queda huérfana ahí (vence sola,
+            # sin que nadie la pague), y se usa la que ya quedó guardada.
+            # El ``atomic()`` alrededor del ``save()`` es necesario para
+            # que, en Postgres, el error no deje la transacción abierta
+            # en un estado roto que bloquee esta misma consulta de abajo.
+            return SolicitudPagoSipap.objects.get(**{campo: transaccion})
         return solicitud
 
     solicitud.marcar_vencida_si_corresponde()
@@ -349,8 +376,13 @@ class _IniciarPagoSipapBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo == self.model.ESTADO_PAGADA:
+            if transaccion.estado_efectivo in estados_con_pago_ya_registrado(self.model):
                 messages.error(request, 'Esta transacción ya fue pagada.')
+            elif transaccion.tasa_vencida:
+                messages.error(
+                    request,
+                    'La tasa fijada al confirmar esta transacción ya venció. Debe recalcularla.',
+                )
             else:
                 messages.error(request, 'Esta transacción no está en condiciones de pagarse.')
             return redirect(self.url_detalle, pk=transaccion.pk)
@@ -439,6 +471,18 @@ def _procesar_confirmacion_sipap(solicitud, datos):
         solicitud.save(update_fields=['estado'])
         return
 
+    if estado_sipap == 'saldo_insuficiente':
+        # A diferencia de "rechazada" (una decisión del cliente, que deja
+        # la transacción "Confirmada" para reintentar), sipap-sim ya
+        # detectó que la cuenta elegida no tenía fondos: no tiene sentido
+        # dejarla abierta para reintentar con la misma cuenta, así que se
+        # cancela la transacción directamente, sin crear ningún Pago.
+        solicitud.estado = SolicitudPagoSipap.ESTADO_SALDO_INSUFICIENTE
+        solicitud.save(update_fields=['estado'])
+        transaccion.estado = transaccion.ESTADO_CANCELADA_FONDOS_CLIENTE
+        transaccion.save(update_fields=['estado'])
+        return
+
     if estado_sipap != 'acreditada':
         return
 
@@ -452,7 +496,7 @@ def _procesar_confirmacion_sipap(solicitud, datos):
 
     if monto_recibido == solicitud.monto:
         try:
-            pago, _creado = Pago.registrar_pago(
+            pago, creado = Pago.registrar_pago(
                 transaccion,
                 medio_pago=solicitud.medio_pago,
                 proveedor=PROVEEDOR_SIPAP,
@@ -464,6 +508,14 @@ def _procesar_confirmacion_sipap(solicitud, datos):
             # La transacción ya no está en condiciones de pagarse (p. ej.
             # otro medio la pagó mientras tanto). No hay más que hacer.
             return
+        if creado and transaccion.estado == transaccion.ESTADO_PAGADA:
+            # Entrega lo que corresponda (la divisa comprada, el resultado
+            # de un cambio, o los guaraníes de una venta) recién ahora, la
+            # primera vez que se registra este pago, nunca en una
+            # repetición idempotente del mismo webhook, y nunca si llegó
+            # fuera de plazo (ver Pago.registrar_pago).
+            realizar_entrega(transaccion)
+            intentar_emitir_documento_electronico(transaccion)
         solicitud.pago = pago
         solicitud.estado = SolicitudPagoSipap.ESTADO_ACREDITADA
     else:

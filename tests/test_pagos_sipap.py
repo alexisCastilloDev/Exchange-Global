@@ -85,34 +85,29 @@ def _crear_metodo_pago_sipap(cliente, tipo_medio=MetodoPago.TIPO_TRANSFERENCIA, 
 class GenerarReferenciaTest(TestCase):
     """Pruebas unitarias de la generación de referencias únicas."""
 
-    def test_tiene_el_prefijo_esperado(self):
-        """La referencia empieza con 'SIPAP-', para que se distinga a simple vista."""
-        self.assertTrue(_generar_referencia().startswith('SIPAP-'))
+    def test_tiene_el_prefijo_esperado_y_es_distinta_entre_llamadas(self):
+        with self.subTest("empieza con 'SIPAP-', para que se distinga a simple vista"):
+            self.assertTrue(_generar_referencia().startswith('SIPAP-'))
 
-    def test_dos_llamadas_dan_referencias_distintas(self):
-        """Dos solicitudes nunca deberían terminar con la misma referencia."""
-        self.assertNotEqual(_generar_referencia(), _generar_referencia())
+        with self.subTest('dos solicitudes nunca deberían terminar con la misma referencia'):
+            self.assertNotEqual(_generar_referencia(), _generar_referencia())
 
 
 class FirmaValidaTest(TestCase):
     """Pruebas unitarias de la verificación de firma HMAC del webhook."""
 
     @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
-    def test_firma_correcta_es_valida(self):
-        """La firma calculada con el secreto correcto se acepta."""
+    def test_firma_valida_segun_el_caso(self):
         payload = b'{"referencia": "SIPAP-ABC"}'
-        self.assertTrue(_firma_valida(payload, _firmar(payload)))
 
-    @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
-    def test_firma_incorrecta_es_invalida(self):
-        """Una firma que no coincide (payload alterado o secreto distinto) se rechaza."""
-        payload = b'{"referencia": "SIPAP-ABC"}'
-        self.assertFalse(_firma_valida(payload, _firmar(payload, secreto='otro-secreto')))
+        with self.subTest('la firma calculada con el secreto correcto se acepta'):
+            self.assertTrue(_firma_valida(payload, _firmar(payload)))
 
-    @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
-    def test_sin_firma_es_invalida(self):
-        """Sin encabezado de firma, se rechaza en vez de tirar una excepción."""
-        self.assertFalse(_firma_valida(b'{"a": 1}', ''))
+        with self.subTest('una firma que no coincide (payload alterado o secreto distinto) se rechaza'):
+            self.assertFalse(_firma_valida(payload, _firmar(payload, secreto='otro-secreto')))
+
+        with self.subTest('sin encabezado de firma, se rechaza en vez de tirar una excepción'):
+            self.assertFalse(_firma_valida(b'{"a": 1}', ''))
 
 
 @override_settings(SIPAP_BASE_URL=BASE_URL_TEST, SIPAP_API_KEY=API_KEY_TEST)
@@ -155,30 +150,28 @@ class CrearSolicitudCobroEnSipapTest(TestCase):
         self.assertEqual(solicitud.link_pago, 'http://sipap-sim.test/pagar/SPI-20261011-000123/')
 
     @patch('apps.divisas.pagos_sipap.requests.post')
-    def test_un_error_de_conexion_levanta_sipap_comunicacion_error(self, mock_post):
-        """Criterio 6: un error de conexión real (sipap-sim apagado) se traduce en SipapComunicacionError."""
+    def test_fallas_de_comunicacion_levantan_sipap_comunicacion_error(self, mock_post):
+        """Criterio 6: error de conexión, respuesta no-2xx, o cuerpo no-JSON: todas son una falla de comunicación."""
         import requests
-        mock_post.side_effect = requests.exceptions.ConnectionError('no se pudo conectar')
 
-        with self.assertRaises(SipapComunicacionError):
-            _crear_solicitud_cobro_en_sipap(self._solicitud(), 'http://ge.test/detalle/')
+        with self.subTest('error de conexión real (sipap-sim apagado)'):
+            mock_post.side_effect = requests.exceptions.ConnectionError('no se pudo conectar')
 
-    @patch('apps.divisas.pagos_sipap.requests.post')
-    def test_una_respuesta_de_error_levanta_sipap_comunicacion_error(self, mock_post):
-        """Criterio 6: una respuesta que no sea 2xx (p. ej. SIM_MODO_FALLA=error) también cuenta como falla."""
-        import requests
-        mock_post.return_value = Mock(raise_for_status=Mock(side_effect=requests.exceptions.HTTPError('500')))
+            with self.assertRaises(SipapComunicacionError):
+                _crear_solicitud_cobro_en_sipap(self._solicitud(), 'http://ge.test/detalle/')
 
-        with self.assertRaises(SipapComunicacionError):
-            _crear_solicitud_cobro_en_sipap(self._solicitud(), 'http://ge.test/detalle/')
+        with self.subTest('una respuesta que no sea 2xx (p. ej. SIM_MODO_FALLA=error)'):
+            mock_post.side_effect = None
+            mock_post.return_value = Mock(raise_for_status=Mock(side_effect=requests.exceptions.HTTPError('500')))
 
-    @patch('apps.divisas.pagos_sipap.requests.post')
-    def test_una_respuesta_que_no_es_json_levanta_sipap_comunicacion_error(self, mock_post):
-        """Una respuesta 2xx pero con un cuerpo que no se puede decodificar también es una falla de comunicación."""
-        mock_post.return_value = Mock(raise_for_status=Mock(), json=Mock(side_effect=ValueError('no es json')))
+            with self.assertRaises(SipapComunicacionError):
+                _crear_solicitud_cobro_en_sipap(self._solicitud(), 'http://ge.test/detalle/')
 
-        with self.assertRaises(SipapComunicacionError):
-            _crear_solicitud_cobro_en_sipap(self._solicitud(), 'http://ge.test/detalle/')
+        with self.subTest('una respuesta 2xx pero con un cuerpo que no se puede decodificar'):
+            mock_post.return_value = Mock(raise_for_status=Mock(), json=Mock(side_effect=ValueError('no es json')))
+
+            with self.assertRaises(SipapComunicacionError):
+                _crear_solicitud_cobro_en_sipap(self._solicitud(), 'http://ge.test/detalle/')
 
 
 class SolicitudPagoSipapModeloTest(TestCase):
@@ -207,40 +200,42 @@ class SolicitudPagoSipapModeloTest(TestCase):
             confirmado_en=timezone.now(),
         )
 
-    def test_una_solicitud_vigente_no_esta_vencida(self):
-        """Mientras no se pase la fecha, 'esta_vencida' es falso."""
-        solicitud = SolicitudPagoSipap.objects.create(
-            calculo_operacion=self.transaccion, referencia='SIPAP-VIG-001',
-            monto=Decimal('747400.00'), moneda='PYG', vence_en=timezone.now() + timedelta(hours=1),
-        )
+    def test_el_vencimiento_depende_del_plazo_y_de_si_ya_se_resolvio(self):
+        # SolicitudPagoSipap.calculo_operacion es OneToOne: cada subTest borra
+        # la suya antes del siguiente, para poder seguir usando self.transaccion.
+        with self.subTest('mientras no se pase la fecha, no está vencida'):
+            solicitud = SolicitudPagoSipap.objects.create(
+                calculo_operacion=self.transaccion, referencia='SIPAP-VIG-001',
+                monto=Decimal('747400.00'), moneda='PYG', vence_en=timezone.now() + timedelta(hours=1),
+            )
 
-        self.assertFalse(solicitud.esta_vencida)
-        self.assertFalse(solicitud.marcar_vencida_si_corresponde())
-        solicitud.refresh_from_db()
-        self.assertEqual(solicitud.estado, SolicitudPagoSipap.ESTADO_PENDIENTE)
+            self.assertFalse(solicitud.esta_vencida)
+            self.assertFalse(solicitud.marcar_vencida_si_corresponde())
+            solicitud.refresh_from_db()
+            self.assertEqual(solicitud.estado, SolicitudPagoSipap.ESTADO_PENDIENTE)
+            solicitud.delete()
 
-    def test_una_solicitud_pasado_su_plazo_se_marca_vencida(self):
-        """Pasado el plazo, 'marcar_vencida_si_corresponde' la persiste como 'Vencida'."""
-        solicitud = SolicitudPagoSipap.objects.create(
-            calculo_operacion=self.transaccion, referencia='SIPAP-VEN-001',
-            monto=Decimal('747400.00'), moneda='PYG', vence_en=timezone.now() - timedelta(seconds=1),
-        )
+        with self.subTest("pasado el plazo, 'marcar_vencida_si_corresponde' la persiste como 'Vencida'"):
+            solicitud = SolicitudPagoSipap.objects.create(
+                calculo_operacion=self.transaccion, referencia='SIPAP-VEN-001',
+                monto=Decimal('747400.00'), moneda='PYG', vence_en=timezone.now() - timedelta(seconds=1),
+            )
 
-        self.assertTrue(solicitud.esta_vencida)
-        self.assertTrue(solicitud.marcar_vencida_si_corresponde())
-        solicitud.refresh_from_db()
-        self.assertEqual(solicitud.estado, SolicitudPagoSipap.ESTADO_VENCIDA)
+            self.assertTrue(solicitud.esta_vencida)
+            self.assertTrue(solicitud.marcar_vencida_si_corresponde())
+            solicitud.refresh_from_db()
+            self.assertEqual(solicitud.estado, SolicitudPagoSipap.ESTADO_VENCIDA)
+            solicitud.delete()
 
-    def test_una_solicitud_ya_resuelta_no_se_considera_vencida(self):
-        """Una solicitud 'Acreditada' no vuelve a marcarse como algo distinto por el paso del tiempo."""
-        solicitud = SolicitudPagoSipap.objects.create(
-            calculo_operacion=self.transaccion, referencia='SIPAP-ACR-001',
-            monto=Decimal('747400.00'), moneda='PYG', vence_en=timezone.now() - timedelta(seconds=1),
-            estado=SolicitudPagoSipap.ESTADO_ACREDITADA,
-        )
+        with self.subTest("una solicitud 'Acreditada' no vuelve a marcarse como algo distinto por el paso del tiempo"):
+            solicitud = SolicitudPagoSipap.objects.create(
+                calculo_operacion=self.transaccion, referencia='SIPAP-ACR-001',
+                monto=Decimal('747400.00'), moneda='PYG', vence_en=timezone.now() - timedelta(seconds=1),
+                estado=SolicitudPagoSipap.ESTADO_ACREDITADA,
+            )
 
-        self.assertFalse(solicitud.esta_vencida)
-        self.assertFalse(solicitud.marcar_vencida_si_corresponde())
+            self.assertFalse(solicitud.esta_vencida)
+            self.assertFalse(solicitud.marcar_vencida_si_corresponde())
 
 
 class RegistrarPagoObservadoTest(TestCase):
@@ -299,29 +294,31 @@ class RegistrarPagoObservadoTest(TestCase):
         self.assertFalse(creado)
         self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 1)
 
-    def test_rechaza_si_la_transaccion_no_esta_confirmada(self):
-        """No se puede observar un pago sobre algo que no está 'Confirmada'."""
-        self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
-        self.transaccion.save(update_fields=['estado'])
+    def test_rechaza_si_la_transaccion_no_esta_en_condiciones(self):
+        """No se puede observar un pago sobre algo que no está 'Confirmada' (ni antes, ni después de pagarse)."""
+        with self.subTest('no está Confirmada'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
+            self.transaccion.save(update_fields=['estado'])
 
-        with self.assertRaises(PagoRechazadoError):
-            Pago.registrar_pago_observado(
-                self.transaccion, medio_pago=MetodoPago.TIPO_TRANSFERENCIA, proveedor='SIPAP',
-                identificador_externo='OP-789', monto=Decimal('1.00'), diferencia=Decimal('1.00'),
+            with self.assertRaises(PagoRechazadoError):
+                Pago.registrar_pago_observado(
+                    self.transaccion, medio_pago=MetodoPago.TIPO_TRANSFERENCIA, proveedor='SIPAP',
+                    identificador_externo='OP-789', monto=Decimal('1.00'), diferencia=Decimal('1.00'),
+                )
+
+        with self.subTest('ya está Pagada'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA
+            self.transaccion.save(update_fields=['estado'])
+            Pago.registrar_pago(
+                self.transaccion, medio_pago=MetodoPago.TIPO_TRANSFERENCIA, proveedor=Pago.PROVEEDOR_MANUAL,
+                identificador_externo=str(self.transaccion.pk), monto=self.transaccion.monto_final,
             )
 
-    def test_rechaza_si_ya_fue_pagada(self):
-        """No se puede observar un pago sobre algo que ya está 'Pagada'."""
-        Pago.registrar_pago(
-            self.transaccion, medio_pago=MetodoPago.TIPO_TRANSFERENCIA, proveedor=Pago.PROVEEDOR_MANUAL,
-            identificador_externo=str(self.transaccion.pk), monto=self.transaccion.monto_final,
-        )
-
-        with self.assertRaises(PagoRechazadoError):
-            Pago.registrar_pago_observado(
-                self.transaccion, medio_pago=MetodoPago.TIPO_TRANSFERENCIA, proveedor='SIPAP',
-                identificador_externo='OP-999', monto=Decimal('1.00'), diferencia=Decimal('1.00'),
-            )
+            with self.assertRaises(PagoRechazadoError):
+                Pago.registrar_pago_observado(
+                    self.transaccion, medio_pago=MetodoPago.TIPO_TRANSFERENCIA, proveedor='SIPAP',
+                    identificador_externo='OP-999', monto=Decimal('1.00'), diferencia=Decimal('1.00'),
+                )
 
 
 @patch('apps.divisas.pagos_sipap._crear_solicitud_cobro_en_sipap', side_effect=_simular_sipap_ok)
@@ -357,34 +354,55 @@ class IniciarPagoSipapOperacionTest(TestCase):
 
     def test_genera_la_solicitud_con_el_monto_exacto_y_redirige_al_link_de_pago(self, mock_crear):
         """Criterio 1: la solicitud se crea con el monto exacto de la transacción, y se redirige a sipap-sim."""
-        response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk})
+        with self.subTest('transferencia'):
+            response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk})
 
-        solicitud = SolicitudPagoSipap.objects.get(calculo_operacion=self.transaccion)
-        self.assertRedirects(response, solicitud.link_pago, fetch_redirect_response=False)
-        self.assertEqual(solicitud.monto, Decimal('747400.00'))
-        self.assertEqual(solicitud.moneda, 'PYG')
-        self.assertTrue(solicitud.referencia.startswith('SIPAP-'))
-        self.assertEqual(solicitud.estado, SolicitudPagoSipap.ESTADO_PENDIENTE)
-        self.assertEqual(solicitud.medio_pago, MetodoPago.TIPO_TRANSFERENCIA)
-        self.assertEqual(solicitud.metodo_pago, self.metodo_pago)
-        mock_crear.assert_called_once()
+            solicitud = SolicitudPagoSipap.objects.get(calculo_operacion=self.transaccion)
+            self.assertRedirects(response, solicitud.link_pago, fetch_redirect_response=False)
+            self.assertEqual(solicitud.monto, Decimal('747400.00'))
+            self.assertEqual(solicitud.moneda, 'PYG')
+            self.assertTrue(solicitud.referencia.startswith('SIPAP-'))
+            self.assertEqual(solicitud.estado, SolicitudPagoSipap.ESTADO_PENDIENTE)
+            self.assertEqual(solicitud.medio_pago, MetodoPago.TIPO_TRANSFERENCIA)
+            self.assertEqual(solicitud.metodo_pago, self.metodo_pago)
+            mock_crear.assert_called_once()
 
-    def test_sin_metodo_de_pago_valido_no_crea_ninguna_solicitud(self, mock_crear):
-        """Sin un método de pago propio y válido, se rechaza antes de hablar con sipap-sim."""
-        response = self.client.get(self.url, follow=True)
+        with self.subTest('billetera digital: mismo flujo, pero queda registrada como tal'):
+            otra_transaccion = CalculoOperacion.objects.create(
+                usuario=self.usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_COMPRA,
+                divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+                tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+                comision=Decimal('7400.00'), monto_final=Decimal('747400.00'),
+                estado=CalculoOperacion.ESTADO_CONFIRMADA, vence_en=timezone.now() + timedelta(seconds=300),
+                confirmado_en=timezone.now(),
+            )
+            url = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': otra_transaccion.pk})
 
-        self.assertContains(response, 'Elegí una cuenta bancaria o billetera guardada')
-        self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
-        mock_crear.assert_not_called()
+            response = self.client.get(url, {'metodo_pago': self.metodo_billetera.pk})
 
-    def test_billetera_se_guarda_en_la_solicitud(self, mock_crear):
-        """Una billetera digital usa el mismo flujo, pero queda registrada como tal."""
-        response = self.client.get(self.url, {'metodo_pago': self.metodo_billetera.pk})
+            solicitud = SolicitudPagoSipap.objects.get(calculo_operacion=otra_transaccion)
+            self.assertRedirects(response, solicitud.link_pago, fetch_redirect_response=False)
+            self.assertEqual(solicitud.medio_pago, MetodoPago.TIPO_BILLETERA)
+            self.assertEqual(solicitud.metodo_pago, self.metodo_billetera)
 
-        solicitud = SolicitudPagoSipap.objects.get(calculo_operacion=self.transaccion)
-        self.assertRedirects(response, solicitud.link_pago, fetch_redirect_response=False)
-        self.assertEqual(solicitud.medio_pago, MetodoPago.TIPO_BILLETERA)
-        self.assertEqual(solicitud.metodo_pago, self.metodo_billetera)
+    def test_sin_una_solicitud_posible_no_se_crea_ninguna(self, mock_crear):
+        """Sin un método de pago válido, o si sipap-sim no responde: se rechaza sin crear ninguna solicitud."""
+        with self.subTest('sin un método de pago propio y válido'):
+            response = self.client.get(self.url, follow=True)
+
+            self.assertContains(response, 'Elegí una cuenta bancaria o billetera guardada')
+            self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
+            mock_crear.assert_not_called()
+
+        with self.subTest('criterio 6: sipap-sim no responde'):
+            mock_crear.side_effect = SipapComunicacionError('no se pudo conectar')
+
+            response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+
+            self.assertContains(response, 'No se pudo conectar con SIPAP')
+            self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
 
     def test_revisitar_la_pantalla_reutiliza_la_misma_solicitud_pendiente(self, mock_crear):
         """Visitar dos veces sin pagar no crea una segunda solicitud ni cambia la referencia ni el link."""
@@ -400,27 +418,54 @@ class IniciarPagoSipapOperacionTest(TestCase):
         self.assertEqual(primera.link_pago, segunda.link_pago)
         mock_crear.assert_called_once()
 
-    def test_no_permite_pagar_una_transaccion_que_no_esta_confirmada(self, mock_crear):
-        """Solo una transacción 'Confirmada' puede iniciar un pago por SIPAP."""
-        self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
-        self.transaccion.save(update_fields=['estado'])
+    def test_una_carrera_entre_dos_solicitudes_simultaneas_no_rompe_con_un_500(self, mock_crear):
+        """Un doble clic (dos solicitudes casi simultáneas) no debe terminar en un IntegrityError sin manejar."""
+        ganadora = SolicitudPagoSipap.objects.create(
+            calculo_operacion=self.transaccion, referencia='SIPAP-GANADORA', monto=Decimal('747400.00'),
+            moneda='PYG', medio_pago=MetodoPago.TIPO_TRANSFERENCIA, metodo_pago=self.metodo_pago,
+            vence_en=timezone.now() + timedelta(hours=1), link_pago='http://sipap-sim.test/pagar/ganadora/',
+        )
+        with patch(
+            'apps.divisas.pagos_sipap.SolicitudPagoSipap.objects.filter',
+            return_value=SolicitudPagoSipap.objects.none(),
+        ):
+            response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk})
 
-        response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+        self.assertRedirects(response, ganadora.link_pago, fetch_redirect_response=False)
+        self.assertEqual(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).count(), 1)
 
-        self.assertContains(response, 'no está en condiciones de pagarse')
-        self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
-        mock_crear.assert_not_called()
+    def test_no_permite_generar_una_solicitud_si_la_transaccion_no_esta_en_condiciones(self, mock_crear):
+        """Solo una transacción 'Confirmada', con la tasa todavía vigente, puede iniciar un pago por SIPAP."""
+        with self.subTest('no está Confirmada'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
+            self.transaccion.save(update_fields=['estado'])
 
-    def test_problema_de_comunicacion_no_crea_ninguna_solicitud(self, mock_crear):
-        """Criterio 6: si sipap-sim no responde, no se crea ninguna solicitud ni se toca la transacción."""
-        mock_crear.side_effect = SipapComunicacionError('no se pudo conectar')
+            response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
 
-        response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+            self.assertContains(response, 'no está en condiciones de pagarse')
+            self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
+            mock_crear.assert_not_called()
 
-        self.assertContains(response, 'No se pudo conectar con SIPAP')
-        self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+        with self.subTest('la tasa fijada ya venció'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA
+            self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+            self.transaccion.save(update_fields=['estado', 'tasa_vence_en'])
+
+            response = self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+
+            self.assertContains(response, 'ya venció')
+            self.assertFalse(SolicitudPagoSipap.objects.filter(calculo_operacion=self.transaccion).exists())
+            mock_crear.assert_not_called()
+
+    def test_la_solicitud_nunca_dura_mas_que_la_tasa_fijada(self, mock_crear):
+        """``vence_en`` de la solicitud nunca supera ``tasa_vence_en`` de la transacción."""
+        self.transaccion.tasa_vence_en = timezone.now() + timedelta(minutes=5)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+
+        self.client.get(self.url, {'metodo_pago': self.metodo_pago.pk})
+
+        solicitud = SolicitudPagoSipap.objects.get(calculo_operacion=self.transaccion)
+        self.assertEqual(solicitud.vence_en, self.transaccion.tasa_vence_en)
 
     def test_una_solicitud_vencida_se_reinicia_con_una_referencia_nueva_al_reintentar(self, mock_crear):
         """Criterio 5: tras vencer, volver a iniciar el pago genera una referencia y un link nuevos para reintentar."""
@@ -537,6 +582,14 @@ class SipapWebhookTest(TestCase):
         )
         self.url = reverse('sipap_webhook')
 
+        # La entrega (transferir la divisa comprada al cliente) es un paso
+        # posterior a este webhook, con su propia integración HTTP a
+        # sipap-sim; estos tests cubren solo la confirmación del pago en
+        # sí, así que se mockea para que "siempre funcione" sin red real.
+        parche_entrega = patch('apps.divisas.pagos_sipap.realizar_entrega', return_value=True)
+        self.mock_entrega = parche_entrega.start()
+        self.addCleanup(parche_entrega.stop)
+
     def _post(self, datos, secreto=WEBHOOK_SECRET_TEST):
         """Firma y envía un payload al webhook, como lo haría sipap-sim de verdad."""
         payload = json.dumps(datos).encode('utf-8')
@@ -583,6 +636,61 @@ class SipapWebhookTest(TestCase):
         self.assertEqual(pago.metodo_pago, self.metodo_pago)
 
     @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
+    def test_acreditada_de_una_venta_tambien_dispara_la_entrega_automatica(self):
+        """HU "Retiro de fondos" (GE-24): una venta pagada se entrega sola, igual que una compra o un cambio.
+
+        Mismo mecanismo que GE-23: se paga y se recibe, sin que el
+        cliente tenga que pedir nada aparte (``realizar_entrega`` se
+        llama apenas se confirma el pago, para los tres tipos de
+        transacción por igual).
+        """
+        venta = CalculoOperacion.objects.create(
+            usuario=self.usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_VENTA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7300.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('73.00'), monto_final=Decimal('729700.00'),
+            estado=CalculoOperacion.ESTADO_CONFIRMADA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(),
+        )
+        metodo_pago_usd = _crear_metodo_pago_sipap(
+            self.cliente, numero_cuenta='2000000000000202', documento_titular='7654321',
+        )
+        solicitud = SolicitudPagoSipap.objects.create(
+            calculo_operacion=venta, referencia='SIPAP-VENTA-WEBHOOK-001',
+            monto=Decimal('100.00'), moneda='USD', vence_en=timezone.now() + timedelta(hours=1),
+            metodo_pago=metodo_pago_usd,
+        )
+
+        response = self._post({
+            'id_operacion': 'SPI-VENTA-001', 'referencia': solicitud.referencia, 'estado': 'acreditada',
+            'monto': 100.00, 'moneda': 'USD', 'banco_origen': 'Banco Itaú Paraguay',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        venta.refresh_from_db()
+        self.assertEqual(venta.estado, CalculoOperacion.ESTADO_PAGADA)
+        self.mock_entrega.assert_called_once()
+        self.assertEqual(self.mock_entrega.call_args.args[0].pk, venta.pk)
+
+    @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
+    def test_acreditada_con_la_tasa_ya_vencida_no_entrega_ni_marca_pagada(self):
+        """Una acreditación que llega tarde registra el pago igual, pero como 'Pago fuera de plazo', sin entregar."""
+        self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+
+        response = self._post({
+            'id_operacion': 'SPI-TARDE-001', 'referencia': self.solicitud.referencia, 'estado': 'acreditada',
+            'monto': 747400, 'moneda': 'PYG', 'banco_origen': 'Banco Itaú Paraguay',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGO_EXPIRADO)
+        pago = Pago.objects.get(calculo_operacion=self.transaccion)
+        self.assertTrue(pago.fuera_de_plazo)
+        self.mock_entrega.assert_not_called()
+
+    @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
     def test_acreditada_por_billetera_registra_el_pago_como_billetera(self):
         """El medio de pago que se muestra en el historial sigue siendo el que eligió el cliente, no 'transferencia'."""
         self.solicitud.medio_pago = MetodoPago.TIPO_BILLETERA
@@ -615,24 +723,61 @@ class SipapWebhookTest(TestCase):
         self.assertEqual(self.solicitud.estado, SolicitudPagoSipap.ESTADO_OBSERVADA)
 
     @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
-    def test_rechazada_no_crea_ningun_pago(self):
-        """Criterio 5: una transferencia rechazada deja la solicitud 'Rechazada', sin crear ningún Pago."""
-        response = self._post({'referencia': self.solicitud.referencia, 'estado': 'rechazada'})
+    def test_una_transferencia_que_no_se_concreta_no_crea_ningun_pago(self):
+        """Criterio 5: rechazada (queda para reintentar) o sin saldo (se cancela directo); nunca se crea un Pago."""
+        with self.subTest('rechazada por el cliente: queda igual, para reintentar'):
+            response = self._post({'referencia': self.solicitud.referencia, 'estado': 'rechazada'})
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 0)
-        self.solicitud.refresh_from_db()
-        self.assertEqual(self.solicitud.estado, SolicitudPagoSipap.ESTADO_RECHAZADA)
-        self.transaccion.refresh_from_db()
-        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 0)
+            self.solicitud.refresh_from_db()
+            self.assertEqual(self.solicitud.estado, SolicitudPagoSipap.ESTADO_RECHAZADA)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CONFIRMADA)
+
+        with self.subTest('sin saldo: a diferencia de rechazada, cancela la transacción directamente'):
+            otra_solicitud = SolicitudPagoSipap.objects.create(
+                calculo_operacion=CalculoOperacion.objects.create(
+                    usuario=self.usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_COMPRA,
+                    divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('50.00'),
+                    tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+                    comision=Decimal('3700.00'), monto_final=Decimal('373700.00'),
+                    estado=CalculoOperacion.ESTADO_CONFIRMADA, vence_en=timezone.now() + timedelta(seconds=300),
+                    confirmado_en=timezone.now(),
+                ),
+                referencia='SIPAP-SALDO-INSUF-001', monto=Decimal('373700.00'), moneda='PYG',
+                vence_en=timezone.now() + timedelta(hours=1), metodo_pago=self.metodo_pago,
+            )
+
+            response = self._post({'referencia': otra_solicitud.referencia, 'estado': 'saldo_insuficiente'})
+
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(Pago.objects.filter(calculo_operacion=otra_solicitud.calculo_operacion).count(), 0)
+            otra_solicitud.refresh_from_db()
+            self.assertEqual(otra_solicitud.estado, SolicitudPagoSipap.ESTADO_SALDO_INSUFICIENTE)
+            otra_solicitud.calculo_operacion.refresh_from_db()
+            self.assertEqual(
+                otra_solicitud.calculo_operacion.estado, CalculoOperacion.ESTADO_CANCELADA_FONDOS_CLIENTE,
+            )
 
     @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
-    def test_referencia_desconocida_no_rompe_ni_crea_nada(self):
-        """Una referencia que no corresponde a ninguna solicitud se ignora sin romper."""
-        response = self._post({'referencia': 'SIPAP-NO-EXISTE', 'estado': 'acreditada', 'monto': '1.00'})
+    def test_entradas_invalidas_se_ignoran_sin_romper(self):
+        """Una referencia desconocida, o un payload que no es JSON válido: se ignoran sin crear ni romper nada."""
+        with self.subTest('referencia que no corresponde a ninguna solicitud'):
+            response = self._post({'referencia': 'SIPAP-NO-EXISTE', 'estado': 'acreditada', 'monto': '1.00'})
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(Pago.objects.count(), 0)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(Pago.objects.count(), 0)
+
+        with self.subTest('payload que no es JSON válido, aunque la firma sea correcta'):
+            payload = b'esto no es json'
+            firma = _firmar(payload)
+
+            response = self.client.post(
+                self.url, data=payload, content_type='application/json', HTTP_X_SIPAP_SIGNATURE=firma,
+            )
+
+            self.assertEqual(response.status_code, 400)
 
     @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
     def test_el_mismo_evento_reenviado_no_duplica_el_pago(self):
@@ -647,18 +792,6 @@ class SipapWebhookTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 1)
-
-    @override_settings(SIPAP_WEBHOOK_SECRET=WEBHOOK_SECRET_TEST)
-    def test_payload_no_json_responde_400(self):
-        """Un cuerpo que no es JSON válido se rechaza, aunque la firma sea correcta."""
-        payload = b'esto no es json'
-        firma = _firmar(payload)
-
-        response = self.client.post(
-            self.url, data=payload, content_type='application/json', HTTP_X_SIPAP_SIGNATURE=firma,
-        )
-
-        self.assertEqual(response.status_code, 400)
 
     def test_el_webhook_no_acepta_metodos_distintos_de_post(self):
         """La URL del webhook es exclusivamente para POST (sipap-sim nunca manda GET)."""

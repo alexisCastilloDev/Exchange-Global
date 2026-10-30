@@ -30,9 +30,9 @@ Diseño elegido para cada criterio de aceptación:
 
 - Criterio 1 (monto exacto, no modificable): tanto la sesión de Checkout
   como el ``PaymentIntent`` del cobro directo se crean con
-  ``apps.divisas.models.monto_a_pagar`` tomado del servidor (``monto_final``
-  para una compra/venta; para un cambio, ``monto_origen`` — lo que el
-  cliente entrega, no lo que recibe, ver el docstring de esa función); el
+  ``apps.divisas.models.monto_a_pagar`` tomado del servidor (siempre
+  ``monto_final`` en PYG, porque una tarjeta solo puede pagar una
+  compra — ver el docstring de esa función para venta/cambio); el
   cliente nunca tiene un campo para escribir un monto.
 - Criterio 2 (confirmación del pago): para Checkout, ``stripe_webhook_view``
   procesa ``checkout.session.completed`` con ``payment_status == "paid"``
@@ -61,6 +61,7 @@ Diseño elegido para cada criterio de aceptación:
   falla, se informa el problema sin tocar la transacción.
 """
 
+from datetime import timedelta
 from decimal import ROUND_HALF_UP
 
 import stripe
@@ -70,16 +71,21 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from apps.clientes.forms import AgregarTarjetaStripeForm
 from apps.clientes.models import MetodoPago
+from apps.divisas.entrega import realizar_entrega
+from apps.divisas.factura_electronica import intentar_emitir_documento_electronico
 from apps.divisas.models import (
     CalculoOperacion,
     CalculoTriangulacion,
+    Divisa,
     Pago,
     PagoRechazadoError,
+    estados_con_pago_ya_registrado,
     moneda_a_pagar,
     monto_a_pagar,
 )
@@ -217,6 +223,29 @@ def _configuracion_solo_tarjeta():
     return nueva.id
 
 
+def _expires_at_checkout(transaccion):
+    """Calcula el ``expires_at`` de una sesión de Checkout alineado con la tasa fijada.
+
+    Stripe exige que ``expires_at`` quede entre 30 minutos y 24 horas
+    después de creada la sesión (verificado contra la documentación
+    oficial de Stripe Checkout). Dentro de ese rango, se usa
+    ``transaccion.tasa_vence_en`` (ver ``CalculoOperacion.tasa_vencida``)
+    para que la sesión de Stripe y la tasa fijada venzan lo más cerca
+    posible entre sí: pasado ese momento no tiene sentido seguir
+    aceptando el pago a esa tasa, aunque ``Pago.registrar_pago`` nunca
+    pierde un pago que de todas formas llegue tarde.
+
+    Returns:
+        int: Epoch en segundos a pasarle a ``expires_at``.
+    """
+    ahora = timezone.now()
+    minimo = ahora + timedelta(minutes=30)
+    maximo = ahora + timedelta(hours=24)
+    objetivo = transaccion.tasa_vence_en or maximo
+    objetivo = max(minimo, min(objetivo, maximo))
+    return int(objetivo.timestamp())
+
+
 def _resolver_metodo_pago_tarjeta(cliente, metodo_pago_id):
     """Busca el ``MetodoPago`` de tarjeta elegido, con su referencia de Stripe.
 
@@ -281,8 +310,13 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
         transaccion.marcar_vencida_si_corresponde()
 
         if not _puede_pagarse(transaccion):
-            if transaccion.estado_efectivo == self.model.ESTADO_PAGADA:
+            if transaccion.estado_efectivo in estados_con_pago_ya_registrado(self.model):
                 messages.error(request, 'Esta transacción ya fue pagada.')
+            elif transaccion.tasa_vencida:
+                messages.error(
+                    request,
+                    'La tasa fijada al confirmar esta transacción ya venció. Debe recalcularla.',
+                )
             else:
                 messages.error(request, 'Esta transacción no está en condiciones de pagarse.')
             return redirect(self.url_detalle, pk=transaccion.pk)
@@ -306,7 +340,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
             return redirect(self.url_detalle, pk=transaccion.pk)
 
         resultado = self._cobrar_con_tarjeta_guardada(
-            request, transaccion, customer_id, metodo_pago.referencia_externa, moneda,
+            request, transaccion, customer_id, metodo_pago, moneda,
         )
         if resultado is not None:
             return resultado
@@ -331,9 +365,17 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
                 metadata={
                     'tipo_transaccion': self.tipo_transaccion,
                     'transaccion_id': str(transaccion.pk),
+                    # La misma tarjeta queda preseleccionada en Checkout
+                    # (``customer=...``), así que esto es, en la enorme
+                    # mayoría de los casos, la que termina usándose; sirve
+                    # para que el Pago resultante quede asociado a esa
+                    # tarjeta (ver _procesar_sesion_completada), igual que
+                    # ya pasa con el cobro directo.
+                    'metodo_pago_id': str(metodo_pago.pk),
                 },
                 success_url=_url_absoluta(request, self.url_detalle, pk=transaccion.pk) + '?pago=iniciado',
                 cancel_url=_url_absoluta(request, self.url_detalle, pk=transaccion.pk) + '?pago=cancelado',
+                expires_at=_expires_at_checkout(transaccion),
             )
         except stripe.error.StripeError:
             # Criterio 6: Stripe no respondió o la conexión falló. No se
@@ -346,13 +388,19 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         return redirect(sesion.url)
 
-    def _cobrar_con_tarjeta_guardada(self, request, transaccion, customer_id, metodo_guardado, moneda):
+    def _cobrar_con_tarjeta_guardada(self, request, transaccion, customer_id, metodo_pago, moneda):
         """Intenta cobrar directo, sin que el cliente vea ninguna página de Stripe.
 
         Usa una ``idempotency_key`` fija por transacción: si esta vista se
         llama dos veces para la misma transacción (doble clic, el usuario
         vuelve atrás y refresca), Stripe devuelve el mismo ``PaymentIntent``
         ya creado en vez de cobrar la tarjeta una segunda vez.
+
+        Args:
+            metodo_pago (apps.clientes.models.MetodoPago): La tarjeta
+                guardada elegida. Se guarda en el ``Pago`` resultante
+                (ver ``apps.clientes.views.MetodoPagoMovimientosView``),
+                no solo su ``referencia_externa``.
 
         Returns:
             HttpResponse | None: La redirección final si el cobro directo
@@ -365,7 +413,7 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
                 amount=_monto_en_unidad_minima_stripe(monto_a_pagar(transaccion), moneda),
                 currency=moneda.lower(),
                 customer=customer_id,
-                payment_method=metodo_guardado,
+                payment_method=metodo_pago.referencia_externa,
                 off_session=True,
                 confirm=True,
                 metadata={
@@ -398,18 +446,37 @@ class _IniciarPagoStripeBaseView(LoginRequiredMixin, UserPassesTestMixin, View):
             return None
 
         try:
-            Pago.registrar_pago(
+            pago, creado = Pago.registrar_pago(
                 transaccion,
                 medio_pago=MetodoPago.TIPO_TARJETA,
                 proveedor=PROVEEDOR_STRIPE,
                 identificador_externo=intent.id,
                 monto=monto_a_pagar(transaccion),
+                metodo_pago=metodo_pago,
             )
         except PagoRechazadoError as error:
             messages.error(request, str(error))
             return redirect(self.url_detalle, pk=transaccion.pk)
 
-        messages.success(request, 'El pago con tu tarjeta guardada se realizó correctamente.')
+        if creado and transaccion.estado == transaccion.ESTADO_PAGADA:
+            # Entrega la divisa comprada recién ahora, la primera vez que
+            # se registra este pago (nunca en una repetición idempotente:
+            # ya se entregó la primera vez), y nunca si el pago llegó
+            # fuera de plazo (ver Pago.registrar_pago).
+            realizar_entrega(transaccion)
+            # Emite la Factura Electrónica en paralelo a la entrega, nunca
+            # en su lugar: una falla acá no debe revertir ni bloquear un
+            # pago ya confirmado (ver apps.divisas.factura_electronica).
+            intentar_emitir_documento_electronico(transaccion)
+
+        if transaccion.estado == transaccion.ESTADO_PAGO_EXPIRADO:
+            messages.warning(
+                request,
+                'El pago se registró, pero llegó después de que venció la tasa fijada: '
+                'un administrador revisará esta transacción.',
+            )
+        else:
+            messages.success(request, 'El pago con tu tarjeta guardada se realizó correctamente.')
         return redirect(self.url_detalle, pk=transaccion.pk)
 
 
@@ -594,6 +661,10 @@ def confirmar_tarjeta_stripe_view(request):
         numero_tarjeta=card.last4,
         proveedor_externo=MetodoPago.PROVEEDOR_STRIPE,
         referencia_externa=pm_id,
+        # Una tarjeta siempre cobra en PYG (ver moneda_a_pagar): nunca hace
+        # falta pedirle esto al cliente, a diferencia de una transferencia
+        # o billetera, donde lo confirma sipap-sim.
+        moneda=Divisa.objects.get(codigo=Divisa.CODIGO_BASE),
     )
     messages.success(request, 'Tarjeta agregada correctamente.')
     return redirect('clientes:metodo_pago_list')
@@ -629,14 +700,19 @@ def _procesar_sesion_completada(session):
     except model.DoesNotExist:
         return
 
+    metodo_pago = MetodoPago.objects.filter(
+        pk=metadata.get('metodo_pago_id'), cliente=transaccion.cliente,
+    ).first()
+
     identificador_externo = session.get('payment_intent') or session.get('id')
     try:
-        Pago.registrar_pago(
+        pago, creado = Pago.registrar_pago(
             transaccion,
             medio_pago=MetodoPago.TIPO_TARJETA,
             proveedor=PROVEEDOR_STRIPE,
             identificador_externo=identificador_externo,
             monto=monto_a_pagar(transaccion),
+            metodo_pago=metodo_pago,
         )
     except PagoRechazadoError:
         # La transacción ya no está en condiciones de pagarse con este
@@ -645,7 +721,14 @@ def _procesar_sesion_completada(session):
         # nada más que hacer: registrar_pago ya es idempotente por
         # (proveedor, identificador_externo) para el caso normal de un
         # webhook reenviado.
-        pass
+        return
+
+    if creado and transaccion.estado == transaccion.ESTADO_PAGADA:
+        # Igual que en _cobrar_con_tarjeta_guardada: solo se entrega la
+        # primera vez que se registra este pago, nunca en una repetición,
+        # y nunca si llegó fuera de plazo (ver Pago.registrar_pago).
+        realizar_entrega(transaccion)
+        intentar_emitir_documento_electronico(transaccion)
 
 
 @csrf_exempt

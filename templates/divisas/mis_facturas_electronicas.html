@@ -1,0 +1,128 @@
+<!--
+Lista las Facturas Electrónicas emitidas para las transacciones del cliente activo, de solo lectura.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: documentos (paginado), page_obj, is_paginated, tiene_facturas,
+fecha_desde_actual, fecha_hasta_actual, querystring, cliente_activo (vía context processor).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Mis facturas electrónicas - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Mis facturas electrónicas</h1>
+        <p>Facturas emitidas ante SIFEN por tus compras, ventas y cambios de divisa.</p>
+    </div>
+</div>
+
+<div class="contenedor-filtro">
+    <form method="GET" action="" class="d-flex align-items-end gap-3 flex-wrap mb-0">
+        <div>
+            <label for="fecha_desde" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Emitida desde</label>
+            <input type="date" name="fecha_desde" id="fecha_desde" value="{{ fecha_desde_actual }}" class="form-control">
+        </div>
+        <div>
+            <label for="fecha_hasta" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Emitida hasta</label>
+            <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ fecha_hasta_actual }}" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+        </button>
+        {% if fecha_desde_actual or fecha_hasta_actual %}
+            <a href="{% url 'divisas:mis_facturas_electronicas' %}" style="font-size: 13px; color: var(--ge-brick);">Limpiar filtros</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha de emisión</th>
+                    <th>Número</th>
+                    <th>CDC</th>
+                    <th>Transacción</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for documento in documentos %}
+                <tr>
+                    <td>{% if documento.emitida_en %}{{ documento.emitida_en|date:"d/m/Y H:i" }}{% else %}—{% endif %}</td>
+                    <td>{{ documento.numero_documento }}</td>
+                    <td>{{ documento.cdc|default:"—" }}</td>
+                    <td>
+                        {% if documento.calculo_operacion %}
+                            {{ documento.calculo_operacion.get_tipo_display }} {{ documento.calculo_operacion.codigo_divisa }}
+                        {% else %}
+                            Cambio {{ documento.calculo_triangulacion.codigo_divisa_origen }} → {{ documento.calculo_triangulacion.codigo_divisa_destino }}
+                        {% endif %}
+                    </td>
+                    <td class="ge-num">{{ documento.transaccion.monto_final|floatformat:2 }}</td>
+                    <td>
+                        {% if documento.factura_pendiente %}
+                            <span class="badge bg-warning text-dark">Pendiente de generación</span>
+                        {% elif documento.es_definitivo %}
+                            <span class="badge bg-success">{{ documento.get_estado_display }}</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">{{ documento.get_estado_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if documento.cdc and not documento.factura_pendiente %}
+                        {% if documento.calculo_operacion %}
+                            <a href="{% url 'divisas:detalle_transaccion_operacion' pk=documento.calculo_operacion.pk %}" class="btn btn-sm btn-outline-primary">Ver detalle</a>
+                        {% else %}
+                            <a href="{% url 'divisas:detalle_transaccion_cambio' pk=documento.calculo_triangulacion.pk %}" class="btn btn-sm btn-outline-primary">Ver detalle</a>
+                        {% endif %}
+                        {% if documento.cdc %}
+                        <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='kude' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-file-pdf me-1"></i>KuDE
+                        </a>
+                        <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='xml' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-filetype-xml me-1"></i>XML
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        {% if tiene_facturas %}
+                            No se encontraron facturas para el rango de fechas seleccionado.
+                        {% else %}
+                            Todavía no tenés ninguna factura electrónica emitida.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación de mis facturas electrónicas">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Anterior</a>
+                    </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

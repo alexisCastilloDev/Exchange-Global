@@ -14,6 +14,7 @@ from apps.divisas.models import (
     CalculoTriangulacion,
     ConfiguracionVigencia,
     Cotizacion,
+    CuentaPropia,
     Divisa,
     Pago,
     PagoRechazadoError,
@@ -111,50 +112,51 @@ class CalculoOperacionTest(TestCase):
         self.assertContains(response, formato(Decimal('747400.00')))
         self.assertContains(response, formato(Decimal('7400.00')))
 
-    def test_confirmar_compra_usa_tasa_venta_y_suma_comision(self):
-        """Al confirmar, crea la transacción usando la tasa de venta y sumando la comisión."""
-        response = self.client.post(
-            reverse('divisas:operar', kwargs={'tipo': 'compra'}),
-            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
-        )
-        resultado = response.context['resultado']
+    def test_confirmar_usa_la_tasa_y_comision_segun_el_tipo_de_operacion(self):
+        """Al confirmar, una compra usa la tasa de venta y suma la comisión; una venta, al revés."""
+        with self.subTest('compra'):
+            response = self.client.post(
+                reverse('divisas:operar', kwargs={'tipo': 'compra'}),
+                {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
+            )
+            resultado = response.context['resultado']
 
-        self.client.post(
-            reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),
-            self._datos_confirmacion(resultado),
-        )
+            self.client.post(
+                reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),
+                self._datos_confirmacion(resultado),
+            )
 
-        calculo = CalculoOperacion.objects.get()
-        self.assertEqual(calculo.estado, CalculoOperacion.ESTADO_PENDIENTE)
-        self.assertEqual(calculo.tasa_aplicada, Decimal('7400.00'))
-        self.assertEqual(calculo.comision, Decimal('7400.00'))
-        self.assertEqual(calculo.monto_final, Decimal('747400.00'))
-        # Criterio 4 de "Compra de divisas" (GE-30): tipo, cliente activo y fecha
-        # quedan registrados; divisa/monto ya se verifican arriba.
-        self.assertEqual(calculo.tipo, CalculoOperacion.TIPO_COMPRA)
-        self.assertEqual(calculo.cliente, self.cliente)
-        self.assertIsNotNone(calculo.creado_en)
+            calculo = CalculoOperacion.objects.get()
+            self.assertEqual(calculo.estado, CalculoOperacion.ESTADO_PENDIENTE)
+            self.assertEqual(calculo.tasa_aplicada, Decimal('7400.00'))
+            self.assertEqual(calculo.comision, Decimal('7400.00'))
+            self.assertEqual(calculo.monto_final, Decimal('747400.00'))
+            # Criterio 4 de "Compra de divisas" (GE-30): tipo, cliente activo y fecha
+            # quedan registrados; divisa/monto ya se verifican arriba.
+            self.assertEqual(calculo.tipo, CalculoOperacion.TIPO_COMPRA)
+            self.assertEqual(calculo.cliente, self.cliente)
+            self.assertIsNotNone(calculo.creado_en)
+            calculo.delete()
 
-    def test_confirmar_venta_usa_tasa_compra_y_resta_comision(self):
-        """Al confirmar, crea la transacción usando la tasa de compra y descontando la comisión."""
-        response = self.client.post(
-            reverse('divisas:operar', kwargs={'tipo': 'venta'}),
-            {'tipo': 'VENTA', 'divisa': str(self.usd.pk), 'monto': '100'},
-        )
-        resultado = response.context['resultado']
-        self.assertContains(response, 'Importe a recibir')
+        with self.subTest('venta'):
+            response = self.client.post(
+                reverse('divisas:operar', kwargs={'tipo': 'venta'}),
+                {'tipo': 'VENTA', 'divisa': str(self.usd.pk), 'monto': '100'},
+            )
+            resultado = response.context['resultado']
+            self.assertContains(response, 'Importe a recibir')
 
-        response = self.client.post(
-            reverse('divisas:confirmar_operacion', kwargs={'tipo': 'venta'}),
-            self._datos_confirmacion(resultado),
-            follow=True,
-        )
+            response = self.client.post(
+                reverse('divisas:confirmar_operacion', kwargs={'tipo': 'venta'}),
+                self._datos_confirmacion(resultado),
+                follow=True,
+            )
 
-        calculo = CalculoOperacion.objects.get()
-        self.assertEqual(calculo.estado, CalculoOperacion.ESTADO_PENDIENTE)
-        self.assertEqual(calculo.tasa_aplicada, Decimal('7300.00'))
-        self.assertEqual(calculo.comision, Decimal('7300.00'))
-        self.assertEqual(calculo.monto_final, Decimal('722700.00'))
+            calculo = CalculoOperacion.objects.get()
+            self.assertEqual(calculo.estado, CalculoOperacion.ESTADO_PENDIENTE)
+            self.assertEqual(calculo.tasa_aplicada, Decimal('7300.00'))
+            self.assertEqual(calculo.comision, Decimal('7300.00'))
+            self.assertEqual(calculo.monto_final, Decimal('722700.00'))
 
     def test_divisa_sin_cotizacion_impide_calcular(self):
         """Muestra error y no crea cálculo cuando falta una cotización."""
@@ -173,67 +175,67 @@ class CalculoOperacionTest(TestCase):
         self.assertFalse(CalculoOperacion.objects.exists())
         self.assertContains(response, 'no tiene cotización disponible')
 
-    def test_calculo_vencido_debe_recalcularse_antes_de_confirmar(self):
-        """Rechaza la confirmación cuando pasó el tiempo de vigencia del cálculo."""
-        response = self.client.post(
-            reverse('divisas:operar', kwargs={'tipo': 'compra'}),
-            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
-        )
-        resultado = response.context['resultado']
-        datos = self._datos_confirmacion(resultado)
-        datos['vence_en_timestamp'] = str((timezone.now() - timedelta(seconds=1)).timestamp())
+    def test_confirmar_rechaza_si_el_calculo_vencio_o_si_cambio_la_cotizacion(self):
+        """Rechaza la confirmación tanto si venció el cálculo como si cambió la cotización entre medio."""
+        with self.subTest('cálculo vencido'):
+            response = self.client.post(
+                reverse('divisas:operar', kwargs={'tipo': 'compra'}),
+                {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
+            )
+            resultado = response.context['resultado']
+            datos = self._datos_confirmacion(resultado)
+            datos['vence_en_timestamp'] = str((timezone.now() - timedelta(seconds=1)).timestamp())
 
-        response = self.client.post(
-            reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),
-            datos,
-            follow=True,
-        )
+            response = self.client.post(
+                reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),
+                datos,
+                follow=True,
+            )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(CalculoOperacion.objects.exists())
-        self.assertContains(response, 'El cálculo venció')
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(CalculoOperacion.objects.exists())
+            self.assertContains(response, 'El cálculo venció')
 
-    def test_confirmar_rechaza_si_la_cotizacion_cambio_desde_que_se_calculo(self):
-        """Si la cotización cambió después de calcular, exige recalcular al confirmar."""
-        response = self.client.post(
-            reverse('divisas:operar', kwargs={'tipo': 'compra'}),
-            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
-        )
-        resultado = response.context['resultado']
+        with self.subTest('cotización cambió'):
+            response = self.client.post(
+                reverse('divisas:operar', kwargs={'tipo': 'compra'}),
+                {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
+            )
+            resultado = response.context['resultado']
 
-        Cotizacion.objects.create(
-            divisa=self.usd,
-            tasa_compra=Decimal('7350.00'),
-            tasa_venta=Decimal('7450.00'),
-        )
+            Cotizacion.objects.create(
+                divisa=self.usd,
+                tasa_compra=Decimal('7350.00'),
+                tasa_venta=Decimal('7450.00'),
+            )
 
-        response = self.client.post(
-            reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),
-            self._datos_confirmacion(resultado),
-            follow=True,
-        )
+            response = self.client.post(
+                reverse('divisas:confirmar_operacion', kwargs={'tipo': 'compra'}),
+                self._datos_confirmacion(resultado),
+                follow=True,
+            )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(CalculoOperacion.objects.exists())
-        self.assertContains(response, 'El cálculo venció')
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(CalculoOperacion.objects.exists())
+            self.assertContains(response, 'El cálculo venció')
 
-    def test_menu_expone_compra_y_venta(self):
-        """Muestra ambos accesos operativos en el menú autenticado."""
-        response = self.client.get(reverse('home'))
+    def test_menu_expone_compra_venta_segun_el_rol(self):
+        """Muestra ambos accesos operativos a un cliente, pero los oculta para un analista."""
+        with self.subTest('cliente'):
+            response = self.client.get(reverse('home'))
 
-        self.assertContains(response, reverse('divisas:operar', kwargs={'tipo': 'compra'}))
-        self.assertContains(response, reverse('divisas:operar', kwargs={'tipo': 'venta'}))
+            self.assertContains(response, reverse('divisas:operar', kwargs={'tipo': 'compra'}))
+            self.assertContains(response, reverse('divisas:operar', kwargs={'tipo': 'venta'}))
 
-    def test_menu_no_expone_compra_venta_a_un_analista(self):
-        """Oculta compra y venta para usuarios analistas."""
-        session = self.client.session
-        session['keycloak_roles'] = ['analista_cambiario']
-        session.save()
+        with self.subTest('analista'):
+            session = self.client.session
+            session['keycloak_roles'] = ['analista_cambiario']
+            session.save()
 
-        response = self.client.get(reverse('home'))
+            response = self.client.get(reverse('home'))
 
-        self.assertNotContains(response, reverse('divisas:operar', kwargs={'tipo': 'compra'}))
-        self.assertNotContains(response, reverse('divisas:operar', kwargs={'tipo': 'venta'}))
+            self.assertNotContains(response, reverse('divisas:operar', kwargs={'tipo': 'compra'}))
+            self.assertNotContains(response, reverse('divisas:operar', kwargs={'tipo': 'venta'}))
 
     def test_cliente_no_ve_auditoria_de_ultima_actualizacion(self):
         """Oculta fecha y usuario de actualización en tasas para clientes."""
@@ -369,50 +371,52 @@ class VentaDeDivisasTest(TestCase):
 
         self.assertFalse(CalculoOperacion.objects.exists())
 
-    def test_divisa_inactiva_rechaza_la_operacion(self):
-        """Criterio 3: una divisa inactiva se rechaza con un mensaje claro."""
-        inactiva = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=False)
-        Cotizacion.objects.create(divisa=inactiva, tasa_compra=Decimal('7900.00'), tasa_venta=Decimal('8100.00'))
+    def test_una_divisa_invalida_rechaza_la_operacion_al_calcular(self):
+        """Criterio 3: una divisa inactiva o sin cotización vigente se rechaza con un mensaje claro."""
+        with self.subTest('inactiva'):
+            inactiva = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=False)
+            Cotizacion.objects.create(divisa=inactiva, tasa_compra=Decimal('7900.00'), tasa_venta=Decimal('8100.00'))
 
-        response = self._calcular(divisa=inactiva)
+            response = self._calcular(divisa=inactiva)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(CalculoOperacion.objects.exists())
-        self.assertIsNone(response.context['resultado'])
-        self.assertContains(response, 'inactiva o no está disponible para operar')
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(CalculoOperacion.objects.exists())
+            self.assertIsNone(response.context['resultado'])
+            self.assertContains(response, 'inactiva o no está disponible para operar')
 
-    def test_divisa_dada_de_baja_antes_de_confirmar_rechaza_la_operacion(self):
-        """Criterio 3: si la divisa se desactiva entre el cálculo y la confirmación, no se crea nada."""
-        resultado = self._calcular().context['resultado']
-        self.usd.activa = False
-        self.usd.save(update_fields=['activa'])
+        with self.subTest('sin cotización vigente'):
+            sin_cotizacion = Divisa.objects.create(codigo='BRL', nombre='Real', simbolo='R$', activa=True)
 
-        response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
+            response = self._calcular(divisa=sin_cotizacion)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(CalculoOperacion.objects.exists())
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(CalculoOperacion.objects.exists())
+            self.assertIsNone(response.context['resultado'])
+            self.assertContains(response, 'no tiene cotización disponible')
 
-    def test_divisa_sin_tasa_vigente_rechaza_la_operacion(self):
-        """Criterio 3: una divisa sin cotización vigente se rechaza con un mensaje claro."""
-        sin_cotizacion = Divisa.objects.create(codigo='BRL', nombre='Real', simbolo='R$', activa=True)
+    def test_una_divisa_invalidada_entre_el_calculo_y_la_confirmacion_rechaza_la_operacion(self):
+        """Criterio 3: si la divisa se desactiva, o pierde su cotización, antes de confirmar, no se crea nada."""
+        with self.subTest('se desactiva'):
+            resultado = self._calcular().context['resultado']
+            self.usd.activa = False
+            self.usd.save(update_fields=['activa'])
 
-        response = self._calcular(divisa=sin_cotizacion)
+            response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(CalculoOperacion.objects.exists())
-        self.assertIsNone(response.context['resultado'])
-        self.assertContains(response, 'no tiene cotización disponible')
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(CalculoOperacion.objects.exists())
+            self.usd.activa = True
+            self.usd.save(update_fields=['activa'])
 
-    def test_divisa_sin_tasa_vigente_en_la_confirmacion_rechaza_la_operacion(self):
-        """Criterio 3: sin cotización al confirmar, avisa que no hay tasa y no crea la transacción."""
-        resultado = self._calcular().context['resultado']
-        Cotizacion.objects.filter(divisa=self.usd).delete()
+        with self.subTest('pierde la cotización'):
+            resultado = self._calcular().context['resultado']
+            Cotizacion.objects.filter(divisa=self.usd).delete()
 
-        response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
+            response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(CalculoOperacion.objects.exists())
-        self.assertContains(response, 'no tiene cotización disponible')
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(CalculoOperacion.objects.exists())
+            self.assertContains(response, 'no tiene cotización disponible')
 
     def test_transaccion_registra_tipo_cliente_divisa_monto_y_fecha(self):
         """Criterio 4: la transacción guarda tipo 'Venta', cliente activo, divisa, monto y fecha."""
@@ -624,50 +628,51 @@ class TriangulacionOperacionTest(TestCase):
         self.assertFalse(CalculoTriangulacion.objects.exists())
         self.assertContains(response, 'Debe seleccionar dos divisas distintas')
 
-    def test_calculo_triangulado_vencido_debe_recalcularse_antes_de_confirmar(self):
-        """Rechaza la confirmación cuando el cálculo ya superó su vigencia."""
-        datos = self._datos_confirmacion(self._calcular().context['resultado'])
-        datos['vence_en_timestamp'] = str((timezone.now() - timedelta(seconds=1)).timestamp())
+    def test_confirmar_rechaza_si_el_calculo_vencio_o_si_cambio_una_cotizacion(self):
+        """Rechaza la confirmación tanto si venció el cálculo como si cambió la cotización de cualquier divisa."""
+        with self.subTest('cálculo vencido'):
+            datos = self._datos_confirmacion(self._calcular().context['resultado'])
+            datos['vence_en_timestamp'] = str((timezone.now() - timedelta(seconds=1)).timestamp())
 
-        response = self.client.post(self.url_confirmar, datos, follow=True)
+            response = self.client.post(self.url_confirmar, datos, follow=True)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(CalculoTriangulacion.objects.exists())
-        self.assertContains(response, 'El cálculo venció')
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(CalculoTriangulacion.objects.exists())
+            self.assertContains(response, 'El cálculo venció')
 
-    def test_confirmar_rechaza_si_una_cotizacion_cambio_desde_que_se_calculo(self):
-        """Si cambia la cotización de cualquiera de las dos divisas, exige recalcular."""
-        resultado = self._calcular().context['resultado']
-        Cotizacion.objects.create(
-            divisa=self.eur,
-            tasa_compra=Decimal('7950.00'),
-            tasa_venta=Decimal('8150.00'),
-        )
+        with self.subTest('cotización cambió'):
+            resultado = self._calcular().context['resultado']
+            Cotizacion.objects.create(
+                divisa=self.eur,
+                tasa_compra=Decimal('7950.00'),
+                tasa_venta=Decimal('8150.00'),
+            )
 
-        response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
+            response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
 
-        self.assertFalse(CalculoTriangulacion.objects.exists())
-        self.assertContains(response, 'El cálculo venció')
+            self.assertFalse(CalculoTriangulacion.objects.exists())
+            self.assertContains(response, 'El cálculo venció')
 
-    def test_confirmar_sin_cotizacion_vigente_no_crea_transaccion(self):
-        """Si una divisa pierde su cotización antes de confirmar, informa y no registra nada."""
-        resultado = self._calcular().context['resultado']
-        Cotizacion.objects.filter(divisa=self.eur).delete()
+    def test_una_divisa_invalidada_entre_el_calculo_y_la_confirmacion_no_crea_transaccion(self):
+        """Si una divisa pierde su cotización, o se desactiva, antes de confirmar, no se registra nada."""
+        with self.subTest('pierde la cotización'):
+            resultado = self._calcular().context['resultado']
+            Cotizacion.objects.filter(divisa=self.eur).delete()
 
-        response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
+            response = self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
 
-        self.assertFalse(CalculoTriangulacion.objects.exists())
-        self.assertContains(response, 'no tiene cotización disponible')
+            self.assertFalse(CalculoTriangulacion.objects.exists())
+            self.assertContains(response, 'no tiene cotización disponible')
+            Cotizacion.objects.create(divisa=self.eur, tasa_compra=Decimal('7900.00'), tasa_venta=Decimal('8100.00'))
 
-    def test_confirmar_con_divisa_inactiva_no_crea_transaccion(self):
-        """Una divisa dada de baja entre el cálculo y la confirmación impide registrar el cambio."""
-        resultado = self._calcular().context['resultado']
-        self.eur.activa = False
-        self.eur.save(update_fields=['activa'])
+        with self.subTest('se desactiva'):
+            resultado = self._calcular().context['resultado']
+            self.eur.activa = False
+            self.eur.save(update_fields=['activa'])
 
-        self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
+            self.client.post(self.url_confirmar, self._datos_confirmacion(resultado), follow=True)
 
-        self.assertFalse(CalculoTriangulacion.objects.exists())
+            self.assertFalse(CalculoTriangulacion.objects.exists())
 
     def test_confirmar_con_monto_invalido_no_crea_transaccion(self):
         """Montos negativos, en cero o no numéricos en los campos ocultos no registran nada."""
@@ -746,29 +751,16 @@ class HistorialTransaccionesTest(TestCase):
         session.save()
         return staff
 
-    def test_administrador_puede_ver_el_historial(self):
-        """El rol admin accede al historial de transacciones."""
-        self._login_como('admin')
+    def test_acceso_al_historial_segun_el_rol(self):
+        """Admin y analista_cambiario acceden; un cliente no puede ver el historial administrativo."""
+        for rol, esperado in (('admin', 200), ('analista_cambiario', 200), ('cliente', 403)):
+            with self.subTest(rol=rol):
+                self._login_como(rol)
 
-        response = self.client.get(reverse('divisas:historial_transacciones'))
+                response = self.client.get(reverse('divisas:historial_transacciones'))
 
-        self.assertEqual(response.status_code, 200)
-
-    def test_analista_cambiario_puede_ver_el_historial(self):
-        """El rol analista_cambiario accede al historial de transacciones."""
-        self._login_como('analista_cambiario')
-
-        response = self.client.get(reverse('divisas:historial_transacciones'))
-
-        self.assertEqual(response.status_code, 200)
-
-    def test_cliente_no_puede_ver_el_historial(self):
-        """Un rol cliente no puede acceder al historial administrativo."""
-        self._login_como('cliente')
-
-        response = self.client.get(reverse('divisas:historial_transacciones'))
-
-        self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, esperado)
+                self.client.logout()
 
     def test_historial_muestra_tipo_estado_cliente_divisa_monto_y_fecha(self):
         """Cada fila expone tipo, estado, cliente activo, divisa, monto y fecha."""
@@ -1166,6 +1158,12 @@ class ConfirmacionOperacionCambiariaTest(TestCase):
         )
         self.url = reverse('divisas:confirmar_transaccion', kwargs={'pk': self.transaccion.pk})
 
+        # Al confirmar, se verifica que Global Exchange tenga saldo
+        # propio suficiente en la divisa a entregar (ver CuentaPropia):
+        # estos tests cubren la confirmación en sí, así que se arranca
+        # con saldo siempre suficiente en USD.
+        CuentaPropia.objects.create(divisa=self.usd, saldo=Decimal('1000000.00'))
+
     def test_pantalla_de_confirmacion_muestra_el_resumen_completo(self):
         """Criterio 1: la pantalla muestra tipo, divisa, monto, tasa, comisión y monto final."""
         response = self.client.get(self.url)
@@ -1205,7 +1203,31 @@ class ConfirmacionOperacionCambiariaTest(TestCase):
         self.assertIsNone(self.transaccion.confirmado_en)
         self.assertContains(response, 'La tasa vigente cambió')
         self.assertContains(response, 'fue cancelad')
-        self.assertContains(response, 'Recalcular')
+
+    def test_confirmar_se_cancela_si_global_exchange_no_puede_entregar(self):
+        """Sin saldo suficiente, o sin ninguna cuenta propia cargada en esa moneda, no se puede confirmar."""
+        with self.subTest('saldo insuficiente'):
+            cuenta_usd = CuentaPropia.objects.get(divisa=self.usd)
+            cuenta_usd.saldo = Decimal('1.00')
+            cuenta_usd.save(update_fields=['saldo'])
+
+            response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE)
+            self.assertIsNone(self.transaccion.confirmado_en)
+            self.assertContains(response, 'no dispone de fondos suficientes')
+
+        with self.subTest('sin cuenta propia en esa moneda'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
+            self.transaccion.save(update_fields=['estado'])
+            CuentaPropia.objects.filter(divisa=self.usd).delete()
+
+            response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE)
+            self.assertContains(response, 'no dispone de fondos suficientes')
 
     def test_cancelada_por_cotizacion_es_distinguible_de_la_cancelacion_manual_en_el_historial(self):
         """Criterio 4: en el historial, la cancelación por cotización se ve distinta de la manual."""
@@ -1288,6 +1310,18 @@ class ConfirmacionOperacionCambiariaTest(TestCase):
         self.transaccion.refresh_from_db()
         self.assertIsNotNone(self.transaccion.confirmado_en)
         self.assertGreaterEqual(self.transaccion.confirmado_en, antes)
+
+    def test_confirmar_fija_el_vencimiento_de_la_tasa_segun_la_vigencia_configurada(self):
+        """Al confirmar, la tasa fijada queda con su propio vencimiento (``tasa_vence_en``)."""
+        self.client.post(self.url, {'accion': 'confirmar'})
+
+        self.transaccion.refresh_from_db()
+        self.assertIsNotNone(self.transaccion.tasa_vence_en)
+        self.assertEqual(
+            self.transaccion.tasa_vence_en,
+            self.transaccion.confirmado_en + timedelta(seconds=ConfiguracionVigencia.vigencia_pago_segundos()),
+        )
+        self.assertFalse(self.transaccion.tasa_vencida)
 
     def test_no_se_puede_reprocesar_una_transaccion_ya_confirmada(self):
         """Una transacción ya confirmada no puede volver a confirmarse o cancelarse."""
@@ -1445,6 +1479,10 @@ class ConfirmacionCambioDivisasTest(TestCase):
         )
         self.url = reverse('divisas:confirmar_transaccion_cambio', kwargs={'pk': self.transaccion.pk})
 
+        # Ver ConfirmacionOperacionCambiariaTest.setUp: saldo propio
+        # suficiente en la divisa de destino (EUR), lo que entrega el cambio.
+        CuentaPropia.objects.create(divisa=self.eur, saldo=Decimal('1000000.00'))
+
     def test_pantalla_de_confirmacion_muestra_el_resumen_completo(self):
         """Criterio 1: la pantalla muestra ambas divisas, monto, tasas, comisión y monto final."""
         response = self.client.get(self.url)
@@ -1479,6 +1517,19 @@ class ConfirmacionCambioDivisasTest(TestCase):
         self.assertContains(response, 'Las tasas vigentes cambiaron')
         self.assertContains(response, 'fue cancelad')
         self.assertContains(response, 'Recalcular')
+
+    def test_confirmar_se_cancela_si_global_exchange_no_tiene_saldo_suficiente_en_la_divisa_de_destino(self):
+        """Un cambio tampoco se confirma si Global Exchange no puede entregar la divisa de destino."""
+        cuenta_eur = CuentaPropia.objects.get(divisa=self.eur)
+        cuenta_eur.saldo = Decimal('1.00')
+        cuenta_eur.save(update_fields=['saldo'])
+
+        response = self.client.post(self.url, {'accion': 'confirmar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE)
+        self.assertIsNone(self.transaccion.confirmado_en)
+        self.assertContains(response, 'no dispone de fondos suficientes')
 
     def test_cancelada_por_cotizacion_es_distinguible_de_la_cancelacion_manual_en_el_historial(self):
         """Criterio 4: en el historial, la cancelación por cotización se ve distinta de la manual."""
@@ -1549,6 +1600,18 @@ class ConfirmacionCambioDivisasTest(TestCase):
         self.transaccion.refresh_from_db()
         self.assertIsNotNone(self.transaccion.confirmado_en)
         self.assertGreaterEqual(self.transaccion.confirmado_en, antes)
+
+    def test_confirmar_fija_el_vencimiento_de_la_tasa_segun_la_vigencia_configurada(self):
+        """Al confirmar, la tasa fijada queda con su propio vencimiento (``tasa_vence_en``)."""
+        self.client.post(self.url, {'accion': 'confirmar'})
+
+        self.transaccion.refresh_from_db()
+        self.assertIsNotNone(self.transaccion.tasa_vence_en)
+        self.assertEqual(
+            self.transaccion.tasa_vence_en,
+            self.transaccion.confirmado_en + timedelta(seconds=ConfiguracionVigencia.vigencia_pago_segundos()),
+        )
+        self.assertFalse(self.transaccion.tasa_vencida)
 
     def test_otro_cliente_no_puede_ver_ni_confirmar_el_cambio(self):
         """Solo el cliente dueño del cambio puede verlo o accionarlo."""
@@ -1626,22 +1689,22 @@ class MontoAPagarTest(TestCase):
     entrega, no ``monto_final`` (lo que recibe a cambio).
     """
 
-    def test_una_operacion_paga_el_monto_final_en_pyg(self):
-        """Una compra/venta siempre se paga en PYG, con monto_final."""
-        operacion = CalculoOperacion(codigo_divisa='USD', monto_final=Decimal('747400.00'))
+    def test_monto_a_pagar_segun_el_tipo_de_transaccion(self):
+        """Una compra/venta siempre se paga en PYG con monto_final; un cambio, con monto_origen en su divisa."""
+        with self.subTest('operación'):
+            operacion = CalculoOperacion(codigo_divisa='USD', monto_final=Decimal('747400.00'))
 
-        self.assertEqual(monto_a_pagar(operacion), Decimal('747400.00'))
-        self.assertEqual(moneda_a_pagar(operacion), 'PYG')
+            self.assertEqual(monto_a_pagar(operacion), Decimal('747400.00'))
+            self.assertEqual(moneda_a_pagar(operacion), 'PYG')
 
-    def test_un_cambio_paga_el_monto_origen_en_su_divisa_de_origen(self):
-        """Un cambio se paga con monto_origen, en codigo_divisa_origen — no con monto_final."""
-        cambio = CalculoTriangulacion(
-            codigo_divisa_origen='EUR', codigo_divisa_destino='USD',
-            monto_origen=Decimal('500.00'), monto_final=Decimal('559.16'),
-        )
+        with self.subTest('cambio'):
+            cambio = CalculoTriangulacion(
+                codigo_divisa_origen='EUR', codigo_divisa_destino='USD',
+                monto_origen=Decimal('500.00'), monto_final=Decimal('559.16'),
+            )
 
-        self.assertEqual(monto_a_pagar(cambio), Decimal('500.00'))
-        self.assertEqual(moneda_a_pagar(cambio), 'EUR')
+            self.assertEqual(monto_a_pagar(cambio), Decimal('500.00'))
+            self.assertEqual(moneda_a_pagar(cambio), 'EUR')
 
 
 class PagoRegistrarPagoTest(TestCase):
@@ -1713,6 +1776,46 @@ class PagoRegistrarPagoTest(TestCase):
 
         self.transaccion.refresh_from_db()
         self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
+
+    def test_pago_fuera_de_plazo_segun_si_la_tasa_ya_vencio(self):
+        """Un pago tardío nunca se rechaza: queda 'Pago fuera de plazo'; a tiempo, queda 'Pagada' como siempre."""
+        with self.subTest('tasa ya vencida'):
+            self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+            self.transaccion.save(update_fields=['tasa_vence_en'])
+
+            pago, creado = Pago.registrar_pago(
+                self.transaccion,
+                medio_pago=MetodoPago.TIPO_TRANSFERENCIA,
+                proveedor='MANUAL',
+                identificador_externo='pago-tardio',
+                monto=self.transaccion.monto_final,
+            )
+
+            self.assertTrue(creado)
+            self.assertTrue(pago.fuera_de_plazo)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGO_EXPIRADO)
+
+        with self.subTest('tasa vigente'):
+            # El pago del caso anterior ya ocupa el OneToOneField con esta
+            # transacción: hay que sacarlo antes de poder registrar otro.
+            Pago.objects.filter(calculo_operacion=self.transaccion).delete()
+            self.transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA
+            self.transaccion.tasa_vence_en = timezone.now() + timedelta(seconds=300)
+            self.transaccion.save(update_fields=['estado', 'tasa_vence_en'])
+
+            pago, creado = Pago.registrar_pago(
+                self.transaccion,
+                medio_pago=MetodoPago.TIPO_TRANSFERENCIA,
+                proveedor='MANUAL',
+                identificador_externo='pago-a-tiempo',
+                monto=self.transaccion.monto_final,
+            )
+
+            self.assertTrue(creado)
+            self.assertFalse(pago.fuera_de_plazo)
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_PAGADA)
 
     def test_rechaza_un_pago_sobre_una_transaccion_que_no_esta_confirmada(self):
         """Solo puede pagarse una transacción 'Confirmada' (no pendiente, cancelada ni vencida)."""
@@ -1815,11 +1918,12 @@ class PagarTransaccionOperacionTest(TestCase):
     """Verifica la pantalla de pago de una compra/venta (HU "Asociación de pagos a transacciones")."""
 
     def setUp(self):
-        """Prepara un cliente con un método de pago y una compra ya 'Confirmada'."""
+        """Prepara un cliente con medios de pago (origen y destino) y una compra ya 'Confirmada'."""
         self.usuario, self.cliente = _crear_cliente_logueado(
             self.client, 'cliente-pagar-op', 'PAGAR-OP-001', apellido='Pagar'
         )
         self.usd = _crear_usd_cotizado()
+        self.pyg = Divisa.objects.get(codigo='PYG')
         self.transaccion = CalculoOperacion.objects.create(
             usuario=self.usuario,
             cliente=self.cliente,
@@ -1835,14 +1939,26 @@ class PagarTransaccionOperacionTest(TestCase):
             vence_en=timezone.now() + timedelta(seconds=300),
             confirmado_en=timezone.now(),
         )
-        # Un método guardado de billetera digital, para la pantalla de
-        # selección: igual que transferencia, se paga vía SIPAP, nunca de
-        # forma manual (ver test_pagar_con_un_metodo_de_billetera_redirige_a_sipap_en_vez_de_registrar_el_pago).
+        # Un método guardado de billetera digital en PYG, para pagar la
+        # compra (medio de origen): igual que transferencia, se paga vía
+        # SIPAP, nunca de forma manual (ver
+        # test_pagar_con_un_metodo_de_billetera_redirige_a_sipap_en_vez_de_registrar_el_pago).
         self.metodo_pago = MetodoPago.objects.create(
             cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_BILLETERA,
             nombre_titular='Cliente Pagar',
             entidad_financiera='Banco Test',
+            moneda=self.pyg,
+        )
+        # Y uno en USD, para recibir la divisa comprada (medio de destino):
+        # la pantalla de pago exige elegir ambos, cada uno en la moneda que
+        # corresponde a esta compra.
+        self.metodo_destino = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_BILLETERA,
+            nombre_titular='Cliente Pagar',
+            entidad_financiera='Banco Destino',
+            moneda=self.usd,
         )
         self.url = reverse('divisas:pagar_transaccion', kwargs={'pk': self.transaccion.pk})
         self.detalle_url = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.transaccion.pk})
@@ -1854,61 +1970,149 @@ class PagarTransaccionOperacionTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Banco Test')
 
-    def test_pagar_con_un_metodo_de_billetera_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
-        """Una billetera digital se paga vía SIPAP, no de forma manual: sipap-sim simula ambas por igual."""
-        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk})
+    def test_cada_opcion_del_formulario_muestra_el_tipo_de_medio_y_la_divisa(self):
+        """Para distinguir cuentas y billeteras entre sí, cada opción indica tipo, entidad y divisa."""
+        response = self.client.get(self.url)
 
-        url_sipap = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': self.transaccion.pk})
-        self.assertRedirects(
-            response, f'{url_sipap}?metodo_pago={self.metodo_pago.pk}', fetch_redirect_response=False,
+        form = response.context['form']
+        etiqueta_origen = form.fields['medio_origen'].label_from_instance(self.metodo_pago)
+        etiqueta_destino = form.fields['medio_destino'].label_from_instance(self.metodo_destino)
+        self.assertIn('Billetera Digital', etiqueta_origen)
+        self.assertIn('PYG', etiqueta_origen)
+        self.assertIn('Billetera Digital', etiqueta_destino)
+        self.assertIn('USD', etiqueta_destino)
+        self.assertContains(response, etiqueta_origen)
+        self.assertContains(response, etiqueta_destino)
+
+    def test_pagar_redirige_al_proveedor_externo_segun_el_tipo_de_medio_en_vez_de_registrar_el_pago(self):
+        """Billetera y transferencia redirigen a SIPAP; tarjeta, a Stripe. Ninguna registra el pago acá."""
+        with self.subTest('billetera → SIPAP'):
+            response = self.client.post(self.url, {
+                'medio_origen': self.metodo_pago.pk, 'medio_destino': self.metodo_destino.pk,
+            })
+
+            url_sipap = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': self.transaccion.pk})
+            self.assertRedirects(
+                response, f'{url_sipap}?metodo_pago={self.metodo_pago.pk}', fetch_redirect_response=False,
+            )
+            self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.medio_destino, self.metodo_destino)
+
+        with self.subTest('tarjeta → Stripe'):
+            tarjeta = MetodoPago.objects.create(
+                cliente=self.cliente,
+                tipo_medio=MetodoPago.TIPO_TARJETA,
+                nombre_titular='Cliente Pagar',
+                entidad_financiera='Visa Test',
+                numero_tarjeta='4111111111111111',
+                moneda=self.pyg,
+            )
+
+            response = self.client.post(self.url, {
+                'medio_origen': tarjeta.pk, 'medio_destino': self.metodo_destino.pk,
+            })
+
+            url_stripe = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': self.transaccion.pk})
+            self.assertRedirects(
+                response, f'{url_stripe}?metodo_pago={tarjeta.pk}', fetch_redirect_response=False,
+            )
+            self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
+
+        with self.subTest('transferencia → SIPAP'):
+            transferencia = MetodoPago.objects.create(
+                cliente=self.cliente,
+                tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+                nombre_titular='Cliente Pagar',
+                entidad_financiera='Banco Itaú',
+                numero_cuenta='555666',
+                tipo_cuenta='CORRIENTE',
+                moneda=self.pyg,
+            )
+
+            response = self.client.post(self.url, {
+                'medio_origen': transferencia.pk, 'medio_destino': self.metodo_destino.pk,
+            })
+
+            url_sipap = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': self.transaccion.pk})
+            self.assertRedirects(
+                response, f'{url_sipap}?metodo_pago={transferencia.pk}', fetch_redirect_response=False,
+            )
+            self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
+
+    def test_medio_de_origen_solo_ofrece_medios_en_la_moneda_que_corresponde_pagar(self):
+        """Una cuenta en una moneda que no es la que hay que pagar no aparece como opción de origen.
+
+        (Sí puede aparecer como opción de destino, si coincide con la
+        moneda que Global Exchange entrega — acá, la compra entrega USD,
+        así que esta misma cuenta en USD es válida ahí.)
+        """
+        billetera_usd = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_BILLETERA,
+            nombre_titular='Cliente Pagar', entidad_financiera='Billetera en USD', moneda=self.usd,
         )
-        self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
-
-    def test_pagar_con_un_metodo_de_tarjeta_redirige_a_stripe_en_vez_de_registrar_el_pago(self):
-        """Un método guardado de tipo 'tarjeta' se cobra vía Stripe, no de forma manual (HU "Pago con tarjeta vía Stripe")."""
-        tarjeta = MetodoPago.objects.create(
-            cliente=self.cliente,
-            tipo_medio=MetodoPago.TIPO_TARJETA,
-            nombre_titular='Cliente Pagar',
-            entidad_financiera='Visa Test',
-            numero_tarjeta='4111111111111111',
-        )
-
-        response = self.client.post(self.url, {'metodo_pago': tarjeta.pk})
-
-        url_stripe = reverse('divisas:pagar_transaccion_stripe', kwargs={'pk': self.transaccion.pk})
-        self.assertRedirects(
-            response, f'{url_stripe}?metodo_pago={tarjeta.pk}', fetch_redirect_response=False,
-        )
-        self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
-
-    def test_pagar_con_un_metodo_de_transferencia_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
-        """Un método guardado de tipo 'transferencia' se paga vía SIPAP, no de forma manual (HU SIPAP)."""
-        transferencia = MetodoPago.objects.create(
-            cliente=self.cliente,
-            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
-            nombre_titular='Cliente Pagar',
-            entidad_financiera='Banco Itaú',
-            numero_cuenta='555666',
-            tipo_cuenta='CORRIENTE',
-        )
-
-        response = self.client.post(self.url, {'metodo_pago': transferencia.pk})
-
-        url_sipap = reverse('divisas:pagar_transaccion_sipap', kwargs={'pk': self.transaccion.pk})
-        self.assertRedirects(
-            response, f'{url_sipap}?metodo_pago={transferencia.pk}', fetch_redirect_response=False,
-        )
-        self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
-
-    def test_no_ofrece_el_formulario_de_pago_si_la_transaccion_no_esta_confirmada(self):
-        """Una transacción pendiente todavía no puede pagarse."""
-        self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
-        self.transaccion.save(update_fields=['estado'])
 
         response = self.client.get(self.url)
 
-        self.assertNotContains(response, 'name="metodo_pago"')
+        form = response.context['form']
+        self.assertIn(self.metodo_pago, form.fields['medio_origen'].queryset)
+        self.assertNotIn(billetera_usd, form.fields['medio_origen'].queryset)
+
+    def test_medio_de_destino_nunca_ofrece_una_tarjeta(self):
+        """Stripe no puede depositarle a una tarjeta: nunca aparece como destino, aunque esté en la moneda correcta."""
+        tarjeta = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TARJETA,
+            nombre_titular='Cliente Pagar', entidad_financiera='Visa Test',
+            numero_tarjeta='4111111111111111', moneda=self.usd,
+        )
+
+        response = self.client.post(self.url, {
+            'medio_origen': self.metodo_pago.pk, 'medio_destino': tarjeta.pk,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertFormError(form, 'medio_destino', 'El medio de destino elegido no es válido para esta transacción.')
+
+    def test_no_ofrece_el_formulario_de_pago_si_no_corresponde(self):
+        """Ni una transacción pendiente ni una con la tasa fijada ya vencida pueden pagarse."""
+        with self.subTest('no confirmada'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
+            self.transaccion.save(update_fields=['estado'])
+
+            response = self.client.get(self.url)
+
+            self.assertNotContains(response, 'name="medio_origen"')
+
+        with self.subTest('tasa vencida'):
+            self.transaccion.estado = CalculoOperacion.ESTADO_CONFIRMADA
+            self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+            self.transaccion.save(update_fields=['estado', 'tasa_vence_en'])
+
+            response = self.client.get(self.url)
+
+            self.assertNotContains(response, 'name="medio_origen"')
+
+    def test_rechaza_pagar_si_la_tasa_fijada_ya_vencio(self):
+        """Al intentar pagar con la tasa ya vencida, se informa y no se registra ningún pago."""
+        self.transaccion.tasa_vence_en = timezone.now() - timedelta(seconds=1)
+        self.transaccion.save(update_fields=['tasa_vence_en'])
+
+        response = self.client.post(self.url, {
+            'medio_origen': self.metodo_pago.pk, 'medio_destino': self.metodo_destino.pk,
+        }, follow=True)
+
+        self.assertContains(response, 'ya venció')
+        self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
+
+    def test_cancelar_desde_la_pantalla_de_pago_cancela_la_operacion(self):
+        """Una vez confirmada, el cliente también puede cancelarla desde la pantalla de pago."""
+        response = self.client.post(self.url, {'accion': 'cancelar'}, follow=True)
+
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoOperacion.ESTADO_CANCELADA)
+        self.assertContains(response, 'La operación fue cancelada')
+        self.assertFalse(Pago.objects.filter(calculo_operacion=self.transaccion).exists())
 
     def test_rechaza_pagar_una_transaccion_que_ya_fue_pagada(self):
         """Criterio 3: un segundo intento de pago, por cualquier medio, se rechaza."""
@@ -1920,34 +2124,36 @@ class PagarTransaccionOperacionTest(TestCase):
             monto=self.transaccion.monto_final,
         )
 
-        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+        response = self.client.post(self.url, {
+            'medio_origen': self.metodo_pago.pk, 'medio_destino': self.metodo_destino.pk,
+        }, follow=True)
 
         self.assertContains(response, 'ya fue pagada')
         self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 1)
 
-    def test_detalle_muestra_el_pago_registrado(self):
-        """Criterio 5: el detalle muestra medio, monto, fecha e identificador del pago.
+    def test_detalle_muestra_el_pago_registrado_o_su_ausencia(self):
+        """Criterio 5: sin pago lo indica explícitamente; con uno, muestra medio, monto, fecha e identificador.
 
         El pago llega siempre por confirmación asíncrona (Stripe o el
         webhook de SIPAP), nunca registrado por esta vista: se simula acá
         registrándolo directamente, igual que lo haría esa confirmación.
         """
-        Pago.registrar_pago(
-            self.transaccion, medio_pago=MetodoPago.TIPO_BILLETERA, proveedor='SIPAP',
-            identificador_externo='SPI-TEST-001', monto=self.transaccion.monto_final,
-        )
+        with self.subTest('sin pago'):
+            response = self.client.get(self.detalle_url)
 
-        response = self.client.get(self.detalle_url)
+            self.assertContains(response, 'Todavía no tiene un pago registrado')
 
-        self.assertContains(response, 'Billetera Digital')
-        self.assertContains(response, formato(self.transaccion.monto_final))
-        self.assertContains(response, 'SPI-TEST-001')
+        with self.subTest('con pago'):
+            Pago.registrar_pago(
+                self.transaccion, medio_pago=MetodoPago.TIPO_BILLETERA, proveedor='SIPAP',
+                identificador_externo='SPI-TEST-001', monto=self.transaccion.monto_final,
+            )
 
-    def test_detalle_indica_que_no_hay_pago_registrado_todavia(self):
-        """Criterio 5: sin pago, el detalle lo indica explícitamente."""
-        response = self.client.get(self.detalle_url)
+            response = self.client.get(self.detalle_url)
 
-        self.assertContains(response, 'Todavía no tiene un pago registrado')
+            self.assertContains(response, 'Billetera Digital')
+            self.assertContains(response, formato(self.transaccion.monto_final))
+            self.assertContains(response, 'SPI-TEST-001')
 
     def test_otro_cliente_no_puede_ver_ni_pagar_la_transaccion_ajena(self):
         """Criterio 6: otro cliente no puede ver el pago ni la transacción, ni iniciar un pago sobre ella."""
@@ -1968,6 +2174,43 @@ class PagarTransaccionOperacionTest(TestCase):
         self.assertEqual(response_post.status_code, 404)
         self.assertEqual(response_detalle.status_code, 404)
         self.assertEqual(Pago.objects.filter(calculo_operacion=self.transaccion).count(), 0)
+
+    def test_pagar_una_venta_pide_y_guarda_el_medio_destino_igual_que_una_compra(self):
+        """HU "Retiro de fondos" (GE-24): a qué cuenta se transfiere se elige al pagar, no al retirar.
+
+        Simétrico con una compra: ambos campos (de dónde sale el pago, a
+        dónde se transfiere el resultado) se piden en la misma pantalla y
+        en el mismo momento. Más adelante, pedir el retiro de esta venta
+        va a usar esta misma cuenta ya guardada, sin volver a preguntarla.
+        """
+        venta = CalculoOperacion.objects.create(
+            usuario=self.usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_VENTA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7300.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('73.00'), monto_final=Decimal('729700.00'),
+            estado=CalculoOperacion.ESTADO_CONFIRMADA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(),
+        )
+        medio_origen_usd = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_BILLETERA, nombre_titular='Cliente Pagar',
+            entidad_financiera='Banco Origen Venta', moneda=self.usd,
+        )
+        medio_destino_pyg = MetodoPago.objects.create(
+            cliente=self.cliente, tipo_medio=MetodoPago.TIPO_TRANSFERENCIA, nombre_titular='Cliente Pagar',
+            entidad_financiera='Banco Destino Venta', moneda=self.pyg,
+        )
+        url = reverse('divisas:pagar_transaccion', kwargs={'pk': venta.pk})
+
+        response = self.client.get(url)
+        self.assertContains(response, 'Recibís en')
+
+        response = self.client.post(
+            url, {'medio_origen': medio_origen_usd.pk, 'medio_destino': medio_destino_pyg.pk},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        venta.refresh_from_db()
+        self.assertEqual(venta.medio_destino, medio_destino_pyg)
 
     def test_cambiar_de_cliente_activo_avisa_en_vez_de_dar_un_error(self):
         """Si cambia el cliente activo (otro cliente propio), avisa en vez de dar 404 al pagar o ver el detalle."""
@@ -2000,7 +2243,7 @@ class PagarTransaccionCambioTest(TestCase):
     """Verifica la pantalla de pago de un cambio entre divisas: mismo flujo que compra/venta."""
 
     def setUp(self):
-        """Prepara un cliente con un método de pago y un cambio ya 'Confirmado'."""
+        """Prepara un cliente con medios de pago (origen en USD, destino en EUR) y un cambio ya 'Confirmado'."""
         self.usuario, self.cliente = _crear_cliente_logueado(
             self.client, 'cliente-pagar-cambio', 'PAGAR-CAMBIO-001', apellido='Cambio'
         )
@@ -2025,63 +2268,91 @@ class PagarTransaccionCambioTest(TestCase):
             vence_en=timezone.now() + timedelta(seconds=300),
             confirmado_en=timezone.now(),
         )
-        # Un método guardado de billetera digital, para la pantalla de
-        # selección: igual que transferencia, se paga vía SIPAP, nunca de
-        # forma manual.
+        # Un método guardado de billetera digital en USD, para pagar el
+        # cambio (medio de origen): igual que transferencia, se paga vía
+        # SIPAP, nunca de forma manual.
         self.metodo_pago = MetodoPago.objects.create(
             cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_BILLETERA,
             nombre_titular='Cliente Cambio',
             entidad_financiera='Banco Test',
+            moneda=self.usd,
+        )
+        # Y uno en EUR, para recibir el resultado del cambio (medio de
+        # destino): la pantalla de pago exige elegir ambos.
+        self.metodo_destino = MetodoPago.objects.create(
+            cliente=self.cliente,
+            tipo_medio=MetodoPago.TIPO_BILLETERA,
+            nombre_titular='Cliente Cambio',
+            entidad_financiera='Banco Destino',
+            moneda=self.eur,
         )
         self.url = reverse('divisas:pagar_transaccion_cambio', kwargs={'pk': self.transaccion.pk})
         self.detalle_url = reverse('divisas:detalle_transaccion_cambio', kwargs={'pk': self.transaccion.pk})
 
-    def test_pagar_con_un_metodo_de_billetera_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
-        """Una billetera digital se paga vía SIPAP, no de forma manual: sipap-sim simula ambas por igual."""
-        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk})
+    def test_pagar_con_billetera_o_transferencia_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
+        """Tanto una billetera digital como una transferencia se pagan vía SIPAP, no de forma manual."""
+        with self.subTest('billetera'):
+            response = self.client.post(self.url, {
+                'medio_origen': self.metodo_pago.pk, 'medio_destino': self.metodo_destino.pk,
+            })
 
-        url_sipap = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': self.transaccion.pk})
-        self.assertRedirects(
-            response, f'{url_sipap}?metodo_pago={self.metodo_pago.pk}', fetch_redirect_response=False,
-        )
-        self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
+            url_sipap = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': self.transaccion.pk})
+            self.assertRedirects(
+                response, f'{url_sipap}?metodo_pago={self.metodo_pago.pk}', fetch_redirect_response=False,
+            )
+            self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
+            self.transaccion.refresh_from_db()
+            self.assertEqual(self.transaccion.medio_destino, self.metodo_destino)
 
-    def test_pagar_con_un_metodo_de_tarjeta_redirige_a_stripe_en_vez_de_registrar_el_pago(self):
-        """Un método guardado de tipo 'tarjeta' se cobra vía Stripe, no de forma manual (HU "Pago con tarjeta vía Stripe")."""
+        with self.subTest('transferencia'):
+            transferencia = MetodoPago.objects.create(
+                cliente=self.cliente,
+                tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
+                nombre_titular='Cliente Cambio',
+                entidad_financiera='Banco Itaú',
+                numero_cuenta='777888',
+                tipo_cuenta='AHORRO',
+                moneda=self.usd,
+            )
+
+            response = self.client.post(self.url, {
+                'medio_origen': transferencia.pk, 'medio_destino': self.metodo_destino.pk,
+            })
+
+            url_sipap = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': self.transaccion.pk})
+            self.assertRedirects(
+                response, f'{url_sipap}?metodo_pago={transferencia.pk}', fetch_redirect_response=False,
+            )
+            self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
+
+    def test_una_tarjeta_nunca_es_una_opcion_para_pagar_un_cambio(self):
+        """Una tarjeta solo existe en PYG, y un cambio nunca se paga en PYG: nunca es una opción válida."""
         tarjeta = MetodoPago.objects.create(
             cliente=self.cliente,
             tipo_medio=MetodoPago.TIPO_TARJETA,
             nombre_titular='Cliente Cambio',
             entidad_financiera='Visa Test',
             numero_tarjeta='4111111111111111',
+            moneda=Divisa.objects.get(codigo='PYG'),
         )
 
-        response = self.client.post(self.url, {'metodo_pago': tarjeta.pk})
+        response = self.client.post(self.url, {
+            'medio_origen': tarjeta.pk, 'medio_destino': self.metodo_destino.pk,
+        })
 
-        url_stripe = reverse('divisas:pagar_transaccion_cambio_stripe', kwargs={'pk': self.transaccion.pk})
-        self.assertRedirects(
-            response, f'{url_stripe}?metodo_pago={tarjeta.pk}', fetch_redirect_response=False,
-        )
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertFormError(form, 'medio_origen', 'El medio de pago elegido no es válido para esta transacción.')
         self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
 
-    def test_pagar_con_un_metodo_de_transferencia_redirige_a_sipap_en_vez_de_registrar_el_pago(self):
-        """Un método guardado de tipo 'transferencia' se paga vía SIPAP, no de forma manual (HU SIPAP)."""
-        transferencia = MetodoPago.objects.create(
-            cliente=self.cliente,
-            tipo_medio=MetodoPago.TIPO_TRANSFERENCIA,
-            nombre_titular='Cliente Cambio',
-            entidad_financiera='Banco Itaú',
-            numero_cuenta='777888',
-            tipo_cuenta='AHORRO',
-        )
+    def test_cancelar_desde_la_pantalla_de_pago_cancela_el_cambio(self):
+        """Una vez confirmado, el cliente también puede cancelarlo desde la pantalla de pago."""
+        response = self.client.post(self.url, {'accion': 'cancelar'}, follow=True)
 
-        response = self.client.post(self.url, {'metodo_pago': transferencia.pk})
-
-        url_sipap = reverse('divisas:pagar_transaccion_cambio_sipap', kwargs={'pk': self.transaccion.pk})
-        self.assertRedirects(
-            response, f'{url_sipap}?metodo_pago={transferencia.pk}', fetch_redirect_response=False,
-        )
+        self.transaccion.refresh_from_db()
+        self.assertEqual(self.transaccion.estado, CalculoTriangulacion.ESTADO_CANCELADA)
+        self.assertContains(response, 'El cambio fue cancelado')
         self.assertFalse(Pago.objects.filter(calculo_triangulacion=self.transaccion).exists())
 
     def test_rechaza_pagar_un_cambio_que_ya_fue_pagado(self):
@@ -2094,7 +2365,9 @@ class PagarTransaccionCambioTest(TestCase):
             monto=self.transaccion.monto_origen,
         )
 
-        response = self.client.post(self.url, {'metodo_pago': self.metodo_pago.pk}, follow=True)
+        response = self.client.post(self.url, {
+            'medio_origen': self.metodo_pago.pk, 'medio_destino': self.metodo_destino.pk,
+        }, follow=True)
 
         self.assertContains(response, 'ya fue pagad')
         self.assertEqual(Pago.objects.filter(calculo_triangulacion=self.transaccion).count(), 1)

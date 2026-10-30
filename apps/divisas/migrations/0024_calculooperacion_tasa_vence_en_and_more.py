@@ -1,0 +1,42 @@
+
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('divisas', '0023_alter_calculooperacion_estado_and_more'),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name='calculooperacion',
+            name='tasa_vence_en',
+            field=models.DateTimeField(blank=True, help_text='Se fija al confirmar, sumándole a ese momento ConfiguracionVigencia.vigencia_pago_segundos(). Campo separado de "vence_en" (que gobierna solo Pendiente → Confirmar/Cancelar) para no interferir con ese mecanismo ya existente.', null=True, verbose_name='La tasa fijada vence en'),
+        ),
+        migrations.AddField(
+            model_name='calculotriangulacion',
+            name='tasa_vence_en',
+            field=models.DateTimeField(blank=True, help_text='Ver CalculoOperacion.tasa_vence_en: mismo criterio, aplicado al cambio entre divisas.', null=True, verbose_name='La tasa fijada vence en'),
+        ),
+        migrations.AddField(
+            model_name='configuracionvigencia',
+            name='pago_vigencia_segundos',
+            field=models.IntegerField(default=1800, help_text='Tiempo entre confirmar la operación y pagarla, antes de que la tasa fijada venza. Mínimo recomendado: 1800 (el mínimo real de Stripe Checkout).', verbose_name='Tiempo de espera para pagar con la tasa fijada (segundos)'),
+        ),
+        migrations.AddField(
+            model_name='pago',
+            name='fuera_de_plazo',
+            field=models.BooleanField(default=False, help_text='El pago llegó después de que venció la tasa fijada al confirmar (ver CalculoOperacion.tasa_vencida): se registra igual, nunca se pierde, pero la transacción pasa a "Pago fuera de plazo" en vez de "Pagada", porque ya no corresponde liquidarla a esa tasa.', verbose_name='Fuera de plazo'),
+        ),
+        migrations.AlterField(
+            model_name='calculooperacion',
+            name='estado',
+            field=models.CharField(choices=[('PENDIENTE_CONFIRMACION', 'Pendiente de confirmación'), ('CONFIRMADA', 'Confirmada'), ('CANCELADA', 'Cancelada'), ('VENCIDA', 'Vencida'), ('CANCELADA_COTIZACION', 'Cancelada por cambio de cotización'), ('CANCELADA_SALDO_INSUFICIENTE', 'Cancelada por saldo insuficiente de Global Exchange'), ('CANCELADA_FONDOS_CLIENTE', 'Cancelada por fondos insuficientes del cliente'), ('PAGADA', 'Pagada'), ('ENTREGA_FALLIDA', 'Pagada, pero la entrega al cliente falló'), ('PAGO_EXPIRADO', 'Pago fuera de plazo')], default='PENDIENTE_CONFIRMACION', max_length=30),
+        ),
+        migrations.AlterField(
+            model_name='calculotriangulacion',
+            name='estado',
+            field=models.CharField(choices=[('PENDIENTE_CONFIRMACION', 'Pendiente de confirmación'), ('CONFIRMADA', 'Confirmada'), ('CANCELADA', 'Cancelada'), ('VENCIDA', 'Vencida'), ('CANCELADA_COTIZACION', 'Cancelada por cambio de cotización'), ('CANCELADA_SALDO_INSUFICIENTE', 'Cancelada por saldo insuficiente de Global Exchange'), ('CANCELADA_FONDOS_CLIENTE', 'Cancelada por fondos insuficientes del cliente'), ('PAGADA', 'Pagada'), ('ENTREGA_FALLIDA', 'Pagada, pero la entrega al cliente falló'), ('PAGO_EXPIRADO', 'Pago fuera de plazo')], default='PENDIENTE_CONFIRMACION', max_length=30),
+        ),
+    ]

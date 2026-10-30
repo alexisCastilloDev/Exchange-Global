@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>SIPAP (simulado) · Editar cuenta</title>
+    <style>
+        body { font-family: sans-serif; max-width: 480px; margin: 40px auto; color: #222; }
+        h1 { font-size: 1.2rem; }
+        a.volver { color: #1565c0; text-decoration: none; }
+        .formulario { background: #f3f3f3; border-radius: 6px; padding: 16px; margin-top: 16px; }
+        label { display: block; font-weight: bold; margin-top: 12px; }
+        select, input[type="text"], input[type="number"] {
+            width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box;
+            border: 1px solid #ccc; border-radius: 4px;
+        }
+        input[type="checkbox"] { width: auto; margin-top: 8px; }
+        .errorlist { color: #b00020; list-style: none; padding: 0; margin: 4px 0 0; font-size: 0.9rem; }
+        .nonfield { color: #b00020; list-style: none; padding: 0; margin: 0 0 12px; }
+        button {
+            margin-top: 16px; padding: 10px 16px; border: none; border-radius: 4px;
+            cursor: pointer; font-size: 1rem; background: #2e7d32; color: white;
+        }
+    </style>
+</head>
+<body>
+    <p><a class="volver" href="{% url 'cuentas' %}">&larr; Volver a cuentas</a></p>
+    <h1>Editar cuenta {{ cuenta.numero }}</h1>
+
+    <div class="formulario">
+        {% if form.non_field_errors %}
+            <ul class="nonfield">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                {% if field.errors %}<ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            {% endfor %}
+            <button type="submit">Guardar cambios</button>
+        </form>
+    </div>
+</body>
+</html>

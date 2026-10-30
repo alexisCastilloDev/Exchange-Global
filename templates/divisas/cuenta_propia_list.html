@@ -1,0 +1,106 @@
+<!--
+Lista el saldo propio de Global Exchange en cada divisa, sincronizado con sipap-sim, y permite
+designar cuál cuenta de sipap-sim hace de casa de cambio en cada una.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: cuentas_propias, sin_cuenta_en_sipap, error_sincronizacion, sipap_panel_url, form_designar.
+Cada elemento de cuentas_propias trae además cuenta_sipap (dict con numero/titular/proveedor, o None).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Fondos propios - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Fondos propios</h1>
+        <p>Saldo que Global Exchange tiene disponible para entregar en cada divisa, sincronizado con sipap-sim.</p>
+    </div>
+    <a href="{{ sipap_panel_url }}" target="_blank" rel="noopener" class="btn btn-secondary">
+        <i class="bi bi-box-arrow-up-right me-1"></i>Crear cuentas en sipap-sim
+    </a>
+</div>
+
+{% if error_sincronizacion %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        No se pudo conectar con sipap-sim para actualizar algunos datos; se muestra el último valor conocido.
+    </div>
+{% endif %}
+
+{% if sin_cuenta_en_sipap %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        Todavía no hay ninguna cuenta designada como la casa de cambio en
+        <strong>{{ sin_cuenta_en_sipap|join:", " }}</strong>. Sin una, Global Exchange no va a poder confirmar
+        ninguna operación en esa divisa. Creá la cuenta en
+        <a href="{{ sipap_panel_url }}" target="_blank" rel="noopener">el panel de sipap-sim</a> y después
+        designala en la fila correspondiente, acá abajo.
+    </div>
+{% endif %}
+
+<div class="ge-card p-0">
+    <div class="ge-card__header">
+        <h2>Saldo por divisa</h2>
+        <span class="badge bg-secondary">{{ cuentas_propias|length }} divisas</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr><th>Divisa</th><th>Saldo</th><th>Cuenta designada</th><th>Actualizado</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for cuenta in cuentas_propias %}
+                <tr>
+                    <td><strong>{{ cuenta.divisa.codigo }}</strong> — {{ cuenta.divisa.nombre }}</td>
+                    <td>{{ cuenta.saldo|floatformat:2 }} {{ cuenta.divisa.simbolo }}</td>
+                    <td>
+                        {% if cuenta.cuenta_sipap %}
+                            {{ cuenta.cuenta_sipap.numero }}
+                            <div class="text-muted small">{{ cuenta.cuenta_sipap.proveedor }} — {{ cuenta.cuenta_sipap.titular }}</div>
+                        {% else %}
+                            <span class="text-danger">Sin designar</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ cuenta.actualizado_en }}</td>
+                    <td class="text-end">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{% url 'divisas:historial_cuenta_propia' codigo=cuenta.divisa.codigo %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-clock-history me-1"></i>Historial
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#designar-{{ cuenta.divisa.codigo }}">
+                                <i class="bi bi-link-45deg me-1"></i>{% if cuenta.cuenta_sipap %}Cambiar cuenta{% else %}Designar cuenta{% endif %}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="collapse" id="designar-{{ cuenta.divisa.codigo }}">
+                    <td colspan="5" class="bg-light">
+                        <form method="post" action="{% url 'divisas:designar_cuenta_propia' codigo=cuenta.divisa.codigo %}" class="row g-2 align-items-end py-2">
+                            {% csrf_token %}
+                            <div class="col-sm-4">
+                                <label class="form-label small mb-0">{{ form_designar.numero_cuenta.label }}</label>
+                                {{ form_designar.numero_cuenta }}
+                            </div>
+                            <div class="col-sm-4">
+                                <label class="form-label small mb-0">{{ form_designar.documento_titular.label }}</label>
+                                {{ form_designar.documento_titular }}
+                            </div>
+                            <div class="col-sm-auto">
+                                <button type="submit" class="btn btn-sm btn-primary">Confirmar</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4 text-muted">No hay ninguna divisa activa todavía.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="text-muted small mt-3">
+    La cuenta bancaria o billetera real de cada divisa se crea en sipap-sim, pero es Global Exchange quien
+    designa cuál le corresponde a cada una: sipap-sim no lo decide por sí solo, solo refleja esa designación.
+</p>
+{% endblock %}

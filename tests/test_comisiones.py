@@ -15,44 +15,43 @@ User = get_user_model()
 class ConfiguracionComisionResolucionTest(TestCase):
     """Verifica la prioridad de resolución del porcentaje de comisión."""
 
-    def test_usa_el_valor_por_defecto_sin_cliente(self):
-        """Sin cliente, se usa el porcentaje por defecto de settings."""
+    def test_prioridad_de_resolucion_del_porcentaje(self):
+        """Sin cliente usa el valor por defecto; con segmento, el del segmento; personalizada, gana siempre."""
         from django.conf import settings
 
-        porcentaje = ConfiguracionComision.porcentaje_para(None)
+        with self.subTest('sin cliente, valor por defecto'):
+            porcentaje = ConfiguracionComision.porcentaje_para(None)
 
-        self.assertEqual(porcentaje, Decimal(str(settings.COMISION_OPERACION_PORCENTAJE)))
+            self.assertEqual(porcentaje, Decimal(str(settings.COMISION_OPERACION_PORCENTAJE)))
 
-    def test_usa_la_comision_del_segmento_configurado(self):
-        """Si el segmento tiene una configuración, se usa ese porcentaje."""
-        cliente = Cliente.objects.create(
-            identificador='CI-COM-001',
-            nombre='Cliente',
-            apellido='Minorista',
-            email='minorista@test.com',
-            segmento='MINORISTA',
-        )
-        ConfiguracionComision.objects.create(segmento='MINORISTA', porcentaje=Decimal('2.500'))
+        with self.subTest('con segmento configurado'):
+            cliente = Cliente.objects.create(
+                identificador='CI-COM-001',
+                nombre='Cliente',
+                apellido='Minorista',
+                email='minorista@test.com',
+                segmento='MINORISTA',
+            )
+            ConfiguracionComision.objects.create(segmento='MINORISTA', porcentaje=Decimal('2.500'))
 
-        porcentaje = ConfiguracionComision.porcentaje_para(cliente)
+            porcentaje = ConfiguracionComision.porcentaje_para(cliente)
 
-        self.assertEqual(porcentaje, Decimal('2.500'))
+            self.assertEqual(porcentaje, Decimal('2.500'))
 
-    def test_comision_personalizada_prevalece_sobre_el_segmento(self):
-        """La comisión personalizada del cliente tiene prioridad sobre su segmento."""
-        cliente = Cliente.objects.create(
-            identificador='CI-COM-002',
-            nombre='Cliente',
-            apellido='VIP',
-            email='vip@test.com',
-            segmento='VIP',
-            comision_personalizada=Decimal('0.250'),
-        )
-        ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('1.500'))
+        with self.subTest('personalizada prevalece sobre el segmento'):
+            cliente = Cliente.objects.create(
+                identificador='CI-COM-002',
+                nombre='Cliente',
+                apellido='VIP',
+                email='vip@test.com',
+                segmento='VIP',
+                comision_personalizada=Decimal('0.250'),
+            )
+            ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('1.500'))
 
-        porcentaje = ConfiguracionComision.porcentaje_para(cliente)
+            porcentaje = ConfiguracionComision.porcentaje_para(cliente)
 
-        self.assertEqual(porcentaje, Decimal('0.250'))
+            self.assertEqual(porcentaje, Decimal('0.250'))
 
 
 class ConfiguracionComisionVistaTest(TestCase):
@@ -66,15 +65,17 @@ class ConfiguracionComisionVistaTest(TestCase):
         session['keycloak_roles'] = ['admin']
         session.save()
 
-    def test_cliente_no_puede_acceder_a_configurar_comisiones(self):
-        """Un rol cliente no puede ver ni editar la configuración de comisiones."""
-        session = self.client.session
-        session['keycloak_roles'] = ['cliente']
-        session.save()
+    def test_acceso_segun_el_rol(self):
+        """Admin y analista_cambiario pueden ver la configuración; un cliente, no."""
+        for rol, status_esperado in (('analista_cambiario', 200), ('cliente', 403)):
+            with self.subTest(rol=rol):
+                session = self.client.session
+                session['keycloak_roles'] = [rol]
+                session.save()
 
-        response = self.client.get(reverse('divisas:comisiones'))
+                response = self.client.get(reverse('divisas:comisiones'))
 
-        self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, status_esperado)
 
     def test_administrador_configura_comision_de_un_segmento(self):
         """El administrador puede crear la comisión de un segmento sin configurar."""
@@ -87,16 +88,6 @@ class ConfiguracionComisionVistaTest(TestCase):
         configuracion = ConfiguracionComision.objects.get(segmento='CORPORATIVO')
         self.assertEqual(configuracion.porcentaje, Decimal('0.800'))
         self.assertEqual(configuracion.actualizado_por, self.admin)
-
-    def test_analista_cambiario_tambien_puede_configurar_comisiones(self):
-        """El rol analista_cambiario tiene el mismo acceso que admin."""
-        session = self.client.session
-        session['keycloak_roles'] = ['analista_cambiario']
-        session.save()
-
-        response = self.client.get(reverse('divisas:comisiones'))
-
-        self.assertEqual(response.status_code, 200)
 
     def test_rechaza_comision_negativa(self):
         """No permite configurar un porcentaje de comisión negativo."""
@@ -132,32 +123,31 @@ class ComisionEnCalculoOperacionTest(TestCase):
         self.usd = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
         Cotizacion.objects.create(divisa=self.usd, tasa_compra=Decimal('7300.00'), tasa_venta=Decimal('7400.00'))
 
-    def test_compra_usa_la_comision_configurada_para_el_segmento(self):
-        """La comisión configurada para VIP reemplaza a la comisión por defecto."""
+    def test_la_comision_aplicada_respeta_la_misma_prioridad_que_porcentaje_para(self):
+        """La comisión del segmento se usa por defecto, pero la personalizada del cliente prevalece."""
         ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('2.000'))
 
-        response = self.client.post(
-            reverse('divisas:operar', kwargs={'tipo': 'compra'}),
-            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
-        )
+        with self.subTest('usa la comisión del segmento'):
+            response = self.client.post(
+                reverse('divisas:operar', kwargs={'tipo': 'compra'}),
+                {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
+            )
 
-        resultado = response.context['resultado']
-        self.assertEqual(resultado['comision_porcentaje'], Decimal('2.000'))
-        self.assertEqual(resultado['comision'], Decimal('14800.00'))
-        self.assertEqual(resultado['monto_final'], Decimal('754800.00'))
+            resultado = response.context['resultado']
+            self.assertEqual(resultado['comision_porcentaje'], Decimal('2.000'))
+            self.assertEqual(resultado['comision'], Decimal('14800.00'))
+            self.assertEqual(resultado['monto_final'], Decimal('754800.00'))
 
-    def test_comision_personalizada_del_cliente_prevalece(self):
-        """La comisión personalizada del cliente gana incluso con una comisión de segmento."""
-        ConfiguracionComision.objects.create(segmento='VIP', porcentaje=Decimal('2.000'))
-        self.cliente.comision_personalizada = Decimal('0.000')
-        self.cliente.save(update_fields=['comision_personalizada'])
+        with self.subTest('la personalizada del cliente prevalece'):
+            self.cliente.comision_personalizada = Decimal('0.000')
+            self.cliente.save(update_fields=['comision_personalizada'])
 
-        response = self.client.post(
-            reverse('divisas:operar', kwargs={'tipo': 'compra'}),
-            {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
-        )
+            response = self.client.post(
+                reverse('divisas:operar', kwargs={'tipo': 'compra'}),
+                {'tipo': 'COMPRA', 'divisa': str(self.usd.pk), 'monto': '100'},
+            )
 
-        resultado = response.context['resultado']
-        self.assertEqual(resultado['comision_porcentaje'], Decimal('0.000'))
-        self.assertEqual(resultado['comision'], Decimal('0.00'))
-        self.assertEqual(resultado['monto_final'], Decimal('740000.00'))
+            resultado = response.context['resultado']
+            self.assertEqual(resultado['comision_porcentaje'], Decimal('0.000'))
+            self.assertEqual(resultado['comision'], Decimal('0.00'))
+            self.assertEqual(resultado['monto_final'], Decimal('740000.00'))

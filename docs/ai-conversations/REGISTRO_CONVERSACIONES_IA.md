@@ -34,7 +34,12 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 18. [Sesión 18 — 11/10/2026 — Arqueo de Caja](#sesión-18--11102026--arqueo-de-caja)
 19. [Sesión 19 — 12/10/2026 — GE-54 — Movimientos extraordinarios de Caja](#sesión-19--12102026--ge-54--gestión-de-movimientos-extraordinarios-de-caja)
 20. [Sesión 20 — 12/10/2026 — GE-56 — Cierre de Caja](#sesión-20--12102026--ge-56--cierre-de-caja)
-21. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+21. [Sesión 21 — 26/10/2026 — GE-23 — Acreditación de fondos](#sesión-21--26102026--ge-23--acreditación-de-fondos)
+22. [Sesión 22 — 26/10/2026 — GE-19 — Movimientos y saldo de los métodos de pago](#sesión-22--26102026--ge-19--movimientos-y-saldo-de-los-métodos-de-pago)
+23. [Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos](#sesión-23--27102026--ge-24--retiro-de-fondos)
+24. [Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)](#sesión-27--30102026--generación-de-factura-electrónica-hu-del-cliente)
+25. [Sesión 28 — 30/10/2026 — GE-86 — Descarga de facturas electrónicas](#sesión-28--30102026--ge-86--descarga-de-facturas-electrónicas)
+26. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -2880,6 +2885,1361 @@ formato localizado correcto.
   cierre, antes de confirmarlo.
 - No se agregó ninguna restricción sobre cuántas veces puede abrir y cerrar cajas un cajero en un
   mismo día: cada apertura y cierre es independiente, igual que ya permite "Apertura de Caja".
+
+## Sesión 21 — 26/10/2026 — GE-23 — Acreditación de fondos
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-23
+**Rama:** `feature/GE-23`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Acreditación de fondos" (GE-23), con tests, docstrings, Sphinx actualizado y
+esta documentación de la conversación.
+
+> Como usuario cliente quiero recibir los fondos de una operación de compra en mi cuenta bancaria
+> o billetera electrónica para disponer de las divisas adquiridas.
+
+Criterios de aceptación:
+
+1. Dado que tengo una transacción de compra en estado "Pagada", cuando el sistema procesa la
+   acreditación, entonces transfiere el monto correspondiente a la cuenta bancaria o billetera
+   registrada como destino, usando el medio seleccionado (Stripe o SIPAP, según corresponda).
+2. Dado que la acreditación se confirma exitosamente, cuando se completa, entonces la transacción
+   pasa a estado "Acreditada" y queda registrada con fecha, hora y referencia externa de la
+   acreditación.
+3. Dado que la acreditación falla (cuenta inválida, servicio no disponible, etc.), cuando ocurre,
+   entonces la transacción permanece en estado "Pagada" (no pasa a "Acreditada"), se notifica el
+   error al usuario y se habilita un reintento.
+4. Dado que una transacción ya fue acreditada, cuando se intenta acreditar de nuevo, entonces el
+   sistema rechaza la operación e informa que los fondos ya fueron acreditados.
+5. Dado que no tengo un medio de acreditación configurado, cuando intento recibir la acreditación,
+   entonces el sistema me solicita completar esos datos antes de continuar.
+
+### Diagnóstico inicial
+
+Antes de escribir código se evaluó, criterio por criterio, qué parte de esta HU ya estaba resuelta
+por trabajo de sprints anteriores (``apps.divisas.entrega.realizar_entrega``, construido para la
+entrega automática de compra/venta/cambio apenas se confirma el pago):
+
+- **Criterios 1, 4 y 5 ya estaban cubiertos**: la entrega a la cuenta/billetera de destino ya
+  ocurre automáticamente al pagar (criterio 1, con una precisión: siempre sale por SIPAP, nunca
+  por Stripe, porque Stripe no puede depositarle a una cuenta arbitraria); la entrega es idempotente
+  por referencia, así que un segundo intento nunca duplica nada (criterio 4); y
+  ``PagarTransaccionForm`` ya exige elegir el medio de destino antes de poder pagar (criterio 5).
+- **Criterios 2 y 3 eran el trabajo real pendiente**: no existía ningún estado "Acreditada" (una
+  entrega exitosa dejaba la transacción en "Pagada" sin más, sin fecha ni referencia propia de la
+  acreditación), y el reintento ante una falla solo lo podía hacer un administrador desde "Entregas
+  pendientes" — el cliente no tenía ninguna visibilidad ni manera de reintentarlo él mismo.
+
+### Diseño
+
+- **Nuevo estado `ESTADO_ACREDITADA`** (con los campos `acreditado_en` y `referencia_acreditacion`)
+  en `CalculoOperacion` y `CalculoTriangulacion` (espejado en los dos modelos, mismo patrón que el
+  resto de los estados de esta app).
+- **`apps.divisas.entrega._es_acreditable(transaccion)`** (nueva): decide si, al entregarse con
+  éxito, corresponde pasar a "Acreditada". Una compra o un cambio entre divisas sí (reciben algo a
+  cambio); una venta, por ahora, no — "retirar" lo obtenido por una venta es la HU "Retiro de
+  fondos" (GE-24), todavía sin implementar, así que una venta exitosa se sigue quedando en "Pagada"
+  exactamente como antes de esta HU.
+- **`realizar_entrega()` modificado**: en el camino de éxito, si `_es_acreditable()` es verdadero,
+  pasa a "Acreditada" con `timezone.now()` y la misma referencia que ya se usó para pedirle la
+  transferencia a sipap-sim (no se inventa una nueva).
+- **`reintentar_entrega()` (nueva, extraída de la vista administrativa)**: devuelve la transacción
+  a "Pagada" y vuelve a llamar a `realizar_entrega()`, devolviendo `None` si no había nada que
+  reintentar. La reutilizan tanto `ReintentarEntregaView` (administrador, refactorizada para usar
+  este helper en vez de repetir la lógica) como el nuevo `post()` de
+  `DetalleTransaccionOperacionView`/`DetalleTransaccionCambioView` (criterio 3: ahora el propio
+  cliente ve el error en el detalle de su transacción y puede reintentarla él mismo, no solo un
+  administrador).
+- **Plantillas**: sección "Acreditación" (fecha y referencia) cuando corresponde, botón "Reintentar
+  entrega" para el cliente cuando quedó "Entrega fallida", y los mensajes de "esta transacción ya
+  fue pagada" (en las pantallas de pago y de inicio de cobro por Stripe/SIPAP) ahora también
+  reconocen "Acreditada" como ya pagada (criterio 4).
+- **Migración** `0025_calculooperacion_acreditado_en_and_more.py` (sin datos que migrar: los campos
+  nacen vacíos).
+
+### Tests
+
+`tests/test_entrega.py`: se corrigieron 2 tests existentes que asumían que una entrega exitosa
+dejaba la transacción en "Pagada" (ahora es "Acreditada" para una compra), y se agregaron: una
+compra exitosa queda "Acreditada" con fecha y referencia; una venta exitosa se sigue quedando en
+"Pagada" (todavía no hay HU de retiro); un cambio entre divisas también queda "Acreditada";
+`reintentar_entrega()` devuelve `None` sin tocar nada si no hay ninguna entrega fallida; y una clase
+nueva (`ReintentarEntregaClienteTest`) para el reintento desde el detalle del propio cliente (éxito,
+vuelve a fallar, y no puede reintentar ni ver una transacción de otro cliente).
+
+### Problema encontrado: `User.clientes` es una relación M2M explícita
+
+Los primeros tres tests de reintento desde el detalle del cliente fallaban con 403 en vez del
+código esperado. La causa: a diferencia de los tests administrativos de este mismo archivo (que
+nunca necesitaron la relación cliente-usuario), `DetalleTransaccionOperacionView.test_func()` y
+`_resolver_transaccion_propia()` dependen de `request.user.clientes` — una relación M2M explícita
+que hay que poblar con `usuario.clientes.add(cliente)`, no una simple FK inversa de
+`Cliente.objects.create(user=usuario, ...)`. Los fixtures de este archivo nunca habían necesitado
+hacer ese `.add()` porque las dos clases de test anteriores (`EntregasPendientesListViewTest`,
+`ReintentarEntregaViewTest`) solo probaban la vista administrativa, que no depende de esa relación.
+
+### Resultado final
+
+- `tests/test_entrega.py`: **22/22** verde.
+- Regresión dirigida (`test_operaciones`, `test_pagos_stripe`, `test_pagos_sipap`, `test_divisas`):
+  **273/273** verde.
+- `makemigrations --check --dry-run`: sin cambios pendientes.
+- Sphinx: se encontró que `apps.divisas.entrega` y `apps.divisas.casa_de_cambio` (creados en una
+  sesión anterior) nunca habían tenido su propio `.rst` — se agregaron ambos al `toctree` de
+  `apps.divisas.rst`, más la entrada de `ReintentarEntregaView` (modificada en esta sesión) en
+  `apps.divisas.views.rst`. La única advertencia que queda con `-W` es preexistente y ajena a esta
+  HU (un resaltado de sintaxis en `templates.rst` sobre `metodo_pago_list.html`, de la sesión de
+  rediseño de métodos de pago).
+
+### Pendiente / fuera de alcance
+
+- "Retiro de fondos" (GE-24): una venta exitosa sigue quedando en "Pagada", sin un estado
+  "Retirada" propio ni reintento visible para el cliente en ese caso — es una HU aparte, todavía no
+  implementada.
+- La advertencia preexistente de Sphinx sobre `metodo_pago_list.html` no se corrigió: es ajena a
+  esta HU y no impide que la documentación se genere (solo aparece con `-W`, no en la generación
+  normal que usa `entrypoint.sh` en producción).
+
+## Sesión 22 — 26/10/2026 — GE-19 — Movimientos y saldo de los métodos de pago
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-19 (Gestión de métodos de pago del cliente) — mejora pedida directamente,
+sin un ticket de Jira propio todavía.
+**Rama:** `feature/GE-23` (continuación de la sesión anterior, sin cambiar de rama)
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+> - En cada cuenta bancaria, billetera digital o tarjeta de crédito/débito, se puedan ver los
+>   movimientos que se hicieron con ella en el sistema (para la tarjeta, se entendía que había que
+>   extraer la información de Stripe).
+> - En el sistema se pueda ver la información de saldo de las cuentas bancarias, billeteras
+>   digitales y tarjetas de crédito/débito.
+
+### Diagnóstico inicial
+
+Dos decisiones de diseño importantes antes de escribir código, ambas explicadas en la respuesta
+antes de implementar:
+
+- **"Movimientos" no necesita llamar a Stripe.** Global Exchange ya registra, en su propia base,
+  cada pago (`Pago.metodo_pago`) y cada entrega recibida
+  (`CalculoOperacion`/`CalculoTriangulacion.medio_destino`). Volver a pedirle esos mismos datos a
+  Stripe duplicaría información que ya es exacta de este lado. Al revisar esto se encontró que
+  `Pago.metodo_pago` **no se estaba completando para los pagos con tarjeta** (sí para SIPAP): los
+  dos puntos de `apps.divisas.pagos_stripe` que llaman a `Pago.registrar_pago` (cobro directo y el
+  webhook de Checkout) nunca pasaban `metodo_pago=...`. Sin corregir eso, "movimientos de una
+  tarjeta" habría quedado siempre vacío.
+- **"Saldo" de una tarjeta no es algo que Stripe pueda dar.** Stripe procesa cobros; no es el
+  banco emisor de la tarjeta, así que no tiene (ni expone) su saldo disponible ni su límite de
+  crédito. Se decidió no inventar ese número: para una tarjeta se muestran los movimientos, y en
+  el lugar del saldo se explica por qué no hay ninguno. Para una cuenta bancaria o billetera, en
+  cambio, el saldo real sí existe del otro lado (sipap-sim), así que se consulta en vivo.
+
+### Diseño
+
+- **`GET /api/cuentas/validar/` (sipap-sim)** ahora devuelve también `saldo`, además de lo que ya
+  devolvía (`titular`, `proveedor`, `tipo_proveedor`, `moneda`). Es el mismo endpoint que ya se usa
+  al registrar una cuenta o billetera; se reutiliza para consultar el saldo actual de una ya
+  guardada, en vez de sumar un endpoint nuevo.
+- **Atribución de `Pago.metodo_pago` para tarjeta (corrección, no pedida explícitamente pero
+  necesaria):**
+  - `_cobrar_con_tarjeta_guardada` ahora recibe el `MetodoPago` completo (antes solo
+    `referencia_externa`) y lo pasa a `Pago.registrar_pago`.
+  - La sesión de Stripe Checkout (cobro que necesita confirmarse en la página de Stripe) ahora
+    manda `metodo_pago_id` en sus `metadata`, igual que ya hace con `transaccion_id`; el webhook
+    (`_procesar_sesion_completada`) lo usa para resolver el `MetodoPago` y pasarlo también. Si ese
+    dato faltara (sesiones viejas), el pago se registra igual, sin tarjeta asociada, en vez de
+    romper.
+- **`apps.clientes.views._movimientos_de_metodo_pago(metodo)`** (nueva, privada): junta, de más
+  reciente a más antiguo, los pagos hechos con ese medio (`metodo.pagos`) y, solo para cuenta o
+  billetera (nunca tarjeta), las entregas recibidas en él
+  (`CalculoOperacion`/`CalculoTriangulacion.filter(medio_destino=metodo)`). Cada ítem lleva ya
+  resuelta la URL de detalle correspondiente (compra/venta o cambio), para no tener que distinguir
+  el tipo en el template.
+- **`apps.clientes.views.metodo_pago_movimientos`** (nueva vista, con el mismo patrón de
+  verificación de rol y dueño que el resto de las vistas de `MetodoPago` en este módulo): además
+  de los movimientos, resuelve el saldo (consultando sipap-sim para cuenta/billetera, u omitiéndolo
+  con una explicación para tarjeta).
+- **`templates/clientes/metodo_pago_movimientos.html`** (nueva) y un botón "Movimientos y saldo"
+  agregado a `_metodo_pago_card.html`, visible en cada tarjeta de la lista de métodos de pago.
+
+### Tests
+
+`tests/test_metodos_pago.py` (clase nueva `MetodoPagoMovimientosTest`, 8 tests): una billetera que
+se usó para pagar y para recibir muestra ambos movimientos junto con el saldo real consultado a
+sipap-sim; si sipap-sim no responde, se avisa sin romper; una tarjeta solo muestra sus pagos, nunca
+consulta a sipap-sim y explica por qué no hay saldo; una tarjeta nunca aparece como medio de
+destino; un cambio entre divisas (no solo una compra/venta) también cuenta como movimiento recibido
+y enlaza al detalle correcto; sin ningún movimiento se avisa sin error; no se puede ver el método de
+otro cliente; sin rol cliente, redirige. `tests/test_pagos_stripe.py`: se agregaron aserciones de
+`pago.metodo_pago` a los dos tests existentes de pago con tarjeta (cobro directo y webhook), más un
+test nuevo para el caso sin `metodo_pago_id` en los metadatos. `sipap_sim/tests/test_api.py`: se
+agregó la aserción de `saldo` al test existente de `validar_cuenta`.
+
+### Resultado final
+
+- `tests/test_metodos_pago.py`: **37/37** verde.
+- `tests/test_pagos_stripe.py`: **52/52** verde.
+- `sipap_sim/tests/`: **71/71** verde.
+- `makemigrations --check --dry-run`: sin cambios pendientes (esta mejora no agrega ni modifica
+  ningún campo).
+- Sphinx: sin advertencias nuevas (`apps.clientes.views.rst` ya documenta el módulo entero con
+  `automodule`, así que la vista nueva se incluye sola; se agregó
+  `metodo_pago_movimientos.html` a `templates.rst`, junto a los demás templates de esta app). La
+  única advertencia que sigue apareciendo con `-W` es la misma preexistente y ajena, ya señalada en
+  la Sesión 21.
+- Queda pendiente la verificación completa de `tests/` (corriendo en segundo plano al cerrar esta
+  sesión).
+
+### Pendiente / fuera de alcance
+
+- El saldo de una tarjeta sigue sin mostrarse, a propósito: no hay ninguna fuente real (ni Stripe
+  ni ningún otro sistema de este proyecto) de la que obtenerlo sin inventarlo.
+- No se creó ningún ticket de Jira para esta mejora; si corresponde, habría que darla de alta bajo
+  GE-19 (Gestión de métodos de pago del cliente), la epic más cercana a lo que pide.
+
+## Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** GE-24
+**Rama:** `develop`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Retiro de fondos" (GE-24), con tests, docstrings, Sphinx actualizado y esta
+documentación de la conversación.
+
+> Como usuario cliente quiero retirar los fondos obtenidos mediante una operación de venta para
+> recibirlos en mi cuenta bancaria o billetera electrónica.
+
+Criterios de aceptación:
+
+1. Dado que tengo una transacción de venta pagada/confirmada con fondos disponibles, cuando
+   solicito el retiro, entonces el sistema procesa la transferencia hacia la cuenta bancaria o
+   billetera que indico, usando Stripe o SIPAP según el medio elegido.
+2. Dado que el retiro se confirma exitosamente, cuando se completa, entonces la transacción pasa a
+   estado "Retirada" y queda registrada con fecha, hora y referencia externa.
+3. Dado que el retiro falla, cuando ocurre, entonces la transacción no cambia a "Retirada", se
+   notifica el error al usuario y se permite reintentar.
+4. Dado que intento retirar fondos de una transacción ya retirada, cuando lo intento, entonces el
+   sistema rechaza la operación e informa que ya fue procesada.
+5. Dado que el monto a retirar excede el disponible de esa operación, cuando se valida, entonces el
+   sistema rechaza el retiro antes de iniciar cualquier transferencia externa.
+
+### Diagnóstico inicial
+
+GE-24 es la mitad que le faltaba a GE-23: desde que existe `apps.divisas.entrega.realizar_entrega`,
+una venta exitosa se entrega automáticamente apenas se confirma el pago, igual que una compra o un
+cambio, pero se queda en "Pagada" sin más (``_es_acreditable`` devolvía `False` para una venta a
+propósito, dejando esto anotado como "HU aparte, todavía no implementada").
+
+El criterio 1 dice "cuando solicito el retiro", lo que en una primera lectura sugiere un pedido
+explícito y aparte del cliente, distinto de cómo ya funciona una compra (automático, sin ninguna
+acción extra). Esa lectura se intentó primero y se corrigió dos veces durante esta sesión (ver "Dos
+correcciones de diseño" más abajo): el diseño final, confirmado con el usuario, es que **el retiro
+de una venta es tan automático como la acreditación de una compra** — se paga y se recibe, al mismo
+momento, sin ningún paso aparte. Lo único que GE-24 agrega de verdad sobre lo que ya hacía GE-23 es
+el **nombre** del estado final ("Retirada" en vez de "Acreditada", para que el cliente distinga de
+un vistazo si fue Global Exchange quien le entregó algo o si fue él quien retiró lo suyo).
+
+Sobre "Stripe o SIPAP según el medio elegido" del criterio 1: en la práctica, el destino de un
+retiro siempre es una cuenta o billetera (nunca una tarjeta, Stripe no puede depositarle a una), así
+que siempre sale por SIPAP — la misma precisión que ya se había hecho notar para GE-23.
+
+Sobre el criterio 5 ("antes de iniciar cualquier transferencia externa"): se cubre con el mismo
+chequeo que ya existía para una compra, sin agregar nada — `_verificar_saldo_casa_de_cambio` ya se
+llama, para los dos tipos de `CalculoOperacion` por igual, en el momento de "Confirmar" (antes de
+que exista ningún pago), y vuelve a confirmarse de forma pesimista dentro de la misma
+`realizar_entrega` (vía `CuentaPropia.ajustar_saldos`) antes de tocar el saldo. Nada de esto es
+nuevo de GE-24: ya estaba ahí desde GE-23.
+
+### Diseño (versión final)
+
+- **Nuevo estado `ESTADO_RETIRADA`**, con `retirado_en` y `referencia_retiro`, agregado **solo** a
+  `CalculoOperacion` — a diferencia de todos los estados anteriores, deliberadamente no se espeja en
+  `CalculoTriangulacion` (un cambio entre divisas nunca es una venta, así que nunca podría llegar a
+  "Retirada"; espejarlo ahí solo agregaría una columna y una opción muertas).
+- **`apps.divisas.entrega._es_acreditable` renombrada a `_es_retiro`**, con el sentido invertido
+  (antes decía si correspondía "Acreditada"; ahora dice si corresponde "Retirada", solo para una
+  venta). `realizar_entrega()` elige entre `acreditado_en`/`referencia_acreditacion` o
+  `retirado_en`/`referencia_retiro` según el resultado, pero el resto de la función —cuándo se
+  llama, en qué orden, cómo falla— es exactamente el mismo mecanismo que ya tenía GE-23, sin ninguna
+  rama nueva por tipo de transacción.
+- **`estados_con_pago_ya_registrado(modelo)` (nueva, en `models.py`)**: los mensajes de "esta
+  transacción ya fue pagada" (en pago con tarjeta, por SIPAP, y al intentar pagar de nuevo) ahora
+  también reconocen "Retirada" como ya pagada, sin que ese chequeo rompa para
+  `CalculoTriangulacion` (que no tiene ese estado) — encapsula el `hasattr` necesario en un solo
+  lugar en vez de repetirlo en los cuatro puntos que lo usan.
+- **Plantilla `detalle_transaccion_operacion.html`**: sección "Retiro" (fecha y referencia), paralela
+  a la sección "Acreditación" que ya existía; el bloque de "Entrega fallida" distingue "reintentar
+  retiro" de "reintentar entrega" solo en el texto, usando el mismo botón y el mismo `post()` que ya
+  existían para GE-23 — ninguna acción nueva, ninguna pantalla nueva.
+- **Migración** `0026_calculooperacion_retirada_and_more.py` (sin datos que migrar: los campos
+  nacen vacíos).
+
+### Dos correcciones de diseño, hasta llegar a "se paga y se recibe"
+
+La primera versión trató el retiro como un pedido explícito y aparte: agregaba una vista/acción
+nueva (`_retirar_fondos`, con `accion="retirar"` en `DetalleTransaccionOperacionView`), una función
+`es_entrega_automatica()` para que una venta pagada se quedara en "Pagada" en vez de entregarse
+sola, y un formulario nuevo (`RetirarFondosForm`) para elegir la cuenta de destino en ese momento,
+sacando ese mismo campo de `PagarTransaccionForm` para no pedirlo dos veces.
+
+El usuario señaló dos problemas reales de esa primera versión: rompía la simetría con una compra
+(donde el medio de destino se elige al pagar, no después) y, además, `_movimientos_de_metodo_pago`
+(HU "Movimientos y saldo de los métodos de pago") mostraba la cuenta de destino como "Recibiste" en
+cuanto `medio_destino` quedaba asignado, sin importar si la transacción ya estaba "Acreditada"/
+"Retirada" de verdad.
+
+Primera corrección (todavía con retiro explícito): `PagarTransaccionForm` vuelve a pedir
+`medio_destino` siempre, para los tres tipos de transacción por igual; se elimina `RetirarFondosForm`
+y `_retirar_fondos` pasa a ser un botón de confirmación simple que usa la cuenta ya guardada al
+pagar, sin volver a pedirla.
+
+Segunda corrección (la definitiva): el usuario aclaró que el retiro no debería ser un paso aparte en
+absoluto — "se paga y se recibe", igual que una compra. Se eliminó por completo la noción de un
+pedido explícito: `es_entrega_automatica()` desaparece (y con ella, la condición que agregaba en los
+tres puntos donde se llama a `realizar_entrega()` tras un pago), y `DetalleTransaccionOperacionView`
+vuelve a tener una sola acción por `POST` ("Reintentar", igual que en GE-23) — ninguna "Retirar
+fondos" aparte. Una venta pagada ahora se entrega sola, en el mismo instante que una compra o un
+cambio, y queda "Retirada" en vez de "Pagada" sin que el cliente haga nada más.
+
+En las dos correcciones, `_movimientos_de_metodo_pago` quedó igual: filtra por `estado` en
+`ACREDITADA`/`RETIRADA`, nunca solo por `medio_destino`, así que un "Recibiste" nunca aparece antes
+de que la transferencia se haya resuelto de verdad — esa parte era correcta independientemente de
+cuándo se elige la cuenta o de si el retiro es automático o explícito.
+
+### Tests
+
+`tests/test_entrega.py`: se corrigió el test que asumía que una venta exitosa se quedaba en
+"Pagada" (ahora pasa a "Retirada", con una cuenta de destino en PYG propia del escenario, ya elegida
+al pagar). La clase `RetirarFondosVentaTest` (de la primera versión, con retiro explícito) se
+eliminó por completo al no existir más esa acción. `tests/test_operaciones.py`: un test confirma que
+pagar una venta pide y guarda `medio_destino` igual que una compra. `tests/test_pagos_sipap.py`: un
+test confirma que una venta pagada por SIPAP dispara `realizar_entrega` automáticamente, igual que
+una compra (antes de la segunda corrección, probaba lo contrario). `tests/test_metodos_pago.py`: un
+test confirma que una venta "Pagada" (con `medio_destino` ya asignado) todavía no aparece como
+"Recibiste" en movimientos, y que sí aparece apenas pasa a "Retirada".
+
+### Resultado final
+
+- Suite completa (`tests/`, incluido el cluster de caja consolidado en la sesión de reducción de
+  tests): **383/383** verde.
+- `makemigrations --check --dry-run`: sin cambios pendientes.
+- Sphinx (`-W`): se agregó `_es_retiro` a `apps.divisas.entrega.rst` (en lugar de `_es_acreditable`)
+  y `estados_con_pago_ya_registrado` a `apps.divisas.models.rst`. `es_entrega_automatica` y
+  `RetirarFondosForm` se agregaron y se volvieron a sacar de sus `.rst` al eliminarse ambos. Sin
+  advertencias nuevas; sigue la única preexistente y ajena a esta HU ya señalada en la Sesión 21
+  (`templates.rst`/`metodo_pago_list.html`).
+- De paso, se encontró y corrigió un bug preexistente y ajeno a esta HU en
+  `tests/test_cierre_caja.py` (de la sesión de reducción de tests): comparaba
+  `Caja.abierta_en`/`cerrada_en` (en UTC) con `.strftime()` directo contra lo que el template
+  muestra en hora local, así que fallaba cerca de medianoche. Se corrigió con
+  `timezone.localtime(...)` antes de formatear.
+
+### Pendiente / fuera de alcance
+
+- No se creó ningún ticket de verificación en Jira para cerrar GE-24 como "Listo"; queda a criterio
+  del equipo actualizar su estado ahí.
+- El criterio 5 se sigue cubriendo con el mismo chequeo optimista que ya usa el paso de "Confirmar"
+  (verificar antes de intentar, sin reservar el saldo): dos operaciones que compitieran por el mismo
+  saldo escaso podrían, en teoría, pasar los dos ese chequeo antes de que `realizar_entrega` ajuste
+  el saldo real. Es la misma limitación ya aceptada para GE-23, no algo nuevo de esta HU.
+
+## Sesión 24 — 29/10/2026 — Integración con API de facturación electrónica (SIFEN / Factura Segura)
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** (sin número de Jira asignado en el pedido original)
+**Rama:** `feature/GE-41`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Implementar la HU "Integración con API de facturación electrónica", con tests, docstrings, Sphinx
+actualizado y esta documentación de la conversación.
+
+> Como administrador quiero que las operaciones realizadas se emitan ante SIFEN mediante su API
+> para cumplir con la normativa de facturación electrónica y contar con comprobantes válidos.
+
+Criterios de aceptación (de partida; ver "Ajustes a los criterios" más abajo):
+
+1. Cuando una operación pasa a "Pagada", el sistema la emite ante SIFEN con los datos completos de
+   la operación.
+2. Cuando SIFEN confirma la emisión, se guarda el CDC y la operación queda "Aprobada".
+3. Cuando SIFEN rechaza la emisión, se registra el error y queda "Pendiente/Rechazada", sin
+   bloquear la transacción ya confirmada y pagada.
+4. Ante un timeout, el sistema reintenta automáticamente o encola el reintento, sin duplicar la
+   emisión.
+5. Si la operación ya fue emitida con éxito, no se vuelve a emitir: se devuelve el documento
+   existente.
+
+Junto con el pedido, el usuario adjuntó el PDF completo de la "API de Factura Segura para ESI" (39
+páginas) y los datos reales de habilitación en el ambiente de **TEST** de Factura Segura para
+Global Exchange (RUC, timbrado, actividades económicas, establecimiento/punto de expedición, y los
+rangos de numeración habilitados: Facturas `0000623`-`0000634`, Notas de crédito `0000241`-
+`0000252`), junto con una advertencia explícita y determinante para todo el diseño de esta sesión:
+
+> Ten en cuenta que solo puedo generar 11 facturas, si se puede no generes ninguno o genera 1 solo
+> para probar que todo esté bien.
+
+### Dos preguntas antes de escribir código
+
+A diferencia de otras HU de esta bitácora, acá se decidió preguntar **antes** de implementar nada,
+en vez de construir sobre una interpretación propia y corregirla después (la lección de la sesión
+anterior, GE-24, donde una lectura demasiado literal de los criterios tuvo que corregirse dos veces
+ya construida). Dos preguntas, con sus respuestas:
+
+- **¿Para qué tipos de transacción se debe emitir la Factura Electrónica?** El criterio 1 solo
+  menciona "operaciones", sin precisar si incluye una venta o un cambio entre divisas. Se preguntó
+  explícitamente; el usuario eligió **"los tres tipos (compra, venta y cambio)"**, descartando la
+  alternativa más conservadora ("solo compra") que se había sugerido como recomendada.
+- **¿Hacemos ya una llamada real a la API de TEST, o primero todo con mocks?** Dado que solo quedan
+  11 números reales disponibles, se preguntó antes de escribir una sola línea de cliente HTTP. El
+  usuario eligió **"primero todo con mocks, prueba en vivo después"**. Esta sesión se atuvo a esa
+  respuesta de forma estricta: **no se hizo ninguna llamada real a Factura Segura**, ni para
+  probar, ni para depurar; toda la suite de pruebas nuevas mockea `requests.post` sin excepción (ver
+  "Tests").
+
+### Diseño
+
+- **Numeración (recurso real y finito) — `ContadorDocumentoElectronico`** (`apps/divisas/models.py`):
+  una fila por tipo de documento (Factura / Nota de crédito), con `desde`/`hasta` (el rango que
+  Factura Segura habilitó) y `ultimo_asignado`. El método `siguiente_numero` reserva el próximo
+  número bajo `select_for_update()` (mismo patrón de bloqueo que ya usa
+  `CuentaPropia.ajustar_saldos`, HU "Acreditación de fondos"), y lo deja "quemado" apenas se reserva
+  — nunca se libera, ni siquiera si la emisión después falla —, porque perder un número del rango es
+  preferible a arriesgar un `dNumDoc` duplicado. Se agota con `RangoDocumentosAgotadoError`.
+  Migración de datos `0028_seed_contador_documento_electronico.py`: siembra el rango real tal como
+  lo comunicó el usuario (`0000623`-`0000634` para Facturas), sin asignar ningún número — la
+  migración deja una nota explícita para que, antes de cualquier emisión real, un administrador
+  confirme con Factura Segura si `0000623` ya está consumido (el usuario avisó 11 disponibles sobre
+  un rango nominal de 12) y ajuste `ultimo_asignado` a mano si corresponde, en vez de confiar a
+  ciegas en que el rango está intacto.
+- **`DocumentoElectronico`** (mismo archivo): una fila por transacción facturada, con el mismo
+  patrón que `Pago` (`OneToOneField` a `CalculoOperacion`/`CalculoTriangulacion`, exactamente una de
+  las dos — ver su `clean()` — lo que además garantiza por diseño de base de datos la idempotencia
+  del criterio 5, no solo por un chequeo en código). Guarda `numero_documento`, `estado` (Generado /
+  Aprobado / Aprobado con observación / Rechazado / Error de SIFEN / Error al generar), `cdc`,
+  `estado_sifen`/`desc_sifen` (la respuesta cruda de SIFEN) y `error_generacion`.
+- **`apps/divisas/factura_electronica.py`** (módulo nuevo, mismo rol que `apps.divisas.entrega` pero
+  para la factura, no para la entrega de dinero):
+  - `emitir_documento_electronico(transaccion)`: punto de entrada idempotente (criterio 5) — si ya
+    existe un documento para la transacción, lo devuelve sin llamar a la API. Si no, reserva un
+    número y llama a `generar_de`.
+  - `intentar_emitir_documento_electronico(transaccion)`: el wrapper que de verdad se llama desde
+    los puntos de pago — nunca deja escapar ninguna excepción (criterio 3: una falla al facturar
+    jamás debe poder revertir ni bloquear un pago ya confirmado).
+  - `consultar_estado_sifen(documento)`: `get_estado_sifen`, de solo lectura, para pasar de
+    "Generado" a "Aprobado"/"Aprobado con observación"/"Rechazado"/"Error de SIFEN" (criterios 2 y
+    3). Se puede repetir sin ningún riesgo.
+  - `reintentar_emision(documento)`: reintento manual, solo para un documento en "Error al generar",
+    que reutiliza el mismo número ya reservado.
+- **Reinterpretación deliberada del criterio 4 ("reintenta automáticamente... sin duplicar")**: la
+  propia documentación de Factura Segura advierte textualmente que la petición es síncrona y que,
+  ante un timeout, "el resultado queda sin confirmar, ya que el servidor pudo haber procesado la
+  solicitud" y que hay que "verificar su resultado... o solicitar asistencia a soporte" antes de
+  reenviarla — y no hay, a diferencia de sipap-sim, ningún mecanismo documentado para consultar un
+  documento por número antes de tener su CDC. Por eso se decidió que **no hay ningún reintento
+  automático de `generar_de`**, ni ante un timeout ni ante un rechazo: ambos casos dejan el
+  documento en "Error al generar", visible para un administrador, que debe confirmar con soporte si
+  el documento ya se generó del otro lado antes de pedir un reintento explícito. Reintentar sin esa
+  verificación sería, con los datos disponibles, más arriesgado que simplemente esperar.
+- **Puntos de enganche**: `intentar_emitir_documento_electronico` se llama exactamente en los mismos
+  3 lugares que ya disparan `apps.divisas.entrega.realizar_entrega` tras un pago confirmado
+  (`apps/divisas/pagos_stripe.py`: cobro directo con tarjeta y webhook de Checkout;
+  `apps/divisas/pagos_sipap.py`: webhook de confirmación), siempre justo después, nunca en su lugar
+  — son dos procesos independientes (facturar y entregar), cada uno aislado de las fallas del otro.
+- **Pantalla administrativa "Documentos electrónicos"** (`DocumentosElectronicosListView`, admin-only
+  igual que "Entregas pendientes"): lista cada documento con su número, cliente, estado y CDC, con
+  un botón de reintentar visible solo para los que están en "Error al generar"
+  (`ReintentarEmisionDocumentoElectronicoView`). Bloque de solo lectura (número/estado/CDC) agregado
+  también en el detalle de cada transacción (`detalle_transaccion_operacion.html` y
+  `detalle_transaccion_cambio.html`).
+- **Modelado del comprobante** (decisiones razonadas, a revalidar antes de cualquier emisión real —
+  ver "Ajustes a los criterios y limitaciones conocidas"):
+  - El receptor se modela siempre como "No Contribuyente"/consumidor final, identificado por el CI
+    genérico que ya guarda `Cliente.identificador`. `Cliente` no tiene, hoy, ningún dígito
+    verificador (DV) de RUC separado: implementar el algoritmo de verificación paraguayo sin poder
+    probarlo contra un caso real es más riesgoso que facturar a consumidor final, que la propia API
+    admite y que es fiscalmente válido para cualquier cliente que no pida factura con RUC.
+  - La moneda de la operación (`cMoneOpe`) es siempre la que Global Exchange **entrega** al cliente
+    (`moneda_a_entregar`, la misma función ya usada por `apps.divisas.entrega`): modela las tres
+    operaciones de forma uniforme como "Global Exchange le entrega una divisa al cliente", que es lo
+    que el usuario pidió al elegir facturar los tres tipos con el mismo documento.
+  - Un único ítem (`gCamItem`), por el monto a entregar, exento de IVA (`iAfecIVA='3'`): no hay IVA
+    sobre el tipo de cambio de divisas.
+  - El medio de pago (`gPaConEIni`) se mapea desde `Pago.medio_pago`, ya registrado por GE-25/Stripe/
+    SIPAP: tarjeta → `iTiPago='3'`; transferencia o billetera → `iTiPago='5'`.
+
+### Ajustes a los criterios y limitaciones conocidas
+
+El propio pedido invitó a corregir los criterios si no cuadraban con una implementación sólida
+("los criterios pueden no estar muy de acuerdo a la implementación real... si ve que algo no cuadra
+tanto, modificamos los criterios"). El ajuste principal es al criterio 4: en vez de "reintenta
+automáticamente", queda **"encola para reintento manual, nunca automático"**, por el motivo ya
+explicado (sin forma segura y documentada de confirmar qué pasó tras un timeout). El resto de los
+criterios se mantienen tal como se pidieron.
+
+Limitación conocida, documentada en el propio código (`apps/divisas/factura_electronica.py`,
+función `_armar_de`): el armado exacto del JSON de `generar_de` reúne los campos ya decididos con el
+usuario, pero su agrupación jerárquica no quedó verificada campo por campo contra el manual completo
+de SIFEN — antes de la primera emisión real hay que recorrerlo contra ese manual y ajustarlo si no
+calza, exactamente como el propio criterio invita a hacer.
+
+### Tests
+
+**Ninguna prueba de esta sesión llama a la API real de Factura Segura**: la única función que le
+habla por HTTP (`_solicitar`) está siempre mockeada, y el rango de numeración de las pruebas es
+siempre uno chico y separado (`900`-`901`), nunca el rango real sembrado para TEST. Nuevo
+`tests/test_factura_electronica.py` (15 pruebas): emisión exitosa con guardado de CDC (criterios 1 y
+2); rechazo claro de Factura Segura y timeout de comunicación, ambos sin reintento automático
+(criterios 3 y 4); una segunda llamada a `emitir_documento_electronico` para la misma transacción no
+vuelve a llamar a la API (criterio 5); agotamiento del rango de numeración sin romper el flujo de
+pago; `consultar_estado_sifen` (aprobado, rechazado, sin respuesta, sin CDC); `reintentar_emision`
+(reutiliza el mismo número, rechaza reintentar un documento que no está en error); la pantalla
+administrativa y su acceso restringido a `admin`.
+
+### Resultado final
+
+- Suite completa (`tests/`): **392/392** verde (377 preexistentes + 15 nuevas).
+- `makemigrations --check --dry-run`: sin cambios pendientes.
+- Sphinx (`-W`): nuevo `apps.divisas.factura_electronica.rst`, entradas nuevas en
+  `apps.divisas.models.rst` (`RangoDocumentosAgotadoError`, `ContadorDocumentoElectronico`,
+  `DocumentoElectronico`) y en `apps.divisas.views.rst` (`DocumentosElectronicosListView`,
+  `ReintentarEmisionDocumentoElectronicoView`). Sin advertencias nuevas; sigue la única preexistente
+  y ajena a esta HU ya señalada en sesiones anteriores (`templates.rst`/`metodo_pago_list.html`).
+
+### Pendiente / fuera de alcance
+
+- **No se hizo ninguna llamada real a Factura Segura en esta sesión**, ni siquiera la única prueba
+  en vivo que el usuario había autorizado condicionalmente ("genera 1 solo para probar"): queda para
+  un pedido explícito y separado, una vez que el usuario revise esta implementación.
+- Falta cargar `FACTURASEGURA_AUTH_TOKEN` en el `.env` real (obtenido una sola vez contra
+  `POST /login?include_auth_token` con las credenciales de Factura Segura) — no se tocó el `.env`
+  del usuario en esta sesión.
+- El manual de uso del sistema que el usuario mencionó como "te lo paso también" no llegó a
+  adjuntarse en esta sesión; el diseño se basó únicamente en el PDF de la API y en los datos de
+  habilitación ya proporcionados.
+- Antes de la primera emisión real: confirmar con soporte de Factura Segura si `0000623` ya está
+  consumido (ver la nota en la migración `0028`), y revalidar `_armar_de` contra el manual completo
+  de SIFEN (ver "Ajustes a los criterios y limitaciones conocidas").
+- `consultar_estado_sifen` no se llama todavía desde ningún punto automático (cron o tarea
+  periódica): hoy es una función disponible para que un administrador la dispare a mano o para una
+  futura vista/comando. Agregar ese disparo periódico queda fuera de esta entrega.
+
+### Corrección post-sesión — protocolo real de Factura Segura
+
+El usuario compartió, en un mensaje posterior a cerrar la implementación, la documentación oficial
+del protocolo petición-respuesta de Factura Segura (generación de token, estructura `operation`/
+`params`, estructura `code`/`description`/`operation_info`/`results`). Al compararla contra
+`apps/divisas/factura_electronica.py`, aparecieron dos desajustes reales, no cosméticos:
+
+- **`results` está documentado como un ARRAY** de objetos JSON (incluso con un solo registro), pero
+  `_generar`/`consultar_estado_sifen` lo trataban como un dict (`cuerpo.get('results') or {}` y
+  después `.get('CDC', ...)`), lo que habría roto con `AttributeError` ante la primera respuesta real
+  no vacía. Los tests propios no lo detectaron porque mockeaban `results` igual de mal (como dict).
+  **Corrección**: nuevo helper `_primer_resultado(cuerpo)` que toma `results[0]` si la lista no está
+  vacía, usado en ambos lugares; los mocks de `tests/test_factura_electronica.py` ahora envían
+  `results` como lista.
+- **`operation_info` solo garantiza la clave `"id"`**, no `"operation_id"` como se había asumido.
+  Corregido a `cuerpo.get('operation_info', {}).get('id', '')` (el campo del modelo,
+  `DocumentoElectronico.operation_id`, no cambia: sigue siendo donde se guarda ese valor, solo
+  cambió la clave con la que se lee del JSON de respuesta).
+
+Verificado: `tests/test_factura_electronica.py` (15/15) y la suite completa vuelven a pasar después
+del cambio. Esto refuerza, una vez más, que `_armar_de` (el armado del propio `generar_de`) sigue
+sin revalidarse campo por campo contra el manual completo — este hallazgo es evidencia de que vale
+la pena hacerlo antes de cualquier emisión real, no solo una formalidad.
+
+### Segunda corrección post-sesión — operaciones del API (`generar_de`/`get_estado_sifen`)
+
+El usuario compartió un extracto adicional de la guía de Factura Segura (descripción de las
+operaciones `calcular_de`, `generar_de`, `get_estado_sifen`, `sol_cancelacion`, `sol_inutilizacion`,
+`dwn_kude`, `dwn_xml`, con ejemplos completos de petición/respuesta). Comparado contra el código,
+aparecieron más desajustes:
+
+- **`generar_de` envía los campos del documento sueltos en `params`, no envueltos en `{"DE": {...}}`**
+  como exige el contrato (`"params":{"DE":<JSON_DE>}`). Esto habría hecho fallar cualquier llamada
+  real con un payload mal formado. **Corregido**: `_generar` ahora llama a
+  `_solicitar('generar_de', {'DE': _armar_de(documento, transaccion)})`.
+- **`get_estado_sifen` leía mal los nombres de los campos del resultado**: usaba `desc_estado_sifen`
+  (no existe en la respuesta real) en vez de `desc_sifen`, y reutilizaba esa misma descripción como
+  `error_sifen` en vez de leer el campo `error_sifen` real y separado que documenta la API.
+  **Corregido** en `consultar_estado_sifen`.
+- **La interpretación de `estado_sifen` no cubría los valores intermedios documentados**
+  (`SOL.APROBACION`, `ENVIADO_A_SIFEN`): cualquiera de los dos caía al `else` y se marcaba como
+  `ESTADO_ERROR_SIFEN`, cuando en realidad significan "todavía sin resolución definitiva, hay que
+  volver a consultar". Tampoco se manejaba `REINGRESADO` (el CDC quedó inválido porque el documento
+  se reingresó con otro). **Corregido**: la función ahora distingue explícitamente los estados
+  terminales (`APROBADO`, `APROBADO CON OBSERVACIÓN`, `RECHAZADO`), el caso `REINGRESADO`, los
+  intermedios (`SOL.APROBACION`, `ENVIADO_A_SIFEN`, vacío) y los de error
+  (`ERROR_SIFEN`/`ERROR_ENVIO_LOTE`/`REINTENTAR_LOTE`/`ERROR_CONSULTA_LOTE`), tal como los define el
+  manual, en vez de un `if`/`else` genérico.
+- Se agregó `test_estado_intermedio_no_se_marca_como_error` para blindar justamente el bug real que
+  se encontró (un estado intermedio no debe tratarse como error). Los tests existentes que mockeaban
+  `desc_estado_sifen`/`dNumDoc` sin el envoltorio `DE` se corrigieron para reflejar el protocolo real.
+
+**No implementado, fuera de alcance de esta HU** (documentado para no sorprender a futuro): las
+operaciones `calcular_de`, `sol_cancelacion`, `sol_inutilizacion`, `dwn_kude` y `dwn_xml`. En
+particular, el manual separa `calcular_de` (recibe un `JSON_RESUMIDO_DE` y devuelve el `JSON_DE`
+completo con los campos calculados por SIFEN, "listo para enviarse en `generar_de`") de `generar_de`
+en sí — este módulo construye el `JSON_DE` a mano en `_armar_de` sin pasar primero por
+`calcular_de`, lo cual es una fuente real de riesgo: si SIFEN exige campos calculados (totales,
+desglose de IVA, etc.) que `_armar_de` no está poniendo, `generar_de` podría rechazar la solicitud
+incluso con el resto de los datos correctos. La especificación completa de `JSON_RESUMIDO_DE`/
+`JSON_DE` ("al final del documento", según la guía) todavía no se compartió — es el dato que más
+falta para cerrar esta verificación antes de una emisión real. Tampoco se implementó el chequeo de
+prioridad `estado_inu` → `estado_can` → `estado_sifen` que documenta el manual para
+`get_estado_sifen`, porque esta HU no genera cancelaciones ni inutilizaciones (esos dos campos
+siempre vienen vacíos para los documentos que emite este módulo).
+
+### Tercera corrección post-sesión — esquema completo del `DE` y decisión sobre la moneda de la factura
+
+El usuario compartió la especificación completa y real del JSON `DE` de Factura Electrónica (con
+comentarios campo por campo, valores hardcodeados específicos de Factura Segura y las fórmulas de
+cada campo calculado). Comparado contra `_armar_de`, aparecieron hallazgos mucho más profundos que
+las dos correcciones anteriores:
+
+- **Restricción de moneda no contemplada**: la guía aclara que `cMoneOpe` solo admite `"PYG"` o
+  `"USD"` ("Factura Segura no soporta otras monedas"), pero `_armar_de` usaba
+  `cMoneOpe = moneda_a_entregar(transaccion)`, que para un cambio (triangulación) puede ser
+  cualquier divisa activa (EUR, BRL, ARS, etc.) — eso hubiera hecho rechazar cualquier operación que
+  no involucrara USD. **Se consultó al usuario** cómo resolverlo (facturar siempre en PYG vs. usar
+  USD solo cuando la divisa entregada es USD) y eligió **facturar siempre en PYG**, usando el
+  equivalente en Guaraníes de cada operación. Nuevo helper `_monto_en_pyg(transaccion)`: para una
+  compra o venta usa `transaccion.monto_final` (en ambos casos ya es PYG, ver `monto_a_pagar`/
+  `monto_a_entregar`), y para un cambio usa `transaccion.monto_equivalente_pyg` (el valor ya
+  triangulado por PYG). El monto se redondea a entero con `to_integral_value(ROUND_HALF_UP)`, el
+  mismo criterio que `apps.divisas.pagos_stripe` ya usa para cobrar en PYG (moneda sin subunidad).
+- **Al documento le faltaban campos obligatorios completos**: `dFeEmiDE` (fecha/hora de emisión),
+  `dNomEmi`/`dNumCas`/`cDepEmi`/`dDesDepEmi`/`cCiuEmi`/`dDesCiuEmi`/`dEmailE` del emisor (ya existían
+  como settings desde una sesión anterior, pero nunca se habían conectado a `_armar_de`),
+  `cPaisRec`, `dEmailRec` ("obligatorio para Factura Segura" según la guía — se usa `cliente.email`),
+  `iIndPres`, `iCondOpe`, `iCondCred`, `dPlazoCre`, `iTipEmi`, `iTImp`. Todos agregados.
+- **`iTiOpe` estaba en `'1'` (B2B), inconsistente con `iNatRec='2'` (No Contribuyente)**: un
+  receptor "No Contribuyente"/consumidor final nunca puede ser la contraparte de una operación B2B.
+  Corregido a `'2'` (B2C), coherente con la propia decisión de modelar siempre al cliente como
+  consumidor final.
+- **Cada ítem (`gCamItem`) y el documento completo necesitan sus propios totales calculados**
+  (`dTotBruOpeItem`, `dTotOpeItem`, `dBasGravIVA`, `dLiqIVAItem`, `dBasExe` por ítem; `dSubExe`,
+  `dTotOpe`, `dTotGralOpe`, `dTotIVA`, etc. a nivel documento) que `_armar_de` no calculaba en
+  absoluto. Como esta HU siempre factura un único ítem "Exento" (`iAfecIVA='3'`), casi todos esos
+  campos son triviales (cero, salvo el propio monto en PYG): se agregaron explícitamente en vez de
+  omitirlos, siguiendo las fórmulas que documenta la guía para el caso exento.
+- **`gPaConEIni` (el pago) también necesita su propio monto**: `dMonTiPag`/`cMoneTiPag`/
+  `dTiCamTiPag`, que no se enviaban. Agregados (el monto del único pago es el total en PYG).
+- Se reescribieron `_armar_de`, `_grupo_item` y `_grupo_pago` por completo (ahora `_grupo_item`/
+  `_grupo_pago` reciben el monto ya calculado, en vez de recalcularlo cada uno por su lado).
+  `tests/test_factura_electronica.py` sigue pasando sin cambios (los mocks no dependían de la forma
+  exacta del `DE` enviado, solo de la respuesta simulada), 16/16, y `manage.py check` sin errores.
+
+**Sigue pendiente, ahora más acotado**: la guía confirma que `calcular_de` existe para calcular
+estos mismos totales por el lado de SIFEN antes de `generar_de` — como el ítem siempre es exento,
+los cálculos manuales debieran coincidir (todo cero salvo el monto), pero no se verificó contra una
+respuesta real de `calcular_de`. Tampoco se verificaron contra el Manual Técnico de SIFEN 150
+completo los códigos de clasificación que la guía solo describe como "ver Manual SIFEN": `iTipEmi`,
+`iTipTra`, `iTImp`, `iIndPres` (quedaron con el valor más plausible, no una certeza).
+
+### Esquema de la Nota de Crédito electrónica — guardado como referencia, sin implementar
+
+El usuario compartió también la especificación completa del `DE` de una Nota de Crédito electrónica
+(`iTiDE='5'`, el mismo tipo que `ContadorDocumentoElectronico.TIPO_NOTA_CREDITO` ya tiene sembrado
+con su rango real 241-252 desde la migración `0028`, pero que ningún código emite todavía). Se le
+preguntó al usuario si correspondía implementar su emisión en esta misma sesión y eligió **guardarla
+solo como referencia para una futura HU**, porque:
+
+- Ninguno de los 5 criterios de esta HU pide emitir una Nota de Crédito — son para "pago confirmado
+  → facturar", no "factura ya aprobada → anular/corregir".
+- Ningún flujo actual del sistema (reversión de saldo en `apps.divisas.entrega`, reintentos,
+  cancelaciones) dispara ninguna anulación de una factura ya emitida; agregar la emisión ahora sería
+  alcance nuevo sin un disparador real todavía definido (¿una reversión de entrega? ¿una cancelación
+  manual de un administrador?).
+
+Diferencias de esquema respecto a la Factura ya implementada (para cuando haga falta): agrega
+`iMotEmi` (motivo de emisión) y `gCamDEAsoc` (un array de un único elemento, el límite de Factura
+Segura, que referencia el documento que se anula — por CDC si es electrónico, o por
+timbrado/establecimiento/punto de expedición/número si es un documento impreso); **no tiene**
+`gPaConEIni`/`iCondOpe` (una nota de crédito no registra ningún pago). El resto (ítems, totales
+calculados, datos del emisor, datos del receptor) es estructuralmente idéntico al `DE` de Factura.
+
+### Cuarta corrección post-sesión — flujo real `calcular_de` + `generar_de` (reemplaza el cálculo manual)
+
+El usuario compartió además el `JSON_RESUMIDO_DE` (la entrada real de `calcular_de`, antes no vista),
+que confirmó algo que ya se había dejado como riesgo pendiente: hay una separación real entre la
+entrada resumida (sin ningún campo calculado) y el `DE` completo con los totales, que SIFEN/Factura
+Segura calcula por su cuenta en `calcular_de` — "este DE ya está listo para ser enviado en la
+operación `generar_de`".
+
+En vez de seguir calculando a mano los totales en `_armar_de` (aun siendo triviales por tratarse
+siempre de un único ítem exento), se **reemplazó ese cálculo manual por el flujo real de dos pasos**:
+
+- Nuevo `_armar_resumido_de` (reemplaza a `_armar_de`): arma solo el `JSON_RESUMIDO_DE` mínimo —
+  mismos datos de cabecera/emisor/receptor/pago, pero sin ningún campo derivado (`dTotBruOpeItem`,
+  `dTotOpeItem`, `dBasGravIVA`, `dSubExe`, `dTotGralOpe`, etc. desaparecen por completo).
+  `_grupo_item_resumido` (reemplaza a `_grupo_item`) es el ítem recortado a sus campos base.
+  `_grupo_pago` no cambia (sus campos ya eran de entrada directa, no calculados).
+- Nuevo `_calcular(documento, transaccion, monto)`: llama a `calcular_de` con ese resumido y devuelve,
+  tal cual, el `DE` completo que viene en `results[0]['DE']`.
+- `_generar` ahora hace `_calcular(...)` y manda ese resultado directo a `generar_de`, sin tocar
+  ningún total por su cuenta. Una falla en cualquiera de los dos pasos (`calcular_de` o `generar_de`)
+  se trata igual: `ESTADO_ERROR_GENERACION`, mismo número ya reservado, mismo criterio de "nunca
+  reintentar solo" (criterio 4) — `calcular_de` en sí no genera ningún documento real, así que sería
+  seguro reintentarla sola, pero como siempre se llama junto con `generar_de` dentro de la misma
+  `_generar`, el criterio de no reintentar automáticamente sigue aplicando igual al conjunto.
+
+Esto elimina por completo el riesgo que había quedado señalado ("si SIFEN exige campos calculados
+que `_armar_de` no está poniendo, `generar_de` podría rechazar la solicitud"): ya no hay ninguna
+fórmula propia que pueda estar mal — los totales los calcula siempre Factura Segura/SIFEN.
+
+Tests actualizados: los que ejercitan el camino feliz completo (`emitir_documento_electronico`,
+`reintentar_emision`, la vista de reintento) ahora mockean las **dos** llamadas a `requests.post` en
+orden (`calcular_de` seguido de `generar_de`), con un nuevo helper `_respuesta_calculo`, en vez de un
+único `mock_post.return_value` reutilizado para ambas — así se verifica de verdad que el `DE` que
+llega a `generar_de` es el que devolvió `calcular_de`, no solo que el resultado final no se rompe.
+16/16 en el módulo, suite completa, `manage.py check` y Sphinx (sin advertencias nuevas) verificados
+después del cambio.
+
+### Incidente — los tests hicieron llamadas reales a Factura Segura y consumieron un número real
+
+El usuario reportó haber recibido 17 correos de error de Factura Segura (3 con motivo
+`NUMDOC_SOL_APROBACION`, 14 con `NUMDOC_APROBACION`/`NUMDOC_APROBADO`), pese a que en ningún momento
+de esta sesión se pidió ni se hizo ninguna llamada real a propósito.
+
+**Causa raíz identificada**: `intentar_emitir_documento_electronico` está conectado a los 3 mismos
+puntos de confirmación de pago (`_procesar_sesion_completada`/`_cobrar_con_tarjeta_guardada` en
+`pagos_stripe.py`, `_procesar_confirmacion_sipap` en `pagos_sipap.py`) desde que se implementó esta
+HU. Ningún archivo de test fuera de `tests/test_factura_electronica.py` mockea
+`apps.divisas.factura_electronica.requests.post` (confirmado con `grep` sobre todo `tests/`). El
+usuario había agregado credenciales reales (`FACTURASEGURA_AUTH_TOKEN`, etc.) a su `.env` durante
+esta misma sesión, y `manage.py test` usa el mismo módulo de settings (`global_exchange.settings.dev`,
+ver `DJANGO_SETTINGS_MODULE` en `.env`) que `manage.py runserver` — sin ningún override para tests.
+Resultado: cada vez que corrí la suite completa (`python manage.py test tests`) después de que esas
+credenciales quedaran cargadas, al menos 5 tests confirmados en `tests/test_pagos_stripe.py`/
+`tests/test_pagos_sipap.py` (los que efectivamente llevan una transacción a "Pagada" a través del
+webhook/cobro real) dispararon una llamada real a `calcular_de`+`generar_de` contra el ambiente de
+TEST real de Factura Segura. Corrí la suite completa 3 veces después de que las credenciales
+quedaran activas en esta sesión — coincide con el orden de magnitud de los 17 correos.
+
+**Por qué probablemente solo se vio afectado un único número real**: `ContadorDocumentoElectronico`
+vive en la base de datos de TEST de Django (`test_global_exchange_dev`), que `TestCase` envuelve en
+una transacción por test y descarta al final de cada uno — así que el `ultimo_asignado` nunca quedó
+realmente persistido entre corridas, y cada intento (en cualquier test, en cualquier corrida) volvía
+a calcular el mismo "próximo número": el primero del rango real sembrado por la migración `0028`
+(`0000623`). Se verificó con `manage.py shell` que la fila real de `ContadorDocumentoElectronico` en
+la base de datos de **desarrollo** (no la de test) sigue con `ultimo_asignado=None` para ambos tipos
+— la aplicación real nunca quedó con su propio estado corrupto, solo el sistema remoto de Factura
+Segura vio intentos repetidos sobre el mismo número. El patrón de los 17 correos (siempre rechazos
+por "ya usado", nunca por otro motivo) es consistente con que el primer intento real haya sido
+aceptado por Factura Segura (consumiendo `0000623` de verdad) y los 17 restantes hayan sido
+rechazados por reintentar ese mismo número — es decir, lo más probable es que **solo se haya
+consumido el número `0000623`**, no los 11-12 completos, pero esto no está confirmado y debe
+verificarse con soporte de Factura Segura antes de asumir nada.
+
+**Corrección aplicada** (`global_exchange/settings/dev.py`): se agregó un bloque que detecta
+`'test' in sys.argv` (el mismo módulo de settings se usa para `runserver` y para `test`, así que no
+hay otra forma de distinguirlos sin tocar `DJANGO_SETTINGS_MODULE`) y, solo en ese caso, fuerza
+`FACTURASEGURA_AUTH_TOKEN=''` y `FACTURASEGURA_BASE_URL='http://127.0.0.1:1/'` (un puerto cerrado:
+cualquier llamada real falla al instante con un error de conexión, contenido por
+`intentar_emitir_documento_electronico`, que nunca relanza nada). Esto protege **cualquier test
+futuro** que termine pagando una transacción, no solo los que ya existen hoy. Verificado:
+`tests/test_factura_electronica.py` (que mockea `requests.post` directamente) sigue funcionando
+igual, sin verse afectado por el override.
+
+**Bug adicional que este mismo fix destapó**: al apuntar a un puerto cerrado, el mensaje de
+`ConnectionError` real (con toda la cadena de reintentos de `urllib3` interpolada) superaba los 255
+caracteres de `DocumentoElectronico.error_generacion`, lo que rompía el propio `save()` con un error
+de Postgres (`StringDataRightTruncation`) y dejaba la transacción de test abortada, haciendo fallar
+en cascada el resto de esos mismos tests (4 failures + 6 errors en `test_pagos_stripe`/
+`test_pagos_sipap`). **Corregido**: tanto en `_generar` como en `consultar_estado_sifen`, todo texto
+de error se recorta siempre al `max_length` real del campo (leído desde
+`DocumentoElectronico._meta.get_field(...)`, no un número mágico repetido) antes de guardarlo — un
+mensaje de error nunca puede volver a romper el guardado del propio error. Esto es una corrección de
+fondo, no solo para los tests: un timeout real contra la API, en producción, también podría generar
+un mensaje de excepción largo.
+
+Verificado: `tests/test_factura_electronica.py` + `tests/test_pagos_stripe.py` +
+`tests/test_pagos_sipap.py` juntos, 77/77 OK (antes de ambos fixes, 4 failures + 6 errors en estos
+mismos archivos). Suite completa corrida de nuevo para confirmar.
+
+**Pendiente de parte del usuario**: contactar a soporte de Factura Segura para confirmar el estado
+real del número `0000623` (¿"Sol.Aprobación" pendiente o ya "Aprobado"?) antes de que la aplicación
+real intente usarlo — la fila real de `ContadorDocumentoElectronico` sigue en `ultimo_asignado=None`
+y deliberadamente no se tocó, para no asumir por mi cuenta algo que solo soporte puede confirmar.
+
+### Revisión de cumplimiento contra el texto formal de los 5 criterios (Jira)
+
+El usuario pegó el texto formal de la historia (con el formato Dado/Cuando/Entonces de Jira) y
+preguntó directamente si se estaban cumpliendo todos los criterios. Revisando el código real (no de
+memoria) contra cada criterio aparecieron dos brechas concretas, ya corregidas:
+
+- **Criterio 1** ("...envía la información completa de la operación: cliente, monto, divisa, tasa,
+  fecha..."): cliente/monto/fecha ya viajaban en el `DE`, pero la **tasa aplicada nunca se enviaba en
+  ningún campo** (`grep` sobre el módulo no encontró ninguna referencia a `tasa_aplicada`/
+  `tasa_cruzada`). Como el esquema de Factura Segura no tiene un campo estructurado para "la tasa de
+  cambio del negocio" (`dTiCam` es la tasa de la propia factura cuando `cMoneOpe≠PYG`, que acá
+  siempre es PYG), se agregó un nuevo `_info_adicional(transaccion)` que la escribe en `dInfAdic`
+  (texto libre impreso en el KuDE, fuera del XML firmado, exactamente el campo que la guía describe
+  para esto).
+- **Criterios 2 y 3** (recibir la aprobación/rechazo real de SIFEN): `consultar_estado_sifen` existía
+  desde la implementación original pero **no se llamaba desde ningún lado de la aplicación** —
+  `grep` sobre `apps/`/`templates/` solo la encontró en el propio módulo y en los tests. Sin cron ni
+  botón, un documento quedaba para siempre en "Generado" (ni aprobado ni rechazado) salvo que alguien
+  la invocara a mano por shell. Se agregó `ConsultarEstadoSifenDocumentoElectronicoView` (mismo patrón
+  que `ReintentarEmisionDocumentoElectronicoView`) + su URL + un botón "Consultar estado SIFEN" en
+  `documentos_electronicos.html`, visible cuando el documento tiene CDC y todavía no es definitivo
+  (`not documento.es_definitivo`) — ahora un administrador sí puede completar estos dos criterios
+  para un documento ya generado, aunque sigue siendo una acción manual, no automática.
+
+**Criterio 4 sigue con la reinterpretación ya documentada** (sesión anterior): no hay reintento
+automático de `generar_de` ante un timeout, por la propia advertencia de Factura Segura sobre
+peticiones síncronas sin confirmar. Se encola para un administrador (lista + botón "Reintentar"), lo
+que satisface la lectura de "encola el reintento" del criterio, pero no la de "reintenta
+automáticamente" — desviación deliberada, acordada con el usuario, no un descuido.
+
+Tests nuevos: la vista de consulta (éxito y sin CDC) y que `dInfAdic` lleve la tasa. 19/19 en el
+módulo, `manage.py check` y Sphinx limpios, suite completa verificada de nuevo.
+
+### Primera prueba en vivo real — hallazgo y corrección: email del cliente obligatorio
+
+Con la decisión informada del usuario de probar directamente con el número `0000623` (sin confirmar
+antes con soporte), se ejecutó un primer llamado controlado por shell a `emitir_documento_electronico`
+contra una transacción real "Pagada" ya existente. Resultado: rechazo real con
+`code=-10101`/`"NUMDOC_APROBADO"`, confirmando en los hechos (ya no solo por teoría) que `0000623`
+había quedado aprobado por el incidente de los tests de sesiones anteriores. Se actualizó el
+`ContadorDocumentoElectronico` real (`ultimo_asignado=623`) para que cualquier emisión futura use
+`0000624` en adelante, y se dejó sin tocar el `DocumentoElectronico` fallido que quedó asociado a esa
+transacción de prueba (por el `OneToOneField`, esa transacción en particular ya no puede reintentarse
+con éxito, al estar pegada al número `623`).
+
+El usuario pidió después probar él mismo desde la aplicación real (creando una compra y pagándola),
+para validar `0000624`. El intento real falló con `code=-10009`:
+`"El parametro dEmailRec: es obligatorio. Corrija el dato en el origen."` — el `Cliente` de prueba
+(Rodrigo Mereles) no tenía ningún email cargado (`Cliente.email` es `null=True, blank=True`, y no hay
+ningún lugar en el alta de un cliente que lo complete automáticamente, confirmado revisando
+`apps/clientes/forms.py`/`models.py`). A diferencia de `NUMDOC_APROBADO`, este es un rechazo de
+**validación de datos**, no de numeración: no se generó nada del otro lado, así que el mismo número
+seguía disponible. Se cargó el email real del usuario (`remm2003@gmail.com`) en el `Cliente` y se usó
+el botón **"Reintentar"** (que reutiliza el mismo número) — la segunda vez, con el dato corregido,
+Factura Segura aceptó la emisión real. **Primera emisión real exitosa de esta HU**, con el número
+`0000624`.
+
+**Corrección aplicada** para que esto no vuelva a pasar con otro cliente: `_generar` ahora valida que
+`transaccion.cliente.email` esté cargado **antes** de llamar a la API en absoluto. Si falta, el
+documento queda directamente en `ESTADO_ERROR_GENERACION` con un mensaje claro, sin gastar ningún
+intento real contra Factura Segura (ni generar el correo de error que le llega a soporte). El número
+ya reservado sigue "quemándose" igual que con cualquier otra falla (mismo criterio ya documentado:
+preferible a arriesgar un `dNumDoc` duplicado), pero al menos la falla se detecta sin tocar la red.
+Nuevo test `test_cliente_sin_email_no_llama_a_la_api`. Se le señaló al usuario, como mejora aparte no
+implementada todavía, hacer `Cliente.email` obligatorio en el alta — a definir si se quiere encarar
+como una HU separada.
+
+Verificado: 20/20 en el módulo, `manage.py check` y Sphinx limpios, suite completa corrida de nuevo.
+
+### Pantalla propia para el cliente + fix del link roto en la lista de administración
+
+El usuario pidió dos cosas: que en "Documentos electrónicos" (administración) el cliente se vea bien
+en vez de como un link que da error, y una pantalla nueva donde el propio cliente pueda ver sus
+facturas electrónicas.
+
+- **El link roto**: `documentos_electronicos.html` enlazaba el nombre del cliente a
+  `detalle_transaccion_operacion`/`detalle_transaccion_cambio`, pero el `test_func` de esas dos vistas
+  exige explícitamente `'cliente' in roles and not request.user.is_staff` — un administrador nunca
+  puede entrar ahí, para ninguna transacción, ni siquiera la suya. Se quitó el enlace: el cliente
+  ahora se muestra como texto simple.
+- **Nueva pantalla del cliente**: `MisFacturasElectronicasListView` (``apps/divisas/views.py``),
+  simétrica a `MiHistorialTransaccionesView` (mismo `test_func`, mismo patrón de `cliente_activo` vía
+  el middleware de `apps.clientes`), filtrando `DocumentoElectronico` por
+  `calculo_operacion__cliente`/`calculo_triangulacion__cliente` igual al cliente activo. Nueva URL
+  `divisas:mis_facturas_electronicas`, template `mis_facturas_electronicas.html` (solo lectura, sin
+  botones de administrador), enlace nuevo en el sidebar y en el home, ambos bajo el mismo
+  `puede_ver_historial_propio` que ya gatea "Mi historial de transacciones".
+- Al escribir los tests apareció un detalle real del modelo: el `test_func` usa
+  `request.user.clientes` (el `ManyToManyField` `usuarios` de `Cliente`, `related_name='clientes'`),
+  **no** el `OneToOneField user` (`related_name='cliente_perfil'`) que ya fijaba el fixture base de
+  este archivo — sin `cliente.usuarios.add(cliente.user)`, el propio cliente quedaba afuera con 403.
+  Mismo patrón que ya usa el helper `_crear_cliente` de `tests/test_operaciones.py`.
+
+Tests nuevos: el cliente ve su propia factura, no ve la de otro cliente (aislamiento), un admin no
+puede entrar a esta pantalla; más una verificación de que el admin ya no ve ningún link roto. 23/23 en
+el módulo, `manage.py check` y Sphinx limpios, suite completa corrida de nuevo.
+
+### Corrección: ``dEmailRec`` debía usar el email de Keycloak, no el campo legado de ``Cliente``
+
+El usuario preguntó si el email con el que un cliente se registra (Keycloak) es el mismo que se
+termina usando para Factura Segura. Revisando el código, la respuesta real era **no**: tanto el
+chequeo previo agregado en la sesión anterior como `_armar_resumido_de` leían directamente
+`cliente.email`, el campo que `ClienteForm` marca explícitamente como legado:
+
+```python
+# Campo legado: se conserva para aceptar datos históricos, pero no se
+# muestra en la interfaz; el correo operativo pertenece al usuario.
+email = forms.EmailField(required=False, widget=forms.HiddenInput())
+```
+
+Es decir, el propio diseño de la app ya había decidido que el email real y vigente de un cliente es
+el de su usuario (`Cliente.user`, `OneToOneField` al usuario titular, sincronizado desde Keycloak vía
+`apps.authentication.backends`), y que `Cliente.email` solo se conserva por compatibilidad con datos
+viejos — nada en el alta real lo completa. El email que se cargó a mano durante la prueba en vivo de
+la sesión anterior fue justamente ese campo legado, porque era el único que `_armar_resumido_de` leía.
+
+**Corrección**: nuevo helper `_email_receptor(cliente)` que prioriza `cliente.user.email` (el titular,
+real y verificado por Keycloak) y solo cae al campo legado `cliente.email` si no hay usuario titular o
+no tiene email. Usado tanto en `_armar_resumido_de` (`dEmailRec`) como en el chequeo previo de
+`_generar` que ya existía. Nuevo test
+`test_el_email_del_usuario_titular_tiene_prioridad_sobre_el_campo_legado`. Se verificó en la base de
+desarrollo real que el `Cliente` de prueba usado para la emisión real (`Rodrigo Mereles`) no tiene
+`user` asignado (`None`) — por eso, para ese cliente en particular, el comportamiento no cambia: sigue
+cayendo al campo legado que ya se cargó a mano. Para cualquier cliente real con su `user` de Keycloak
+bien vinculado, a partir de ahora se usa automáticamente ese email, sin necesitar ninguna carga manual.
+
+24/24 en el módulo, `manage.py check` y Sphinx limpios, suite completa corrida de nuevo.
+
+### Descarga del KuDE (PDF) y el XML firmado, bajo demanda
+
+El usuario notó que el sistema no permite ver la factura generada en sí (solo metadatos: número,
+estado, CDC) — depende por completo de que llegue el correo de Factura Segura. Se implementó la
+descarga directa, usando las operaciones `dwn_kude`/`dwn_xml` de la guía (GET, no el endpoint único
+de operaciones POST), consultando antes con el usuario quién puede descargar y cómo:
+
+- **Quién**: tanto el administrador (cualquier documento, desde "Documentos electrónicos") como el
+  propio cliente (solo los suyos, desde "Mis facturas electrónicas").
+- **Cómo**: bajo demanda, sin guardar nada en el servidor — cada clic vuelve a pedirle el archivo a
+  Factura Segura.
+
+Nuevo en `apps/divisas/factura_electronica.py`: `_descargar_archivo(operation, documento)` (GET
+genérico a `{BASE_URL}/{operation}/{dRucEm}/{CDC}` con el `Authentication-Token`, devuelve el cuerpo
+binario tal cual, o `None` si falla o no hay CDC) y los dos wrappers `descargar_kude`/`descargar_xml`.
+Nueva vista compartida `DescargarDocumentoElectronicoView` (`apps/divisas/views.py`): resuelve permiso
+(admin siempre; cliente solo si la transacción es suya) y devuelve el archivo con
+`Content-Disposition: attachment`, o un error claro (400 sin CDC, 502 si Factura Segura no responde,
+404 formato desconocido). Nueva URL `divisas:descargar_documento_electronico` (no vive bajo
+`administrar/`, porque la usan ambos roles). Botones "KuDE"/"XML" agregados en
+`documentos_electronicos.html` y `mis_facturas_electronicas.html`, visibles cuando el documento ya
+tiene CDC.
+
+Se verificó contra el documento real ya aprobado (`0000624`, `estado_sifen='APROBADO'`) que esta es
+una operación de solo lectura segura de probar en vivo (no consume ningún número), aunque la
+implementación en sí se probó solo con mocks en esta sesión.
+
+34/34 en el módulo, `manage.py check` y Sphinx limpios, suite completa corrida de nuevo.
+
+### Segunda prueba en vivo (Jorge Ferreira) — dos problemas distintos mezclados en un solo reporte
+
+El usuario creó un segundo cliente de prueba real (Jorge Ferreira) y reportó un correo de error
+`NUMDOC_APROBADO` más "no llega la factura... me da error en el sistema, dice que no se pudo
+generar". Investigando los datos reales (`ContadorDocumentoElectronico`, los tres
+`DocumentoElectronico` existentes y sus timestamps), se separaron en dos hechos distintos:
+
+- **El correo `NUMDOC_APROBADO` no es un problema nuevo**: corresponde a un reintento sobre el
+  `DocumentoElectronico` viejo y permanentemente atascado de `0000623` (de la primera prueba en vivo,
+  sesión anterior) — su `actualizado_en` coincide con ese momento. Ese número nunca puede
+  reutilizarse (ver la sesión del incidente); el botón "Reintentar" sigue mostrándose igual para esa
+  fila porque el código no distingue "falló por un dato corregible" de "falló porque el número está
+  permanentemente quemado" — queda anotado como mejora posible, no resuelto en esta sesión.
+- **El "no se pudo generar" de Jorge sí era un bug real, nuevo**: `_email_receptor` (agregado en la
+  corrección anterior) solo miraba `cliente.user.email` (el ``OneToOneField`` "titular"), pero el
+  `Cliente` de Jorge, igual que el de Rodrigo, tiene `user=None` — el único lugar con su email real
+  (`jorge.adan.ferreira02@gmail.com`, el mismo de Keycloak) es `Cliente.usuarios` (el `ManyToManyField`
+  que de hecho es la relación que usa `test_func` en las vistas propias del cliente vía
+  `request.user.clientes`, no `Cliente.user`). El documento `0000625` de Jorge quedó en
+  `ESTADO_ERROR_GENERACION` con el mensaje "cliente no tiene email cargado" — correcto en el
+  diagnóstico, pero el fix anterior no cubría este caso real tan común (ningún cliente de prueba
+  tiene `Cliente.user` asignado; todos dependen de `Cliente.usuarios`).
+
+**Corrección**: `_email_receptor` ahora prueba, en orden, `cliente.user.email` → el email de
+cualquier usuario en `cliente.usuarios` que tenga uno cargado (`cliente.usuarios.exclude(email='')
+.first()`) → el campo legado `cliente.email`. Nuevo test
+`test_sin_titular_usa_el_email_de_un_usuario_asociado`, que reproduce exactamente el caso real
+encontrado (sin `user`, sin campo legado, con el email solo en `usuarios`). Con este fix, el
+documento `0000625` de Jorge puede reintentarse ahora y debería generarse correctamente sin tocar
+nada más a mano (su email ya está en el lugar correcto, `usuarios`).
+
+35/35 en el módulo, `manage.py check` y Sphinx limpios, suite completa corrida de nuevo.
+
+## Sesión 25 — 30/10/2026 — Autoservicio de alta: "Solicitud de cliente"
+
+### Pedido
+
+Tras las pruebas en vivo de la HU de facturación electrónica, el usuario pidió, aparte, un ajuste al
+flujo de alta de clientes: hoy un administrador tiene que crear el `Cliente` a mano
+(`ClienteCreateView`) y asociarlo después a un usuario existente (`AsociarUsuariosClienteView`), sin
+que el usuario mismo inicie nada. Pidió que un usuario nuevo pueda solicitar ser cliente (nombre,
+apellido, cédula/RUC), que un administrador la gestione, y que, mientras no tenga cliente asociado,
+lo único que vea sea esa pantalla (o el aviso de que ya la envió) y un vistazo de las tasas.
+
+También pidió, como parte del mismo pedido, cambiar el formulario de registro de usuarios (quitar la
+contraseña, pedirla recién después de verificar el email).
+
+### Hallazgo que redefinió el alcance
+
+Investigando antes de planificar (con dos agentes de exploración en paralelo), se confirmó que **el
+registro de usuarios está 100% delegado a Keycloak**: no existe ningún `RegisterView`/formulario
+propio dentro de este Django, ni verificación de email en el código (`apps/authentication/views.py`
+solo tiene `CustomOIDCLogoutView`/`CustomOIDCCallbackView`; `LOGIN_URL` apunta directo a
+`oidc_authentication_init`; no hay `send_mail` en ningún lugar del proyecto). El formulario de
+registro con el que se queja el usuario es la pantalla hospedada por Keycloak, fuera de este
+repositorio. Se le preguntó al usuario cómo manejar esto, y eligió configurarlo él mismo en Keycloak
+(que ya soporta nativamente ese patrón vía Required Actions) — esta sesión se limitó a la parte que
+sí vive en el código: la solicitud de cliente.
+
+### Diseño e implementación
+
+- **Modelo `SolicitudCliente`** (`apps/clientes/models.py`): `usuario` (FK), `nombre`, `apellido`,
+  `identificador`, `estado` (`PENDIENTE`/`APROBADA`/`RECHAZADA`, mismo patrón que el resto del
+  proyecto), `motivo_rechazo`, `creado_en`, `revisado_en`/`revisado_por`, `cliente_creado`
+  (`OneToOneField` a `Cliente`, se completa al aprobar). Una `UniqueConstraint` condicional
+  (`estado='PENDIENTE'`) garantiza a nivel de base de datos que un usuario no tenga dos solicitudes
+  pendientes a la vez — mismo criterio de "la base de datos lo impide" que ya usa `DocumentoElectronico`.
+  Solo cubre clientes físicos; uno jurídico sigue dándose de alta por un administrador, sin cambios.
+- **`SolicitudClienteForm`** (`apps/clientes/forms.py`): pide solo nombre/apellido/identificador (el
+  usuario lo fija siempre la vista, nunca el formulario). Se extrajo `_error_identificador_en_uso`
+  (función compartida) de la lógica que ya tenía `ClienteForm.clean_identificador`, y se le agregó
+  también el chequeo contra una `SolicitudCliente` pendiente de otro usuario — beneficio colateral:
+  ahora tampoco un administrador puede crear a mano un `Cliente` con un identificador que ya está
+  pendiente de aprobación por autoservicio.
+- **Vistas nuevas** (`apps/clientes/views.py`): `SolicitarClienteView` (el propio usuario; redirige si
+  ya tiene cliente, muestra el aviso de "en gestión" si hay una pendiente, el motivo + formulario si
+  la última fue rechazada), `SolicitudesClienteListView`/`AprobarSolicitudClienteView`/
+  `RechazarSolicitudClienteView` (admin, mismo criterio `is_staff`/`is_superuser` que
+  `ClienteCreateView`). Aprobar crea el `Cliente` y hace `cliente.usuarios.add(solicitud.usuario)`
+  (la relación real que usan los permisos, no el `OneToOneField user`, casi sin uso en la práctica).
+- **UI**: nuevo booleano `puede_solicitar_cliente` en `apps.authentication.context_processors`
+  (`'cliente' in roles and not es_admin and not tiene_clientes_asociados`), tarjeta en `home.html` y
+  link en el sidebar de `base.html`, visibles solo para quien corresponde. No hizo falta tocar nada de
+  "tasas vigentes": `puede_ver_tasas` ya no exige tener un `Cliente` asociado, solo el rol Keycloak.
+- **Templates nuevos**: `solicitar_cliente.html`, `solicitudes_cliente.html` (lista admin con
+  aprobar/rechazar inline, el rechazo con un `motivo` obligatorio en un `<textarea>` colapsable).
+
+### Hallazgo adicional durante la verificación
+
+Al correr los tests nuevos con `manage.py test`, aparecía "NO TESTS RAN": se descubrió que
+`tests/test_clientes.py` (y otros 6 archivos: `test_auth.py`, `test_divisas.py`,
+`test_notificaciones_tasas.py`, `test_roles.py`, `test_seleccion_cliente.py`, `test_users.py`) están
+escritos en estilo `pytest` (`@pytest.mark.django_db`), no `django.test.TestCase` — el runner de
+Django nunca los descubre. Hay un `pytest.ini` en la raíz del proyecto preparado exactamente para
+correr estos archivos vía `pytest`, separado de `manage.py test`. Esto significa que **ninguna de las
+"suites completas" corridas en sesiones anteriores de este proyecto (incluidas todas las de esta
+misma sesión, antes de este hallazgo) incluyó estos 7 archivos** — no es un problema introducido
+ahora, es una laguna de verificación preexistente que convendría tener en cuenta de acá en adelante:
+el chequeo completo de este proyecto requiere correr tanto `manage.py test tests` como
+`pytest tests/test_auth.py tests/test_clientes.py tests/test_divisas.py
+tests/test_notificaciones_tasas.py tests/test_roles.py tests/test_seleccion_cliente.py
+tests/test_users.py` (o `pytest tests/` entero, con cuidado de no correrlo en paralelo con
+`manage.py test`, porque ambos compiten por la misma base de datos de test).
+
+### Verificación
+
+`manage.py makemigrations --check --dry-run` limpio, `manage.py check` limpio, Sphinx sin
+advertencias nuevas (los tres `.rst` de `apps.clientes` usan `automodule` genérico, documentan lo
+nuevo sin tocar ningún archivo). 27/27 tests nuevos y existentes en `test_clientes.py` (pytest),
+131/131 en los 7 archivos pytest en conjunto (sin regresión), suite completa de `manage.py test`
+corrida de nuevo para la confirmación final.
+
+### Ajustes al registro: tema de Keycloak, bug del username, y redirección directa
+
+Tras implementar "Solicitud de cliente", el usuario probó el registro completo contra su Keycloak
+local (`C:\herramientas_IS2\keycloak`, instalación standalone, realm `global-exchange`) y aparecieron
+varios problemas reales, cada uno investigado con evidencia concreta (logs de Keycloak, la API de
+administración, el jar de Keycloak) antes de corregir:
+
+- **El registro seguía pidiendo nombre/apellido**: `register.ftl` (el tema propio
+  `keycloak/themes/global-exchange`) usaba `userProfileCommons.userProfileFormFields`, que renderiza
+  todos los atributos de User Profile sin excepción. Se reemplazó por un loop propio que excluye
+  `firstName`/`lastName` explícitamente. **Primer intento fallido**: se copió el patrón de macro del
+  tema `keycloak.v2` (que depende de `field.ftl`), pero la cadena de herencia real de este tema es
+  `global-exchange → keycloak → base` (confirmado leyendo `theme.properties` de cada uno dentro del
+  jar `keycloak-themes-26.7.2.jar`) — nunca pasa por `keycloak.v2`, así que `field.ftl` no existía en
+  esa cadena (`TemplateNotFoundException`). Se corrigió usando el patrón real de `base`
+  (autocontenido, sin `field.ftl`), extraído del jar con Python/zipfile para no adivinar.
+- **La contraseña diferida no funcionaba**: `keycloak/instalar-tema.ps1` (ya existente en el repo)
+  fijaba `always_set_password_on_register_form=true`, anulando a propósito el comportamiento nativo
+  de Keycloak 26 (diferir la contraseña hasta verificar el email). Se invirtió a `false`.
+- **El correo de verificación no se enviaba**: `535-5.7.8 Username and Password not accepted` de
+  Gmail — la contraseña SMTP configurada era la contraseña normal de la cuenta, no una "contraseña de
+  aplicación" (obligatoria para SMTP con 2FA activo). Se le indicó al usuario generar una en
+  `myaccount.google.com/apppasswords` y cargarla en `Realm settings → Email`.
+- **El rol `cliente` no se asigna a cuentas nuevas**: confirmado por la API de administración de
+  Keycloak que `default-roles-global-exchange` (el rol que se asigna solo a cualquier cuenta nueva)
+  no incluye el rol de negocio `cliente` como componente — es config de Keycloak, no bug de código. Un
+  intento de arreglarlo vía API (POST a `.../composites`) quedó bloqueado por el modo de permisos de
+  la sesión; se le dieron los pasos para hacerlo a mano en la consola.
+- **Bug real encontrado y corregido**: `apps/authentication/backends.py` nunca sobrescribía
+  `get_username`, así que `mozilla_django_oidc` usaba su algoritmo por defecto — un hash SHA1 en
+  base64 del email — como `User.username` local, en vez del username real de Keycloak. Se confirmó
+  consultando la base real (`'U4Qc8ATyulSxHM7b6ZFlivqu_DI'` para la cuenta nueva de prueba, vs.
+  usernames limpios para cuentas más viejas). Esto afectaba la UI (mostraba un hash/el email en vez
+  de un nombre) y, potencialmente, `ClienteForm.save()` (que busca
+  `User.objects.filter(username=identificador)` asumiendo que el username es real). Se agregó
+  `get_username` (usa `preferred_username` del token), se corrigió a mano el registro ya afectado, y
+  se sumó `test_get_username_usa_preferred_username_no_un_hash_del_email`.
+- **Nombre mostrado en la UI**: `home.html`/`base.html`/`perfil.html` caían a `user.email` cuando no
+  había `first_name` (ahora el caso normal, al no pedirse en el registro). Se corrigió la prioridad a
+  `cliente_activo.nombre_completo` (el nombre real del `Cliente`, cuando lo tiene) → `user.first_name`
+  (cuentas viejas/admin) → `user.username` (último recurso, nunca el email).
+- **Redirección directa a "Solicitar cliente"**: un usuario con rol `cliente` sin ningún `Cliente`
+  asociado ahora es redirigido desde `home` directo a `clientes:solicitar_cliente`
+  (`global_exchange/views.py`), en vez de aterrizar en un panel general casi vacío con solo un link
+  para hacer clic. Mismo criterio exacto que `puede_solicitar_cliente`, sin crear loops (un usuario ya
+  con cliente nunca cumple la condición de redirección). Se actualizó
+  `test_el_link_para_solicitar_aparece_solo_para_quien_corresponde` (ya no se prueba en `home`, que
+  ahora redirige, sino en `tasas_vigentes`) y se agregaron
+  `test_home_redirige_directo_a_solicitar_cliente_si_no_tiene_ninguno` y
+  `test_home_no_redirige_a_un_admin_ni_a_quien_ya_tiene_cliente`.
+
+Toda esta investigación se hizo con evidencia real en cada paso: lectura directa del jar de temas de
+Keycloak, consultas a su API de administración (autenticado con las credenciales que compartió el
+usuario — se le señaló explícitamente el riesgo de reusar la misma contraseña que su base de datos
+Postgres), y los stack traces reales de la consola de Keycloak para cada error, nunca suposiciones.
+
+29/29 en `test_clientes.py`, 12/12 en `test_auth.py`, Sphinx y `manage.py check` limpios, suite
+completa de Django corrida de nuevo para la confirmación final.
+
+### Ampliación de "Solicitud de cliente": jurídica, rol en Keycloak, aviso por email
+
+Tres pedidos más sobre la misma feature, cada uno investigado antes de tocar código:
+
+- **Soporte para persona jurídica**: `SolicitudCliente` ganó `tipo_cliente` y `razon_social` (mismos
+  campos/validación condicional que `Cliente`/`ClienteForm`, con el mismo toggle JS en el formulario).
+  `AprobarSolicitudClienteView` crea el `Cliente` del tipo correspondiente.
+- **Bug real: el rol `cliente` nunca se asignaba en Keycloak al aprobar**. La aprobación asociaba el
+  usuario al `Cliente` en Django (`cliente.usuarios.add(...)`), pero casi todos los permisos del
+  sistema exigen además el rol `'cliente'` de Keycloak en la sesión — sin ese rol, el usuario queda
+  con un `Cliente` asociado pero sin poder operar nada. Se reusó
+  `apps.users.services.obtener_roles_de_usuario`/`actualizar_roles_de_usuario` (ya existente, usado
+  por la pantalla de gestión de roles) para agregarle el rol al aprobar, contenido en un
+  `try/except` que nunca rompe la aprobación si Keycloak falla o el usuario no tiene email — mismo
+  criterio que `AsociarUsuariosClienteView._usuarios_cliente_ids`.
+- **Pregunta sobre cierre de sesión**: los roles de Keycloak solo se sincronizan a la sesión de
+  Django en el login (no hay `mozilla_django_oidc.middleware.SessionRefresh` instalado) — confirmado
+  revisando `MIDDLEWARE` en `settings/base.py`. Se le explicó la opción real
+  (`SessionRefresh` + `OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS`, revalidación periódica silenciosa) y el
+  usuario eligió **no** agregarla por ahora — el fix del rol ya resuelve lo más importante.
+- **Email de aviso al aprobar/rechazar**: se activó (el usuario pidió implementarlo). Nuevo
+  `EMAIL_BACKEND` configurable vía `.env` en `global_exchange/settings/base.py` (sigue en "console"
+  por defecto, igual que antes — nunca se completa una credencial real en el repo, mismo criterio que
+  `FACTURASEGURA_*`). Nuevo `_notificar_resultado_solicitud` en `apps/clientes/views.py`, llamado
+  desde ambas vistas, con el mismo criterio de contención de errores que el resto de esta HU. Django
+  reemplaza el backend por uno en memoria durante los tests automáticamente, así que nunca se manda
+  un correo real al correr la suite, sin importar la configuración real.
+
+**Dos regresiones propias, encontradas y corregidas por la propia suite de tests** (no reportadas
+por el usuario): la condición `puede_solicitar_cliente`, al ampliarla para no depender del rol
+`'cliente'`, quedó dos veces mal calibrada en el camino — primero excluyendo solo a `admin` (lo que
+mandaba erróneamente a "Solicitar cliente" a un `analista_cambiario` sin cliente, rol de personal, no
+de cliente en potencia; detectado por `test_divisas.py`), después un ajuste intermedio que exigía
+"ningún rol en absoluto" (lo que rompía el caso original: alguien con el rol `'cliente'` pero sin
+`Cliente` todavía). La condición final, correcta: califica quien no tiene **ningún rol de negocio
+distinto de `'cliente'`** (`not (set(roles) - {'cliente'}) and not es_admin and not tiene_cliente`) —
+cubre tanto a quien no tiene ningún rol todavía como a quien ya tiene `'cliente'` sin `Cliente`
+asociado, sin capturar a ningún otro rol de personal. También se ajustó `test_metodos_pago.py`
+(`fetch_redirect_response=False`) porque el nuevo redirect de `home` hace que un "redirige a home"
+ya no implique "home devuelve 200" para un usuario sin cliente.
+
+Verificado en capas: 37/37 en `test_clientes.py`, 142/142 en los 7 archivos pytest, 137/137 en
+`test_metodos_pago`/`test_operaciones` (los más expuestos a la regresión), `manage.py check` y
+Sphinx limpios, suite completa de Django corrida de nuevo para la confirmación final.
+
+## Sesión 26 — 30/10/2026 — La comisión se factura gravada al 10% de IVA (no exenta)
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5)
+**HU relacionada:** Integración con API de facturación electrónica (ver Sesión 24)
+**Rama:** `feature/GE-41`
+**Participantes:** Rodrigo Mereles, integrante del equipo Global Exchange
+
+### Pedido
+
+Durante una revisión posterior a la Sesión 24, el usuario preguntó si la comisión de Global Exchange
+se estaba incluyendo en el total facturado en compra, venta y cambio, y si esa comisión debía ir
+gravada al 10% de IVA en vez de exenta. Antes de tocar código se investigó `_grupo_item_resumido`
+original (un único ítem exento, `_monto_en_pyg`) y las funciones de cálculo de comisión en
+`apps/divisas/views.py` (`_calcular_importe_operacion`, `_calcular_triangulacion`), y se reportaron
+dos hallazgos, dejando la decisión tributaria (una cuestión real de legislación paraguaya, con
+consecuencias fiscales) al usuario, no a una suposición propia:
+
+1. En compra y venta, `monto_final` (lo ya facturado) **sí** incluye el efecto de la comisión (sumada
+   en una compra, restada en una venta) — no había bug ahí.
+2. En un cambio, sí había un bug real: se facturaba `monto_equivalente_pyg` (el bruto triangulado del
+   Paso A, calculado en `_calcular_triangulacion`, **antes** de restar la comisión), en vez del monto
+   ya neto de comisión — un cambio se facturaba de más, por el valor íntegro de la comisión.
+
+El usuario confirmó ambos puntos: corregir el bug del cambio, y facturar la comisión como ítem
+separado gravado al 10% de IVA (no exenta) en los tres tipos de operación.
+
+### Diseño e implementación
+
+`apps/divisas/factura_electronica.py`:
+
+- `_monto_en_pyg` → renombrada `_total_en_pyg` y corregida para un cambio: ahora convierte
+  `monto_final` (divisa de destino, ya neto de comisión) a PYG con `tasa_venta_aplicada` — la misma
+  tasa del Paso B de `_calcular_triangulacion` — en vez de usar `monto_equivalente_pyg`.
+- `_comision_en_pyg` (nueva): la comisión en PYG. En compra/venta ya está en PYG directamente
+  (`comision`); en un cambio, `comision` está en la divisa de **destino** (Paso B), así que se
+  convierte con la misma `tasa_venta_aplicada`.
+- `_grupo_item_resumido` (un único ítem) → `_grupo_item` (un ítem genérico, exento o gravado al 10%
+  según `afecta_iva`) + `_grupos_item_resumido` (arma la lista: comisión gravada + el resto exento,
+  `base = total - comisión`, nunca el bruto calculado aparte, para que ambos ítems sumen exactamente
+  el total ya corregido sin descuadres de redondeo). Si la comisión del cliente es 0% queda un único
+  ítem exento, igual que antes de este cambio. El precio de un ítem gravado se manda tal cual
+  (`dPUniProSer` = comisión, IVA incluido): es `calcular_de` quien calcula cuánto de ese precio es
+  base y cuánto es IVA (`dBasGravIVA`/`dLiqIVAItem`), no hay que sumarle nada encima.
+- `_armar_resumido_de` actualizada para usar `_grupos_item_resumido` (ahora una lista de ítems, no
+  uno solo) en `gCamItem`.
+
+`tests/test_factura_electronica.py`: nueva clase `ComisionGravadaAl10PorCientoTest` (4 casos) — compra
+y venta separan correctamente la comisión del resto exento; el cambio usa el monto neto de comisión,
+no el bruto triangulado (se verifica explícitamente que el total ya **no** coincide con
+`monto_equivalente_pyg`); sin comisión (0%) sigue quedando un único ítem exento, sin romper ese caso
+ya existente.
+
+Sphinx (`docs/source/reference/apps.divisas.factura_electronica.rst`) actualizado con los símbolos
+nuevos/renombrados. Verificado con `tests.test_factura_electronica` (39/39), `manage.py check` y la
+suite completa de Django.
+
+### Segundo hallazgo en la misma sesión: `iTipTra`/`dDesTipTra` (tipo de transacción)
+
+El usuario preguntó, mirando una factura real generada, si era normal que el "Tipo de operación"
+figurara como "Venta de mercadería". No lo era: `_armar_resumido_de` mandaba `iTipTra` fijo en `'1'`
+(ese código), un valor que el propio docstring del módulo ya señalaba como "el más plausible según la
+guía, no una verificación campo por campo contra el Manual Técnico de SIFEN 150 completo" desde el
+principio de esta HU (ver Sesión 24). El usuario pegó la tabla real de códigos del manual: `5`="Venta
+de divisas", `6`="Compra de divisas" — códigos propios de una casa de cambio, confirmando la sospecha.
+En el camino se encontró un segundo bug, más grave que el código equivocado: `dDesTipTra` (la
+descripción textual, obligatoria siempre que se envía `iTipTra`) **no se mandaba en absoluto**.
+
+Nueva función `_tipo_transaccion` en `apps/divisas/factura_electronica.py`: compra → `('6', 'Compra de
+divisas')`, venta → `('5', 'Venta de divisas')`, ambos sin ambigüedad. Para un cambio entre divisas
+(triangulación) no hay código propio en la tabla — combina ambas piernas en una sola operación (Global
+Exchange recibe la divisa origen y entrega la destino) — así que se le preguntó al usuario, que eligió
+facturarlo siempre como "Venta de divisas" (`5`), consistente con lo que Global Exchange finalmente le
+entrega al cliente. `_armar_resumido_de` actualizada para usar ambos valores en vez del `'1'` fijo.
+
+Nueva clase de tests `TipoTransaccionTest` (4 casos: compra, venta, cambio, y una verificación de
+integración de que el `DE` real enviado a `calcular_de` lleva ambos campos). Sphinx actualizado.
+Verificado con `tests.test_factura_electronica` (43/43), `manage.py check` y la suite completa de
+Django.
+
+### Aparte, en la misma sesión: `GH013` al pushear `develop` — secretos reales en `.env.example`
+
+Push rechazado por GitHub Push Protection: `.env.example` tenía una Stripe Test Secret Key y su
+webhook secret reales hardcodeados (y también `FACTURASEGURA_AUTH_TOKEN`), en vez de vacíos como el
+resto del template. Como los commits afectados (`integración con la api de factura segura`,
+`ajustes de registro de usuario y solicitud de cliente`, y los dos commits encima) todavía no estaban
+publicados en el remoto, se reescribió el historial local completo de `develop` con `git filter-branch
+--tree-filter` para quitar esos tres valores de **todas** las versiones históricas del archivo (no
+solo la última) — una reescritura segura porque ninguno de esos commits había llegado nunca a
+`origin/develop` (confirmado antes y después con `git log develop -S"<secreto>"`). Recién entonces se
+pudo pushear sin forzar nada (fast-forward normal, los hashes viejos nunca existieron en el remoto).
+`git gc --prune=now` (limpieza de los objetos sueltos que quedaron en el `.git` local) quedó bloqueado
+por el clasificador de permisos de Claude Code por ser una acción local irreversible; no es necesario
+para el push, queda pendiente si el usuario autoriza ese permiso puntual.
+
+## Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5.5)
+**HU relacionada:** "Generación de factura electrónica" (sin número de Jira en el pedido)
+**Rama:** `develop`
+**Participantes:** Adriana Benítez, integrante del equipo Global Exchange
+
+### Pedido
+
+Verificar que el sistema cumpla la HU "Generación de factura electrónica" (*Como usuario cliente quiero
+recibir una factura electrónica por cada operación realizada para contar con un comprobante de la
+transacción*) y, si no, implementarla bien: docstrings, Sphinx actualizado, esta conversación
+documentada y tests. Condición explícita: **los tests no deben generar ninguna factura real**.
+
+### Auditoría de los 4 criterios de aceptación
+
+La emisión ante SIFEN vía Factura Segura ya existía (Sesión 24, `apps/divisas/factura_electronica.py`,
+modelo `DocumentoElectronico`, pantallas del cliente y de administración, 43 tests). Se contrastó
+criterio por criterio:
+
+| Criterio | Estado previo | Resultado |
+|---|---|---|
+| 1. Pagada + SIFEN aprueba → factura con datos del cliente, detalle y CDC | Cumplido (receptor, ítems, CDC guardado; aprobación real vía `consultar_estado_sifen`) | Sin cambios |
+| 2. Vínculo inequívoco, sin más de una factura vigente | Parcial: `OneToOneField` en ambas FK, pero "exactamente una transacción" solo se validaba en `clean()` (que la base no ejecuta) | Se agregó `CheckConstraint` en base de datos |
+| 3. Rechazo → "pendiente de generación", sin bloquear el resto | **Incumplido**: el detalle mostraba el estado técnico ("Rechazado por SIFEN", "No se pudo generar (Factura Segura...)"), y si no había documento (rango agotado) no decía nada | Aviso "pendiente de generación" en el detalle y el listado |
+| 4. Se registra fecha y hora de emisión | **Incumplido**: solo existía `creado_en` (cuando se reserva el número, aun si la generación falla) | Campo `emitida_en`, solo se completa si la generación salió bien |
+
+### Cambios
+
+- `DocumentoElectronico` (`apps/divisas/models.py`): campo `emitida_en`; `CheckConstraint`
+  `documento_electronico_exactamente_una_transaccion`; constante `ESTADOS_PENDIENTES` y propiedad
+  `factura_pendiente`.
+- Migración `0029_documentoelectronico_emitida_en_constraint`: agrega el campo, rellena `emitida_en`
+  con `creado_en` para las facturas que ya tienen CDC, y crea la restricción.
+- `apps/divisas/factura_electronica.py`: `_generar` completa `emitida_en` solo al éxito (también en
+  `reintentar_emision`, que reutiliza `_generar`); nueva `factura_pendiente_de_generacion(transaccion)`
+  — verdadera si la transacción ya está pagada y no tiene documento o el suyo está rechazado/fallido.
+- `DetalleTransaccionOperacionView`/`DetalleTransaccionCambioView` pasan `factura_pendiente` al
+  template; ambos detalles muestran el aviso en vez del estado técnico (sin filtrar el motivo del
+  error ni el CDC rechazado) y, con la factura generada, la fecha de emisión. El listado "Mis facturas
+  electrónicas" muestra "Fecha de emisión" y la insignia "Pendiente de generación".
+
+### Tests
+
+Se agregaron 14 tests a `tests/test_factura_electronica.py` (de 43 a 57): `FechaEmisionTest`,
+`VinculoUnicoConLaTransaccionTest` y `FacturaPendienteParaElClienteTest`. Ninguno llama a Factura Segura:
+`requests.post`/`requests.get` están siempre mockeados y se usa un rango de numeración de prueba
+(900-901), nunca el real. Verificado: 57/57, `makemigrations --check` sin cambios pendientes.
+
+### Decisión pendiente de confirmar
+
+"Pendiente de generación" cubre tanto el fallo al generar como el rechazo posterior de SIFEN. Un
+`RECHAZADO` de SIFEN no tiene hoy reintento desde la UI (solo `ERROR_GENERACION`); queda como mejora si
+el equipo quiere emitir un documento nuevo para esa transacción.
+
+## Sesión 28 — 30/10/2026 — GE-86 — Descarga de facturas electrónicas
+
+**Herramienta:** Claude Code (Anthropic, modelo Opus 5.5)
+**HU relacionada:** GE-86 — Descarga de facturas electrónicas (Epic GE-15: Facturación Electrónica)
+**Rama:** `feature/GE-86`
+**Participantes:** Alexis Castillo, integrante del equipo Global Exchange
+
+### Pedido
+
+Leer la HU GE-86 desde Jira e implementarla en su rama de feature, o mejorarla si ya existía, cumpliendo
+cada criterio de aceptación: docstrings, Sphinx actualizado, esta conversación documentada y tests.
+Condición explícita: **los tests no deben generar ninguna factura**.
+
+### Auditoría de los 4 criterios de aceptación
+
+La descarga ya existía parcialmente (`DescargarDocumentoElectronicoView`, Sesión 24). Se contrastó criterio
+por criterio:
+
+| Criterio | Estado previo | Resultado |
+|---|---|---|
+| 1. Factura aprobada → entrega PDF/XML con datos completos | Parcial: funcionaba, pero solo desde los listados | Botones de descarga también en el detalle de la transacción |
+| 2. Factura "Pendiente" → no se descarga y se explica el motivo | **Incumplido**: bastaba tener CDC, así que se descargaban facturas sin aprobar o rechazadas; los errores eran texto plano sin diseño | `DocumentoElectronico.descargable`/`motivo_no_descargable`; se redirige al listado con el motivo |
+| 3. Mismo CDC y mismos datos, sin alterarlos | Parcial: se entregaba sin modificar, pero sin validar lo recibido | El XML debe contener el CDC y el KuDE debe ser un PDF; el nombre del archivo lleva el CDC |
+| 4. Factura ajena al cliente activo → acceso denegado | **Incumplido**: se aceptaba cualquier cliente asociado al usuario, no solo el activo | `_puede_ver` compara contra `request.cliente_activo` |
+
+### Decisiones
+
+- **Regla de aprobación también para administradores:** el criterio no distingue roles, y una factura no
+  aprobada no es un comprobante válido.
+- **Consulta de estado previa a la descarga:** ninguna tarea periódica actualiza el estado SIFEN. Sin
+  consultarlo, una factura ya aprobada seguiría bloqueada hasta que un administrador la revisara. Por eso,
+  si está en `GENERADO`, la vista llama primero a `consultar_estado_sifen`, una lectura que no emite nada.
+  Los botones siguen visibles en ese estado para poder hacer ese intento; se ocultan si la factura está
+  rechazada o con error.
+- **Errores de descarga como mensaje en pantalla:** los antiguos 400 y 502 en texto plano se reemplazaron por
+  una redirección al listado, con el motivo visible para el usuario.
+
+### Limitación conocida
+
+La verificación del CDC dentro del archivo solo es directa en el XML. El texto de un PDF suele estar comprimido,
+por lo que en el KuDE se valida que sea un PDF y se confía en que Factura Segura lo devuelve para el CDC pedido.
+
+### Tests
+
+`DescargarDocumentoElectronicoViewTest` se reescribió por criterio y `DescargarArchivosTest` sumó la validación
+del contenido. Ninguno genera una factura: los documentos se crean directo en la base de pruebas, `requests` está
+mockeado y cada test de la vista comprueba al terminar que no se llamó a `calcular_de`/`generar_de` ni se
+reservó un número del rango.
 
 ## Enlaces externos (conversaciones completas)
 

@@ -175,6 +175,96 @@ class Cliente(models.Model):
         return f'{nombre_completo} ({self.identificador}) - [{estado}]'
 
 
+class SolicitudCliente(models.Model):
+    """Pedido de un usuario de Keycloak para que se le dé de alta como cliente.
+
+    Implementa el autoservicio de alta: hoy un administrador tiene que
+    crear el ``Cliente`` a mano (``ClienteCreateView``) y asociarlo
+    después a un usuario existente (``AsociarUsuariosClienteView``) sin
+    que el usuario mismo inicie nada. Esta solicitud es el paso que
+    falta: cualquier usuario sin ningún ``Cliente`` asociado todavía
+    puede pedirlo, como persona física (nombre, apellido, CI) o
+    jurídica (razón social, RUC) — mismas dos variantes y la misma
+    validación condicional que ya usa ``Cliente``/``ClienteForm``; un
+    administrador la aprueba (lo que crea el ``Cliente`` del tipo
+    correspondiente y lo asocia) o la rechaza (con un motivo).
+    """
+
+    ESTADO_PENDIENTE = 'PENDIENTE'
+    ESTADO_APROBADA = 'APROBADA'
+    ESTADO_RECHAZADA = 'RECHAZADA'
+    ESTADO_CHOICES = [
+        (ESTADO_PENDIENTE, 'Pendiente de revisión'),
+        (ESTADO_APROBADA, 'Aprobada'),
+        (ESTADO_RECHAZADA, 'Rechazada'),
+    ]
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='solicitudes_cliente',
+        verbose_name='Usuario solicitante',
+    )
+    tipo_cliente = models.CharField(
+        max_length=10,
+        choices=Cliente.TIPO_CLIENTE_CHOICES,
+        default=Cliente.TIPO_FISICA,
+        verbose_name='Tipo de cliente',
+    )
+    nombre = models.CharField(max_length=100, blank=True, verbose_name='Nombre')
+    apellido = models.CharField(max_length=100, blank=True, verbose_name='Apellido')
+    razon_social = models.CharField(max_length=150, blank=True, verbose_name='Razón social')
+    identificador = models.CharField(max_length=20, verbose_name='Cédula/RUC')
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
+    motivo_rechazo = models.CharField(
+        max_length=255, blank=True, verbose_name='Motivo de rechazo',
+        help_text='Solo se completa cuando un administrador rechaza la solicitud.',
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+    revisado_en = models.DateTimeField(null=True, blank=True)
+    revisado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='solicitudes_revisadas',
+        verbose_name='Administrador que revisó',
+    )
+    cliente_creado = models.OneToOneField(
+        'Cliente',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='solicitud_origen',
+        verbose_name='Cliente creado',
+        help_text='El Cliente que se creó al aprobar esta solicitud (vacío si está pendiente o fue rechazada).',
+    )
+
+    class Meta:
+        """Como mucho una solicitud pendiente por usuario, garantizado por la base de datos."""
+        verbose_name = 'Solicitud de cliente'
+        verbose_name_plural = 'Solicitudes de cliente'
+        ordering = ['-creado_en']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['usuario'],
+                condition=models.Q(estado='PENDIENTE'),
+                name='una_solicitud_pendiente_por_usuario',
+            ),
+        ]
+
+    @property
+    def nombre_completo(self):
+        """Nombre a mostrar: razón social si es jurídica, nombre y apellido si es física."""
+        if self.tipo_cliente == Cliente.TIPO_JURIDICA:
+            return self.razon_social
+        return f'{self.nombre} {self.apellido}'.strip()
+
+    def __str__(self):
+        """Devuelve una descripción legible de la solicitud y su estado."""
+        return f'{self.nombre_completo} ({self.identificador}) - [{self.get_estado_display()}]'
+
+
 class MetodoPago(models.Model):
     """
     Modelo para gestionar los métodos de pago registrados por un usuario cliente.
@@ -278,6 +368,19 @@ class MetodoPago(models.Model):
         null=True,
         verbose_name='Número de Tarjeta'
     )
+    moneda = models.ForeignKey(
+        'divisas.Divisa',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='metodos_pago',
+        verbose_name='Moneda',
+        help_text=(
+            'La moneda de esta cuenta o billetera (la confirma sipap-sim al '
+            'validarla, ver apps.clientes.validacion_sipap; para tarjeta, '
+            'siempre PYG). Decide en qué operaciones puede usarse este medio.'
+        ),
+    )
     proveedor_externo = models.CharField(
         max_length=20,
         choices=PROVEEDOR_EXTERNO_CHOICES,
@@ -304,7 +407,12 @@ class MetodoPago(models.Model):
     )
     es_predeterminado = models.BooleanField(
         default=False,
-        verbose_name='¿Es Predeterminado?'
+        verbose_name='¿Es Predeterminado?',
+        help_text=(
+            'El predeterminado es por divisa, no uno solo por cliente: '
+            'marcar este no le quita el flag a un método predeterminado '
+            'en otra divisa.'
+        ),
     )
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
@@ -319,21 +427,51 @@ class MetodoPago(models.Model):
         """Devuelve una descripción legible del método de pago."""
         return f"{self.get_tipo_medio_display()} - {self.entidad_financiera} ({self.nombre_titular})"
 
+    @property
+    def etiqueta_corta(self):
+        """Etiqueta para elegir este medio en un <select>: tipo, entidad, identificador y divisa.
+
+        A diferencia de ``__str__`` (usado en el admin y en logs), esta
+        no alcanza con el tipo y la entidad: dos cuentas o billeteras
+        del mismo banco en distinta divisa, o dos tarjetas del mismo
+        banco, se verían idénticas en un desplegable. Se agrega el
+        número (los últimos 4 dígitos, nunca el completo) y el código
+        de la divisa para que cada opción sea inequívoca.
+        """
+        numero = self.numero_tarjeta if self.tipo_medio == self.TIPO_TARJETA else self.numero_cuenta
+        cola = numero[-4:] if numero else ''
+        partes = [self.get_tipo_medio_display(), self.entidad_financiera]
+        if cola:
+            partes.append(f'····{cola}')
+        if self.moneda_id:
+            partes.append(self.moneda.codigo)
+        return ' · '.join(partes)
+
     def save(self, *args, **kwargs):
         """
         Sobrescribe save para garantizar que solo exista un método de pago predeterminado
-        por cliente a la vez (Criterio 6).
+        por cliente y por divisa a la vez (Criterio 6).
+
+        El predeterminado no es único por cliente sino por cada divisa en la que
+        tiene medios registrados: puede tener, por ejemplo, una cuenta predeterminada
+        en USD y otra distinta en EUR al mismo tiempo, cada una para pagar u operar
+        en esa divisa. ``moneda=None`` (medios sin divisa confirmada, ver
+        ``apps.clientes.views.metodo_pago_list``) cuenta como una divisa más a este
+        efecto, nunca se mezcla con una divisa real.
         """
         with transaction.atomic():
-            # Si el usuario no tiene métodos de pago previos, este será predeterminado por defecto
-            if not MetodoPago.objects.filter(cliente=self.cliente).exists():
+            # Si el cliente todavía no tiene ningún método en esta divisa, este será
+            # predeterminado por defecto.
+            if not MetodoPago.objects.filter(cliente=self.cliente, moneda_id=self.moneda_id).exists():
                 self.es_predeterminado = True
 
-            # Si se está guardando como predeterminado, quitar el flag a los demás métodos de este usuario
+            # Si se está guardando como predeterminado, quitar el flag solo a los demás
+            # métodos del cliente en esa misma divisa (los de otra divisa no se tocan).
             if self.es_predeterminado:
                 MetodoPago.objects.filter(
-                    cliente=self.cliente, 
-                    es_predeterminado=True
+                    cliente=self.cliente,
+                    moneda_id=self.moneda_id,
+                    es_predeterminado=True,
                 ).exclude(pk=self.pk).update(es_predeterminado=False)
 
             super().save(*args, **kwargs)
