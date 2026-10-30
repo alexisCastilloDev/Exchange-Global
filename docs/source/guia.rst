@@ -825,6 +825,51 @@ cerradas, con el período en que cada una estuvo abierta y su balance por
 moneda (Criterio 4); es una pantalla de solo lectura, sin ninguna acción
 para modificar lo ya registrado.
 
+Consulta de facturas electrónicas
+----------------------------------
+
+Implementa la HU "Consulta de facturas electrónicas": un cliente con un
+cliente activo seleccionado consulta, en ``/divisas/transacciones/mias/facturas/``
+(``apps.divisas.views.MisFacturasElectronicasListView``), el listado
+**paginado** (20 por página, Criterio 1) de los ``apps.divisas.models.DocumentoElectronico``
+emitidos para sus propias transacciones (compra/venta o cambio) — el
+comprobante que la HU "Integración con API de facturación electrónica"
+genera automáticamente ante SIFEN apenas una transacción queda "Pagada". Es
+de solo lectura: a diferencia de la pantalla de administración
+(``DocumentosElectronicosListView``, con todos los clientes y acciones para
+reintentar o consultar el estado SIFEN), el cliente no puede ejecutar
+ninguna acción sobre sus propios documentos, solo consultarlos.
+
+Cada fila muestra número de documento, CDC, la transacción asociada (con su
+tipo y divisa), la fecha de emisión y el monto —tomado de
+``documento.transaccion.monto_final``, porque el documento en sí no lo
+duplica— junto con el estado (Criterio 2). El estado se simplifica para el
+cliente con el mismo criterio que ya usa el detalle de una transacción:
+``DocumentoElectronico.factura_pendiente`` agrupa cualquier falla técnica
+(de generación o de SIFEN) bajo "Pendiente de generación", en vez de
+mostrarle un código de error interno.
+
+El listado admite filtrar por rango de fechas de emisión con
+``fecha_desde``/``fecha_hasta`` en la URL (Criterio 3), mismo patrón y mismo
+parseo (``apps.divisas.views._parsear_fecha``) que
+``MiHistorialTransaccionesView`` ya usa para su propio filtro de fechas. Un
+documento sin ``emitida_en`` todavía (pendiente de generación, o rechazado)
+nunca coincide con ningún filtro de fecha —no hay ninguna fecha de emisión
+real contra la que comparar— así que solo aparece en el listado sin
+filtrar.
+
+Cada fila enlaza, con un botón "Ver detalle", a la pantalla de detalle de su
+transacción (``DetalleTransaccionOperacionView``/``DetalleTransaccionCambioView``),
+que ya incluye una sección "Factura electrónica" con el comprobante completo
+—número, estado, fecha de emisión y CDC— y, si el documento ya tiene CDC,
+los enlaces de descarga del KuDE y el XML (Criterio 4). Sin ninguna factura
+emitida para el cliente activo, la plantilla muestra un mensaje explícito
+("Todavía no tenés ninguna factura electrónica emitida.") en vez de una
+tabla vacía o un error (Criterio 5); si el cliente sí tiene facturas pero el
+rango de fechas filtrado no encuentra ninguna, el mensaje lo distingue
+("No se encontraron facturas para el rango de fechas seleccionado.") para no
+confundir "no tengo ninguna" con "no hay ninguna con este filtro".
+
 Acceso a esta documentación desde el sistema
 ----------------------------------------------
 
