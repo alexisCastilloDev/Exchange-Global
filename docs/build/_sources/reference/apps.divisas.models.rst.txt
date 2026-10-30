@@ -21,6 +21,8 @@ apps.divisas.models module
 
 .. autofunction:: apps.divisas.models.moneda_a_pagar
 
+.. autofunction:: apps.divisas.models.estados_con_pago_ya_registrado
+
 .. autoclass:: apps.divisas.models.ConfiguracionComision
    :members:
    :show-inheritance:
@@ -38,5 +40,17 @@ apps.divisas.models module
    :show-inheritance:
 
 .. autoclass:: apps.divisas.models.NotificacionTasa
+   :members:
+   :show-inheritance:
+
+.. autoexception:: apps.divisas.models.RangoDocumentosAgotadoError
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.models.ContadorDocumentoElectronico
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.models.DocumentoElectronico
    :members:
    :show-inheritance:

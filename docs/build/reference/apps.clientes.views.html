@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -163,6 +164,25 @@
   <section id="module-apps.clientes.views">
 <span id="apps-clientes-views-module"></span><h1>apps.clientes.views module<a class="headerlink" href="#module-apps.clientes.views" title="Link to this heading"></a></h1>
 <p>Módulo de vistas para la aplicación de clientes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.AprobarSolicitudClienteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AprobarSolicitudClienteView</span></span><a class="reference internal" href="../_modules/apps/clientes/views.html#AprobarSolicitudClienteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.AprobarSolicitudClienteView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Aprueba una solicitud: crea el <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> (física o jurídica) y lo asocia al usuario solicitante.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.AprobarSolicitudClienteView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#AprobarSolicitudClienteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.AprobarSolicitudClienteView.post" title="Link to this definition"></a></dt>
+<dd><p>Crea el cliente y marca la solicitud como aprobada, o informa el error sin romper.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.AprobarSolicitudClienteView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#AprobarSolicitudClienteView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.AprobarSolicitudClienteView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el usuario pueda administrar solicitudes de cliente.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.clientes.views.AsociarUsuariosClienteView">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AsociarUsuariosClienteView</span></span><a class="reference internal" href="../_modules/apps/clientes/views.html#AsociarUsuariosClienteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.AsociarUsuariosClienteView" title="Link to this definition"></a></dt>
@@ -434,6 +454,104 @@
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.RechazarSolicitudClienteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">RechazarSolicitudClienteView</span></span><a class="reference internal" href="../_modules/apps/clientes/views.html#RechazarSolicitudClienteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.RechazarSolicitudClienteView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Rechaza una solicitud, con un motivo obligatorio, sin crear ningún <code class="docutils literal notranslate"><span class="pre">Cliente</span></code>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.RechazarSolicitudClienteView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#RechazarSolicitudClienteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.RechazarSolicitudClienteView.post" title="Link to this definition"></a></dt>
+<dd><p>Marca la solicitud como rechazada con el motivo indicado.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.RechazarSolicitudClienteView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#RechazarSolicitudClienteView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.RechazarSolicitudClienteView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el usuario pueda administrar solicitudes de cliente.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitarClienteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SolicitarClienteView</span></span><a class="reference internal" href="../_modules/apps/clientes/views.html#SolicitarClienteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.SolicitarClienteView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Autoservicio: cualquier usuario sin ningún <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> asociado todavía pide darse de alta.</p>
+<p>No depende del rol <code class="docutils literal notranslate"><span class="pre">cliente</span></code> de Keycloak: un usuario recién
+registrado puede no tener ningún rol de negocio todavía (dárselo
+de alta como cliente es justamente el paso que lo lleva a tener
+uno). Mientras no tenga ningún <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> asociado, esta es la
+única pantalla operativa que tiene sentido ofrecerle. Si ya tiene
+una <code class="docutils literal notranslate"><span class="pre">SolicitudCliente</span></code> en <code class="docutils literal notranslate"><span class="pre">PENDIENTE</span></code>, no vuelve a mostrar el
+formulario: solo el aviso de que se está gestionando. Si la última
+fue <code class="docutils literal notranslate"><span class="pre">RECHAZADA</span></code>, muestra el motivo y permite reintentar.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitarClienteView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#SolicitarClienteView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.SolicitarClienteView.get" title="Link to this definition"></a></dt>
+<dd><p>Muestra el formulario, el aviso de “en gestión”, o redirige si ya tiene cliente.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitarClienteView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#SolicitarClienteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.SolicitarClienteView.post" title="Link to this definition"></a></dt>
+<dd><p>Crea la solicitud si el usuario todavía no tiene cliente ni una pendiente.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitarClienteView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'clientes/solicitar_cliente.html'</span></span><a class="headerlink" href="#apps.clientes.views.SolicitarClienteView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitarClienteView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#SolicitarClienteView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.SolicitarClienteView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Solo quien no tiene ningún rol de negocio distinto de “cliente” puede solicitar — ver <code class="docutils literal notranslate"><span class="pre">puede_solicitar_cliente</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitudesClienteListView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SolicitudesClienteListView</span></span><a class="reference internal" href="../_modules/apps/clientes/views.html#SolicitudesClienteListView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.SolicitudesClienteListView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>Lista, para un administrador, todas las solicitudes de alta de cliente.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitudesClienteListView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'solicitudes'</span></span><a class="headerlink" href="#apps.clientes.views.SolicitudesClienteListView.context_object_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitudesClienteListView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#SolicitudesClienteListView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.SolicitudesClienteListView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega el formulario de rechazo, reutilizado inline en cada fila pendiente.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitudesClienteListView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#SolicitudesClienteListView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.SolicitudesClienteListView.get_queryset" title="Link to this definition"></a></dt>
+<dd><p>Trae de una sola vez al usuario solicitante, más recientes primero (orden del modelo).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitudesClienteListView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.clientes.views.SolicitudesClienteListView.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.SolicitudCliente" title="apps.clientes.models.SolicitudCliente"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolicitudCliente</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitudesClienteListView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'clientes/solicitudes_cliente.html'</span></span><a class="headerlink" href="#apps.clientes.views.SolicitudesClienteListView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.views.SolicitudesClienteListView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#SolicitudesClienteListView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.SolicitudesClienteListView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el usuario pueda administrar solicitudes de cliente.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="apps.clientes.views.cambiar_cliente_view">
 <span class="sig-name descname"><span class="pre">cambiar_cliente_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#cambiar_cliente_view"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.cambiar_cliente_view" title="Link to this definition"></a></dt>
@@ -459,6 +577,44 @@ Solo los clientes con un cliente activo seleccionado pueden gestionarlos.</p>
 <span class="sig-name descname"><span class="pre">metodo_pago_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_list"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_list" title="Link to this definition"></a></dt>
 <dd><p>Muestra los métodos del cliente activo, con datos censurados.
 Solo clientes con un cliente activo seleccionado pueden verlo.</p>
+<p>En vez de una sola lista plana, agrupa las cuentas y billeteras por
+divisa (<code class="docutils literal notranslate"><span class="pre">grupos_por_divisa</span></code>, uno por cada <code class="docutils literal notranslate"><span class="pre">Divisa</span></code> activa,
+incluida una fila aunque esté vacía) y deja las tarjetas en su
+propia sección (<code class="docutils literal notranslate"><span class="pre">tarjetas</span></code>), ya que siempre son en PYG y no tiene
+sentido subdividirlas por divisa. Un grupo sin ningún medio marca
+de entrada que falta agregar uno: sin eso, el cliente no puede
+elegir nada para pagar ni para recibir una operación en esa divisa
+(ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.forms.PagarTransaccionForm</span></code>), así que conviene
+avisarlo antes de que lo descubra recién al intentar pagar.</p>
+<p>Una cuenta o billetera registrada antes de que existiera el campo
+<code class="docutils literal notranslate"><span class="pre">MetodoPago.moneda</span></code> (la migración de datos que agregó este campo
+deja esas filas en <code class="docutils literal notranslate"><span class="pre">moneda=NULL</span></code> a propósito, sin adivinar)
+quedaría invisible en cualquier agrupación por divisa: en vez de
+eso, se muestra aparte (<code class="docutils literal notranslate"><span class="pre">metodos_sin_divisa</span></code>) para que el cliente
+la vea y sepa que tiene que volver a registrarla, en vez de que
+desaparezca sin ningún aviso.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.clientes.views.metodo_pago_movimientos">
+<span class="sig-name descname"><span class="pre">metodo_pago_movimientos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_movimientos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_movimientos" title="Link to this definition"></a></dt>
+<dd><p>Muestra los movimientos y, si corresponde, el saldo real de un método de pago propio.</p>
+<p>«Movimientos» se arma siempre con datos propios (ver
+<code class="docutils literal notranslate"><span class="pre">_movimientos_de_metodo_pago</span></code>): nunca depende de que sipap-sim o
+Stripe respondan. El «saldo», en cambio, es información que solo
+existe del otro lado, así que si no se puede consultar no hay
+ningún valor local al que recurrir:</p>
+<ul class="simple">
+<li><p>Cuenta bancaria o billetera: se le vuelve a preguntar a sipap-sim
+por esa cuenta puntual (<code class="docutils literal notranslate"><span class="pre">apps.clientes.validacion_sipap.validar_cuenta</span></code>,
+el mismo endpoint que ya se usa al registrarla), para mostrar el
+saldo real en este momento, no uno guardado que podría haber
+quedado desactualizado.</p></li>
+<li><p>Tarjeta: no se muestra ningún saldo. Stripe es un procesador de
+pagos, no el banco emisor de la tarjeta: no tiene (ni expone) el
+saldo disponible o el límite de crédito de una tarjeta ajena, así
+que mostrar un número ahí sería inventado.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -470,8 +626,11 @@ Solo clientes con un cliente activo seleccionado pueden verlo.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="apps.clientes.views.metodo_pago_set_default">
 <span class="sig-name descname"><span class="pre">metodo_pago_set_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/views.html#metodo_pago_set_default"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.views.metodo_pago_set_default" title="Link to this definition"></a></dt>
-<dd><p>Establece un método de pago específico como el predeterminado (Criterio 6).
-Solo los clientes con un cliente activo seleccionado pueden gestionarlos.</p>
+<dd><p>Establece un método de pago específico como el predeterminado en su divisa
+(Criterio 6). El predeterminado es independiente por divisa (ver
+<code class="docutils literal notranslate"><span class="pre">MetodoPago.save</span></code>): esto nunca le quita el flag a un método predeterminado
+en otra divisa distinta. Solo los clientes con un cliente activo
+seleccionado pueden gestionarlos.</p>
 </dd></dl>
 
 <dl class="py function">

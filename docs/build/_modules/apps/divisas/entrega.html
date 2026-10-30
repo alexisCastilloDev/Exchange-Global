@@ -1,0 +1,400 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.entrega &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.divisas.entrega</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.divisas.entrega</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Entrega al cliente de lo que le corresponde tras un pago ya confirmado.</span>
+
+<span class="sd">Hasta esta implementación, una transacción se consideraba completa en</span>
+<span class="sd">cuanto el cliente pagaba (``Pago.registrar_pago`` la marcaba "Pagada") y</span>
+<span class="sd">ahí terminaba todo: nunca existió el otro lado de la operación, que</span>
+<span class="sd">Global Exchange le transfiera al cliente la divisa que compró, los</span>
+<span class="sd">guaraníes de su venta, o el resultado de su cambio. Este módulo agrega</span>
+<span class="sd">ese paso, en su versión simple: se intenta en el momento, de forma</span>
+<span class="sd">sincrónica, inmediatamente después de registrar el pago (ver</span>
+<span class="sd">``apps.divisas.pagos_stripe``/``apps.divisas.pagos_sipap``, los únicos</span>
+<span class="sd">llamadores). Si sipap-sim no responde o rechaza la transferencia, no se</span>
+<span class="sd">reintenta solo ni se inventa un estado intermedio: la transacción pasa</span>
+<span class="sd">a "Pagada, pero la entrega al cliente falló"</span>
+<span class="sd">(``ESTADO_ENTREGA_FALLIDA``), visible tanto para un administrador</span>
+<span class="sd">("Entregas pendientes") como para el propio cliente (en el detalle de</span>
+<span class="sd">su transacción), para reintentarla desde cualquiera de los dos lados</span>
+<span class="sd">(ver ``reintentar_entrega``). El ``Pago`` ya registrado nunca se pierde</span>
+<span class="sd">ni se duplica (sipap-sim es idempotente por referencia, ver</span>
+<span class="sd">``core.views.crear_transferencia_saliente``).</span>
+
+<span class="sd">Recién después de que esa transferencia se confirma de verdad contra</span>
+<span class="sd">sipap-sim se ajusta el saldo propio de Global Exchange</span>
+<span class="sd">(``CuentaPropia.ajustar_saldos``): así el saldo que se usa para decidir</span>
+<span class="sd">si una futura operación puede confirmarse siempre queda en espejo con</span>
+<span class="sd">lo que realmente se transfirió, nunca adelantado a algo que todavía</span>
+<span class="sd">podría fallar.</span>
+
+<span class="sd">Una entrega exitosa de una compra o de un cambio entre divisas (HU</span>
+<span class="sd">"Acreditación de fondos", GE-23) deja la transacción en "Acreditada" en</span>
+<span class="sd">vez de "Pagada" sin más, con la fecha, hora y referencia externa de esa</span>
+<span class="sd">acreditación. Una venta exitosa, en cambio, queda "Retirada" (HU</span>
+<span class="sd">"Retiro de fondos", GE-24, ver ``_es_retiro``): mismo mecanismo de</span>
+<span class="sd">entrega, al mismo momento (apenas se confirma el pago, sin ninguna</span>
+<span class="sd">acción extra del cliente — se paga y se recibe, los tres tipos de</span>
+<span class="sd">transacción por igual), solo que con un nombre de estado distinto a</span>
+<span class="sd">propósito, para que el cliente distinga de un vistazo si lo que pasó</span>
+<span class="sd">fue que Global Exchange le entregó algo (compra o cambio) o que él</span>
+<span class="sd">retiró lo suyo (venta).</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CalculoOperacion</span><span class="p">,</span>
+    <span class="n">CalculoTriangulacion</span><span class="p">,</span>
+    <span class="n">CuentaPropia</span><span class="p">,</span>
+    <span class="n">CuentaPropiaInexistenteError</span><span class="p">,</span>
+    <span class="n">SaldoInsuficienteError</span><span class="p">,</span>
+    <span class="n">divisa_a_entregar</span><span class="p">,</span>
+    <span class="n">divisa_a_pagar</span><span class="p">,</span>
+    <span class="n">monto_a_entregar</span><span class="p">,</span>
+    <span class="n">monto_a_pagar</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="_referencia_entrega">
+<a class="viewcode-back" href="../../../reference/apps.divisas.entrega.html#apps.divisas.entrega._referencia_entrega">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_referencia_entrega</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Referencia única y estable para la entrega de una transacción.</span>
+
+<span class="sd">    Siempre la misma para la misma transacción (nunca se regenera), así</span>
+<span class="sd">    que si se llama dos veces, sipap-sim reconoce la segunda llamada</span>
+<span class="sd">    como la misma transferencia en vez de pagarle al cliente dos veces.</span>
+<span class="sd">    """</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="s1">'OPERACION'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'CAMBIO'</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'ENTREGA-</span><span class="si">{</span><span class="n">tipo</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">'</span></div>
+
+
+
+<div class="viewcode-block" id="_enviar_transferencia_saliente">
+<a class="viewcode-back" href="../../../reference/apps.divisas.entrega.html#apps.divisas.entrega._enviar_transferencia_saliente">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_enviar_transferencia_saliente</span><span class="p">(</span><span class="n">medio_destino</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="n">referencia</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pide a sipap-sim que transfiera ``monto`` desde la casa de cambio a ``medio_destino``.</span>
+
+<span class="sd">    Único punto donde este módulo le habla a sipap-sim por HTTP</span>
+<span class="sd">    (``POST {SIPAP_BASE_URL}/api/transferencias/``).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        requests.exceptions.RequestException: Si sipap-sim no responde,</span>
+<span class="sd">            la conexión falla, o responde con un error (cuenta de</span>
+<span class="sd">            destino inexistente, sin cuenta de la casa de cambio en esa</span>
+<span class="sd">            moneda, etc.) — en la versión simple no se distingue el</span>
+<span class="sd">            motivo, cualquier falla se trata igual.</span>
+<span class="sd">    """</span>
+    <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_BASE_URL</span><span class="si">}</span><span class="s1">/api/transferencias/'</span><span class="p">,</span>
+        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">'cuenta_destino'</span><span class="p">:</span> <span class="n">medio_destino</span><span class="o">.</span><span class="n">numero_cuenta</span><span class="p">,</span>
+            <span class="s1">'documento'</span><span class="p">:</span> <span class="n">medio_destino</span><span class="o">.</span><span class="n">documento_titular</span><span class="p">,</span>
+            <span class="s1">'monto'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">monto</span><span class="p">),</span>
+            <span class="s1">'referencia'</span><span class="p">:</span> <span class="n">referencia</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Bearer </span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">SIPAP_API_KEY</span><span class="si">}</span><span class="s1">'</span><span class="p">},</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">respuesta</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="_es_retiro">
+<a class="viewcode-back" href="../../../reference/apps.divisas.entrega.html#apps.divisas.entrega._es_retiro">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_es_retiro</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Indica si una entrega exitosa de esta transacción debe llamarse "Retirada", no "Acreditada".</span>
+
+<span class="sd">    Solo una venta (ver ``CalculoOperacion.ESTADO_RETIRADA``, HU "Retiro</span>
+<span class="sd">    de fondos" GE-24): un cambio entre divisas nunca llega a este caso,</span>
+<span class="sd">    así que esta función nunca necesita mirar</span>
+<span class="sd">    ``CalculoTriangulacion.ESTADO_RETIRADA`` (que, a propósito, ni</span>
+<span class="sd">    siquiera existe — ver su ``ESTADO_CHOICES``).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">)</span> <span class="ow">and</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tipo</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_VENTA</span></div>
+
+
+
+<div class="viewcode-block" id="realizar_entrega">
+<a class="viewcode-back" href="../../../reference/apps.divisas.entrega.html#apps.divisas.entrega.realizar_entrega">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">realizar_entrega</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Entrega a una transacción ya "Pagada" lo que le corresponde al cliente.</span>
+
+<span class="sd">    Se llama una sola vez, justo después de que ``Pago.registrar_pago``</span>
+<span class="sd">    deja la transacción en "Pagada" (nunca antes, y nunca si el pago ya</span>
+<span class="sd">    existía de antes — ver los llamadores), o desde ``reintentar_entrega``</span>
+<span class="sd">    si una entrega anterior quedó fallida. Si no hay un medio de</span>
+<span class="sd">    destino elegido (no debería pasar: se exige al pagar, ver</span>
+<span class="sd">    ``apps.divisas.forms.PagarTransaccionForm``), la llamada a sipap-sim</span>
+<span class="sd">    falla, o el saldo propio de Global Exchange no alcanza (una</span>
+<span class="sd">    verificación ya se hizo al confirmar, pero puede haber cambiado</span>
+<span class="sd">    entretanto), la transacción pasa a "Entrega fallida" en vez de</span>
+<span class="sd">    quedar "Pagada" como si nada hubiera pasado.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``</span>
+<span class="sd">            recién marcada "Pagada".</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: ``True`` si la entrega se completó (la transacción queda</span>
+<span class="sd">        "Acreditada" para una compra o un cambio, o "Retirada" para una</span>
+<span class="sd">        venta, ver ``_es_retiro``), ``False`` si falló (la transacción</span>
+<span class="sd">        ya quedó marcada "Entrega fallida").</span>
+<span class="sd">    """</span>
+    <span class="n">medio_destino</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">medio_destino</span>
+    <span class="k">if</span> <span class="n">medio_destino</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_ENTREGA_FALLIDA</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">referencia</span> <span class="o">=</span> <span class="n">_referencia_entrega</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_enviar_transferencia_saliente</span><span class="p">(</span><span class="n">medio_destino</span><span class="p">,</span> <span class="n">monto_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">referencia</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_ENTREGA_FALLIDA</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">CuentaPropia</span><span class="o">.</span><span class="n">ajustar_saldos</span><span class="p">(</span>
+            <span class="n">divisa_recibir</span><span class="o">=</span><span class="n">divisa_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">monto_recibir</span><span class="o">=</span><span class="n">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+            <span class="n">divisa_entregar</span><span class="o">=</span><span class="n">divisa_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">monto_entregar</span><span class="o">=</span><span class="n">monto_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">SaldoInsuficienteError</span><span class="p">,</span> <span class="n">CuentaPropiaInexistenteError</span><span class="p">):</span>
+        <span class="c1"># La transferencia a sipap-sim ya se hizo (es real e irreversible</span>
+        <span class="c1"># en esta versión simple, sin compensación automática): lo que</span>
+        <span class="c1"># falló fue solo el espejo interno. Queda igual para que un</span>
+        <span class="c1"># administrador lo note y corrija el saldo propio a mano.</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_ENTREGA_FALLIDA</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">_es_retiro</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_RETIRADA</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">retirado_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">referencia_retiro</span> <span class="o">=</span> <span class="n">referencia</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'retirado_en'</span><span class="p">,</span> <span class="s1">'referencia_retiro'</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_ACREDITADA</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">acreditado_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">referencia_acreditacion</span> <span class="o">=</span> <span class="n">referencia</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'acreditado_en'</span><span class="p">,</span> <span class="s1">'referencia_acreditacion'</span><span class="p">])</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="reintentar_entrega">
+<a class="viewcode-back" href="../../../reference/apps.divisas.entrega.html#apps.divisas.entrega.reintentar_entrega">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reintentar_entrega</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reintenta la entrega de una transacción que quedó en "Entrega fallida".</span>
+
+<span class="sd">    La devuelve primero a "Pagada" (``realizar_entrega`` no sabe</span>
+<span class="sd">    "reanudar" desde una entrega fallida por sí sola, solo entregar algo</span>
+<span class="sd">    que está "Pagada") y recién ahí llama a ``realizar_entrega``, que</span>
+<span class="sd">    decide el resultado final exactamente igual que en el intento</span>
+<span class="sd">    original. Lo usan tanto un administrador (pantalla "Entregas</span>
+<span class="sd">    pendientes") como el propio cliente, desde el detalle de su</span>
+<span class="sd">    transacción.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool | None: Lo mismo que ``realizar_entrega`` si había algo</span>
+<span class="sd">        para reintentar, o ``None`` si la transacción ya no estaba en</span>
+<span class="sd">        "Entrega fallida" (nada que hacer).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">!=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_ENTREGA_FALLIDA</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span>
+    <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">realizar_entrega</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
