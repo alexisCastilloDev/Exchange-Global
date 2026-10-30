@@ -4097,6 +4097,44 @@ Sphinx (`docs/source/reference/apps.divisas.factura_electronica.rst`) actualizad
 nuevos/renombrados. Verificado con `tests.test_factura_electronica` (39/39), `manage.py check` y la
 suite completa de Django.
 
+### Segundo hallazgo en la misma sesión: `iTipTra`/`dDesTipTra` (tipo de transacción)
+
+El usuario preguntó, mirando una factura real generada, si era normal que el "Tipo de operación"
+figurara como "Venta de mercadería". No lo era: `_armar_resumido_de` mandaba `iTipTra` fijo en `'1'`
+(ese código), un valor que el propio docstring del módulo ya señalaba como "el más plausible según la
+guía, no una verificación campo por campo contra el Manual Técnico de SIFEN 150 completo" desde el
+principio de esta HU (ver Sesión 24). El usuario pegó la tabla real de códigos del manual: `5`="Venta
+de divisas", `6`="Compra de divisas" — códigos propios de una casa de cambio, confirmando la sospecha.
+En el camino se encontró un segundo bug, más grave que el código equivocado: `dDesTipTra` (la
+descripción textual, obligatoria siempre que se envía `iTipTra`) **no se mandaba en absoluto**.
+
+Nueva función `_tipo_transaccion` en `apps/divisas/factura_electronica.py`: compra → `('6', 'Compra de
+divisas')`, venta → `('5', 'Venta de divisas')`, ambos sin ambigüedad. Para un cambio entre divisas
+(triangulación) no hay código propio en la tabla — combina ambas piernas en una sola operación (Global
+Exchange recibe la divisa origen y entrega la destino) — así que se le preguntó al usuario, que eligió
+facturarlo siempre como "Venta de divisas" (`5`), consistente con lo que Global Exchange finalmente le
+entrega al cliente. `_armar_resumido_de` actualizada para usar ambos valores en vez del `'1'` fijo.
+
+Nueva clase de tests `TipoTransaccionTest` (4 casos: compra, venta, cambio, y una verificación de
+integración de que el `DE` real enviado a `calcular_de` lleva ambos campos). Sphinx actualizado.
+Verificado con `tests.test_factura_electronica` (43/43), `manage.py check` y la suite completa de
+Django.
+
+### Aparte, en la misma sesión: `GH013` al pushear `develop` — secretos reales en `.env.example`
+
+Push rechazado por GitHub Push Protection: `.env.example` tenía una Stripe Test Secret Key y su
+webhook secret reales hardcodeados (y también `FACTURASEGURA_AUTH_TOKEN`), en vez de vacíos como el
+resto del template. Como los commits afectados (`integración con la api de factura segura`,
+`ajustes de registro de usuario y solicitud de cliente`, y los dos commits encima) todavía no estaban
+publicados en el remoto, se reescribió el historial local completo de `develop` con `git filter-branch
+--tree-filter` para quitar esos tres valores de **todas** las versiones históricas del archivo (no
+solo la última) — una reescritura segura porque ninguno de esos commits había llegado nunca a
+`origin/develop` (confirmado antes y después con `git log develop -S"<secreto>"`). Recién entonces se
+pudo pushear sin forzar nada (fast-forward normal, los hashes viejos nunca existieron en el remoto).
+`git gc --prune=now` (limpieza de los objetos sueltos que quedaron en el `.git` local) quedó bloqueado
+por el clasificador de permisos de Claude Code por ser una acción local irreversible; no es necesario
+para el push, queda pendiente si el usuario autoriza ese permiso puntual.
+
 ## Enlaces externos (conversaciones completas)
 
 Extraído de `ia-CONVERSATION.TXT`. Son enlaces a conversaciones completas alojadas en claude.ai (no narrativas resumidas como las sesiones anteriores):
