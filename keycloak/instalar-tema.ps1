@@ -5,8 +5,9 @@ standalone, sin Docker) y lo deja activo en el realm.
   1. Copia keycloak/themes/global-exchange a <Keycloak>/themes/global-exchange
      (si ya existía una versión que no salió de este repo, la respalda antes).
   2. Si se pasan credenciales de admin (o se piden), configura el realm:
-     loginTheme/emailTheme=global-exchange, registro de usuarios con
-     contraseña y verificación de email, "olvidé mi contraseña", sin la opción
+     loginTheme/emailTheme=global-exchange, registro de usuarios sin
+     contraseña (se pide recién después de verificar el email) con
+     verificación de email obligatoria, "olvidé mi contraseña", sin la opción
      "Mantener la sesión iniciada", e idioma español.
 
 Uso:
@@ -116,14 +117,17 @@ if (-not $paso) {
     Write-Host "Contraseña activada en el formulario de registro." -ForegroundColor Green
 }
 
-# Con "verifyEmail" activado, Keycloak 26 deja de pedir la contraseña en el
-# registro y la pide recién después de verificar el email. La opción
-# "Always set password on register form" del paso la vuelve a poner en el
-# formulario, así el usuario se registra con contraseña y solo tiene que
-# verificar el correo para poder entrar.
+# Con "verifyEmail" activado, Keycloak 26 ya difiere nativamente la
+# contraseña: no la pide en el registro, y le adjunta al usuario nuevo la
+# acción requerida "Update Password" automáticamente, que se le pide recién
+# la primera vez que entra, después de verificar el email. "Always set
+# password on register form" en "false" (explícito, por si una corrida
+# anterior de este script la había dejado en "true") es lo que mantiene ese
+# comportamiento nativo en vez de forzar la contraseña de vuelta al
+# formulario de registro.
 if ($paso) {
     $cfgJson = Join-Path $env:TEMP "kc-config-password.json"
-    $opciones = @{ always_set_password_on_register_form = "true" }
+    $opciones = @{ always_set_password_on_register_form = "false" }
     if ($paso.authenticationConfig) {
         @{ id = $paso.authenticationConfig; alias = "ge-password-en-registro"; config = $opciones } | ConvertTo-Json | Set-Content -Path $cfgJson -Encoding ascii
         & $kcadm update "authentication/config/$($paso.authenticationConfig)" -r $Realm -f $cfgJson @kcConfig
@@ -133,7 +137,7 @@ if ($paso) {
     }
     if ($LASTEXITCODE -ne 0) { throw "No se pudo configurar la contraseña en el formulario de registro." }
     Remove-Item $cfgJson
-    Write-Host "El registro pide la contraseña aunque el email esté sin verificar." -ForegroundColor Green
+    Write-Host "El registro ya no pide la contraseña: se difiere hasta después de verificar el email." -ForegroundColor Green
 }
 
 Write-Host ""

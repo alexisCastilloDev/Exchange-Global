@@ -54,7 +54,7 @@ Contexto esperado: user, cliente_activo y permisos de UI.
 {% block content %}
 <div class="ge-page-header">
     <div>
-        <h1>Hola, {{ user.first_name|default:user.email }}</h1>
+        <h1>Hola, {{ cliente_activo.nombre_completo|default:user.first_name|default:user.username }}</h1>
         <p>Esto es lo que tenés disponible según tu acceso.</p>
     </div>
 </div>
@@ -142,6 +142,17 @@ Contexto esperado: user, cliente_activo y permisos de UI.
                 <i class="bi bi-graph-up-arrow" style="font-size: 22px; color: var(--ge-brass);"></i>
                 <h2 style="font-size:16px; margin: 10px 0 4px;">{% if puede_actualizar_tasas %}Actualizar tasas{% else %}Tasas actuales{% endif %}</h2>
                 <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Consultá las tasas de compra y venta vigentes.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+    {% if puede_solicitar_cliente %}
+    <div class="col-md-4">
+        <a href="{% url 'clientes:solicitar_cliente' %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-person-plus" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Solicitar ser cliente</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Pedí que un administrador te dé de alta como cliente.</p>
             </div>
         </a>
     </div>

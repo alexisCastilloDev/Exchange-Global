@@ -5,11 +5,40 @@ Módulo de formularios para la aplicación de Clientes.
 from django import forms
 from django.contrib.auth import get_user_model
 # Se agregó MetodoPago a la importación existente
-from apps.clientes.models import Cliente, MetodoPago
+from apps.clientes.models import Cliente, MetodoPago, SolicitudCliente
 from apps.clientes.validacion_sipap import SipapComunicacionError, validar_cuenta
 from apps.divisas.models import Divisa
 
 User = get_user_model()
+
+
+def _error_identificador_en_uso(identificador, *, excluir_cliente_pk=None, excluir_solicitud_pk=None):
+    """Mensaje de error si ``identificador`` ya está tomado, o ``None`` si está libre.
+
+    Compartido por ``ClienteForm`` y ``SolicitudClienteForm`` (dos
+    ``ModelForm`` sobre modelos distintos, ``Cliente`` y
+    ``SolicitudCliente``, que no pueden compartir un
+    ``clean_identificador`` de otra forma sin una mixin): un
+    identificador no puede coincidir ni con el de un ``Cliente`` ya
+    existente, ni con el de otra ``SolicitudCliente`` todavía
+    pendiente de otro usuario — evita que dos personas reclamen la
+    misma cédula/RUC al mismo tiempo.
+    """
+    clientes = Cliente.objects.filter(identificador=identificador)
+    if excluir_cliente_pk:
+        clientes = clientes.exclude(pk=excluir_cliente_pk)
+    if clientes.exists():
+        return 'Ya existe un perfil de cliente registrado con este documento/identificador.'
+
+    solicitudes = SolicitudCliente.objects.filter(
+        identificador=identificador, estado=SolicitudCliente.ESTADO_PENDIENTE,
+    )
+    if excluir_solicitud_pk:
+        solicitudes = solicitudes.exclude(pk=excluir_solicitud_pk)
+    if solicitudes.exists():
+        return 'Ya hay una solicitud pendiente con este documento/identificador.'
+
+    return None
 
 
 class ClienteForm(forms.ModelForm):
@@ -73,17 +102,11 @@ class ClienteForm(forms.ModelForm):
         if not identificador:
             return identificador
 
-        # 1. Validar unicidad del identificador dentro de la tabla Cliente
-        cliente_existente = Cliente.objects.filter(identificador=identificador)
-        if self.instance and self.instance.pk:
-            cliente_existente = cliente_existente.exclude(
-                pk=self.instance.pk
-            )
-
-        if cliente_existente.exists():
-            raise forms.ValidationError(
-                'Ya existe un perfil de cliente registrado con este documento/identificador.'
-            )
+        error = _error_identificador_en_uso(
+            identificador, excluir_cliente_pk=self.instance.pk if self.instance else None,
+        )
+        if error:
+            raise forms.ValidationError(error)
 
         return identificador
 
@@ -133,6 +156,62 @@ class ClienteForm(forms.ModelForm):
             self.save_m2m()
 
         return cliente
+
+
+class SolicitudClienteForm(forms.ModelForm):
+    """Formulario de autoservicio: un usuario pide que se le dé de alta como cliente.
+
+    El ``usuario`` solicitante lo fija siempre la vista
+    (``request.user``), nunca este formulario. Cubre tanto persona
+    física (nombre, apellido) como jurídica (razón social) — misma
+    validación condicional por ``tipo_cliente`` que ya usa
+    ``ClienteForm``.
+    """
+
+    class Meta:
+        """Define el modelo y los campos que completa el propio usuario."""
+        model = SolicitudCliente
+        fields = ['tipo_cliente', 'nombre', 'apellido', 'razon_social', 'identificador']
+
+    def clean_identificador(self):
+        """Valida que el identificador no esté ya tomado por un cliente o una solicitud pendiente."""
+        identificador = self.cleaned_data.get('identificador')
+        if not identificador:
+            return identificador
+
+        error = _error_identificador_en_uso(
+            identificador, excluir_solicitud_pk=self.instance.pk if self.instance else None,
+        )
+        if error:
+            raise forms.ValidationError(error)
+
+        return identificador
+
+    def clean(self):
+        """Exige nombre/apellido para persona física, razón social para jurídica — igual que ClienteForm."""
+        cleaned_data = super().clean()
+        tipo_cliente = cleaned_data.get('tipo_cliente')
+
+        if tipo_cliente == Cliente.TIPO_FISICA:
+            if not cleaned_data.get('nombre'):
+                self.add_error('nombre', 'El nombre es obligatorio para personas físicas.')
+            if not cleaned_data.get('apellido'):
+                self.add_error('apellido', 'El apellido es obligatorio para personas físicas.')
+        elif tipo_cliente == Cliente.TIPO_JURIDICA:
+            if not cleaned_data.get('razon_social'):
+                self.add_error('razon_social', 'La razón social es obligatoria para personas jurídicas.')
+
+        return cleaned_data
+
+
+class RechazarSolicitudClienteForm(forms.Form):
+    """Pide el motivo, obligatorio, con el que un administrador rechaza una solicitud de cliente."""
+
+    motivo = forms.CharField(
+        label='Motivo del rechazo',
+        widget=forms.Textarea(attrs={'rows': 2}),
+        max_length=255,
+    )
 
 
 class AsociarUsuarioClienteForm(forms.Form):
