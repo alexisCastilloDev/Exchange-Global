@@ -37,7 +37,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 21. [Sesión 21 — 26/10/2026 — GE-23 — Acreditación de fondos](#sesión-21--26102026--ge-23--acreditación-de-fondos)
 22. [Sesión 22 — 26/10/2026 — GE-19 — Movimientos y saldo de los métodos de pago](#sesión-22--26102026--ge-19--movimientos-y-saldo-de-los-métodos-de-pago)
 23. [Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos](#sesión-23--27102026--ge-24--retiro-de-fondos)
-23. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+24. [Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)](#sesión-27--30102026--generación-de-factura-electrónica-hu-del-cliente)
+25. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4134,6 +4135,61 @@ pudo pushear sin forzar nada (fast-forward normal, los hashes viejos nunca exist
 `git gc --prune=now` (limpieza de los objetos sueltos que quedaron en el `.git` local) quedó bloqueado
 por el clasificador de permisos de Claude Code por ser una acción local irreversible; no es necesario
 para el push, queda pendiente si el usuario autoriza ese permiso puntual.
+
+## Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)
+
+**Herramienta:** Claude Code (Anthropic, modelo Sonnet 5.5)
+**HU relacionada:** "Generación de factura electrónica" (sin número de Jira en el pedido)
+**Rama:** `develop`
+**Participantes:** Adriana Benítez, integrante del equipo Global Exchange
+
+### Pedido
+
+Verificar que el sistema cumpla la HU "Generación de factura electrónica" (*Como usuario cliente quiero
+recibir una factura electrónica por cada operación realizada para contar con un comprobante de la
+transacción*) y, si no, implementarla bien: docstrings, Sphinx actualizado, esta conversación
+documentada y tests. Condición explícita: **los tests no deben generar ninguna factura real**.
+
+### Auditoría de los 4 criterios de aceptación
+
+La emisión ante SIFEN vía Factura Segura ya existía (Sesión 24, `apps/divisas/factura_electronica.py`,
+modelo `DocumentoElectronico`, pantallas del cliente y de administración, 43 tests). Se contrastó
+criterio por criterio:
+
+| Criterio | Estado previo | Resultado |
+|---|---|---|
+| 1. Pagada + SIFEN aprueba → factura con datos del cliente, detalle y CDC | Cumplido (receptor, ítems, CDC guardado; aprobación real vía `consultar_estado_sifen`) | Sin cambios |
+| 2. Vínculo inequívoco, sin más de una factura vigente | Parcial: `OneToOneField` en ambas FK, pero "exactamente una transacción" solo se validaba en `clean()` (que la base no ejecuta) | Se agregó `CheckConstraint` en base de datos |
+| 3. Rechazo → "pendiente de generación", sin bloquear el resto | **Incumplido**: el detalle mostraba el estado técnico ("Rechazado por SIFEN", "No se pudo generar (Factura Segura...)"), y si no había documento (rango agotado) no decía nada | Aviso "pendiente de generación" en el detalle y el listado |
+| 4. Se registra fecha y hora de emisión | **Incumplido**: solo existía `creado_en` (cuando se reserva el número, aun si la generación falla) | Campo `emitida_en`, solo se completa si la generación salió bien |
+
+### Cambios
+
+- `DocumentoElectronico` (`apps/divisas/models.py`): campo `emitida_en`; `CheckConstraint`
+  `documento_electronico_exactamente_una_transaccion`; constante `ESTADOS_PENDIENTES` y propiedad
+  `factura_pendiente`.
+- Migración `0029_documentoelectronico_emitida_en_constraint`: agrega el campo, rellena `emitida_en`
+  con `creado_en` para las facturas que ya tienen CDC, y crea la restricción.
+- `apps/divisas/factura_electronica.py`: `_generar` completa `emitida_en` solo al éxito (también en
+  `reintentar_emision`, que reutiliza `_generar`); nueva `factura_pendiente_de_generacion(transaccion)`
+  — verdadera si la transacción ya está pagada y no tiene documento o el suyo está rechazado/fallido.
+- `DetalleTransaccionOperacionView`/`DetalleTransaccionCambioView` pasan `factura_pendiente` al
+  template; ambos detalles muestran el aviso en vez del estado técnico (sin filtrar el motivo del
+  error ni el CDC rechazado) y, con la factura generada, la fecha de emisión. El listado "Mis facturas
+  electrónicas" muestra "Fecha de emisión" y la insignia "Pendiente de generación".
+
+### Tests
+
+Se agregaron 14 tests a `tests/test_factura_electronica.py` (de 43 a 57): `FechaEmisionTest`,
+`VinculoUnicoConLaTransaccionTest` y `FacturaPendienteParaElClienteTest`. Ninguno llama a Factura Segura:
+`requests.post`/`requests.get` están siempre mockeados y se usa un rango de numeración de prueba
+(900-901), nunca el real. Verificado: 57/57, `makemigrations --check` sin cambios pendientes.
+
+### Decisión pendiente de confirmar
+
+"Pendiente de generación" cubre tanto el fallo al generar como el rechazo posterior de SIFEN. Un
+`RECHAZADO` de SIFEN no tiene hoy reintento desde la UI (solo `ERROR_GENERACION`); queda como mejora si
+el equipo quiere emitir un documento nuevo para esa transacción.
 
 ## Enlaces externos (conversaciones completas)
 

@@ -20,12 +20,13 @@ propio, con un rango chico separado del real (p. ej. ``900``-``901``),
 nunca el rango sembrado para TEST.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest.mock import Mock, patch
 
 import requests
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction as db_transaction
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -40,6 +41,7 @@ from apps.divisas.factura_electronica import (
     descargar_kude,
     descargar_xml,
     emitir_documento_electronico,
+    factura_pendiente_de_generacion,
     intentar_emitir_documento_electronico,
     reintentar_emision,
 )
@@ -781,3 +783,168 @@ class DescargarDocumentoElectronicoViewTest(FacturaElectronicaTestCase):
         response = self.client.get(self._url('docx'))
 
         self.assertEqual(response.status_code, 404)
+
+
+class FechaEmisionTest(FacturaElectronicaTestCase):
+    """Criterio 4: la fecha y hora de emisión se registra solo cuando la factura se genera bien."""
+
+    def test_emision_exitosa_registra_fecha_y_hora(self):
+        """Una emisión exitosa deja ``emitida_en`` con el momento de la generación."""
+        antes = timezone.now()
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            mock_post.side_effect = [_respuesta_calculo(), _respuesta(code=0, results={'CDC': 'CDC-FECHA'})]
+            documento = emitir_documento_electronico(self.transaccion)
+
+        documento.refresh_from_db()
+        self.assertIsNotNone(documento.emitida_en)
+        self.assertGreaterEqual(documento.emitida_en, antes)
+
+    def test_una_falla_no_registra_fecha_de_emision(self):
+        """Si Factura Segura rechaza la emisión, ``emitida_en`` queda vacía."""
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            mock_post.return_value = _respuesta(code=-5, description='rechazo')
+            documento = emitir_documento_electronico(self.transaccion)
+
+        self.assertIsNone(documento.emitida_en)
+
+    def test_un_reintento_exitoso_registra_la_fecha(self):
+        """Un reintento manual que sale bien también registra la fecha de emisión."""
+        documento = DocumentoElectronico.objects.create(
+            calculo_operacion=self.transaccion, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+            numero_documento='0000900', estado=DocumentoElectronico.ESTADO_ERROR_GENERACION,
+        )
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            mock_post.side_effect = [_respuesta_calculo(), _respuesta(code=0, results={'CDC': 'CDC-R'})]
+            reintentar_emision(documento)
+
+        documento.refresh_from_db()
+        self.assertIsNotNone(documento.emitida_en)
+
+
+class VinculoUnicoConLaTransaccionTest(FacturaElectronicaTestCase):
+    """Criterio 2: cada factura queda ligada a una sola transacción, y viceversa."""
+
+    def test_una_transaccion_no_puede_tener_dos_facturas(self):
+        """El ``OneToOneField`` impide una segunda factura vigente para la misma transacción."""
+        DocumentoElectronico.objects.create(
+            calculo_operacion=self.transaccion, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+            numero_documento='0000900',
+        )
+        with self.assertRaises(IntegrityError), db_transaction.atomic():
+            DocumentoElectronico.objects.create(
+                calculo_operacion=self.transaccion, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+                numero_documento='0000901',
+            )
+
+    def test_la_base_rechaza_una_factura_sin_transaccion(self):
+        """La restricción de base de datos exige una transacción de origen."""
+        with self.assertRaises(IntegrityError), db_transaction.atomic():
+            DocumentoElectronico.objects.create(
+                tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA, numero_documento='0000900',
+            )
+
+    def test_la_base_rechaza_una_factura_con_dos_transacciones(self):
+        """La restricción de base de datos impide asociar la misma factura a una compra y a un cambio."""
+        ars = Divisa.objects.create(codigo='ARS', nombre='Peso argentino', simbolo='$', activa=True)
+        cambio = CalculoTriangulacion.objects.create(
+            usuario=self.cliente.user, cliente=self.cliente, divisa_origen=self.usd, divisa_destino=ars,
+            codigo_divisa_origen='USD', codigo_divisa_destino='ARS', monto_origen=Decimal('100.00'),
+            tasa_compra_aplicada=Decimal('7400.00'), tasa_venta_aplicada=Decimal('20.00'),
+            tasa_cruzada=Decimal('370.000000'), monto_equivalente_pyg=Decimal('740000.00'),
+            comision_porcentaje=Decimal('1.000'), comision=Decimal('370.00'),
+            monto_final=Decimal('36630.00'), estado=CalculoTriangulacion.ESTADO_PAGADA,
+            vence_en=timezone.now() + timedelta(seconds=300), confirmado_en=timezone.now(),
+        )
+        with self.assertRaises(IntegrityError), db_transaction.atomic():
+            DocumentoElectronico.objects.create(
+                calculo_operacion=self.transaccion, calculo_triangulacion=cambio,
+                tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA, numero_documento='0000900',
+            )
+
+
+class FacturaPendienteParaElClienteTest(FacturaElectronicaTestCase):
+    """Criterio 3: ante un rechazo, el cliente ve "pendiente de generación" sin perder el resto del detalle."""
+
+    def setUp(self):
+        """Además del fixture base, logueado como el cliente propietario de la transacción."""
+        super().setUp()
+        self.cliente.usuarios.add(self.cliente.user)
+        self.client.login(username='cliente-fe', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+        self.url = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.transaccion.pk})
+
+    def _documento(self, **campos):
+        """Crea el documento de la transacción base con los campos indicados."""
+        return DocumentoElectronico.objects.create(
+            calculo_operacion=self.transaccion, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+            numero_documento='0000900', **campos,
+        )
+
+    def _transaccion_fresca(self):
+        """Recarga la transacción para descartar el documento cacheado en la relación inversa."""
+        return CalculoOperacion.objects.get(pk=self.transaccion.pk)
+
+    def test_helper_pendiente_con_cada_estado_fallido(self):
+        """Fallo al generar, rechazo de SIFEN y error de SIFEN cuentan como pendientes."""
+        for estado in DocumentoElectronico.ESTADOS_PENDIENTES:
+            with self.subTest(estado=estado):
+                DocumentoElectronico.objects.filter(calculo_operacion=self.transaccion).delete()
+                self._documento(estado=estado)
+                self.assertTrue(factura_pendiente_de_generacion(self._transaccion_fresca()))
+
+    def test_helper_no_pendiente_si_la_factura_se_genero(self):
+        """Una factura aprobada no se informa como pendiente."""
+        self._documento(estado=DocumentoElectronico.ESTADO_APROBADO, cdc='CDC-OK')
+        self.assertFalse(factura_pendiente_de_generacion(self._transaccion_fresca()))
+
+    def test_helper_pendiente_si_pagada_y_sin_documento(self):
+        """Pagada pero sin documento (p. ej. rango agotado) también es "pendiente de generación"."""
+        self.assertTrue(factura_pendiente_de_generacion(self.transaccion))
+
+    def test_helper_no_pendiente_si_aun_no_se_pago(self):
+        """Una transacción todavía no pagada no corresponde facturarla, así que no es pendiente."""
+        self.transaccion.estado = CalculoOperacion.ESTADO_PENDIENTE
+        self.assertFalse(factura_pendiente_de_generacion(self.transaccion))
+
+    def test_detalle_rechazado_informa_pendiente_y_muestra_el_resto(self):
+        """El detalle informa la factura pendiente, no filtra el error técnico y conserva los datos."""
+        self._documento(
+            estado=DocumentoElectronico.ESTADO_ERROR_GENERACION, error_generacion='detalle tecnico interno',
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'pendiente de generación')
+        self.assertNotContains(response, 'detalle tecnico interno')
+        self.assertContains(response, '747.400')
+
+    def test_detalle_sifen_rechazo_informa_pendiente(self):
+        """Un rechazo posterior de SIFEN también se informa como pendiente, sin mostrar su CDC."""
+        self._documento(estado=DocumentoElectronico.ESTADO_RECHAZADO, cdc='CDC-RECHAZADO')
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, 'pendiente de generación')
+        self.assertNotContains(response, 'CDC-RECHAZADO')
+
+    def test_detalle_factura_generada_muestra_cdc_y_fecha_de_emision(self):
+        """Con la factura generada, el detalle muestra su CDC y la fecha y hora de emisión."""
+        emitida = timezone.make_aware(datetime(2026, 10, 30, 14, 5))
+        self._documento(estado=DocumentoElectronico.ESTADO_APROBADO, cdc='CDC-VISIBLE', emitida_en=emitida)
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, 'CDC-VISIBLE')
+        self.assertContains(response, '30/10/2026 14:05')
+        self.assertNotContains(response, 'pendiente de generación')
+
+    def test_listado_marca_pendiente_las_facturas_fallidas(self):
+        """El listado del cliente rotula como "Pendiente de generación" las facturas fallidas."""
+        self._documento(estado=DocumentoElectronico.ESTADO_RECHAZADO)
+
+        response = self.client.get(reverse('divisas:mis_facturas_electronicas'))
+
+        self.assertContains(response, 'Pendiente de generación')
