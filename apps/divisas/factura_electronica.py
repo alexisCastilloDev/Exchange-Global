@@ -92,6 +92,15 @@ from apps.divisas.models import (
 
 logger = logging.getLogger(__name__)
 
+# Estados de una transacción que ya pasó por un pago confirmado y, por
+# lo tanto, debe tener (o estar esperando) su factura electrónica.
+ESTADOS_FACTURABLES = (
+    CalculoOperacion.ESTADO_PAGADA,
+    CalculoOperacion.ESTADO_ENTREGA_FALLIDA,
+    CalculoOperacion.ESTADO_ACREDITADA,
+    CalculoOperacion.ESTADO_RETIRADA,
+)
+
 
 class FacturaSeguraRechazadaError(Exception):
     """Factura Segura respondió, pero rechazó la solicitud (``code`` negativo en el sobre de respuesta).
@@ -485,7 +494,34 @@ def _generar(documento, transaccion):
     documento.operation_id = str(cuerpo.get('operation_info', {}).get('id', ''))
     documento.estado = DocumentoElectronico.ESTADO_GENERADO
     documento.error_generacion = ''
-    documento.save(update_fields=['estado', 'cdc', 'operation_id', 'error_generacion', 'actualizado_en'])
+    # Criterio 4: la fecha y hora de emisión se registra solo cuando la
+    # factura se generó correctamente (hay CDC), nunca en una falla.
+    documento.emitida_en = timezone.now()
+    documento.save(update_fields=['estado', 'cdc', 'operation_id', 'error_generacion', 'emitida_en', 'actualizado_en'])
+
+
+def factura_pendiente_de_generacion(transaccion):
+    """Indica si a una transacción ya pagada todavía le falta su factura electrónica (criterio 3).
+
+    Es ``True`` cuando la transacción ya fue pagada y, o bien no tiene
+    ningún ``DocumentoElectronico`` (p. ej. se agotó el rango de
+    numeración), o bien el que tiene está rechazado/fallido
+    (``DocumentoElectronico.factura_pendiente``). Las pantallas de
+    detalle lo usan para informarle al cliente que la factura está
+    "pendiente de generación" **sin ocultar ni bloquear** el resto de los
+    datos de la operación.
+
+    Args:
+        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``.
+
+    Returns:
+        bool: ``False`` si la transacción aún no fue pagada (todavía no
+        corresponde facturar) o si su factura se generó correctamente.
+    """
+    if transaccion.estado not in ESTADOS_FACTURABLES:
+        return False
+    documento = getattr(transaccion, 'documento_electronico', None)
+    return documento is None or documento.factura_pendiente
 
 
 def emitir_documento_electronico(transaccion):
