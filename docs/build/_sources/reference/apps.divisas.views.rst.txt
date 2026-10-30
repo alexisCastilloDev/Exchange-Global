@@ -21,6 +21,10 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.MisFacturasElectronicasListView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.DetalleTransaccionOperacionView
    :members:
    :show-inheritance:
@@ -98,5 +102,25 @@ apps.divisas.views module
    :show-inheritance:
 
 .. autoclass:: apps.divisas.views.DivisaSoftDeleteView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ReintentarEntregaView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DocumentosElectronicosListView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ReintentarEmisionDocumentoElectronicoView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DescargarDocumentoElectronicoView
    :members:
    :show-inheritance:

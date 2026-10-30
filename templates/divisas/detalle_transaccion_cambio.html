@@ -96,6 +96,16 @@ Contexto esperado: transaccion.
                     <div class="operation-summary__row"><span class="operation-summary__label">CDC: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.cdc }}</strong></div>
                     {% endif %}
                 </div>
+                {% if transaccion.documento_electronico.cdc %}
+                <div class="mt-3">
+                    <a href="{% url 'divisas:descargar_documento_electronico' pk=transaccion.documento_electronico.pk formato='kude' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-file-pdf me-1"></i>Descargar PDF
+                    </a>
+                    <a href="{% url 'divisas:descargar_documento_electronico' pk=transaccion.documento_electronico.pk formato='xml' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-filetype-xml me-1"></i>Descargar XML
+                    </a>
+                </div>
+                {% endif %}
             {% endif %}
         </div>
     </div>

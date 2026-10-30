@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -2015,13 +2015,15 @@ class ConsultarEstadoSifenDocumentoElectronicoView(AdminDivisasMixin, View):
 class DescargarDocumentoElectronicoView(LoginRequiredMixin, View):
     """Descarga el KuDE (PDF) o el XML firmado de un documento, bajo demanda, sin guardar nada.
 
+    Implementa la HU "Descarga de facturas electrónicas" (GE-86).
     Accesible para un administrador (cualquier documento) o para el
-    propio cliente (solo el de sus transacciones) — mismo criterio de
-    acceso que ``DocumentosElectronicosListView``/
-    ``MisFacturasElectronicasListView``, las dos pantallas desde donde
-    se linkea esta descarga. Cada clic vuelve a pedirle el archivo a
-    Factura Segura (``descargar_kude``/``descargar_xml``): no se
-    almacena ninguna copia en el servidor.
+    cliente, solo si el documento pertenece a su **cliente activo**
+    (criterio 4). Solo se descarga una factura aprobada por SIFEN
+    (criterios 1 y 2; ver ``DocumentoElectronico.descargable``). Cada
+    clic vuelve a pedirle el archivo a Factura Segura
+    (``descargar_kude``/``descargar_xml``) y lo entrega sin modificarlo,
+    con el CDC en el nombre: no se almacena ninguna copia en el servidor
+    (criterio 3).
     """
 
     FORMATOS = {
@@ -2030,33 +2032,71 @@ class DescargarDocumentoElectronicoView(LoginRequiredMixin, View):
     }
 
     def get(self, request, pk, formato):
-        """Resuelve permisos y devuelve el archivo pedido, o un error claro si no se puede."""
+        """Valida el permiso y el estado de la factura, y entrega el archivo o explica por qué no se puede.
+
+        Si la factura espera la respuesta de SIFEN, primero se consulta
+        su estado (``consultar_estado_sifen``, una simple lectura que
+        nunca emite nada): ninguna tarea periódica lo actualiza, así que
+        sin esto una factura ya aprobada seguiría figurando como
+        pendiente hasta que un administrador la consultara.
+
+        Args:
+            request (HttpRequest): Solicitud del usuario autenticado.
+            pk (int): Identificador del ``DocumentoElectronico``.
+            formato (str): ``'kude'`` (PDF) o ``'xml'``.
+
+        Returns:
+            HttpResponse: El archivo como adjunto, o una redirección a la
+            lista de facturas con el motivo si no se pudo descargar.
+
+        Raises:
+            PermissionDenied: El usuario no puede acceder a este documento.
+            Http404: El documento o el formato no existen.
+        """
         documento = get_object_or_404(DocumentoElectronico, pk=pk)
         if not self._puede_ver(request, documento):
             raise PermissionDenied
         if formato not in self.FORMATOS:
             raise Http404('Formato de descarga desconocido.')
-        if not documento.cdc:
-            return HttpResponseBadRequest('Este documento todavía no tiene un CDC.')
+
+        if documento.cdc and documento.estado == DocumentoElectronico.ESTADO_GENERADO:
+            consultar_estado_sifen(documento)
+        if not documento.descargable:
+            messages.error(request, documento.motivo_no_descargable)
+            return redirect(self._lista_de_facturas(request))
 
         funcion, content_type, extension = self.FORMATOS[formato]
         contenido = funcion(documento)
         if contenido is None:
-            return HttpResponse('No se pudo descargar el archivo desde Factura Segura.', status=502)
+            messages.error(request, 'No se pudo descargar el archivo desde Factura Segura. Volvé a intentarlo más tarde.')
+            return redirect(self._lista_de_facturas(request))
 
         respuesta = HttpResponse(contenido, content_type=content_type)
-        respuesta['Content-Disposition'] = f'attachment; filename="{documento.numero_documento}.{extension}"'
+        respuesta['Content-Disposition'] = f'attachment; filename="factura_{documento.cdc}.{extension}"'
         return respuesta
 
     @staticmethod
     def _puede_ver(request, documento):
-        """Un administrador ve cualquier documento; un cliente, solo el de sus propias transacciones."""
+        """Un administrador ve cualquier documento; un cliente, solo los de su cliente activo.
+
+        Se compara contra ``request.cliente_activo`` y no contra todos
+        los clientes asociados al usuario: quien opera con varios clientes
+        solo accede a las facturas del que tiene seleccionado (criterio 4).
+        """
         roles = request.session.get('keycloak_roles', [])
         if 'admin' in roles:
             return True
         if 'cliente' in roles and not request.user.is_staff:
-            return request.user.clientes.filter(pk=documento.transaccion.cliente_id, is_active=True).exists()
+            cliente_activo = getattr(request, 'cliente_activo', None)
+            return cliente_activo is not None and documento.transaccion.cliente_id == cliente_activo.pk
         return False
+
+    @staticmethod
+    def _lista_de_facturas(request):
+        """Nombre de la pantalla a la que vuelve cada rol cuando la descarga no se puede completar."""
+        if 'admin' in request.session.get('keycloak_roles', []):
+            return 'divisas:documentos_electronicos'
+        return 'divisas:mis_facturas_electronicas'
 
 
 class DivisaListView(AdminDivisasMixin, ListView):

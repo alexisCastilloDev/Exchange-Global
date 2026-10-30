@@ -825,6 +825,36 @@ cerradas, con el período en que cada una estuvo abierta y su balance por
 moneda (Criterio 4); es una pantalla de solo lectura, sin ninguna acción
 para modificar lo ya registrado.
 
+Descarga de facturas electrónicas
+---------------------------------
+
+Implementa la HU "Descarga de facturas electrónicas" (GE-86). El cliente
+descarga el KuDE (PDF) o el XML firmado desde "Mis facturas electrónicas" o
+desde el detalle de la transacción; el administrador, desde "Documentos
+electrónicos". Todas esas pantallas usan
+``apps.divisas.views.DescargarDocumentoElectronicoView``
+(``/divisas/documentos-electronicos/<id>/descargar/<kude|xml>/``), que resuelve
+cada solicitud en este orden:
+
+1. **Acceso (Criterio 4).** Un administrador accede a cualquier factura; un
+   cliente, solo a las de su cliente activo (``request.cliente_activo``). Tener
+   la factura en otro cliente asociado al mismo usuario no alcanza: la respuesta
+   es un 403, sin consultar nada a SIFEN.
+2. **Estado (Criterio 2).** Solo se descarga una factura aprobada por SIFEN, con
+   o sin observación, y con CDC (``DocumentoElectronico.descargable``). En
+   cualquier otro caso, se vuelve al listado con el motivo
+   (``DocumentoElectronico.motivo_no_descargable``), sin mostrar el error técnico.
+   Como ninguna tarea periódica actualiza el estado, si la factura espera la
+   respuesta de SIFEN primero se consulta con
+   ``apps.divisas.factura_electronica.consultar_estado_sifen``: una lectura que
+   nunca emite un documento.
+3. **Entrega (Criterios 1 y 3).** El archivo se le pide a Factura Segura por el
+   CDC del documento y se entrega tal como llegó, sin regenerarlo ni guardar una
+   copia, con el nombre ``factura_<CDC>.pdf`` o ``factura_<CDC>.xml``. Antes de
+   entregarlo se comprueba que el XML contenga ese CDC y que el KuDE sea un PDF;
+   si no pasa la comprobación, o Factura Segura no responde, se vuelve al listado
+   con un aviso.
+
 Acceso a esta documentación desde el sistema
 ----------------------------------------------
 

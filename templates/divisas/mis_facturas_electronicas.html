@@ -56,7 +56,7 @@ Contexto esperado: documentos (paginado), cliente_activo (vía context processor
                     </td>
                     <td>{{ documento.cdc|default:"—" }}</td>
                     <td class="text-end">
-                        {% if documento.cdc %}
+                        {% if documento.cdc and not documento.factura_pendiente %}
                         <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='kude' %}" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-file-pdf me-1"></i>KuDE
                         </a>

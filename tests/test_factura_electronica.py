@@ -485,12 +485,31 @@ class DescargarArchivosTest(FacturaElectronicaTestCase):
         self.assertIn('CDC-DE-PRUEBA', url_pedida)
 
     def test_descarga_el_xml_exitosamente(self):
+        xml = b'<rDE><DE Id="CDC-DE-PRUEBA"/></rDE>'
         with patch('apps.divisas.factura_electronica.requests.get') as mock_get:
-            mock_get.return_value = Mock(status_code=200, content=b'<xml-falso/>')
+            mock_get.return_value = Mock(status_code=200, content=xml)
             mock_get.return_value.raise_for_status.side_effect = None
             contenido = descargar_xml(self.documento)
 
-        self.assertEqual(contenido, b'<xml-falso/>')
+        self.assertEqual(contenido, xml)
+
+    def test_un_xml_con_otro_cdc_se_descarta(self):
+        """GE-86, criterio 3: nunca se entrega un XML que no corresponde al CDC del documento."""
+        with patch('apps.divisas.factura_electronica.requests.get') as mock_get:
+            mock_get.return_value = Mock(status_code=200, content=b'<rDE><DE Id="OTRO-CDC"/></rDE>')
+            mock_get.return_value.raise_for_status.side_effect = None
+            contenido = descargar_xml(self.documento)
+
+        self.assertIsNone(contenido)
+
+    def test_una_respuesta_que_no_es_pdf_se_descarta(self):
+        """GE-86, criterio 3: un mensaje de error enviado con HTTP 200 nunca se entrega como KuDE."""
+        with patch('apps.divisas.factura_electronica.requests.get') as mock_get:
+            mock_get.return_value = Mock(status_code=200, content=b'{"code": -1}')
+            mock_get.return_value.raise_for_status.side_effect = None
+            contenido = descargar_kude(self.documento)
+
+        self.assertIsNone(contenido)
 
     def test_sin_cdc_no_descarga_nada(self):
         self.documento.cdc = ''
@@ -686,50 +705,225 @@ class MisFacturasElectronicasListViewTest(FacturaElectronicaTestCase):
 
 
 class DescargarDocumentoElectronicoViewTest(FacturaElectronicaTestCase):
-    """Verifica permisos y respuesta de la descarga compartida (KuDE/XML)."""
+    """Verifica los criterios de la HU "Descarga de facturas electrónicas" (GE-86).
+
+    **Ninguna de estas pruebas genera una factura**: el documento se crea
+    directamente en la base de pruebas, ``requests`` está siempre
+    mockeado y ``_assert_no_se_emitio_nada`` confirma que nunca se pidió
+    emitir un documento ni se consumió un número del rango.
+    """
+
+    CDC = '01234567890123456789012345678901234567890123'
+    PDF = b'%PDF-contenido-falso'
+    XML = f'<rDE><DE Id="{CDC}"/></rDE>'.encode()
 
     def setUp(self):
-        """Además del fixture base, un documento con CDC propio del cliente."""
+        """Además del fixture base, una factura aprobada del cliente y ``requests`` mockeado."""
         super().setUp()
         self.cliente.usuarios.add(self.cliente.user)
         self.documento = DocumentoElectronico.objects.create(
             calculo_operacion=self.transaccion, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
-            numero_documento='0000900', estado=DocumentoElectronico.ESTADO_GENERADO, cdc='CDC-DESCARGA',
+            numero_documento='0000900', estado=DocumentoElectronico.ESTADO_APROBADO, cdc=self.CDC,
         )
+        patcher_get = patch('apps.divisas.factura_electronica.requests.get')
+        self.mock_get = patcher_get.start()
+        self.addCleanup(patcher_get.stop)
+        patcher_post = patch('apps.divisas.factura_electronica.requests.post')
+        self.mock_post = patcher_post.start()
+        self.addCleanup(patcher_post.stop)
+        self.addCleanup(self._assert_no_se_emitio_nada)
+
+    def _assert_no_se_emitio_nada(self):
+        """Comprueba que la prueba no pidió emitir ningún documento ni reservó ningún número."""
+        operaciones = [llamada.kwargs['json']['operation'] for llamada in self.mock_post.call_args_list]
+        self.assertNotIn('calcular_de', operaciones)
+        self.assertNotIn('generar_de', operaciones)
+        self.contador.refresh_from_db()
+        self.assertIsNone(self.contador.ultimo_asignado)
 
     def _url(self, formato='kude'):
+        """URL de descarga del documento base en el formato indicado."""
         return reverse('divisas:descargar_documento_electronico', kwargs={'pk': self.documento.pk, 'formato': formato})
 
-    def test_un_administrador_puede_descargar(self):
-        admin = User.objects.create_user(username='admin-descarga', password='password123')
-        self.client.login(username='admin-descarga', password='password123')
-        session = self.client.session
-        session['keycloak_roles'] = ['admin']
-        session.save()
+    def _lista_cliente(self):
+        """URL del listado al que vuelve el cliente cuando no se puede descargar."""
+        return reverse('divisas:mis_facturas_electronicas')
 
-        with patch('apps.divisas.factura_electronica.requests.get') as mock_get:
-            mock_get.return_value = Mock(status_code=200, content=b'%PDF-contenido-falso')
-            mock_get.return_value.raise_for_status.side_effect = None
-            response = self.client.get(self._url('kude'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b'%PDF-contenido-falso')
-        self.assertEqual(response['Content-Type'], 'application/pdf')
-        self.assertIn('attachment', response['Content-Disposition'])
-
-    def test_el_propio_cliente_puede_descargar_su_xml(self):
+    def _ingresar_como_cliente(self):
+        """Inicia sesión como el usuario dueño de la factura."""
         self.client.login(username='cliente-fe', password='password123')
         session = self.client.session
         session['keycloak_roles'] = ['cliente']
         session.save()
 
-        with patch('apps.divisas.factura_electronica.requests.get') as mock_get:
-            mock_get.return_value = Mock(status_code=200, content=b'<xml-falso/>')
-            mock_get.return_value.raise_for_status.side_effect = None
-            response = self.client.get(self._url('xml'))
+    def _ingresar_como_admin(self):
+        """Inicia sesión como un administrador."""
+        User.objects.create_user(username='admin-descarga', password='password123')
+        self.client.login(username='admin-descarga', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+    def _archivo_disponible(self, contenido):
+        """Hace que el ``GET`` mockeado a Factura Segura devuelva ``contenido``."""
+        self.mock_get.return_value = Mock(status_code=200, content=contenido)
+        self.mock_get.return_value.raise_for_status.side_effect = None
+
+    def _estado_sifen(self, estado):
+        """Hace que el ``POST`` mockeado a ``get_estado_sifen`` informe ``estado``."""
+        self.mock_post.return_value = _respuesta(code=0, results={'estado_sifen': estado, 'desc_sifen': estado})
+
+    def _cambiar_estado(self, estado):
+        """Cambia el estado del documento base."""
+        self.documento.estado = estado
+        self.documento.save(update_fields=['estado'])
+
+    # Criterio 1: factura aprobada, se entrega el archivo.
+
+    def test_el_cliente_descarga_el_pdf_de_su_factura_aprobada(self):
+        self._ingresar_como_cliente()
+        self._archivo_disponible(self.PDF)
+
+        response = self.client.get(self._url('kude'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment', response['Content-Disposition'])
+
+    def test_el_cliente_descarga_el_xml_de_su_factura_aprobada(self):
+        self._ingresar_como_cliente()
+        self._archivo_disponible(self.XML)
+
+        response = self.client.get(self._url('xml'))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')
+
+    def test_aprobada_con_observacion_tambien_se_descarga(self):
+        """Una aprobación con observación sigue siendo un comprobante válido ante SIFEN."""
+        self._cambiar_estado(DocumentoElectronico.ESTADO_APROBADO_OBS)
+        self._ingresar_como_cliente()
+        self._archivo_disponible(self.PDF)
+
+        response = self.client.get(self._url('kude'))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_un_administrador_puede_descargar(self):
+        self._ingresar_como_admin()
+        self._archivo_disponible(self.PDF)
+
+        response = self.client.get(self._url('kude'))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_el_detalle_ofrece_la_descarga(self):
+        self._ingresar_como_cliente()
+
+        response = self.client.get(reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.transaccion.pk}))
+
+        self.assertContains(response, self._url('kude'))
+        self.assertContains(response, self._url('xml'))
+
+    # Criterio 2: factura no aprobada, no se descarga y se explica el motivo.
+
+    def test_pendiente_de_sifen_no_se_descarga_y_explica_el_motivo(self):
+        self._cambiar_estado(DocumentoElectronico.ESTADO_GENERADO)
+        self._estado_sifen('ENVIADO_A_SIFEN')
+        self._ingresar_como_cliente()
+
+        response = self.client.get(self._url('kude'), follow=True)
+
+        self.assertRedirects(response, self._lista_cliente())
+        self.assertContains(response, 'pendiente de aprobación por SIFEN')
+        self.mock_get.assert_not_called()
+
+    def test_pendiente_que_sifen_ya_aprobo_se_descarga_al_intentarlo(self):
+        """La consulta previa evita bloquear una factura aprobada que todavía figuraba como pendiente."""
+        self._cambiar_estado(DocumentoElectronico.ESTADO_GENERADO)
+        self._estado_sifen('Aprobado')
+        self._ingresar_como_cliente()
+        self._archivo_disponible(self.PDF)
+
+        response = self.client.get(self._url('kude'))
+
+        self.assertEqual(response.status_code, 200)
+        self.documento.refresh_from_db()
+        self.assertEqual(self.documento.estado, DocumentoElectronico.ESTADO_APROBADO)
+
+    def test_si_sifen_no_responde_sigue_sin_descargarse(self):
+        self._cambiar_estado(DocumentoElectronico.ESTADO_GENERADO)
+        self.mock_post.side_effect = requests.exceptions.ConnectionError('sin conexión')
+        self._ingresar_como_cliente()
+
+        response = self.client.get(self._url('kude'), follow=True)
+
+        self.assertContains(response, 'pendiente de aprobación por SIFEN')
+        self.mock_get.assert_not_called()
+
+    def test_rechazada_o_con_error_no_se_descarga_y_explica_el_motivo(self):
+        for estado in DocumentoElectronico.ESTADOS_PENDIENTES:
+            with self.subTest(estado=estado):
+                self._cambiar_estado(estado)
+                self._ingresar_como_cliente()
+
+                response = self.client.get(self._url('kude'), follow=True)
+
+                self.assertRedirects(response, self._lista_cliente())
+                self.assertContains(response, 'pendiente de generación')
+                self.mock_get.assert_not_called()
+
+    def test_sin_cdc_no_se_descarga(self):
+        self.documento.cdc = ''
+        self.documento.save(update_fields=['cdc'])
+        self._ingresar_como_admin()
+
+        response = self.client.get(self._url('kude'), follow=True)
+
+        self.assertRedirects(response, reverse('divisas:documentos_electronicos'))
+        self.assertContains(response, 'No podés descargar esta factura')
+        self.mock_get.assert_not_called()
+        self.mock_post.assert_not_called()
+
+    def test_el_listado_no_ofrece_descargar_una_factura_rechazada(self):
+        self._cambiar_estado(DocumentoElectronico.ESTADO_RECHAZADO)
+        self._ingresar_como_cliente()
+
+        response = self.client.get(self._lista_cliente())
+
+        self.assertNotContains(response, self._url('kude'))
+
+    # Criterio 3: el archivo conserva el CDC y los datos, sin alterarlos.
+
+    def test_entrega_el_archivo_sin_modificarlo_y_lo_pide_por_su_cdc(self):
+        self._ingresar_como_cliente()
+        self._archivo_disponible(self.XML)
+
+        response = self.client.get(self._url('xml'))
+
+        self.assertEqual(response.content, self.XML)
+        self.assertIn(self.CDC, self.mock_get.call_args.args[0])
+        self.assertIn(f'factura_{self.CDC}.xml', response['Content-Disposition'])
+
+    def test_un_xml_con_otro_cdc_no_se_entrega(self):
+        self._ingresar_como_cliente()
+        self._archivo_disponible(b'<rDE><DE Id="OTRO-CDC"/></rDE>')
+
+        response = self.client.get(self._url('xml'), follow=True)
+
+        self.assertRedirects(response, self._lista_cliente())
+        self.assertContains(response, 'No se pudo descargar el archivo')
+
+    def test_una_falla_de_factura_segura_avisa_sin_entregar_nada(self):
+        self._ingresar_como_cliente()
+        self.mock_get.side_effect = requests.exceptions.ConnectionError('sin conexión')
+
+        response = self.client.get(self._url('kude'), follow=True)
+
+        self.assertRedirects(response, self._lista_cliente())
+        self.assertContains(response, 'No se pudo descargar el archivo')
+
+    # Criterio 4: solo se accede a las facturas del cliente activo.
 
     def test_otro_cliente_no_puede_descargar(self):
         otro_usuario = User.objects.create_user(username='otro-descarga', password='password123')
@@ -746,39 +940,45 @@ class DescargarDocumentoElectronicoViewTest(FacturaElectronicaTestCase):
         response = self.client.get(self._url('kude'))
 
         self.assertEqual(response.status_code, 403)
+        self.mock_get.assert_not_called()
 
-    def test_sin_cdc_devuelve_400(self):
-        self.documento.cdc = ''
-        self.documento.save(update_fields=['cdc'])
-        admin = User.objects.create_user(username='admin-sin-cdc', password='password123')
-        self.client.login(username='admin-sin-cdc', password='password123')
+    def test_factura_de_otro_cliente_asociado_que_no_es_el_activo_se_deniega(self):
+        """Un usuario con varios clientes solo descarga las facturas del que tiene seleccionado."""
+        otro_cliente = Cliente.objects.create(
+            identificador='7777777', nombre='Segundo', apellido='Cliente', email='segundo@test.com', is_active=True,
+        )
+        otro_cliente.usuarios.add(self.cliente.user)
+        self._ingresar_como_cliente()
         session = self.client.session
-        session['keycloak_roles'] = ['admin']
+        session['cliente_activo_id'] = otro_cliente.pk
         session.save()
 
         response = self.client.get(self._url('kude'))
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
+        self.mock_get.assert_not_called()
 
-    def test_fallo_de_factura_segura_devuelve_502(self):
-        admin = User.objects.create_user(username='admin-502', password='password123')
-        self.client.login(username='admin-502', password='password123')
+    def test_la_denegacion_no_revela_el_estado_de_la_factura(self):
+        """Sin acceso, el resultado es 403 aunque la factura esté pendiente, sin consultar a SIFEN."""
+        self._cambiar_estado(DocumentoElectronico.ESTADO_GENERADO)
+        otro_usuario = User.objects.create_user(username='otro-pendiente', password='password123')
+        otro_cliente = Cliente.objects.create(
+            user=otro_usuario, identificador='6666666', nombre='Otro', apellido='Pendiente',
+            email='pendiente@test.com', is_active=True,
+        )
+        otro_cliente.usuarios.add(otro_usuario)
+        self.client.login(username='otro-pendiente', password='password123')
         session = self.client.session
-        session['keycloak_roles'] = ['admin']
+        session['keycloak_roles'] = ['cliente']
         session.save()
 
-        with patch('apps.divisas.factura_electronica.requests.get') as mock_get:
-            mock_get.side_effect = requests.exceptions.ConnectionError('sin conexión')
-            response = self.client.get(self._url('kude'))
+        response = self.client.get(self._url('kude'))
 
-        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.status_code, 403)
+        self.mock_post.assert_not_called()
 
     def test_formato_desconocido_devuelve_404(self):
-        admin = User.objects.create_user(username='admin-404', password='password123')
-        self.client.login(username='admin-404', password='password123')
-        session = self.client.session
-        session['keycloak_roles'] = ['admin']
-        session.save()
+        self._ingresar_como_admin()
 
         response = self.client.get(self._url('docx'))
 
