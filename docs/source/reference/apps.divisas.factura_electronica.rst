@@ -10,9 +10,13 @@ apps.divisas.factura_electronica module
 
 .. autofunction:: apps.divisas.factura_electronica._primer_resultado
 
-.. autofunction:: apps.divisas.factura_electronica._monto_en_pyg
+.. autofunction:: apps.divisas.factura_electronica._total_en_pyg
 
-.. autofunction:: apps.divisas.factura_electronica._grupo_item_resumido
+.. autofunction:: apps.divisas.factura_electronica._comision_en_pyg
+
+.. autofunction:: apps.divisas.factura_electronica._grupo_item
+
+.. autofunction:: apps.divisas.factura_electronica._grupos_item_resumido
 
 .. autofunction:: apps.divisas.factura_electronica._descripcion_operacion
 

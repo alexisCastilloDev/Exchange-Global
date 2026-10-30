@@ -32,6 +32,9 @@ from django.utils import timezone
 
 from apps.clientes.models import Cliente, MetodoPago
 from apps.divisas.factura_electronica import (
+    _comision_en_pyg,
+    _grupos_item_resumido,
+    _total_en_pyg,
     consultar_estado_sifen,
     descargar_kude,
     descargar_xml,
@@ -41,6 +44,7 @@ from apps.divisas.factura_electronica import (
 )
 from apps.divisas.models import (
     CalculoOperacion,
+    CalculoTriangulacion,
     ContadorDocumentoElectronico,
     Divisa,
     DocumentoElectronico,
@@ -250,6 +254,94 @@ class EmitirDocumentoElectronicoTest(FacturaElectronicaTestCase):
             resultado = intentar_emitir_documento_electronico(self.transaccion)
 
         self.assertIsNone(resultado)
+
+
+class ComisionGravadaAl10PorCientoTest(FacturaElectronicaTestCase):
+    """La comisión se factura como ítem separado, gravado al 10% de IVA, en compra, venta y cambio.
+
+    Confirmado con el usuario: la comisión de Global Exchange es un
+    servicio propio (no el cambio de divisa en sí, que sigue exento).
+    También cubre el bug ya corregido en un cambio: el total facturado
+    debe reflejar el monto ya neto de comisión (``monto_final``), no el
+    bruto triangulado del Paso A (``monto_equivalente_pyg``).
+    """
+
+    def test_compra_separa_la_comision_del_resto_exento(self):
+        """La compra del fixture: bruto=740000, comisión=7400, total=747400 (monto_final sin cambios)."""
+        total = _total_en_pyg(self.transaccion)
+        self.assertEqual(total, Decimal('747400'))
+        self.assertEqual(_comision_en_pyg(self.transaccion), Decimal('7400'))
+
+        items = _grupos_item_resumido(self.transaccion, total)
+        self.assertEqual(len(items), 2)
+        exento, gravado = items
+        self.assertEqual(exento['iAfecIVA'], '3')
+        self.assertEqual(exento['dPUniProSer'], '740000')
+        self.assertEqual(gravado['iAfecIVA'], '1')
+        self.assertEqual(gravado['dTasaIVA'], '10')
+        self.assertEqual(gravado['dPUniProSer'], '7400')
+
+    def test_venta_separa_la_comision_del_resto_exento(self):
+        """En una venta, monto_final=bruto-comisión: el total facturado sigue siendo monto_final."""
+        usuario = User.objects.create_user(username='cliente-fe-venta', password='password123')
+        venta = CalculoOperacion.objects.create(
+            usuario=usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_VENTA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('100.00'),
+            tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('7400.00'), monto_final=Decimal('732600.00'),
+            estado=CalculoOperacion.ESTADO_PAGADA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(), medio_destino=self.medio_destino,
+        )
+
+        total = _total_en_pyg(venta)
+        self.assertEqual(total, Decimal('732600'))
+        self.assertEqual(_comision_en_pyg(venta), Decimal('7400'))
+
+        items = _grupos_item_resumido(venta, total)
+        exento, gravado = items
+        self.assertEqual(exento['dPUniProSer'], '725200')
+        self.assertEqual(gravado['dPUniProSer'], '7400')
+
+    def test_cambio_usa_el_monto_neto_de_comision_no_el_bruto_triangulado(self):
+        """Bug corregido: el total de un cambio debe salir de monto_final, no de monto_equivalente_pyg."""
+        usuario = User.objects.create_user(username='cliente-fe-cambio', password='password123')
+        ars = Divisa.objects.create(codigo='ARS', nombre='Peso argentino', simbolo='$', activa=True)
+        cambio = CalculoTriangulacion.objects.create(
+            usuario=usuario, cliente=self.cliente, divisa_origen=self.usd, divisa_destino=ars,
+            codigo_divisa_origen='USD', codigo_divisa_destino='ARS', monto_origen=Decimal('100.00'),
+            tasa_compra_aplicada=Decimal('7400.00'), tasa_venta_aplicada=Decimal('20.00'),
+            tasa_cruzada=Decimal('370.000000'), monto_equivalente_pyg=Decimal('740000.00'),
+            comision_porcentaje=Decimal('1.000'), comision=Decimal('370.00'),
+            monto_final=Decimal('36630.00'), estado=CalculoTriangulacion.ESTADO_PAGADA,
+            vence_en=timezone.now() + timedelta(seconds=300), confirmado_en=timezone.now(),
+        )
+
+        # El total correcto (732600) es menor que el bruto triangulado del
+        # Paso A (740000, monto_equivalente_pyg): ignorar la comisión en un
+        # cambio facturaba de más, exactamente el bug que esto corrige.
+        total = _total_en_pyg(cambio)
+        self.assertEqual(total, Decimal('732600'))
+        self.assertNotEqual(total, cambio.monto_equivalente_pyg.to_integral_value())
+        self.assertEqual(_comision_en_pyg(cambio), Decimal('7400'))
+
+        items = _grupos_item_resumido(cambio, total)
+        exento, gravado = items
+        self.assertEqual(exento['dPUniProSer'], '725200')
+        self.assertEqual(gravado['iAfecIVA'], '1')
+        self.assertEqual(gravado['dPUniProSer'], '7400')
+
+    def test_sin_comision_queda_un_unico_item_exento(self):
+        """Un cliente con 0% de comisión (ConfiguracionComision) sigue facturando con un único ítem."""
+        self.transaccion.comision = Decimal('0.00')
+        self.transaccion.monto_final = Decimal('740000.00')
+        self.transaccion.save(update_fields=['comision', 'monto_final'])
+
+        total = _total_en_pyg(self.transaccion)
+        items = _grupos_item_resumido(self.transaccion, total)
+
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]['iAfecIVA'], '3')
+        self.assertEqual(items[0]['dPUniProSer'], '740000')
 
 
 class ConsultarEstadoSifenTest(FacturaElectronicaTestCase):
