@@ -21,7 +21,7 @@ Contexto esperado: documentos (paginado), cliente_activo (vía context processor
         <table class="table mb-0">
             <thead>
                 <tr>
-                    <th>Fecha</th>
+                    <th>Fecha de emisión</th>
                     <th>Número</th>
                     <th>Operación</th>
                     <th>Estado</th>
@@ -32,7 +32,7 @@ Contexto esperado: documentos (paginado), cliente_activo (vía context processor
             <tbody>
                 {% for documento in documentos %}
                 <tr>
-                    <td>{{ documento.creado_en }}</td>
+                    <td>{% if documento.emitida_en %}{{ documento.emitida_en|date:"d/m/Y H:i" }}{% else %}—{% endif %}</td>
                     <td>{{ documento.numero_documento }}</td>
                     <td>
                         {% if documento.calculo_operacion %}
@@ -46,8 +46,8 @@ Contexto esperado: documentos (paginado), cliente_activo (vía context processor
                         {% endif %}
                     </td>
                     <td>
-                        {% if documento.estado == 'ERROR_GENERACION' or documento.estado == 'RECHAZADO' or documento.estado == 'ERROR_SIFEN' %}
-                            <span class="badge bg-warning text-dark">En proceso</span>
+                        {% if documento.factura_pendiente %}
+                            <span class="badge bg-warning text-dark">Pendiente de generación</span>
                         {% elif documento.es_definitivo %}
                             <span class="badge bg-success">{{ documento.get_estado_display }}</span>
                         {% else %}
