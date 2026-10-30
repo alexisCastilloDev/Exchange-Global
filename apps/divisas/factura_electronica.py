@@ -695,7 +695,7 @@ def reintentar_emision(documento):
     return documento.estado == DocumentoElectronico.ESTADO_GENERADO
 
 
-def _descargar_archivo(operation, documento):
+def _descargar_archivo(operation, documento, es_valido):
     """GET genérico para ``dwn_kude``/``dwn_xml``: devuelve el archivo binario, o ``None`` si falla.
 
     A diferencia de ``_solicitar`` (que envuelve todo en el sobre
@@ -704,7 +704,19 @@ def _descargar_archivo(operation, documento):
     cuerpo de la respuesta (``--output cdc.pdf``/``--output cdc.xml``
     en los ejemplos con ``curl``), no un JSON. Bajo demanda, sin
     guardar nada en el servidor: se vuelve a pedir cada vez que se
-    descarga.
+    descarga. El contenido se devuelve tal cual llegó, byte por byte:
+    nunca se regenera ni se modifica (GE-86, criterio 3).
+
+    Args:
+        operation (str): ``'dwn_kude'`` o ``'dwn_xml'``.
+        documento (DocumentoElectronico): Documento a descargar.
+        es_valido (Callable[[bytes], bool]): Comprueba que lo recibido
+            sea realmente el archivo esperado, y no, p. ej., un mensaje
+            de error enviado con estado HTTP 200.
+
+    Returns:
+        bytes | None: El archivo, o ``None`` si no tiene CDC, la
+        descarga falló o el contenido no pasó la validación.
     """
     if not documento.cdc:
         return None
@@ -717,14 +729,23 @@ def _descargar_archivo(operation, documento):
     except requests.exceptions.RequestException:
         logger.warning('No se pudo descargar %s para el documento #%s.', operation, documento.pk)
         return None
+    if not es_valido(respuesta.content):
+        logger.error('Factura Segura devolvió un archivo inválido en %s para el documento #%s.', operation, documento.pk)
+        return None
     return respuesta.content
 
 
 def descargar_kude(documento):
-    """Descarga el KuDE (PDF) de ``documento`` desde Factura Segura, o ``None`` si falla o no tiene CDC."""
-    return _descargar_archivo('dwn_kude', documento)
+    """Descarga el KuDE (PDF) de ``documento`` desde Factura Segura, o ``None`` si falla o no tiene CDC.
+
+    Solo comprueba que lo recibido sea un PDF: el texto de un PDF suele
+    estar comprimido, así que su CDC no se puede verificar con una
+    búsqueda directa, como sí se hace en ``descargar_xml``. El archivo
+    se pide a Factura Segura por ese mismo CDC.
+    """
+    return _descargar_archivo('dwn_kude', documento, lambda contenido: contenido.startswith(b'%PDF'))
 
 
 def descargar_xml(documento):
-    """Descarga el XML firmado de ``documento`` desde Factura Segura, o ``None`` si falla o no tiene CDC."""
-    return _descargar_archivo('dwn_xml', documento)
+    """Descarga el XML firmado de ``documento``, o ``None`` si falla, no tiene CDC o el XML trae otro CDC."""
+    return _descargar_archivo('dwn_xml', documento, lambda contenido: documento.cdc.encode() in contenido)

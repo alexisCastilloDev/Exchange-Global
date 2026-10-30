@@ -1,0 +1,1009 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.factura_electronica &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.divisas.factura_electronica</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.divisas.factura_electronica</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Emisión de Facturas Electrónicas ante SIFEN, a través de la API de Factura Segura (ESI).</span>
+
+<span class="sd">Implementa la HU "Integración con API de facturación electrónica":</span>
+<span class="sd">apenas una compra, venta o cambio queda "Pagada" (criterio 1), Global</span>
+<span class="sd">Exchange le emite al cliente una Factura Electrónica, con los mismos</span>
+<span class="sd">montos y moneda que ya calcula ``apps.divisas.entrega`` para la entrega</span>
+<span class="sd">real de dinero. Es un proceso **independiente** de esa entrega: llama</span>
+<span class="sd">a este módulo exactamente desde los mismos 3 puntos que ya disparan</span>
+<span class="sd">``apps.divisas.entrega.realizar_entrega`` (``apps.divisas.pagos_stripe``/</span>
+<span class="sd">``apps.divisas.pagos_sipap``), pero una falla acá nunca bloquea ni</span>
+<span class="sd">revierte el pago ya confirmado, y viceversa (criterio 3): se usa</span>
+<span class="sd">siempre ``intentar_emitir_documento_electronico``, que no relanza nada</span>
+<span class="sd">hacia quien la llama.</span>
+
+<span class="sd">Autenticación: vía un ``Authentication-Token`` de larga duración</span>
+<span class="sd">(``settings.FACTURASEGURA_AUTH_TOKEN``), obtenido una sola vez por un</span>
+<span class="sd">administrador contra ``POST /login?include_auth_token`` y válido hasta</span>
+<span class="sd">que se cambie la contraseña de esa cuenta — este módulo nunca lo</span>
+<span class="sd">renueva ni hace login por su cuenta, solo lo envía como header.</span>
+
+<span class="sd">Numeración (recurso real y finito, ver ``apps.divisas.models.</span>
+<span class="sd">ContadorDocumentoElectronico``): el número de documento se reserva</span>
+<span class="sd">**antes** de llamar a Factura Segura y nunca se libera ni reutiliza,</span>
+<span class="sd">ni siquiera si la emisión después falla — un número "quemado" es</span>
+<span class="sd">preferible a arriesgar un ``dNumDoc`` duplicado.</span>
+
+<span class="sd">Reintentos (criterio 4): la propia documentación de Factura Segura</span>
+<span class="sd">advierte textualmente que la petición es síncrona y que, ante un</span>
+<span class="sd">timeout o una conexión interrumpida, "el resultado queda sin</span>
+<span class="sd">confirmar, ya que el servidor pudo haber procesado la solicitud" y que</span>
+<span class="sd">hay que verificarlo "mediante los mecanismos de consulta... o</span>
+<span class="sd">solicitar asistencia a soporte" antes de reenviarla. Por eso este</span>
+<span class="sd">módulo **nunca reintenta ``generar_de`` solo**, ni ante un timeout ni</span>
+<span class="sd">ante un rechazo: ambos casos dejan el documento en</span>
+<span class="sd">``DocumentoElectronico.ESTADO_ERROR_GENERACION``, visible para un</span>
+<span class="sd">administrador, que debe primero confirmar con soporte si el documento</span>
+<span class="sd">ya se generó del otro lado antes de pedir un reintento explícito (ver</span>
+<span class="sd">``reintentar_emision``). Consultar el estado ante SIFEN</span>
+<span class="sd">(``consultar_estado_sifen``) es, en cambio, una simple lectura</span>
+<span class="sd">(``get_estado_sifen``): se puede repetir sin ningún riesgo.</span>
+
+<span class="sd">Idempotencia (criterio 5): ``emitir_documento_electronico`` nunca crea</span>
+<span class="sd">un segundo ``DocumentoElectronico`` para la misma transacción —</span>
+<span class="sd">``DocumentoElectronico.calculo_operacion``/``calculo_triangulacion``</span>
+<span class="sd">son ``OneToOneField``, así que la base de datos lo impide por</span>
+<span class="sd">cualquier camino, no solo por el chequeo explícito al principio de la</span>
+<span class="sd">función.</span>
+
+<span class="sd">Armado del documento (``_armar_resumido_de``/``_calcular``): se</span>
+<span class="sd">factura con dos ítems (``_grupos_item_resumido``) — el valor de la</span>
+<span class="sd">operación cambiaria en sí, Exento de IVA (no hay IVA sobre el tipo de</span>
+<span class="sd">cambio), y la comisión de Global Exchange como ítem separado, Gravado</span>
+<span class="sd">al 10% de IVA (decisión confirmada con el usuario: la comisión es un</span>
+<span class="sd">servicio propio, no parte del cambio de divisa exento) — y receptor</span>
+<span class="sd">modelado siempre como "No Contribuyente"/consumidor final por cédula,</span>
+<span class="sd">con **moneda de la factura siempre PYG** (``_total_en_pyg``) — Factura Segura solo admite</span>
+<span class="sd">``cMoneOpe`` ``PYG`` o ``USD``, y la mayoría de las divisas de este</span>
+<span class="sd">sistema no son ninguna de esas dos, así que facturar siempre en PYG</span>
+<span class="sd">evita mezclar monedas según el tipo de transacción (decisión tomada</span>
+<span class="sd">con el usuario). Los totales de la factura (IVA, descuentos, etc.)</span>
+<span class="sd">**no se calculan a mano**: se arma solo el ``JSON_RESUMIDO_DE``</span>
+<span class="sd">mínimo y se usa tal cual el ``DE`` completo que devuelve</span>
+<span class="sd">``calcular_de`` como entrada de ``generar_de`` — así ninguna fórmula</span>
+<span class="sd">propia puede quedar mal calculada, SIFEN/Factura Segura hace esa</span>
+<span class="sd">cuenta. ``iTipTra``/``dDesTipTra`` (tipo de transacción, ver</span>
+<span class="sd">``_tipo_transaccion``) ya está verificado contra la tabla real del</span>
+<span class="sd">Manual Técnico SIFEN (``5``="Venta de divisas", ``6``="Compra de</span>
+<span class="sd">divisas", específicos para una casa de cambio). Otros códigos de</span>
+<span class="sd">clasificación que la guía solo describe como "ver Manual SIFEN"</span>
+<span class="sd">(``iTipEmi``, ``iTImp``, ``iIndPres``) quedan con el valor más</span>
+<span class="sd">plausible según la guía, no una verificación campo por campo contra el</span>
+<span class="sd">Manual Técnico de SIFEN 150 completo: revisar antes de la primera</span>
+<span class="sd">emisión real.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROUND_HALF_UP</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrityError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetodoPago</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CalculoOperacion</span><span class="p">,</span>
+    <span class="n">CalculoTriangulacion</span><span class="p">,</span>
+    <span class="n">ContadorDocumentoElectronico</span><span class="p">,</span>
+    <span class="n">DocumentoElectronico</span><span class="p">,</span>
+    <span class="n">RangoDocumentosAgotadoError</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Estados de una transacción que ya pasó por un pago confirmado y, por</span>
+<span class="c1"># lo tanto, debe tener (o estar esperando) su factura electrónica.</span>
+<span class="n">ESTADOS_FACTURABLES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span><span class="p">,</span>
+    <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_ENTREGA_FALLIDA</span><span class="p">,</span>
+    <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_ACREDITADA</span><span class="p">,</span>
+    <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_RETIRADA</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="FacturaSeguraRechazadaError">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.FacturaSeguraRechazadaError">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FacturaSeguraRechazadaError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Factura Segura respondió, pero rechazó la solicitud (``code`` negativo en el sobre de respuesta).</span>
+
+<span class="sd">    A diferencia de un timeout o un error de conexión, acá sí hubo</span>
+<span class="sd">    respuesta: es un rechazo claro de Factura Segura (datos inválidos,</span>
+<span class="sd">    etc.), nunca una situación incierta.</span>
+<span class="sd">    """</span></div>
+
+
+
+<div class="viewcode-block" id="_solicitar">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._solicitar">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_solicitar</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Envía una operación al endpoint único de Factura Segura y devuelve su sobre de respuesta.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        operation (str): Nombre de la operación (p. ej. ``'generar_de'``).</span>
+<span class="sd">        params (dict): Parámetros propios de esa operación.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: El cuerpo completo de la respuesta (``code``,</span>
+<span class="sd">        ``description``, ``operation_info``, ``results``).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        requests.exceptions.RequestException: Sin respuesta confirmada</span>
+<span class="sd">            (timeout, conexión cortada, error 5xx) — ver la advertencia</span>
+<span class="sd">            de la propia documentación citada en el docstring del</span>
+<span class="sd">            módulo: no se sabe si Factura Segura llegó a procesar la</span>
+<span class="sd">            solicitud.</span>
+<span class="sd">        FacturaSeguraRechazadaError: Hubo respuesta, pero con ``code``</span>
+<span class="sd">            negativo: rechazo claro, no es una situación incierta.</span>
+<span class="sd">    """</span>
+    <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_BASE_URL</span><span class="p">,</span>
+        <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s1">'operation'</span><span class="p">:</span> <span class="n">operation</span><span class="p">,</span> <span class="s1">'params'</span><span class="p">:</span> <span class="n">params</span><span class="p">},</span>
+        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authentication-Token'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_AUTH_TOKEN</span><span class="p">},</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">respuesta</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="n">cuerpo</span> <span class="o">=</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">cuerpo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'code'</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FacturaSeguraRechazadaError</span><span class="p">(</span><span class="n">cuerpo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'description'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">'Factura Segura rechazó la solicitud.'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cuerpo</span></div>
+
+
+
+<div class="viewcode-block" id="_primer_resultado">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._primer_resultado">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_primer_resultado</span><span class="p">(</span><span class="n">cuerpo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Primer elemento de ``results`` (el protocolo lo define como ARRAY, incluso cuando trae un solo registro).</span>
+
+<span class="sd">    Devuelve ``{}`` si ``results`` vino vacío, para que el resto del</span>
+<span class="sd">    código pueda seguir usando ``.get(...)`` con tranquilidad.</span>
+<span class="sd">    """</span>
+    <span class="n">resultados</span> <span class="o">=</span> <span class="n">cuerpo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'results'</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">resultados</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">resultados</span> <span class="k">else</span> <span class="p">{}</span></div>
+
+
+
+<div class="viewcode-block" id="_total_en_pyg">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._total_en_pyg">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_total_en_pyg</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Valor total de la operación, siempre en PYG y redondeado a entero (el Guaraní no tiene subunidad).</span>
+
+<span class="sd">    Factura Segura solo admite ``cMoneOpe`` ``PYG`` o ``USD`` — ninguna</span>
+<span class="sd">    otra divisa de este sistema (EUR, BRL, ARS, etc.) es facturable</span>
+<span class="sd">    directamente, así que **toda** Factura Electrónica se emite en</span>
+<span class="sd">    PYG, sin importar la moneda realmente entregada (decisión tomada</span>
+<span class="sd">    con el usuario). Tanto en una compra como en una venta,</span>
+<span class="sd">    ``monto_final`` ya está en PYG (ver ``apps.divisas.models.</span>
+<span class="sd">    monto_a_pagar``/``monto_a_entregar``) y ya incluye el efecto de la</span>
+<span class="sd">    comisión (sumada en una compra, restada en una venta). En un</span>
+<span class="sd">    cambio entre divisas, ``monto_final`` está en la divisa de</span>
+<span class="sd">    **destino** (Paso B de ``apps.divisas.views._calcular_triangulacion``)</span>
+<span class="sd">    y también ya tiene la comisión restada: se convierte a PYG con</span>
+<span class="sd">    ``tasa_venta_aplicada``, la misma tasa de ese Paso B. No se usa</span>
+<span class="sd">    ``monto_equivalente_pyg`` (el bruto triangulado del Paso A, antes</span>
+<span class="sd">    de la comisión): facturar ese valor ignoraba por completo el</span>
+<span class="sd">    efecto de la comisión en un cambio, a diferencia de lo que ya</span>
+<span class="sd">    hacía ``monto_final`` para una compra/venta (bug corregido).</span>
+<span class="sd">    El redondeo a entero reutiliza el mismo criterio que</span>
+<span class="sd">    ``apps.divisas.pagos_stripe`` ya usa para cobrar en PYG (moneda sin</span>
+<span class="sd">    decimales, tanto en Stripe como en SIFEN).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="n">monto</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_final</span> <span class="o">*</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_venta_aplicada</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">monto</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_final</span>
+    <span class="k">return</span> <span class="n">monto</span><span class="o">.</span><span class="n">to_integral_value</span><span class="p">(</span><span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_comision_en_pyg">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._comision_en_pyg">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_comision_en_pyg</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Comisión de Global Exchange en la operación, siempre en PYG y redondeada a entero.</span>
+
+<span class="sd">    En una compra o venta, ``comision`` ya está en PYG (todo</span>
+<span class="sd">    ``apps.divisas.views._calcular_importe_operacion`` opera en PYG).</span>
+<span class="sd">    En un cambio, ``comision`` se calculó en la divisa de **destino**</span>
+<span class="sd">    (Paso B de ``_calcular_triangulacion``): se convierte a PYG con la</span>
+<span class="sd">    misma tasa usada en ese paso (``tasa_venta_aplicada``), igual que</span>
+<span class="sd">    ``_total_en_pyg``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="n">comision</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">comision</span> <span class="o">*</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_venta_aplicada</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">comision</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">comision</span>
+    <span class="k">return</span> <span class="n">comision</span><span class="o">.</span><span class="n">to_integral_value</span><span class="p">(</span><span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_grupo_item">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupo_item">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_grupo_item</span><span class="p">(</span><span class="n">codigo</span><span class="p">,</span> <span class="n">descripcion</span><span class="p">,</span> <span class="n">monto</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">afecta_iva</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Un ítem del ``JSON_RESUMIDO_DE`` (entrada de ``calcular_de``): sin ningún campo calculado.</span>
+
+<span class="sd">    ``cUniMed='77'`` es, de las opciones que documenta la guía, la</span>
+<span class="sd">    única plausible para un ítem de este tipo de operación. Sin</span>
+<span class="sd">    descuentos ni anticipos (no aplican a esta operación). Los totales</span>
+<span class="sd">    derivados (``dTotBruOpeItem``, ``dTotOpeItem``, ``dBasGravIVA``,</span>
+<span class="sd">    etc.) no se calculan a mano: los completa ``calcular_de`` (ver</span>
+<span class="sd">    ``_calcular``). Si el ítem está gravado, ``monto`` ya es el precio</span>
+<span class="sd">    final con IVA incluido (así factura SIFEN: ``calcular_de`` extrae</span>
+<span class="sd">    cuánto de ese precio es base y cuánto es IVA, no hay que sumarle</span>
+<span class="sd">    nada encima).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">afecta_iva</span><span class="p">:</span>
+        <span class="n">iva</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'iAfecIVA'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span> <span class="s1">'dPropIVA'</span><span class="p">:</span> <span class="s1">'100'</span><span class="p">,</span> <span class="s1">'dTasaIVA'</span><span class="p">:</span> <span class="s1">'10'</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">iva</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'iAfecIVA'</span><span class="p">:</span> <span class="s1">'3'</span><span class="p">,</span> <span class="s1">'dPropIVA'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span> <span class="s1">'dTasaIVA'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'dCodInt'</span><span class="p">:</span> <span class="n">codigo</span><span class="p">,</span>
+        <span class="s1">'dDesProSer'</span><span class="p">:</span> <span class="n">descripcion</span><span class="p">,</span>
+        <span class="s1">'cUniMed'</span><span class="p">:</span> <span class="s1">'77'</span><span class="p">,</span>
+        <span class="s1">'dCantProSer'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
+        <span class="s1">'dPUniProSer'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">monto</span><span class="p">),</span>
+        <span class="s1">'dDescItem'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
+        <span class="s1">'dDescGloItem'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
+        <span class="s1">'dAntPreUniIt'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
+        <span class="s1">'dAntGloPreUniIt'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">iva</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_grupos_item_resumido">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupos_item_resumido">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_grupos_item_resumido</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">total</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Ítems del ``JSON_RESUMIDO_DE``: separa la comisión (gravada al 10% IVA) del resto de la operación (exento).</span>
+
+<span class="sd">    Confirmado con el usuario: la comisión de Global Exchange es un</span>
+<span class="sd">    servicio propio, gravado al 10% de IVA, no parte del cambio de</span>
+<span class="sd">    divisa en sí (que sigue exento, no hay IVA sobre el tipo de</span>
+<span class="sd">    cambio). El ítem exento es siempre ``total - comisión``</span>
+<span class="sd">    (``_total_en_pyg``/``_comision_en_pyg``), nunca el bruto de la</span>
+<span class="sd">    operación calculado aparte, para que los dos ítems sumen</span>
+<span class="sd">    exactamente el total ya correcto, sin descuadres de redondeo. Si</span>
+<span class="sd">    la comisión del cliente es 0% (``ConfiguracionComision``), queda</span>
+<span class="sd">    un único ítem exento, igual que antes de este cambio.</span>
+<span class="sd">    """</span>
+    <span class="n">comision</span> <span class="o">=</span> <span class="n">_comision_en_pyg</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">comision</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">base</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_grupo_item</span><span class="p">(</span><span class="s1">'CAMBIO-DIVISA'</span><span class="p">,</span> <span class="n">_descripcion_operacion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">base</span><span class="p">,</span> <span class="n">afecta_iva</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">comision</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_grupo_item</span><span class="p">(</span><span class="s1">'COMISION'</span><span class="p">,</span> <span class="s1">'Comisión por el servicio de cambio de divisas'</span><span class="p">,</span> <span class="n">comision</span><span class="p">,</span> <span class="n">afecta_iva</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">items</span></div>
+
+
+
+<div class="viewcode-block" id="_tipo_transaccion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._tipo_transaccion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_tipo_transaccion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Código y descripción de ``iTipTra``/``dDesTipTra`` (Manual Técnico SIFEN, campo D011).</span>
+
+<span class="sd">    Confirmado con la tabla real de códigos (compartida por el usuario):</span>
+<span class="sd">    ``5``="Venta de divisas" y ``6``="Compra de divisas" son los códigos</span>
+<span class="sd">    propios de una casa de cambio — no ``1`` ("Venta de mercadería"), el</span>
+<span class="sd">    valor que se usaba antes sin verificar (bug corregido). Una compra</span>
+<span class="sd">    (Global Exchange le compra la divisa al cliente) es código ``6``;</span>
+<span class="sd">    una venta (Global Exchange le vende la divisa al cliente) es código</span>
+<span class="sd">    ``5``. Un cambio entre divisas combina ambas piernas en una sola</span>
+<span class="sd">    operación (Global Exchange recibe la divisa origen y entrega la</span>
+<span class="sd">    divisa destino) y no tiene un código propio en la tabla: decisión</span>
+<span class="sd">    tomada con el usuario, se factura siempre como "Venta de divisas",</span>
+<span class="sd">    consistente con lo que Global Exchange finalmente le entrega al</span>
+<span class="sd">    cliente (la divisa de destino), igual criterio que ya usa</span>
+<span class="sd">    ``_descripcion_operacion`` ("Cambio de X a Y").</span>
+
+<span class="sd">    ``dDesTipTra`` es obligatorio siempre que se envíe ``iTipTra``: no</span>
+<span class="sd">    alcanza con mandar el código solo, hay que mandar también su texto.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">'5'</span><span class="p">,</span> <span class="s1">'Venta de divisas'</span>
+    <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tipo</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">'6'</span><span class="p">,</span> <span class="s1">'Compra de divisas'</span>
+    <span class="k">return</span> <span class="s1">'5'</span><span class="p">,</span> <span class="s1">'Venta de divisas'</span></div>
+
+
+
+<div class="viewcode-block" id="_descripcion_operacion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._descripcion_operacion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_descripcion_operacion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Descripción legible del ítem, distinta para una compra/venta o un cambio entre divisas."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'Cambio de </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_origen</span><span class="si">}</span><span class="s1"> a </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="si">}</span><span class="s1">'</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">()</span><span class="si">}</span><span class="s1"> de </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa</span><span class="si">}</span><span class="s1">'</span></div>
+
+
+
+<div class="viewcode-block" id="_email_receptor">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._email_receptor">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_email_receptor</span><span class="p">(</span><span class="n">cliente</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve el email real del cliente para ``dEmailRec``: el de un usuario real, no el legado.</span>
+
+<span class="sd">    ``Cliente.email`` es un campo legado (ver el comentario en</span>
+<span class="sd">    ``ClienteForm``: "el correo operativo pertenece al usuario"), que no</span>
+<span class="sd">    se completa en ningún alta real — el email verdadero y verificado es</span>
+<span class="sd">    el de Keycloak. En la práctica, muchos clientes no tienen</span>
+<span class="sd">    ``Cliente.user`` (el ``OneToOneField`` "titular") asignado en</span>
+<span class="sd">    absoluto: el vínculo real con sus usuarios es siempre</span>
+<span class="sd">    ``Cliente.usuarios`` (el ``ManyToManyField`` que también usa</span>
+<span class="sd">    ``test_func`` en las vistas propias del cliente, vía</span>
+<span class="sd">    ``request.user.clientes``). Se prueba primero el titular si está,</span>
+<span class="sd">    después cualquier usuario asociado que tenga un email cargado, y</span>
+<span class="sd">    el campo legado solo como último respaldo.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">cliente</span><span class="o">.</span><span class="n">user</span> <span class="ow">and</span> <span class="n">cliente</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cliente</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">email</span>
+    <span class="n">usuario_con_email</span> <span class="o">=</span> <span class="n">cliente</span><span class="o">.</span><span class="n">usuarios</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">usuario_con_email</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">usuario_con_email</span><span class="o">.</span><span class="n">email</span>
+    <span class="k">return</span> <span class="n">cliente</span><span class="o">.</span><span class="n">email</span> <span class="ow">or</span> <span class="s1">''</span></div>
+
+
+
+<div class="viewcode-block" id="_info_adicional">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._info_adicional">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_info_adicional</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Texto para ``dInfAdic``: deja constancia de la tasa aplicada, impresa en el KuDE.</span>
+
+<span class="sd">    El esquema de Factura Segura no tiene ningún campo estructurado</span>
+<span class="sd">    para "la tasa de cambio que usó Global Exchange en esta</span>
+<span class="sd">    operación" (``dTiCam`` es la tasa de la propia factura cuando</span>
+<span class="sd">    ``cMoneOpe`` no es PYG, que en este módulo siempre es PYG, ver</span>
+<span class="sd">    ``_total_en_pyg``): ``dInfAdic`` es, según la guía, el único lugar</span>
+<span class="sd">    pensado para texto libre impreso en el comprobante sin formar parte</span>
+<span class="sd">    del XML firmado, así que es donde se deja la tasa para que el</span>
+<span class="sd">    criterio de "información completa de la operación" (cliente,</span>
+<span class="sd">    monto, divisa, tasa, fecha) quede satisfecho también en ese dato.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Tasa aplicada: </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_cruzada</span><span class="si">}</span><span class="s1"> '</span>
+            <span class="sa">f</span><span class="s1">'(</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_origen</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="si">}</span><span class="s1">)'</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'Tasa aplicada: </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_aplicada</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa</span><span class="si">}</span><span class="s1">/PYG)'</span></div>
+
+
+
+<div class="viewcode-block" id="_grupo_pago">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupo_pago">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_grupo_pago</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mapea el medio de pago real (``Pago.medio_pago``) al tipo de pago que espera la API.</span>
+
+<span class="sd">    Un único pago por el total de la operación, ya en PYG (ver</span>
+<span class="sd">    ``_total_en_pyg``): esta HU no reparte el cobro en más de un medio.</span>
+<span class="sd">    """</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'dMonTiPag'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">monto</span><span class="p">),</span> <span class="s1">'cMoneTiPag'</span><span class="p">:</span> <span class="s1">'PYG'</span><span class="p">,</span> <span class="s1">'dTiCamTiPag'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pago</span><span class="o">.</span><span class="n">medio_pago</span> <span class="o">==</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="s1">'iTiPago'</span><span class="p">:</span> <span class="s1">'3'</span><span class="p">,</span> <span class="s1">'iDenTarj'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span> <span class="s1">'iForProPa'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="s1">'iTiPago'</span><span class="p">:</span> <span class="s1">'5'</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_armar_resumido_de">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._armar_resumido_de">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_armar_resumido_de</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Arma el ``JSON_RESUMIDO_DE``: la entrada de ``calcular_de``, sin ningún campo calculado.</span>
+
+<span class="sd">    Se factura siempre en PYG (``cMoneOpe='PYG'``, ver</span>
+<span class="sd">    ``_total_en_pyg``) y con dos ítems (``_grupos_item_resumido``): el</span>
+<span class="sd">    cambio de divisa en sí, exento de IVA (no hay IVA sobre el tipo de</span>
+<span class="sd">    cambio), y la comisión de Global Exchange, gravada al 10%.</span>
+<span class="sd">    Receptor modelado siempre como "No Contribuyente"/consumidor final</span>
+<span class="sd">    por cédula (``iNatRec='2'``), lo que a su vez implica</span>
+<span class="sd">    ``iTiOpe='2'`` (B2C): un "No Contribuyente" nunca es la contraparte</span>
+<span class="sd">    de una operación B2B.</span>
+
+<span class="sd">    Nota: varios códigos de clasificación documentados solo como</span>
+<span class="sd">    "ver Manual SIFEN" (``iTipEmi``, ``iTImp``, ``iIndPres``) quedan</span>
+<span class="sd">    con el valor más plausible según la guía de Factura Segura, no una</span>
+<span class="sd">    verificación campo por campo contra el Manual Técnico de SIFEN 150</span>
+<span class="sd">    completo — revisar antes de la primera emisión real. ``iTipTra``/</span>
+<span class="sd">    ``dDesTipTra`` (ver ``_tipo_transaccion``) sí están verificados</span>
+<span class="sd">    contra la tabla real del manual.</span>
+<span class="sd">    """</span>
+    <span class="n">cliente</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span>
+    <span class="n">ahora</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+    <span class="n">tipo_transaccion</span><span class="p">,</span> <span class="n">descripcion_tipo_transaccion</span> <span class="o">=</span> <span class="n">_tipo_transaccion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'iTipEmi'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
+        <span class="s1">'iTiDE'</span><span class="p">:</span> <span class="n">documento</span><span class="o">.</span><span class="n">tipo_documento</span><span class="p">,</span>
+        <span class="s1">'dNumTim'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_NUM_TIMBRADO</span><span class="p">,</span>
+        <span class="s1">'dFeIniT'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_FECHA_INICIO_TIMBRADO</span><span class="p">,</span>
+        <span class="s1">'dEst'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_ESTABLECIMIENTO</span><span class="p">,</span>
+        <span class="s1">'dPunExp'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_PUNTO_EXPEDICION</span><span class="p">,</span>
+        <span class="s1">'dNumDoc'</span><span class="p">:</span> <span class="n">documento</span><span class="o">.</span><span class="n">numero_documento</span><span class="p">,</span>
+        <span class="s1">'dFeEmiDE'</span><span class="p">:</span> <span class="n">ahora</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S'</span><span class="p">),</span>
+        <span class="s1">'iTipTra'</span><span class="p">:</span> <span class="n">tipo_transaccion</span><span class="p">,</span>
+        <span class="s1">'dDesTipTra'</span><span class="p">:</span> <span class="n">descripcion_tipo_transaccion</span><span class="p">,</span>
+        <span class="s1">'iTImp'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
+        <span class="s1">'cMoneOpe'</span><span class="p">:</span> <span class="s1">'PYG'</span><span class="p">,</span>
+        <span class="s1">'dRucEm'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_RUC</span><span class="p">,</span>
+        <span class="s1">'dDVEmi'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_DV</span><span class="p">,</span>
+        <span class="s1">'iTipCont'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_TIPO_CONTRIBUYENTE</span><span class="p">,</span>
+        <span class="s1">'dNomEmi'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_NOMBRE</span><span class="p">,</span>
+        <span class="s1">'dDirEmi'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_DIRECCION</span><span class="p">,</span>
+        <span class="s1">'dNumCas'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_NUMERO_CASA</span><span class="p">,</span>
+        <span class="s1">'cDepEmi'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_COD_DEPARTAMENTO</span><span class="p">,</span>
+        <span class="s1">'dDesDepEmi'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_DESC_DEPARTAMENTO</span><span class="p">,</span>
+        <span class="s1">'cCiuEmi'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_COD_CIUDAD</span><span class="p">,</span>
+        <span class="s1">'dDesCiuEmi'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_DESC_CIUDAD</span><span class="p">,</span>
+        <span class="s1">'dTelEmi'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_TELEFONO</span><span class="p">,</span>
+        <span class="s1">'dEmailE'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_EMAIL</span><span class="p">,</span>
+        <span class="s1">'gActEco'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_ACTIVIDADES_ECONOMICAS</span><span class="p">,</span>
+        <span class="s1">'iNatRec'</span><span class="p">:</span> <span class="s1">'2'</span><span class="p">,</span>
+        <span class="s1">'iTiOpe'</span><span class="p">:</span> <span class="s1">'2'</span><span class="p">,</span>
+        <span class="s1">'cPaisRec'</span><span class="p">:</span> <span class="s1">'PRY'</span><span class="p">,</span>
+        <span class="s1">'iTipIDRec'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
+        <span class="s1">'dNumIDRec'</span><span class="p">:</span> <span class="n">cliente</span><span class="o">.</span><span class="n">identificador</span><span class="p">,</span>
+        <span class="s1">'dNomRec'</span><span class="p">:</span> <span class="n">cliente</span><span class="o">.</span><span class="n">nombre_completo</span><span class="p">,</span>
+        <span class="s1">'dEmailRec'</span><span class="p">:</span> <span class="n">_email_receptor</span><span class="p">(</span><span class="n">cliente</span><span class="p">),</span>
+        <span class="s1">'iIndPres'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
+        <span class="s1">'iCondOpe'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
+        <span class="s1">'gPaConEIni'</span><span class="p">:</span> <span class="p">[</span><span class="n">_grupo_pago</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">)],</span>
+        <span class="s1">'iCondCred'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
+        <span class="s1">'dPlazoCre'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
+        <span class="s1">'gCamItem'</span><span class="p">:</span> <span class="n">_grupos_item_resumido</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">),</span>
+        <span class="s1">'CDC'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
+        <span class="s1">'dCodSeg'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
+        <span class="s1">'dDVId'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
+        <span class="s1">'dSisFact'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
+        <span class="s1">'dInfAdic'</span><span class="p">:</span> <span class="n">_info_adicional</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_calcular">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._calcular">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_calcular</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Llama a ``calcular_de`` y devuelve el ``DE`` completo, con los totales ya calculados por SIFEN.</span>
+
+<span class="sd">    Nunca confía en fórmulas propias para los totales de una factura:</span>
+<span class="sd">    arma solo el ``JSON_RESUMIDO_DE`` (``_armar_resumido_de``, sin</span>
+<span class="sd">    ningún campo derivado) y usa tal cual el ``DE`` que devuelve</span>
+<span class="sd">    ``calcular_de`` como entrada de ``generar_de`` — es, según la</span>
+<span class="sd">    guía, "el JSON completo con los campos calculados según SIFEN...</span>
+<span class="sd">    ya listo para ser enviado en la operación generar_de". A</span>
+<span class="sd">    diferencia de ``generar_de``, esta operación **no genera ningún</span>
+<span class="sd">    documento real** (no consume ningún recurso de numeración): es</span>
+<span class="sd">    seguro reintentarla cuantas veces haga falta.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        requests.exceptions.RequestException, FacturaSeguraRechazadaError:</span>
+<span class="sd">            Mismo criterio que ``_solicitar``.</span>
+<span class="sd">    """</span>
+    <span class="n">cuerpo</span> <span class="o">=</span> <span class="n">_solicitar</span><span class="p">(</span><span class="s1">'calcular_de'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'DE'</span><span class="p">:</span> <span class="n">_armar_resumido_de</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">)})</span>
+    <span class="k">return</span> <span class="n">_primer_resultado</span><span class="p">(</span><span class="n">cuerpo</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'DE'</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span></div>
+
+
+
+<div class="viewcode-block" id="_generar">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._generar">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_generar</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Llama a ``calcular_de`` + ``generar_de`` para ``documento`` y actualiza su estado según el resultado.</span>
+
+<span class="sd">    Nunca relanza: cualquier falla (comunicación incierta o rechazo</span>
+<span class="sd">    claro, en cualquiera de las dos llamadas) queda registrada en</span>
+<span class="sd">    ``documento.estado``/``error_generacion``, nunca como una</span>
+<span class="sd">    excepción hacia quien llama a esta función interna. Una falla en</span>
+<span class="sd">    ``calcular_de`` es indistinguible, para quien llama, de una falla</span>
+<span class="sd">    en ``generar_de``: en ambos casos no se generó nada del otro lado,</span>
+<span class="sd">    y el número ya reservado queda igual de "quemado" por diseño (ver</span>
+<span class="sd">    el docstring del módulo).</span>
+
+<span class="sd">    Antes de llamar a la API, valida que el cliente tenga un email</span>
+<span class="sd">    cargado (``_email_receptor``): ``dEmailRec`` es obligatorio para</span>
+<span class="sd">    Factura Segura (lo confirmó un rechazo real, ``code=-10009``,</span>
+<span class="sd">    durante las pruebas de esta HU). Si falta, no se llama a la API en</span>
+<span class="sd">    absoluto: es un dato que nunca va a cambiar solo reintentando</span>
+<span class="sd">    contra el mismo número.</span>
+<span class="sd">    """</span>
+    <span class="n">limite</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s1">'error_generacion'</span><span class="p">)</span><span class="o">.</span><span class="n">max_length</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_email_receptor</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span><span class="p">):</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">error_generacion</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">'El cliente no tiene un email cargado (ni en su usuario de Keycloak ni en el '</span>
+            <span class="s1">'campo legado). dEmailRec es obligatorio para Factura Segura: cargar el email '</span>
+            <span class="s1">'del cliente y reintentar.'</span>
+        <span class="p">)[:</span><span class="n">limite</span><span class="p">]</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ERROR_GENERACION</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'error_generacion'</span><span class="p">,</span> <span class="s1">'actualizado_en'</span><span class="p">])</span>
+        <span class="k">return</span>
+
+    <span class="n">monto</span> <span class="o">=</span> <span class="n">_total_en_pyg</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">de_completo</span> <span class="o">=</span> <span class="n">_calcular</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">)</span>
+        <span class="n">cuerpo</span> <span class="o">=</span> <span class="n">_solicitar</span><span class="p">(</span><span class="s1">'generar_de'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'DE'</span><span class="p">:</span> <span class="n">de_completo</span><span class="p">})</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="c1"># str(exc) de una excepción de red puede ser arbitrariamente largo</span>
+        <span class="c1"># (urllib3 anida toda la cadena de reintentos/causas en su repr):</span>
+        <span class="c1"># se recorta siempre al límite del campo, para que un mensaje de</span>
+        <span class="c1"># error nunca pueda romper el propio guardado del error.</span>
+        <span class="n">mensaje</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">'Sin confirmación de Factura Segura (timeout o error de conexión): </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s1">. '</span>
+            <span class="s1">'No reintentar sin antes verificar con soporte si el documento ya se generó.'</span>
+        <span class="p">)</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">error_generacion</span> <span class="o">=</span> <span class="n">mensaje</span><span class="p">[:</span><span class="n">limite</span><span class="p">]</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ERROR_GENERACION</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'error_generacion'</span><span class="p">,</span> <span class="s1">'actualizado_en'</span><span class="p">])</span>
+        <span class="k">return</span>
+    <span class="k">except</span> <span class="n">FacturaSeguraRechazadaError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">error_generacion</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)[:</span><span class="n">limite</span><span class="p">]</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ERROR_GENERACION</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'error_generacion'</span><span class="p">,</span> <span class="s1">'actualizado_en'</span><span class="p">])</span>
+        <span class="k">return</span>
+
+    <span class="n">resultados</span> <span class="o">=</span> <span class="n">_primer_resultado</span><span class="p">(</span><span class="n">cuerpo</span><span class="p">)</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">cdc</span> <span class="o">=</span> <span class="n">resultados</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'CDC'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">operation_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cuerpo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'operation_info'</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'id'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_GENERADO</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">error_generacion</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="c1"># Criterio 4: la fecha y hora de emisión se registra solo cuando la</span>
+    <span class="c1"># factura se generó correctamente (hay CDC), nunca en una falla.</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">emitida_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'cdc'</span><span class="p">,</span> <span class="s1">'operation_id'</span><span class="p">,</span> <span class="s1">'error_generacion'</span><span class="p">,</span> <span class="s1">'emitida_en'</span><span class="p">,</span> <span class="s1">'actualizado_en'</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="factura_pendiente_de_generacion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.factura_pendiente_de_generacion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">factura_pendiente_de_generacion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Indica si a una transacción ya pagada todavía le falta su factura electrónica (criterio 3).</span>
+
+<span class="sd">    Es ``True`` cuando la transacción ya fue pagada y, o bien no tiene</span>
+<span class="sd">    ningún ``DocumentoElectronico`` (p. ej. se agotó el rango de</span>
+<span class="sd">    numeración), o bien el que tiene está rechazado/fallido</span>
+<span class="sd">    (``DocumentoElectronico.factura_pendiente``). Las pantallas de</span>
+<span class="sd">    detalle lo usan para informarle al cliente que la factura está</span>
+<span class="sd">    "pendiente de generación" **sin ocultar ni bloquear** el resto de los</span>
+<span class="sd">    datos de la operación.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: ``False`` si la transacción aún no fue pagada (todavía no</span>
+<span class="sd">        corresponde facturar) o si su factura se generó correctamente.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ESTADOS_FACTURABLES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">documento</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="s1">'documento_electronico'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">documento</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">documento</span><span class="o">.</span><span class="n">factura_pendiente</span></div>
+
+
+
+<div class="viewcode-block" id="emitir_documento_electronico">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.emitir_documento_electronico">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">emitir_documento_electronico</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Emite (o recupera, si ya existe) la Factura Electrónica de una transacción ya pagada.</span>
+
+<span class="sd">    Punto de entrada principal, llamado por</span>
+<span class="sd">    ``intentar_emitir_documento_electronico`` desde los mismos 3 sitios</span>
+<span class="sd">    que disparan ``apps.divisas.entrega.realizar_entrega``. Idempotente</span>
+<span class="sd">    (criterio 5): si la transacción ya tiene un ``DocumentoElectronico``</span>
+<span class="sd">    (exitoso o no), lo devuelve sin volver a llamar a Factura Segura.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``</span>
+<span class="sd">            recién marcada "Pagada".</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        DocumentoElectronico | None: El documento (nuevo o ya</span>
+<span class="sd">        existente). ``None`` únicamente si no quedaban números</span>
+<span class="sd">        disponibles en el rango habilitado (``RangoDocumentosAgotadoError``,</span>
+<span class="sd">        que queda logueada: requiere pedir un rango nuevo a Factura</span>
+<span class="sd">        Segura antes de poder emitir cualquier otra factura de este</span>
+<span class="sd">        tipo).</span>
+<span class="sd">    """</span>
+    <span class="n">documento_existente</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="s1">'documento_electronico'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">documento_existente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">documento_existente</span>
+
+    <span class="n">campo</span> <span class="o">=</span> <span class="s1">'calculo_operacion'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'calculo_triangulacion'</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">numero_documento</span> <span class="o">=</span> <span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">siguiente_numero</span><span class="p">(</span><span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_FACTURA</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">RangoDocumentosAgotadoError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s1">'No se pudo emitir la Factura Electrónica de </span><span class="si">%s</span><span class="s1"> #</span><span class="si">%s</span><span class="s1">: se agotó el rango de numeración.'</span><span class="p">,</span>
+            <span class="n">campo</span><span class="p">,</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">documento</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">campo</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">},</span>
+            <span class="n">tipo_documento</span><span class="o">=</span><span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_FACTURA</span><span class="p">,</span>
+            <span class="n">numero_documento</span><span class="o">=</span><span class="n">numero_documento</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="n">IntegrityError</span><span class="p">:</span>
+        <span class="c1"># Carrera entre dos llamadas simultáneas para la misma transacción</span>
+        <span class="c1"># (p. ej. un webhook y un cobro directo compitiendo): la otra ya</span>
+        <span class="c1"># ganó y creó el documento, se devuelve esa en vez de una segunda.</span>
+        <span class="c1"># El número recién reservado queda sin usar (no hay forma de</span>
+        <span class="c1"># "devolverlo" al contador sin arriesgar que otra emisión lo tome</span>
+        <span class="c1"># mientras tanto), aceptable frente al riesgo de un dNumDoc repetido.</span>
+        <span class="k">return</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">campo</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">})</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
+    <span class="n">_generar</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">documento</span></div>
+
+
+
+<div class="viewcode-block" id="intentar_emitir_documento_electronico">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.intentar_emitir_documento_electronico">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">intentar_emitir_documento_electronico</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Wrapper seguro de ``emitir_documento_electronico`` para los puntos de pago.</span>
+
+<span class="sd">    Nunca deja escapar ninguna excepción: un fallo al emitir la</span>
+<span class="sd">    factura no debe poder interrumpir ni revertir un pago ya</span>
+<span class="sd">    confirmado (criterio 3). Cualquier error no previsto queda</span>
+<span class="sd">    logueado para que un administrador lo investigue.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">emitir_documento_electronico</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+            <span class="s1">'Fallo inesperado al emitir la Factura Electrónica de la transacción #</span><span class="si">%s</span><span class="s1">.'</span><span class="p">,</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="consultar_estado_sifen">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.consultar_estado_sifen">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">consultar_estado_sifen</span><span class="p">(</span><span class="n">documento</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Consulta a SIFEN (vía ``get_estado_sifen``) el estado real de un documento ya generado.</span>
+
+<span class="sd">    Es una simple lectura: se puede llamar tantas veces como se</span>
+<span class="sd">    quiera, incluso si la anterior falló por comunicación. No modifica</span>
+<span class="sd">    nada si la consulta en sí no se pudo completar (queda igual que</span>
+<span class="sd">    estaba, para volver a consultarse más tarde).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        documento (DocumentoElectronico): Debe tener ``cdc`` (solo</span>
+<span class="sd">            tiene sentido consultar un documento que llegó a generarse).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: ``True`` si se pudo actualizar el estado (sin importar</span>
+<span class="sd">        cuál quedó), ``False`` si la consulta en sí falló.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">documento</span><span class="o">.</span><span class="n">cdc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cuerpo</span> <span class="o">=</span> <span class="n">_solicitar</span><span class="p">(</span>
+            <span class="s1">'get_estado_sifen'</span><span class="p">,</span>
+            <span class="p">{</span><span class="s1">'dRucEm'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_RUC</span><span class="p">,</span> <span class="s1">'CDC'</span><span class="p">:</span> <span class="n">documento</span><span class="o">.</span><span class="n">cdc</span><span class="p">},</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">,</span> <span class="n">FacturaSeguraRechazadaError</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">'No se pudo consultar el estado SIFEN del documento #</span><span class="si">%s</span><span class="s1">.'</span><span class="p">,</span> <span class="n">documento</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">resultados</span> <span class="o">=</span> <span class="n">_primer_resultado</span><span class="p">(</span><span class="n">cuerpo</span><span class="p">)</span>
+    <span class="n">estado_sifen</span> <span class="o">=</span> <span class="p">(</span><span class="n">resultados</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'estado_sifen'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">estado_sifen</span> <span class="o">=</span> <span class="n">estado_sifen</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">desc_sifen</span> <span class="o">=</span> <span class="n">resultados</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'desc_sifen'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">consultado_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+    <span class="c1"># Valores de "estado_sifen" documentados por Factura Segura y su</span>
+    <span class="c1"># interpretación oficial. No se miran "estado_can"/"estado_inu" (que</span>
+    <span class="c1"># tendrían prioridad sobre "estado_sifen" según el manual): esta HU</span>
+    <span class="c1"># no implementa sol_cancelacion/sol_inutilizacion, así que esos dos</span>
+    <span class="c1"># campos siempre vienen vacíos para un documento emitido por este</span>
+    <span class="c1"># módulo.</span>
+    <span class="k">if</span> <span class="n">estado_sifen</span> <span class="o">==</span> <span class="s1">'APROBADO'</span><span class="p">:</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_APROBADO</span>
+    <span class="k">elif</span> <span class="n">estado_sifen</span> <span class="o">==</span> <span class="s1">'APROBADO CON OBSERVACIÓN'</span><span class="p">:</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_APROBADO_OBS</span>
+    <span class="k">elif</span> <span class="n">estado_sifen</span> <span class="o">==</span> <span class="s1">'RECHAZADO'</span><span class="p">:</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_RECHAZADO</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">error_sifen</span> <span class="o">=</span> <span class="n">resultados</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'error_sifen'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">estado_sifen</span> <span class="o">==</span> <span class="s1">'REINGRESADO'</span><span class="p">:</span>
+        <span class="c1"># El documento fue reingresado a Factura Segura con otro CDC: el</span>
+        <span class="c1"># CDC actual ya no es válido. No hay, en esta misma consulta,</span>
+        <span class="c1"># ningún CDC nuevo a seguir, así que queda para revisión manual.</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ERROR_SIFEN</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">error_sifen</span> <span class="o">=</span> <span class="s1">'Reingresado: este CDC ya no es válido, el documento fue reingresado con otro CDC.'</span>
+    <span class="k">elif</span> <span class="n">estado_sifen</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'SOL.APROBACION'</span><span class="p">,</span> <span class="s1">'ENVIADO_A_SIFEN'</span><span class="p">,</span> <span class="s1">''</span><span class="p">):</span>
+        <span class="k">pass</span>  <span class="c1"># Todavía no hay una respuesta definitiva de SIFEN: se vuelve a consultar más tarde.</span>
+    <span class="k">elif</span> <span class="n">estado_sifen</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'ERROR_SIFEN'</span><span class="p">,</span> <span class="s1">'ERROR_ENVIO_LOTE'</span><span class="p">,</span> <span class="s1">'REINTENTAR_LOTE'</span><span class="p">,</span> <span class="s1">'ERROR_CONSULTA_LOTE'</span><span class="p">):</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ERROR_SIFEN</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">error_sifen</span> <span class="o">=</span> <span class="n">resultados</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'error_sifen'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Valor no documentado: se deja visible como error en vez de</span>
+        <span class="c1"># quedar silenciosamente sin cambios.</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ERROR_SIFEN</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">error_sifen</span> <span class="o">=</span> <span class="n">resultados</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'error_sifen'</span><span class="p">)</span> <span class="ow">or</span> <span class="sa">f</span><span class="s1">'Estado SIFEN no reconocido: </span><span class="si">{</span><span class="n">estado_sifen</span><span class="si">!r}</span><span class="s1">'</span>
+
+    <span class="c1"># Se recorta siempre al límite de cada campo, por si el texto que</span>
+    <span class="c1"># devuelve Factura Segura (o uno armado acá) lo excediera.</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">desc_sifen</span> <span class="o">=</span> <span class="n">documento</span><span class="o">.</span><span class="n">desc_sifen</span><span class="p">[:</span><span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s1">'desc_sifen'</span><span class="p">)</span><span class="o">.</span><span class="n">max_length</span><span class="p">]</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">error_sifen</span> <span class="o">=</span> <span class="n">documento</span><span class="o">.</span><span class="n">error_sifen</span><span class="p">[:</span><span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s1">'error_sifen'</span><span class="p">)</span><span class="o">.</span><span class="n">max_length</span><span class="p">]</span>
+    <span class="n">documento</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'estado_sifen'</span><span class="p">,</span> <span class="s1">'desc_sifen'</span><span class="p">,</span> <span class="s1">'error_sifen'</span><span class="p">,</span> <span class="s1">'consultado_en'</span><span class="p">,</span> <span class="s1">'actualizado_en'</span><span class="p">])</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="reintentar_emision">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.reintentar_emision">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reintentar_emision</span><span class="p">(</span><span class="n">documento</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reintenta, a pedido explícito de un administrador, un documento en 'Error al generar'.</span>
+
+<span class="sd">    Reutiliza el mismo ``numero_documento`` ya reservado (nunca pide</span>
+<span class="sd">    uno nuevo): si la emisión anterior nunca llegó a crearse del otro</span>
+<span class="sd">    lado, es seguro reenviarla con ese número. **Antes de llamar a</span>
+<span class="sd">    esta función**, un administrador debe haber confirmado con soporte</span>
+<span class="sd">    de Factura Segura que el documento no se generó ya con ese mismo</span>
+<span class="sd">    número — exactamente la verificación que la propia documentación</span>
+<span class="sd">    de la API exige antes de reenviar una solicitud incierta (ver el</span>
+<span class="sd">    docstring del módulo). Esta función no hace esa verificación por</span>
+<span class="sd">    sí sola, porque no hay ningún mecanismo de consulta por número de</span>
+<span class="sd">    documento documentado, solo por CDC (que no existe todavía si la</span>
+<span class="sd">    emisión original nunca llegó a confirmarse).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        documento (DocumentoElectronico): Debe estar en</span>
+<span class="sd">            ``ESTADO_ERROR_GENERACION``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: ``True`` si quedó generado, ``False`` si no estaba en</span>
+<span class="sd">        condiciones de reintentarse o si volvió a fallar.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">!=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ERROR_GENERACION</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">_generar</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">documento</span><span class="o">.</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_GENERADO</span></div>
+
+
+
+<div class="viewcode-block" id="_descargar_archivo">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._descargar_archivo">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_descargar_archivo</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">documento</span><span class="p">,</span> <span class="n">es_valido</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""GET genérico para ``dwn_kude``/``dwn_xml``: devuelve el archivo binario, o ``None`` si falla.</span>
+
+<span class="sd">    A diferencia de ``_solicitar`` (que envuelve todo en el sobre</span>
+<span class="sd">    ``code``/``description``/``results``), estas dos operaciones son</span>
+<span class="sd">    ``GET`` y, según la guía, devuelven el archivo directo en el</span>
+<span class="sd">    cuerpo de la respuesta (``--output cdc.pdf``/``--output cdc.xml``</span>
+<span class="sd">    en los ejemplos con ``curl``), no un JSON. Bajo demanda, sin</span>
+<span class="sd">    guardar nada en el servidor: se vuelve a pedir cada vez que se</span>
+<span class="sd">    descarga. El contenido se devuelve tal cual llegó, byte por byte:</span>
+<span class="sd">    nunca se regenera ni se modifica (GE-86, criterio 3).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        operation (str): ``'dwn_kude'`` o ``'dwn_xml'``.</span>
+<span class="sd">        documento (DocumentoElectronico): Documento a descargar.</span>
+<span class="sd">        es_valido (Callable[[bytes], bool]): Comprueba que lo recibido</span>
+<span class="sd">            sea realmente el archivo esperado, y no, p. ej., un mensaje</span>
+<span class="sd">            de error enviado con estado HTTP 200.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytes | None: El archivo, o ``None`` si no tiene CDC, la</span>
+<span class="sd">        descarga falló o el contenido no pasó la validación.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">documento</span><span class="o">.</span><span class="n">cdc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_BASE_URL</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">operation</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_EMISOR_RUC</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">documento</span><span class="o">.</span><span class="n">cdc</span><span class="si">}</span><span class="s1">'</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authentication-Token'</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">FACTURASEGURA_AUTH_TOKEN</span><span class="p">},</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">respuesta</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">'No se pudo descargar </span><span class="si">%s</span><span class="s1"> para el documento #</span><span class="si">%s</span><span class="s1">.'</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">documento</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">es_valido</span><span class="p">(</span><span class="n">respuesta</span><span class="o">.</span><span class="n">content</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">'Factura Segura devolvió un archivo inválido en </span><span class="si">%s</span><span class="s1"> para el documento #</span><span class="si">%s</span><span class="s1">.'</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">documento</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">respuesta</span><span class="o">.</span><span class="n">content</span></div>
+
+
+
+<div class="viewcode-block" id="descargar_kude">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.descargar_kude">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">descargar_kude</span><span class="p">(</span><span class="n">documento</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Descarga el KuDE (PDF) de ``documento`` desde Factura Segura, o ``None`` si falla o no tiene CDC.</span>
+
+<span class="sd">    Solo comprueba que lo recibido sea un PDF: el texto de un PDF suele</span>
+<span class="sd">    estar comprimido, así que su CDC no se puede verificar con una</span>
+<span class="sd">    búsqueda directa, como sí se hace en ``descargar_xml``. El archivo</span>
+<span class="sd">    se pide a Factura Segura por ese mismo CDC.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">_descargar_archivo</span><span class="p">(</span><span class="s1">'dwn_kude'</span><span class="p">,</span> <span class="n">documento</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">contenido</span><span class="p">:</span> <span class="n">contenido</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s1">'%PDF'</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="descargar_xml">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.descargar_xml">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">descargar_xml</span><span class="p">(</span><span class="n">documento</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Descarga el XML firmado de ``documento``, o ``None`` si falla, no tiene CDC o el XML trae otro CDC."""</span>
+    <span class="k">return</span> <span class="n">_descargar_archivo</span><span class="p">(</span><span class="s1">'dwn_xml'</span><span class="p">,</span> <span class="n">documento</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">contenido</span><span class="p">:</span> <span class="n">documento</span><span class="o">.</span><span class="n">cdc</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="ow">in</span> <span class="n">contenido</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,675 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.factura_electronica module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.divisas.forms module" href="apps.divisas.forms.html" />
+    <link rel="prev" title="apps.divisas.entrega module" href="apps.divisas.entrega.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.divisas.html">apps.divisas package</a></li>
+      <li class="breadcrumb-item active">apps.divisas.factura_electronica module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-apps.divisas.factura_electronica">
+<span id="apps-divisas-factura-electronica-module"></span><h1>apps.divisas.factura_electronica module<a class="headerlink" href="#module-apps.divisas.factura_electronica" title="Link to this heading"></a></h1>
+<p>Emisión de Facturas Electrónicas ante SIFEN, a través de la API de Factura Segura (ESI).</p>
+<p>Implementa la HU «Integración con API de facturación electrónica»:
+apenas una compra, venta o cambio queda «Pagada» (criterio 1), Global
+Exchange le emite al cliente una Factura Electrónica, con los mismos
+montos y moneda que ya calcula <code class="docutils literal notranslate"><span class="pre">apps.divisas.entrega</span></code> para la entrega
+real de dinero. Es un proceso <strong>independiente</strong> de esa entrega: llama
+a este módulo exactamente desde los mismos 3 puntos que ya disparan
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.entrega.realizar_entrega</span></code> (<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code>/
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_sipap</span></code>), pero una falla acá nunca bloquea ni
+revierte el pago ya confirmado, y viceversa (criterio 3): se usa
+siempre <code class="docutils literal notranslate"><span class="pre">intentar_emitir_documento_electronico</span></code>, que no relanza nada
+hacia quien la llama.</p>
+<p>Autenticación: vía un <code class="docutils literal notranslate"><span class="pre">Authentication-Token</span></code> de larga duración
+(<code class="docutils literal notranslate"><span class="pre">settings.FACTURASEGURA_AUTH_TOKEN</span></code>), obtenido una sola vez por un
+administrador contra <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/login?include_auth_token</span></code> y válido hasta
+que se cambie la contraseña de esa cuenta — este módulo nunca lo
+renueva ni hace login por su cuenta, solo lo envía como header.</p>
+<p>Numeración (recurso real y finito, ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.</span>
+<span class="pre">ContadorDocumentoElectronico</span></code>): el número de documento se reserva
+<strong>antes</strong> de llamar a Factura Segura y nunca se libera ni reutiliza,
+ni siquiera si la emisión después falla — un número «quemado» es
+preferible a arriesgar un <code class="docutils literal notranslate"><span class="pre">dNumDoc</span></code> duplicado.</p>
+<p>Reintentos (criterio 4): la propia documentación de Factura Segura
+advierte textualmente que la petición es síncrona y que, ante un
+timeout o una conexión interrumpida, «el resultado queda sin
+confirmar, ya que el servidor pudo haber procesado la solicitud» y que
+hay que verificarlo «mediante los mecanismos de consulta… o
+solicitar asistencia a soporte» antes de reenviarla. Por eso este
+módulo <strong>nunca reintenta ``generar_de`` solo</strong>, ni ante un timeout ni
+ante un rechazo: ambos casos dejan el documento en
+<code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADO_ERROR_GENERACION</span></code>, visible para un
+administrador, que debe primero confirmar con soporte si el documento
+ya se generó del otro lado antes de pedir un reintento explícito (ver
+<code class="docutils literal notranslate"><span class="pre">reintentar_emision</span></code>). Consultar el estado ante SIFEN
+(<code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code>) es, en cambio, una simple lectura
+(<code class="docutils literal notranslate"><span class="pre">get_estado_sifen</span></code>): se puede repetir sin ningún riesgo.</p>
+<p>Idempotencia (criterio 5): <code class="docutils literal notranslate"><span class="pre">emitir_documento_electronico</span></code> nunca crea
+un segundo <code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code> para la misma transacción —
+<code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.calculo_operacion</span></code>/<code class="docutils literal notranslate"><span class="pre">calculo_triangulacion</span></code>
+son <code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code>, así que la base de datos lo impide por
+cualquier camino, no solo por el chequeo explícito al principio de la
+función.</p>
+<p>Armado del documento (<code class="docutils literal notranslate"><span class="pre">_armar_resumido_de</span></code>/<code class="docutils literal notranslate"><span class="pre">_calcular</span></code>): se
+factura con dos ítems (<code class="docutils literal notranslate"><span class="pre">_grupos_item_resumido</span></code>) — el valor de la
+operación cambiaria en sí, Exento de IVA (no hay IVA sobre el tipo de
+cambio), y la comisión de Global Exchange como ítem separado, Gravado
+al 10% de IVA (decisión confirmada con el usuario: la comisión es un
+servicio propio, no parte del cambio de divisa exento) — y receptor
+modelado siempre como «No Contribuyente»/consumidor final por cédula,
+con <strong>moneda de la factura siempre PYG</strong> (<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>) — Factura Segura solo admite
+<code class="docutils literal notranslate"><span class="pre">cMoneOpe</span></code> <code class="docutils literal notranslate"><span class="pre">PYG</span></code> o <code class="docutils literal notranslate"><span class="pre">USD</span></code>, y la mayoría de las divisas de este
+sistema no son ninguna de esas dos, así que facturar siempre en PYG
+evita mezclar monedas según el tipo de transacción (decisión tomada
+con el usuario). Los totales de la factura (IVA, descuentos, etc.)
+<strong>no se calculan a mano</strong>: se arma solo el <code class="docutils literal notranslate"><span class="pre">JSON_RESUMIDO_DE</span></code>
+mínimo y se usa tal cual el <code class="docutils literal notranslate"><span class="pre">DE</span></code> completo que devuelve
+<code class="docutils literal notranslate"><span class="pre">calcular_de</span></code> como entrada de <code class="docutils literal notranslate"><span class="pre">generar_de</span></code> — así ninguna fórmula
+propia puede quedar mal calculada, SIFEN/Factura Segura hace esa
+cuenta. <code class="docutils literal notranslate"><span class="pre">iTipTra</span></code>/<code class="docutils literal notranslate"><span class="pre">dDesTipTra</span></code> (tipo de transacción, ver
+<code class="docutils literal notranslate"><span class="pre">_tipo_transaccion</span></code>) ya está verificado contra la tabla real del
+Manual Técnico SIFEN (<code class="docutils literal notranslate"><span class="pre">5``=&quot;Venta</span> <span class="pre">de</span> <span class="pre">divisas&quot;,</span> <span class="pre">``6``=&quot;Compra</span> <span class="pre">de</span>
+<span class="pre">divisas&quot;,</span> <span class="pre">específicos</span> <span class="pre">para</span> <span class="pre">una</span> <span class="pre">casa</span> <span class="pre">de</span> <span class="pre">cambio).</span> <span class="pre">Otros</span> <span class="pre">códigos</span> <span class="pre">de</span>
+<span class="pre">clasificación</span> <span class="pre">que</span> <span class="pre">la</span> <span class="pre">guía</span> <span class="pre">solo</span> <span class="pre">describe</span> <span class="pre">como</span> <span class="pre">&quot;ver</span> <span class="pre">Manual</span> <span class="pre">SIFEN&quot;</span>
+<span class="pre">(``iTipEmi</span></code>, <code class="docutils literal notranslate"><span class="pre">iTImp</span></code>, <code class="docutils literal notranslate"><span class="pre">iIndPres</span></code>) quedan con el valor más
+plausible según la guía, no una verificación campo por campo contra el
+Manual Técnico de SIFEN 150 completo: revisar antes de la primera
+emisión real.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.FacturaSeguraRechazadaError">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">FacturaSeguraRechazadaError</span></span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#FacturaSeguraRechazadaError"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.FacturaSeguraRechazadaError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Factura Segura respondió, pero rechazó la solicitud (<code class="docutils literal notranslate"><span class="pre">code</span></code> negativo en el sobre de respuesta).</p>
+<p>A diferencia de un timeout o un error de conexión, acá sí hubo
+respuesta: es un rechazo claro de Factura Segura (datos inválidos,
+etc.), nunca una situación incierta.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._solicitar">
+<span class="sig-name descname"><span class="pre">_solicitar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_solicitar"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._solicitar" title="Link to this definition"></a></dt>
+<dd><p>Envía una operación al endpoint único de Factura Segura y devuelve su sobre de respuesta.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>operation</strong> (<em>str</em>) – Nombre de la operación (p. ej. <code class="docutils literal notranslate"><span class="pre">'generar_de'</span></code>).</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – Parámetros propios de esa operación.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El cuerpo completo de la respuesta (<code class="docutils literal notranslate"><span class="pre">code</span></code>,
+<code class="docutils literal notranslate"><span class="pre">description</span></code>, <code class="docutils literal notranslate"><span class="pre">operation_info</span></code>, <code class="docutils literal notranslate"><span class="pre">results</span></code>).</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+<dt class="field-even">Muestra<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>requests.exceptions.RequestException</strong> – Sin respuesta confirmada
+    (timeout, conexión cortada, error 5xx) — ver la advertencia
+    de la propia documentación citada en el docstring del
+    módulo: no se sabe si Factura Segura llegó a procesar la
+    solicitud.</p></li>
+<li><p><a class="reference internal" href="#apps.divisas.factura_electronica.FacturaSeguraRechazadaError" title="apps.divisas.factura_electronica.FacturaSeguraRechazadaError"><strong>FacturaSeguraRechazadaError</strong></a> – Hubo respuesta, pero con <code class="docutils literal notranslate"><span class="pre">code</span></code>
+    negativo: rechazo claro, no es una situación incierta.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._primer_resultado">
+<span class="sig-name descname"><span class="pre">_primer_resultado</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cuerpo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_primer_resultado"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._primer_resultado" title="Link to this definition"></a></dt>
+<dd><p>Primer elemento de <code class="docutils literal notranslate"><span class="pre">results</span></code> (el protocolo lo define como ARRAY, incluso cuando trae un solo registro).</p>
+<p>Devuelve <code class="docutils literal notranslate"><span class="pre">{}</span></code> si <code class="docutils literal notranslate"><span class="pre">results</span></code> vino vacío, para que el resto del
+código pueda seguir usando <code class="docutils literal notranslate"><span class="pre">.get(...)</span></code> con tranquilidad.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._total_en_pyg">
+<span class="sig-name descname"><span class="pre">_total_en_pyg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_total_en_pyg"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._total_en_pyg" title="Link to this definition"></a></dt>
+<dd><p>Valor total de la operación, siempre en PYG y redondeado a entero (el Guaraní no tiene subunidad).</p>
+<p>Factura Segura solo admite <code class="docutils literal notranslate"><span class="pre">cMoneOpe</span></code> <code class="docutils literal notranslate"><span class="pre">PYG</span></code> o <code class="docutils literal notranslate"><span class="pre">USD</span></code> — ninguna
+otra divisa de este sistema (EUR, BRL, ARS, etc.) es facturable
+directamente, así que <strong>toda</strong> Factura Electrónica se emite en
+PYG, sin importar la moneda realmente entregada (decisión tomada
+con el usuario). Tanto en una compra como en una venta,
+<code class="docutils literal notranslate"><span class="pre">monto_final</span></code> ya está en PYG (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.</span>
+<span class="pre">monto_a_pagar</span></code>/<code class="docutils literal notranslate"><span class="pre">monto_a_entregar</span></code>) y ya incluye el efecto de la
+comisión (sumada en una compra, restada en una venta). En un
+cambio entre divisas, <code class="docutils literal notranslate"><span class="pre">monto_final</span></code> está en la divisa de
+<strong>destino</strong> (Paso B de <code class="docutils literal notranslate"><span class="pre">apps.divisas.views._calcular_triangulacion</span></code>)
+y también ya tiene la comisión restada: se convierte a PYG con
+<code class="docutils literal notranslate"><span class="pre">tasa_venta_aplicada</span></code>, la misma tasa de ese Paso B. No se usa
+<code class="docutils literal notranslate"><span class="pre">monto_equivalente_pyg</span></code> (el bruto triangulado del Paso A, antes
+de la comisión): facturar ese valor ignoraba por completo el
+efecto de la comisión en un cambio, a diferencia de lo que ya
+hacía <code class="docutils literal notranslate"><span class="pre">monto_final</span></code> para una compra/venta (bug corregido).
+El redondeo a entero reutiliza el mismo criterio que
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code> ya usa para cobrar en PYG (moneda sin
+decimales, tanto en Stripe como en SIFEN).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._comision_en_pyg">
+<span class="sig-name descname"><span class="pre">_comision_en_pyg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_comision_en_pyg"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._comision_en_pyg" title="Link to this definition"></a></dt>
+<dd><p>Comisión de Global Exchange en la operación, siempre en PYG y redondeada a entero.</p>
+<p>En una compra o venta, <code class="docutils literal notranslate"><span class="pre">comision</span></code> ya está en PYG (todo
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views._calcular_importe_operacion</span></code> opera en PYG).
+En un cambio, <code class="docutils literal notranslate"><span class="pre">comision</span></code> se calculó en la divisa de <strong>destino</strong>
+(Paso B de <code class="docutils literal notranslate"><span class="pre">_calcular_triangulacion</span></code>): se convierte a PYG con la
+misma tasa usada en ese paso (<code class="docutils literal notranslate"><span class="pre">tasa_venta_aplicada</span></code>), igual que
+<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._grupo_item">
+<span class="sig-name descname"><span class="pre">_grupo_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">codigo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descripcion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monto</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">afecta_iva</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_grupo_item"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._grupo_item" title="Link to this definition"></a></dt>
+<dd><p>Un ítem del <code class="docutils literal notranslate"><span class="pre">JSON_RESUMIDO_DE</span></code> (entrada de <code class="docutils literal notranslate"><span class="pre">calcular_de</span></code>): sin ningún campo calculado.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cUniMed='77'</span></code> es, de las opciones que documenta la guía, la
+única plausible para un ítem de este tipo de operación. Sin
+descuentos ni anticipos (no aplican a esta operación). Los totales
+derivados (<code class="docutils literal notranslate"><span class="pre">dTotBruOpeItem</span></code>, <code class="docutils literal notranslate"><span class="pre">dTotOpeItem</span></code>, <code class="docutils literal notranslate"><span class="pre">dBasGravIVA</span></code>,
+etc.) no se calculan a mano: los completa <code class="docutils literal notranslate"><span class="pre">calcular_de</span></code> (ver
+<code class="docutils literal notranslate"><span class="pre">_calcular</span></code>). Si el ítem está gravado, <code class="docutils literal notranslate"><span class="pre">monto</span></code> ya es el precio
+final con IVA incluido (así factura SIFEN: <code class="docutils literal notranslate"><span class="pre">calcular_de</span></code> extrae
+cuánto de ese precio es base y cuánto es IVA, no hay que sumarle
+nada encima).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._grupos_item_resumido">
+<span class="sig-name descname"><span class="pre">_grupos_item_resumido</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_grupos_item_resumido"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._grupos_item_resumido" title="Link to this definition"></a></dt>
+<dd><p>Ítems del <code class="docutils literal notranslate"><span class="pre">JSON_RESUMIDO_DE</span></code>: separa la comisión (gravada al 10% IVA) del resto de la operación (exento).</p>
+<p>Confirmado con el usuario: la comisión de Global Exchange es un
+servicio propio, gravado al 10% de IVA, no parte del cambio de
+divisa en sí (que sigue exento, no hay IVA sobre el tipo de
+cambio). El ítem exento es siempre <code class="docutils literal notranslate"><span class="pre">total</span> <span class="pre">-</span> <span class="pre">comisión</span></code>
+(<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>/<code class="docutils literal notranslate"><span class="pre">_comision_en_pyg</span></code>), nunca el bruto de la
+operación calculado aparte, para que los dos ítems sumen
+exactamente el total ya correcto, sin descuadres de redondeo. Si
+la comisión del cliente es 0% (<code class="docutils literal notranslate"><span class="pre">ConfiguracionComision</span></code>), queda
+un único ítem exento, igual que antes de este cambio.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._tipo_transaccion">
+<span class="sig-name descname"><span class="pre">_tipo_transaccion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_tipo_transaccion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._tipo_transaccion" title="Link to this definition"></a></dt>
+<dd><p>Código y descripción de <code class="docutils literal notranslate"><span class="pre">iTipTra</span></code>/<code class="docutils literal notranslate"><span class="pre">dDesTipTra</span></code> (Manual Técnico SIFEN, campo D011).</p>
+<p>Confirmado con la tabla real de códigos (compartida por el usuario):
+<code class="docutils literal notranslate"><span class="pre">5``=&quot;Venta</span> <span class="pre">de</span> <span class="pre">divisas&quot;</span> <span class="pre">y</span> <span class="pre">``6``=&quot;Compra</span> <span class="pre">de</span> <span class="pre">divisas&quot;</span> <span class="pre">son</span> <span class="pre">los</span> <span class="pre">códigos</span>
+<span class="pre">propios</span> <span class="pre">de</span> <span class="pre">una</span> <span class="pre">casa</span> <span class="pre">de</span> <span class="pre">cambio</span> <span class="pre">—</span> <span class="pre">no</span> <span class="pre">``1</span></code> («Venta de mercadería»), el
+valor que se usaba antes sin verificar (bug corregido). Una compra
+(Global Exchange le compra la divisa al cliente) es código <code class="docutils literal notranslate"><span class="pre">6</span></code>;
+una venta (Global Exchange le vende la divisa al cliente) es código
+<code class="docutils literal notranslate"><span class="pre">5</span></code>. Un cambio entre divisas combina ambas piernas en una sola
+operación (Global Exchange recibe la divisa origen y entrega la
+divisa destino) y no tiene un código propio en la tabla: decisión
+tomada con el usuario, se factura siempre como «Venta de divisas»,
+consistente con lo que Global Exchange finalmente le entrega al
+cliente (la divisa de destino), igual criterio que ya usa
+<code class="docutils literal notranslate"><span class="pre">_descripcion_operacion</span></code> («Cambio de X a Y»).</p>
+<p><code class="docutils literal notranslate"><span class="pre">dDesTipTra</span></code> es obligatorio siempre que se envíe <code class="docutils literal notranslate"><span class="pre">iTipTra</span></code>: no
+alcanza con mandar el código solo, hay que mandar también su texto.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._descripcion_operacion">
+<span class="sig-name descname"><span class="pre">_descripcion_operacion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_descripcion_operacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._descripcion_operacion" title="Link to this definition"></a></dt>
+<dd><p>Descripción legible del ítem, distinta para una compra/venta o un cambio entre divisas.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._info_adicional">
+<span class="sig-name descname"><span class="pre">_info_adicional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_info_adicional"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._info_adicional" title="Link to this definition"></a></dt>
+<dd><p>Texto para <code class="docutils literal notranslate"><span class="pre">dInfAdic</span></code>: deja constancia de la tasa aplicada, impresa en el KuDE.</p>
+<p>El esquema de Factura Segura no tiene ningún campo estructurado
+para «la tasa de cambio que usó Global Exchange en esta
+operación» (<code class="docutils literal notranslate"><span class="pre">dTiCam</span></code> es la tasa de la propia factura cuando
+<code class="docutils literal notranslate"><span class="pre">cMoneOpe</span></code> no es PYG, que en este módulo siempre es PYG, ver
+<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>): <code class="docutils literal notranslate"><span class="pre">dInfAdic</span></code> es, según la guía, el único lugar
+pensado para texto libre impreso en el comprobante sin formar parte
+del XML firmado, así que es donde se deja la tasa para que el
+criterio de «información completa de la operación» (cliente,
+monto, divisa, tasa, fecha) quede satisfecho también en ese dato.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._email_receptor">
+<span class="sig-name descname"><span class="pre">_email_receptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cliente</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_email_receptor"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._email_receptor" title="Link to this definition"></a></dt>
+<dd><p>Devuelve el email real del cliente para <code class="docutils literal notranslate"><span class="pre">dEmailRec</span></code>: el de un usuario real, no el legado.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Cliente.email</span></code> es un campo legado (ver el comentario en
+<code class="docutils literal notranslate"><span class="pre">ClienteForm</span></code>: «el correo operativo pertenece al usuario»), que no
+se completa en ningún alta real — el email verdadero y verificado es
+el de Keycloak. En la práctica, muchos clientes no tienen
+<code class="docutils literal notranslate"><span class="pre">Cliente.user</span></code> (el <code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code> «titular») asignado en
+absoluto: el vínculo real con sus usuarios es siempre
+<code class="docutils literal notranslate"><span class="pre">Cliente.usuarios</span></code> (el <code class="docutils literal notranslate"><span class="pre">ManyToManyField</span></code> que también usa
+<code class="docutils literal notranslate"><span class="pre">test_func</span></code> en las vistas propias del cliente, vía
+<code class="docutils literal notranslate"><span class="pre">request.user.clientes</span></code>). Se prueba primero el titular si está,
+después cualquier usuario asociado que tenga un email cargado, y
+el campo legado solo como último respaldo.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._grupo_pago">
+<span class="sig-name descname"><span class="pre">_grupo_pago</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monto</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_grupo_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._grupo_pago" title="Link to this definition"></a></dt>
+<dd><p>Mapea el medio de pago real (<code class="docutils literal notranslate"><span class="pre">Pago.medio_pago</span></code>) al tipo de pago que espera la API.</p>
+<p>Un único pago por el total de la operación, ya en PYG (ver
+<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>): esta HU no reparte el cobro en más de un medio.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._armar_resumido_de">
+<span class="sig-name descname"><span class="pre">_armar_resumido_de</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monto</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_armar_resumido_de"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._armar_resumido_de" title="Link to this definition"></a></dt>
+<dd><p>Arma el <code class="docutils literal notranslate"><span class="pre">JSON_RESUMIDO_DE</span></code>: la entrada de <code class="docutils literal notranslate"><span class="pre">calcular_de</span></code>, sin ningún campo calculado.</p>
+<p>Se factura siempre en PYG (<code class="docutils literal notranslate"><span class="pre">cMoneOpe='PYG'</span></code>, ver
+<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>) y con dos ítems (<code class="docutils literal notranslate"><span class="pre">_grupos_item_resumido</span></code>): el
+cambio de divisa en sí, exento de IVA (no hay IVA sobre el tipo de
+cambio), y la comisión de Global Exchange, gravada al 10%.
+Receptor modelado siempre como «No Contribuyente»/consumidor final
+por cédula (<code class="docutils literal notranslate"><span class="pre">iNatRec='2'</span></code>), lo que a su vez implica
+<code class="docutils literal notranslate"><span class="pre">iTiOpe='2'</span></code> (B2C): un «No Contribuyente» nunca es la contraparte
+de una operación B2B.</p>
+<p>Nota: varios códigos de clasificación documentados solo como
+«ver Manual SIFEN» (<code class="docutils literal notranslate"><span class="pre">iTipEmi</span></code>, <code class="docutils literal notranslate"><span class="pre">iTImp</span></code>, <code class="docutils literal notranslate"><span class="pre">iIndPres</span></code>) quedan
+con el valor más plausible según la guía de Factura Segura, no una
+verificación campo por campo contra el Manual Técnico de SIFEN 150
+completo — revisar antes de la primera emisión real. <code class="docutils literal notranslate"><span class="pre">iTipTra</span></code>/
+<code class="docutils literal notranslate"><span class="pre">dDesTipTra</span></code> (ver <code class="docutils literal notranslate"><span class="pre">_tipo_transaccion</span></code>) sí están verificados
+contra la tabla real del manual.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._calcular">
+<span class="sig-name descname"><span class="pre">_calcular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monto</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_calcular"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._calcular" title="Link to this definition"></a></dt>
+<dd><p>Llama a <code class="docutils literal notranslate"><span class="pre">calcular_de</span></code> y devuelve el <code class="docutils literal notranslate"><span class="pre">DE</span></code> completo, con los totales ya calculados por SIFEN.</p>
+<p>Nunca confía en fórmulas propias para los totales de una factura:
+arma solo el <code class="docutils literal notranslate"><span class="pre">JSON_RESUMIDO_DE</span></code> (<code class="docutils literal notranslate"><span class="pre">_armar_resumido_de</span></code>, sin
+ningún campo derivado) y usa tal cual el <code class="docutils literal notranslate"><span class="pre">DE</span></code> que devuelve
+<code class="docutils literal notranslate"><span class="pre">calcular_de</span></code> como entrada de <code class="docutils literal notranslate"><span class="pre">generar_de</span></code> — es, según la
+guía, «el JSON completo con los campos calculados según SIFEN…
+ya listo para ser enviado en la operación generar_de». A
+diferencia de <code class="docutils literal notranslate"><span class="pre">generar_de</span></code>, esta operación <strong>no genera ningún
+documento real</strong> (no consume ningún recurso de numeración): es
+seguro reintentarla cuantas veces haga falta.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Muestra<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>requests.exceptions.RequestException</strong><strong>, </strong><a class="reference internal" href="#apps.divisas.factura_electronica.FacturaSeguraRechazadaError" title="apps.divisas.factura_electronica.FacturaSeguraRechazadaError"><strong>FacturaSeguraRechazadaError</strong></a> – Mismo criterio que <code class="docutils literal notranslate"><span class="pre">_solicitar</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._generar">
+<span class="sig-name descname"><span class="pre">_generar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_generar"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._generar" title="Link to this definition"></a></dt>
+<dd><p>Llama a <code class="docutils literal notranslate"><span class="pre">calcular_de</span></code> + <code class="docutils literal notranslate"><span class="pre">generar_de</span></code> para <code class="docutils literal notranslate"><span class="pre">documento</span></code> y actualiza su estado según el resultado.</p>
+<p>Nunca relanza: cualquier falla (comunicación incierta o rechazo
+claro, en cualquiera de las dos llamadas) queda registrada en
+<code class="docutils literal notranslate"><span class="pre">documento.estado</span></code>/<code class="docutils literal notranslate"><span class="pre">error_generacion</span></code>, nunca como una
+excepción hacia quien llama a esta función interna. Una falla en
+<code class="docutils literal notranslate"><span class="pre">calcular_de</span></code> es indistinguible, para quien llama, de una falla
+en <code class="docutils literal notranslate"><span class="pre">generar_de</span></code>: en ambos casos no se generó nada del otro lado,
+y el número ya reservado queda igual de «quemado» por diseño (ver
+el docstring del módulo).</p>
+<p>Antes de llamar a la API, valida que el cliente tenga un email
+cargado (<code class="docutils literal notranslate"><span class="pre">_email_receptor</span></code>): <code class="docutils literal notranslate"><span class="pre">dEmailRec</span></code> es obligatorio para
+Factura Segura (lo confirmó un rechazo real, <code class="docutils literal notranslate"><span class="pre">code=-10009</span></code>,
+durante las pruebas de esta HU). Si falta, no se llama a la API en
+absoluto: es un dato que nunca va a cambiar solo reintentando
+contra el mismo número.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.factura_pendiente_de_generacion">
+<span class="sig-name descname"><span class="pre">factura_pendiente_de_generacion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#factura_pendiente_de_generacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.factura_pendiente_de_generacion" title="Link to this definition"></a></dt>
+<dd><p>Indica si a una transacción ya pagada todavía le falta su factura electrónica (criterio 3).</p>
+<p>Es <code class="docutils literal notranslate"><span class="pre">True</span></code> cuando la transacción ya fue pagada y, o bien no tiene
+ningún <code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code> (p. ej. se agotó el rango de
+numeración), o bien el que tiene está rechazado/fallido
+(<code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.factura_pendiente</span></code>). Las pantallas de
+detalle lo usan para informarle al cliente que la factura está
+«pendiente de generación» <strong>sin ocultar ni bloquear</strong> el resto de los
+datos de la operación.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>transaccion</strong> – Una <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> o <code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">False</span></code> si la transacción aún no fue pagada (todavía no
+corresponde facturar) o si su factura se generó correctamente.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.emitir_documento_electronico">
+<span class="sig-name descname"><span class="pre">emitir_documento_electronico</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#emitir_documento_electronico"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.emitir_documento_electronico" title="Link to this definition"></a></dt>
+<dd><p>Emite (o recupera, si ya existe) la Factura Electrónica de una transacción ya pagada.</p>
+<p>Punto de entrada principal, llamado por
+<code class="docutils literal notranslate"><span class="pre">intentar_emitir_documento_electronico</span></code> desde los mismos 3 sitios
+que disparan <code class="docutils literal notranslate"><span class="pre">apps.divisas.entrega.realizar_entrega</span></code>. Idempotente
+(criterio 5): si la transacción ya tiene un <code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code>
+(exitoso o no), lo devuelve sin volver a llamar a Factura Segura.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>transaccion</strong> – Una <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> o <code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>
+recién marcada «Pagada».</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El documento (nuevo o ya
+existente). <code class="docutils literal notranslate"><span class="pre">None</span></code> únicamente si no quedaban números
+disponibles en el rango habilitado (<code class="docutils literal notranslate"><span class="pre">RangoDocumentosAgotadoError</span></code>,
+que queda logueada: requiere pedir un rango nuevo a Factura
+Segura antes de poder emitir cualquier otra factura de este
+tipo).</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico">DocumentoElectronico</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.intentar_emitir_documento_electronico">
+<span class="sig-name descname"><span class="pre">intentar_emitir_documento_electronico</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#intentar_emitir_documento_electronico"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.intentar_emitir_documento_electronico" title="Link to this definition"></a></dt>
+<dd><p>Wrapper seguro de <code class="docutils literal notranslate"><span class="pre">emitir_documento_electronico</span></code> para los puntos de pago.</p>
+<p>Nunca deja escapar ninguna excepción: un fallo al emitir la
+factura no debe poder interrumpir ni revertir un pago ya
+confirmado (criterio 3). Cualquier error no previsto queda
+logueado para que un administrador lo investigue.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.consultar_estado_sifen">
+<span class="sig-name descname"><span class="pre">consultar_estado_sifen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#consultar_estado_sifen"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.consultar_estado_sifen" title="Link to this definition"></a></dt>
+<dd><p>Consulta a SIFEN (vía <code class="docutils literal notranslate"><span class="pre">get_estado_sifen</span></code>) el estado real de un documento ya generado.</p>
+<p>Es una simple lectura: se puede llamar tantas veces como se
+quiera, incluso si la anterior falló por comunicación. No modifica
+nada si la consulta en sí no se pudo completar (queda igual que
+estaba, para volver a consultarse más tarde).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documento</strong> (<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico"><em>DocumentoElectronico</em></a>) – Debe tener <code class="docutils literal notranslate"><span class="pre">cdc</span></code> (solo
+tiene sentido consultar un documento que llegó a generarse).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> si se pudo actualizar el estado (sin importar
+cuál quedó), <code class="docutils literal notranslate"><span class="pre">False</span></code> si la consulta en sí falló.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.reintentar_emision">
+<span class="sig-name descname"><span class="pre">reintentar_emision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#reintentar_emision"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.reintentar_emision" title="Link to this definition"></a></dt>
+<dd><p>Reintenta, a pedido explícito de un administrador, un documento en “Error al generar”.</p>
+<p>Reutiliza el mismo <code class="docutils literal notranslate"><span class="pre">numero_documento</span></code> ya reservado (nunca pide
+uno nuevo): si la emisión anterior nunca llegó a crearse del otro
+lado, es seguro reenviarla con ese número. <strong>Antes de llamar a
+esta función</strong>, un administrador debe haber confirmado con soporte
+de Factura Segura que el documento no se generó ya con ese mismo
+número — exactamente la verificación que la propia documentación
+de la API exige antes de reenviar una solicitud incierta (ver el
+docstring del módulo). Esta función no hace esa verificación por
+sí sola, porque no hay ningún mecanismo de consulta por número de
+documento documentado, solo por CDC (que no existe todavía si la
+emisión original nunca llegó a confirmarse).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documento</strong> (<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico"><em>DocumentoElectronico</em></a>) – Debe estar en
+<code class="docutils literal notranslate"><span class="pre">ESTADO_ERROR_GENERACION</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> si quedó generado, <code class="docutils literal notranslate"><span class="pre">False</span></code> si no estaba en
+condiciones de reintentarse o si volvió a fallar.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._descargar_archivo">
+<span class="sig-name descname"><span class="pre">_descargar_archivo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">documento</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">es_valido</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_descargar_archivo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._descargar_archivo" title="Link to this definition"></a></dt>
+<dd><p>GET genérico para <code class="docutils literal notranslate"><span class="pre">dwn_kude</span></code>/<code class="docutils literal notranslate"><span class="pre">dwn_xml</span></code>: devuelve el archivo binario, o <code class="docutils literal notranslate"><span class="pre">None</span></code> si falla.</p>
+<p>A diferencia de <code class="docutils literal notranslate"><span class="pre">_solicitar</span></code> (que envuelve todo en el sobre
+<code class="docutils literal notranslate"><span class="pre">code</span></code>/<code class="docutils literal notranslate"><span class="pre">description</span></code>/<code class="docutils literal notranslate"><span class="pre">results</span></code>), estas dos operaciones son
+<code class="docutils literal notranslate"><span class="pre">GET</span></code> y, según la guía, devuelven el archivo directo en el
+cuerpo de la respuesta (<code class="docutils literal notranslate"><span class="pre">--output</span> <span class="pre">cdc.pdf</span></code>/<code class="docutils literal notranslate"><span class="pre">--output</span> <span class="pre">cdc.xml</span></code>
+en los ejemplos con <code class="docutils literal notranslate"><span class="pre">curl</span></code>), no un JSON. Bajo demanda, sin
+guardar nada en el servidor: se vuelve a pedir cada vez que se
+descarga. El contenido se devuelve tal cual llegó, byte por byte:
+nunca se regenera ni se modifica (GE-86, criterio 3).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>operation</strong> (<em>str</em>) – <code class="docutils literal notranslate"><span class="pre">'dwn_kude'</span></code> o <code class="docutils literal notranslate"><span class="pre">'dwn_xml'</span></code>.</p></li>
+<li><p><strong>documento</strong> (<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico"><em>DocumentoElectronico</em></a>) – Documento a descargar.</p></li>
+<li><p><strong>es_valido</strong> (<em>Callable</em><em>[</em><em>[</em><em>bytes</em><em>]</em><em>, </em><em>bool</em><em>]</em>) – Comprueba que lo recibido
+sea realmente el archivo esperado, y no, p. ej., un mensaje
+de error enviado con estado HTTP 200.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El archivo, o <code class="docutils literal notranslate"><span class="pre">None</span></code> si no tiene CDC, la
+descarga falló o el contenido no pasó la validación.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bytes | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.descargar_kude">
+<span class="sig-name descname"><span class="pre">descargar_kude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#descargar_kude"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.descargar_kude" title="Link to this definition"></a></dt>
+<dd><p>Descarga el KuDE (PDF) de <code class="docutils literal notranslate"><span class="pre">documento</span></code> desde Factura Segura, o <code class="docutils literal notranslate"><span class="pre">None</span></code> si falla o no tiene CDC.</p>
+<p>Solo comprueba que lo recibido sea un PDF: el texto de un PDF suele
+estar comprimido, así que su CDC no se puede verificar con una
+búsqueda directa, como sí se hace en <code class="docutils literal notranslate"><span class="pre">descargar_xml</span></code>. El archivo
+se pide a Factura Segura por ese mismo CDC.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.descargar_xml">
+<span class="sig-name descname"><span class="pre">descargar_xml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#descargar_xml"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.descargar_xml" title="Link to this definition"></a></dt>
+<dd><p>Descarga el XML firmado de <code class="docutils literal notranslate"><span class="pre">documento</span></code>, o <code class="docutils literal notranslate"><span class="pre">None</span></code> si falla, no tiene CDC o el XML trae otro CDC.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.divisas.entrega.html" class="btn btn-neutral float-left" title="apps.divisas.entrega module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.forms.html" class="btn btn-neutral float-right" title="apps.divisas.forms module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

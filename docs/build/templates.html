@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -314,13 +315,22 @@ Sphinx.</p>
 {% extends 'base.html' %}
 </pre></div>
 </div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="err">&lt;</span>!--
+Listado de métodos de pago del cliente activo, agrupado por divisa (cuentas y
+billeteras) y con las tarjetas en su propia sección.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: metodos, metodos_revelados, grupos_por_divisa, tarjetas,
+metodos_sin_divisa y cliente_activo (vía context processor).
+</pre></div>
+</div>
 <div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
-<span class="cm">Listado de métodos de pago del cliente activo.</span>
+<span class="cm">Movimientos y saldo de un método de pago propio (cuenta bancaria, billetera o tarjeta).</span>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
-<span class="cm">Contexto esperado: metodos, metodos_revelados y cliente_activo (vía context processor).</span>
+<span class="cm">Contexto esperado: metodo, saldo, error_saldo, movimientos, cliente_activo (vía context</span>
+<span class="cm">processor).</span>
 <span class="cm">--&gt;</span>
-{% extends 'base.html' %}
 </pre></div>
 </div>
 <div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>

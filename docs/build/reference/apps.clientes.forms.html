@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -391,6 +392,87 @@ de guardar un método de pago sin verificar.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="apps.clientes.forms.MetodoPagoForm.media">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.clientes.forms.MetodoPagoForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.forms.RechazarSolicitudClienteForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">RechazarSolicitudClienteForm</span></span><a class="reference internal" href="../_modules/apps/clientes/forms.html#RechazarSolicitudClienteForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.RechazarSolicitudClienteForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
+<p>Pide el motivo, obligatorio, con el que un administrador rechaza una solicitud de cliente.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.forms.RechazarSolicitudClienteForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'motivo':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.RechazarSolicitudClienteForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.forms.RechazarSolicitudClienteForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'motivo':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.RechazarSolicitudClienteForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.clientes.forms.RechazarSolicitudClienteForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.clientes.forms.RechazarSolicitudClienteForm.media" title="Link to this definition"></a></dt>
+<dd><p>Return all media required to render the widgets on this form.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SolicitudClienteForm</span></span><a class="reference internal" href="../_modules/apps/clientes/forms.html#SolicitudClienteForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelForm</span></code></p>
+<p>Formulario de autoservicio: un usuario pide que se le dé de alta como cliente.</p>
+<p>El <code class="docutils literal notranslate"><span class="pre">usuario</span></code> solicitante lo fija siempre la vista
+(<code class="docutils literal notranslate"><span class="pre">request.user</span></code>), nunca este formulario. Cubre tanto persona
+física (nombre, apellido) como jurídica (razón social) — misma
+validación condicional por <code class="docutils literal notranslate"><span class="pre">tipo_cliente</span></code> que ya usa
+<code class="docutils literal notranslate"><span class="pre">ClienteForm</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm.Meta">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Meta</span></span><a class="reference internal" href="../_modules/apps/clientes/forms.html#SolicitudClienteForm.Meta"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm.Meta" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Define el modelo y los campos que completa el propio usuario.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm.Meta.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['tipo_cliente',</span> <span class="pre">'nombre',</span> <span class="pre">'apellido',</span> <span class="pre">'razon_social',</span> <span class="pre">'identificador']</span></span><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm.Meta.fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm.Meta.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm.Meta.model" title="Link to this definition"></a></dt>
+<dd><p>alias de <a class="reference internal" href="apps.clientes.models.html#apps.clientes.models.SolicitudCliente" title="apps.clientes.models.SolicitudCliente"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolicitudCliente</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm.base_fields">
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'apellido':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'identificador':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'nombre':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'razon_social':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'tipo_cliente':</span> <span class="pre">&lt;django.forms.fields.TypedChoiceField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm.base_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm.clean">
+<span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/forms.html#SolicitudClienteForm.clean"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm.clean" title="Link to this definition"></a></dt>
+<dd><p>Exige nombre/apellido para persona física, razón social para jurídica — igual que ClienteForm.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm.clean_identificador">
+<span class="sig-name descname"><span class="pre">clean_identificador</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/clientes/forms.html#SolicitudClienteForm.clean_identificador"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm.clean_identificador" title="Link to this definition"></a></dt>
+<dd><p>Valida que el identificador no esté ya tomado por un cliente o una solicitud pendiente.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm.declared_fields">
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm.declared_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.clientes.forms.SolicitudClienteForm.media">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#apps.clientes.forms.SolicitudClienteForm.media" title="Link to this definition"></a></dt>
 <dd><p>Return all media required to render the widgets on this form.</p>
 </dd></dl>
 
