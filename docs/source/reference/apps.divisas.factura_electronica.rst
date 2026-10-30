@@ -18,6 +18,8 @@ apps.divisas.factura_electronica module
 
 .. autofunction:: apps.divisas.factura_electronica._grupos_item_resumido
 
+.. autofunction:: apps.divisas.factura_electronica._tipo_transaccion
+
 .. autofunction:: apps.divisas.factura_electronica._descripcion_operacion
 
 .. autofunction:: apps.divisas.factura_electronica._info_adicional
