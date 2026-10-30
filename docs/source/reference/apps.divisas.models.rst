@@ -42,3 +42,15 @@ apps.divisas.models module
 .. autoclass:: apps.divisas.models.NotificacionTasa
    :members:
    :show-inheritance:
+
+.. autoexception:: apps.divisas.models.RangoDocumentosAgotadoError
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.models.ContadorDocumentoElectronico
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.models.DocumentoElectronico
+   :members:
+   :show-inheritance:

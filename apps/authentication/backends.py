@@ -65,6 +65,24 @@ class KeycloakOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
         return self.UserModel.objects.none()
 
+    def get_username(self, claims):
+        """Usa el ``preferred_username`` real de Keycloak como ``User.username`` local.
+
+        Sin este método, ``mozilla_django_oidc`` cae en su algoritmo por
+        defecto (``default_username_algo``), que genera un hash SHA1 en
+        base64 del email — un identificador opaco, no el nombre de
+        usuario que la persona eligió al registrarse en Keycloak. Esto
+        rompía tanto la UI (mostraba ese hash en vez de un nombre
+        legible) como ``ClienteForm.save()``, que busca
+        ``User.objects.filter(username=identificador)`` esperando que
+        el username sea un identificador real, no un hash. Solo aplica
+        a un usuario *nuevo* (``create_user``): a uno ya existente,
+        ``filter_users_by_claims`` lo encuentra por email y nunca pasa
+        por acá.
+        """
+        preferred = claims.get('preferred_username')
+        return preferred if preferred else super().get_username(claims)
+
     def create_user(self, claims):
         """Crea un usuario local y sincroniza sus datos y roles iniciales."""
         user = super().create_user(claims)

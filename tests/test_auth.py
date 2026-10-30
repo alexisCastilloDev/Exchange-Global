@@ -135,6 +135,18 @@ def test_verify_claims_segun_email_verified(backend):
         assert backend.verify_claims(claims_verificado) is True
 
 
+def test_get_username_usa_preferred_username_no_un_hash_del_email(backend):
+    """Un usuario nuevo debe quedar con el username real de Keycloak, no el hash por defecto de la librería."""
+    claims = {'sub': '12345', 'email': 'jorge@example.com', 'preferred_username': 'jorge_ferreira'}
+    assert backend.get_username(claims) == 'jorge_ferreira'
+
+    # Sin preferred_username, cae al comportamiento por defecto de la librería (nunca rompe).
+    claims_sin_preferred = {'sub': '12345', 'email': 'sin-preferred@example.com'}
+    resultado = backend.get_username(claims_sin_preferred)
+    assert resultado != ''
+    assert resultado != 'sin-preferred@example.com'  # confirma que es el hash, no el email crudo
+
+
 @pytest.mark.django_db
 def test_update_user_claims(backend, rf):
     """Guarda los roles de negocio en sesión, los reemplaza (no acumula), y reactiva cuentas inactivas."""

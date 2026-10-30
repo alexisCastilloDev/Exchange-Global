@@ -1583,3 +1583,205 @@ class NotificacionTasa(models.Model):
             for tipo, valor_anterior, valor_nuevo in cambios
         ]
         return cls.objects.bulk_create(notificaciones)
+
+
+class RangoDocumentosAgotadoError(Exception):
+    """No quedan números disponibles en el rango de documento electrónico habilitado para este tipo."""
+
+
+class ContadorDocumentoElectronico(models.Model):
+    """Lleva, para cada tipo de documento, el próximo número a asignar dentro del rango habilitado.
+
+    Factura Segura (HU "Integración con API de facturación electrónica",
+    ver ``apps.divisas.factura_electronica``) no asigna el número de
+    documento (``dNumDoc``) por sí sola: lo elige quien emite, dentro
+    del rango que el administrador de Factura Segura habilitó para este
+    ESI (un establecimiento y punto de expedición fijos — ver
+    ``settings.FACTURASEGURA_ESTABLECIMIENTO``/``FACTURASEGURA_PUNTO_EXPEDICION``
+    — con un rango de números por tipo de documento). Ese rango es
+    finito y real: a diferencia de SIPAP o Stripe, acá no hay ningún
+    sandbox que lo reponga solo, así que este modelo es el único lugar
+    donde se decide el próximo número (``siguiente_numero``), nunca se
+    calcula "al vuelo" al armar el JSON — eso permitiría que dos
+    emisiones simultáneas eligieran el mismo número.
+    """
+
+    TIPO_FACTURA = '1'
+    TIPO_NOTA_CREDITO = '5'
+    TIPO_DOCUMENTO_CHOICES = [
+        (TIPO_FACTURA, 'Factura electrónica'),
+        (TIPO_NOTA_CREDITO, 'Nota de crédito electrónica'),
+    ]
+
+    tipo_documento = models.CharField(max_length=1, choices=TIPO_DOCUMENTO_CHOICES, unique=True)
+    desde = models.PositiveIntegerField(verbose_name='Primer número habilitado')
+    hasta = models.PositiveIntegerField(verbose_name='Último número habilitado')
+    ultimo_asignado = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Último número asignado',
+        help_text='Vacío si todavía no se asignó ninguno: el próximo a usar es "desde".',
+    )
+
+    class Meta:
+        """Etiquetas administrativas del contador."""
+        verbose_name = 'Contador de documento electrónico'
+        verbose_name_plural = 'Contadores de documento electrónico'
+
+    def __str__(self):
+        """Identifica el contador por tipo de documento y su rango habilitado."""
+        return f'{self.get_tipo_documento_display()} ({self.desde:07d}-{self.hasta:07d})'
+
+    @classmethod
+    def siguiente_numero(cls, tipo_documento):
+        """Reserva y devuelve, de forma atómica, el próximo número disponible para ese tipo.
+
+        Bloquea la fila del contador con ``select_for_update()`` para
+        que dos emisiones concurrentes nunca reciban el mismo número,
+        ni siquiera si llegan en el mismo instante. El número se marca
+        como asignado acá, antes de llamar a Factura Segura: si la
+        emisión después falla, ese número queda "quemado" (nunca se
+        reutiliza para un documento distinto) — es preferible perder un
+        número del rango a arriesgarse a emitir dos documentos con el
+        mismo ``dNumDoc``.
+
+        Args:
+            tipo_documento (str): Uno de ``TIPO_DOCUMENTO_CHOICES``.
+
+        Returns:
+            str: El número de 7 dígitos, con ceros a la izquierda
+            (p. ej. ``"0000623"``), listo para usar como ``dNumDoc``.
+
+        Raises:
+            RangoDocumentosAgotadoError: Si ya se asignó el último
+                número del rango habilitado para ese tipo.
+        """
+        with db_transaction.atomic():
+            contador = cls.objects.select_for_update().get(tipo_documento=tipo_documento)
+            siguiente = contador.desde if contador.ultimo_asignado is None else contador.ultimo_asignado + 1
+            if siguiente > contador.hasta:
+                raise RangoDocumentosAgotadoError(
+                    f'Se agotó el rango habilitado de {contador.get_tipo_documento_display()} '
+                    f'({contador.desde:07d}-{contador.hasta:07d}). Hay que pedir un rango nuevo a '
+                    'Factura Segura.'
+                )
+            contador.ultimo_asignado = siguiente
+            contador.save(update_fields=['ultimo_asignado'])
+            return f'{siguiente:07d}'
+
+
+class DocumentoElectronico(models.Model):
+    """Documento tributario electrónico (Factura) emitido ante SIFEN por una transacción pagada.
+
+    Implementa la HU "Integración con API de facturación electrónica":
+    apenas una compra, venta o cambio queda "Pagada", Global Exchange le
+    emite una Factura Electrónica al cliente a través de Factura Segura
+    (ESI de SIFEN) — ver
+    ``apps.divisas.factura_electronica.generar_documento_electronico``,
+    llamada desde los mismos puntos que ya disparan
+    ``apps.divisas.entrega.realizar_entrega``. Es un proceso
+    independiente de la entrega del dinero: una falla acá nunca bloquea
+    ni revierte el pago ya confirmado, y viceversa (criterio 3).
+
+    Puede asociarse tanto a una compra/venta (``calculo_operacion``)
+    como a un cambio entre divisas (``calculo_triangulacion``):
+    exactamente una de las dos, nunca ambas ni ninguna (mismo patrón
+    que ``Pago`` — ver ``clean``). Cada una es un ``OneToOneField``, así
+    que la base de datos garantiza por sí sola que una transacción no
+    puede tener más de un documento (criterio 5: nunca se duplica).
+    """
+
+    ESTADO_GENERADO = 'GENERADO'
+    ESTADO_APROBADO = 'APROBADO'
+    ESTADO_APROBADO_OBS = 'APROBADO_OBS'
+    ESTADO_RECHAZADO = 'RECHAZADO'
+    ESTADO_ERROR_SIFEN = 'ERROR_SIFEN'
+    ESTADO_ERROR_GENERACION = 'ERROR_GENERACION'
+    ESTADO_CHOICES = [
+        (ESTADO_GENERADO, 'Generado, esperando aprobación de SIFEN'),
+        (ESTADO_APROBADO, 'Aprobado'),
+        (ESTADO_APROBADO_OBS, 'Aprobado con observación'),
+        (ESTADO_RECHAZADO, 'Rechazado por SIFEN'),
+        (ESTADO_ERROR_SIFEN, 'Error de SIFEN al procesarlo'),
+        (ESTADO_ERROR_GENERACION, 'No se pudo generar (Factura Segura no respondió, o lo rechazó)'),
+    ]
+
+    calculo_operacion = models.OneToOneField(
+        CalculoOperacion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='documento_electronico',
+        verbose_name='Compra o venta facturada',
+    )
+    calculo_triangulacion = models.OneToOneField(
+        CalculoTriangulacion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='documento_electronico',
+        verbose_name='Cambio de divisas facturado',
+    )
+    tipo_documento = models.CharField(
+        max_length=1,
+        choices=ContadorDocumentoElectronico.TIPO_DOCUMENTO_CHOICES,
+        default=ContadorDocumentoElectronico.TIPO_FACTURA,
+    )
+    numero_documento = models.CharField(
+        max_length=7,
+        verbose_name='Número de documento (dNumDoc)',
+        help_text='Reservado de ContadorDocumentoElectronico.siguiente_numero, nunca se reutiliza.',
+    )
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_GENERADO)
+    cdc = models.CharField(max_length=44, blank=True, verbose_name='CDC (Código de Control)')
+    estado_sifen = models.CharField(
+        max_length=50, blank=True, help_text='Valor crudo de "estado_sifen" devuelto por get_estado_sifen.',
+    )
+    desc_sifen = models.CharField(max_length=255, blank=True, verbose_name='Descripción del estado en SIFEN')
+    error_sifen = models.CharField(max_length=255, blank=True, verbose_name='Error de SIFEN')
+    operation_id = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='Id de operación de Factura Segura',
+        help_text='Para referencia de soporte (log/debug/auditoría); no tiene ningún uso funcional acá.',
+    )
+    error_generacion = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Error al generar',
+        help_text=(
+            'Motivo si "generar_de" nunca llegó a confirmarse (criterios 3 y 4): no se reintenta '
+            'solo, requiere una acción explícita de un administrador, que primero debe verificar '
+            'con soporte de Factura Segura si el documento ya se había generado del otro lado.'
+        ),
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    consultado_en = models.DateTimeField(
+        null=True, blank=True, verbose_name='Último estado consultado a SIFEN',
+    )
+
+    class Meta:
+        """Ordena por fecha de creación y define las etiquetas administrativas."""
+        verbose_name = 'Documento electrónico'
+        verbose_name_plural = 'Documentos electrónicos'
+        ordering = ['-creado_en']
+
+    def __str__(self):
+        """Identifica el documento por tipo, número y estado actual."""
+        return f'{self.get_tipo_documento_display()} {self.numero_documento} ({self.get_estado_display()})'
+
+    def clean(self):
+        """Valida que el documento pertenezca a exactamente una transacción."""
+        if bool(self.calculo_operacion_id) == bool(self.calculo_triangulacion_id):
+            raise ValidationError('Un documento electrónico debe pertenecer a exactamente una transacción.')
+
+    @property
+    def transaccion(self):
+        """Devuelve la compra/venta o el cambio al que pertenece este documento."""
+        return self.calculo_operacion or self.calculo_triangulacion
+
+    @property
+    def es_definitivo(self):
+        """Indica si ya no hace falta volver a consultar su estado a SIFEN (llegó a un estado terminal)."""
+        return self.estado in (self.ESTADO_APROBADO, self.ESTADO_APROBADO_OBS, self.ESTADO_RECHAZADO)

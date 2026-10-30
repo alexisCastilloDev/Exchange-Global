@@ -1,0 +1,73 @@
+<!--
+Autoservicio de alta de cliente: formulario, aviso de "en gestión", o motivo de rechazo + reintento.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: form (si corresponde), solicitud_pendiente (si hay una en curso),
+ultima_rechazada (si la última solicitud propia fue rechazada).
+-->
+{% extends 'base.html' %}
+
+{% block title %}Solicitar ser cliente - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <h1>Solicitar ser cliente</h1>
+        <p>Pedí que un administrador te dé de alta como cliente de Global Exchange.</p>
+    </div>
+</div>
+
+{% if solicitud_pendiente %}
+<div class="ge-card" style="max-width: 560px;">
+    <p class="mb-0">
+        <i class="bi bi-hourglass-split me-2"></i>
+        Tu solicitud ({{ solicitud_pendiente.nombre_completo }}, {{ solicitud_pendiente.identificador }})
+        está siendo gestionada por un administrador. Te vamos a avisar cuando se resuelva.
+    </p>
+</div>
+{% else %}
+    {% if ultima_rechazada %}
+    <div class="ge-card mb-3" style="max-width: 560px;">
+        <p class="mb-0 text-danger">
+            <i class="bi bi-x-circle me-2"></i>
+            Tu última solicitud fue rechazada. Motivo: {{ ultima_rechazada.motivo_rechazo }}
+        </p>
+    </div>
+    {% endif %}
+    <div class="ge-card" style="max-width: 560px;">
+        <form method="post" novalidate class="ge-plain-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Enviar solicitud</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const selectTipo = document.getElementById("id_tipo_cliente");
+            const pNombre = document.getElementById("id_nombre")?.closest("p");
+            const pApellido = document.getElementById("id_apellido")?.closest("p");
+            const pRazonSocial = document.getElementById("id_razon_social")?.closest("p");
+
+            if (selectTipo) {
+                function alternarCampos() {
+                    if (selectTipo.value === "JURIDICA") {
+                        if (pNombre) pNombre.style.display = "none";
+                        if (pApellido) pApellido.style.display = "none";
+                        if (pRazonSocial) pRazonSocial.style.display = "block";
+                    } else {
+                        if (pNombre) pNombre.style.display = "block";
+                        if (pApellido) pApellido.style.display = "block";
+                        if (pRazonSocial) pRazonSocial.style.display = "none";
+                    }
+                }
+                selectTipo.addEventListener("change", alternarCampos);
+                alternarCampos();
+            }
+        });
+    </script>
+{% endif %}
+{% endblock %}

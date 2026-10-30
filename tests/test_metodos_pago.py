@@ -47,7 +47,15 @@ class MetodoPagoTestCase(TestCase):
         session.save()
 
     def test_denegado_sin_rol_cliente_o_sin_clientes_asignados(self):
-        """Tres formas de no calificar para gestionar métodos: otro rol, admin, o cliente sin clientes."""
+        """Tres formas de no calificar para gestionar métodos: otro rol, admin, o cliente sin clientes.
+
+        ``fetch_redirect_response=False`` porque lo que se prueba acá es
+        que esta vista redirige a ``home``, no qué hace ``home`` después
+        — un usuario sin ningún ``Cliente`` asociado (el tercer subtest)
+        es, a su vez, redirigido por ``home`` a
+        ``clientes:solicitar_cliente`` (ver ``global_exchange.views.home``),
+        así que seguir la cadena completa no corresponde a este test.
+        """
         with self.subTest('rol distinto de cliente'):
             session = self.client.session
             session['keycloak_roles'] = ['analista_cambiario']
@@ -55,7 +63,7 @@ class MetodoPagoTestCase(TestCase):
 
             response = self.client.get(reverse('clientes:metodo_pago_list'))
 
-            self.assertRedirects(response, reverse('home'))
+            self.assertRedirects(response, reverse('home'), fetch_redirect_response=False)
 
         with self.subTest('administrador'):
             session = self.client.session
@@ -64,7 +72,7 @@ class MetodoPagoTestCase(TestCase):
 
             response = self.client.get(reverse('clientes:metodo_pago_list'))
 
-            self.assertRedirects(response, reverse('home'))
+            self.assertRedirects(response, reverse('home'), fetch_redirect_response=False)
 
         with self.subTest('cliente sin clientes asociados'):
             session = self.client.session
@@ -74,7 +82,7 @@ class MetodoPagoTestCase(TestCase):
 
             response = self.client.get(reverse('clientes:metodo_pago_list'))
 
-            self.assertRedirects(response, reverse('home'))
+            self.assertRedirects(response, reverse('home'), fetch_redirect_response=False)
 
     def test_menu_no_muestra_metodos_sin_rol_cliente(self):
         """Oculta el acceso de métodos de pago a roles no clientes."""

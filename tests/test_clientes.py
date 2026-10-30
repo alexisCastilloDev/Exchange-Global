@@ -6,10 +6,14 @@ así como pruebas de integración para el control de acceso, actualización de d
 segmentación (HU GE-62 y GE-8) y baja lógica (HU GE-63).
 """
 
+from unittest.mock import patch
+
 import pytest
 from django.contrib.auth import get_user_model
+from django.core import mail
+from django.db import IntegrityError, transaction
 from django.urls import reverse
-from apps.clientes.models import Cliente
+from apps.clientes.models import Cliente, SolicitudCliente
 from apps.clientes.forms import ClienteForm
 from apps.authentication.models import HistorialBaja
 
@@ -558,3 +562,292 @@ class TestClienteNombreCompleto:
 
         assert cliente.nombre_completo == 'Importadora SA'
         assert cliente.identificador not in cliente.nombre_completo
+
+
+def _loguear_con_rol_cliente(client, usuario):
+    """Loguea ``usuario`` y le fija en sesión el rol de Keycloak 'cliente' (sin ningún Cliente asociado)."""
+    client.force_login(usuario)
+    session = client.session
+    session['keycloak_roles'] = ['cliente']
+    session.save()
+
+
+@pytest.mark.django_db
+class TestSolicitudCliente:
+    """Autoservicio de alta: un usuario con rol 'cliente' sin Cliente asociado pide darse de alta."""
+
+    def test_usuario_sin_cliente_puede_enviar_la_solicitud(self, client):
+        """Con los campos completos, se crea en PENDIENTE a nombre del usuario logueado."""
+        usuario = User.objects.create_user(username='nuevo-cliente', password='x')
+        _loguear_con_rol_cliente(client, usuario)
+
+        response = client.post(reverse('clientes:solicitar_cliente'), {
+            'tipo_cliente': 'FISICA', 'nombre': 'Jorge', 'apellido': 'Ferreira', 'identificador': '5910941',
+        })
+
+        assert response.status_code == 302
+        solicitud = SolicitudCliente.objects.get(usuario=usuario)
+        assert solicitud.estado == SolicitudCliente.ESTADO_PENDIENTE
+        assert solicitud.nombre == 'Jorge'
+        assert solicitud.identificador == '5910941'
+
+    def test_un_usuario_sin_ningun_rol_tambien_puede_solicitar(self, client):
+        """No depende del rol 'cliente': un usuario recién registrado puede no tener ningún rol todavía."""
+        usuario = User.objects.create_user(username='sin-ningun-rol', password='x')
+        client.force_login(usuario)
+        session = client.session
+        session['keycloak_roles'] = []
+        session.save()
+
+        response_formulario = client.get(reverse('clientes:solicitar_cliente'))
+        assert response_formulario.status_code == 200
+
+        response_home = client.get(reverse('home'))
+        assert response_home.status_code == 302
+        assert response_home.url == reverse('clientes:solicitar_cliente')
+
+    def test_con_una_solicitud_pendiente_no_se_puede_enviar_otra(self, client):
+        """Ni la vista, ni la base (UniqueConstraint), dejan crear una segunda solicitud pendiente."""
+        usuario = User.objects.create_user(username='con-pendiente', password='x')
+        SolicitudCliente.objects.create(usuario=usuario, nombre='Jorge', apellido='Ferreira', identificador='1111111')
+        _loguear_con_rol_cliente(client, usuario)
+
+        response = client.post(reverse('clientes:solicitar_cliente'), {
+            'nombre': 'Jorge', 'apellido': 'Ferreira', 'identificador': '2222222',
+        })
+
+        assert response.status_code == 302
+        assert SolicitudCliente.objects.filter(usuario=usuario).count() == 1
+
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                SolicitudCliente.objects.create(usuario=usuario, nombre='Otra', apellido='Vez', identificador='3333333')
+
+    def test_usuario_que_ya_tiene_cliente_es_redirigido_sin_ver_el_formulario(self, client):
+        usuario = User.objects.create_user(username='ya-tiene-cliente', password='x')
+        cliente = Cliente.objects.create(tipo_cliente='FISICA', nombre='Ya', apellido='Tiene', identificador='4444444', is_active=True)
+        cliente.usuarios.add(usuario)
+        _loguear_con_rol_cliente(client, usuario)
+
+        response = client.get(reverse('clientes:solicitar_cliente'))
+
+        assert response.status_code == 302
+
+    def test_identificador_ya_usado_por_un_cliente_activo_se_rechaza(self, client):
+        Cliente.objects.create(tipo_cliente='FISICA', nombre='Existente', apellido='Cliente', identificador='5555555', is_active=True)
+        usuario = User.objects.create_user(username='con-ci-duplicado', password='x')
+        _loguear_con_rol_cliente(client, usuario)
+
+        response = client.post(reverse('clientes:solicitar_cliente'), {
+            'nombre': 'Nuevo', 'apellido': 'Pedido', 'identificador': '5555555',
+        })
+
+        assert response.status_code == 200
+        assert not SolicitudCliente.objects.filter(usuario=usuario).exists()
+
+    def test_identificador_ya_pendiente_de_otro_usuario_se_rechaza(self, client):
+        otro_usuario = User.objects.create_user(username='otro-pendiente', password='x')
+        SolicitudCliente.objects.create(usuario=otro_usuario, nombre='Primero', apellido='En pedir', identificador='6666666')
+        usuario = User.objects.create_user(username='segundo-en-pedir', password='x')
+        _loguear_con_rol_cliente(client, usuario)
+
+        response = client.post(reverse('clientes:solicitar_cliente'), {
+            'nombre': 'Segundo', 'apellido': 'En pedir', 'identificador': '6666666',
+        })
+
+        assert response.status_code == 200
+        assert not SolicitudCliente.objects.filter(usuario=usuario).exists()
+
+    def test_admin_aprueba_crea_el_cliente_y_lo_asocia_al_usuario(self, client):
+        usuario = User.objects.create_user(username='sera-aprobado', password='x')
+        solicitud = SolicitudCliente.objects.create(usuario=usuario, nombre='Jorge', apellido='Ferreira', identificador='7777777')
+        admin = User.objects.create_user(username='admin-aprueba', password='x', is_staff=True)
+        client.force_login(admin)
+
+        response = client.post(reverse('clientes:aprobar_solicitud_cliente', kwargs={'pk': solicitud.pk}))
+
+        assert response.status_code == 302
+        solicitud.refresh_from_db()
+        assert solicitud.estado == SolicitudCliente.ESTADO_APROBADA
+        assert solicitud.revisado_por == admin
+        assert solicitud.cliente_creado is not None
+        assert solicitud.cliente_creado.identificador == '7777777'
+        assert usuario in solicitud.cliente_creado.usuarios.all()
+
+    def test_aprobar_le_agrega_el_rol_cliente_en_keycloak(self, client):
+        """Sin esto, el usuario queda asociado en Django pero sin poder operar nada todavía."""
+        usuario = User.objects.create_user(username='con-email', email='con-email@test.com', password='x')
+        solicitud = SolicitudCliente.objects.create(usuario=usuario, nombre='Con', apellido='Email', identificador='4444400')
+        admin = User.objects.create_user(username='admin-rol', password='x', is_staff=True)
+        client.force_login(admin)
+
+        with patch('apps.clientes.views.obtener_roles_de_usuario', return_value=['analista_cambiario']) as mock_obtener, \
+             patch('apps.clientes.views.actualizar_roles_de_usuario') as mock_actualizar:
+            response = client.post(reverse('clientes:aprobar_solicitud_cliente', kwargs={'pk': solicitud.pk}))
+
+        assert response.status_code == 302
+        mock_obtener.assert_called_once_with('con-email@test.com')
+        mock_actualizar.assert_called_once_with('con-email@test.com', {'analista_cambiario', 'cliente'})
+
+    def test_aprobar_no_rompe_si_falla_la_asignacion_del_rol_en_keycloak(self, client):
+        """El Cliente queda creado igual; solo se avisa que el rol no se pudo asignar."""
+        usuario = User.objects.create_user(username='keycloak-caido', email='keycloak-caido@test.com', password='x')
+        solicitud = SolicitudCliente.objects.create(usuario=usuario, nombre='Keycloak', apellido='Caido', identificador='5555500')
+        admin = User.objects.create_user(username='admin-rol-2', password='x', is_staff=True)
+        client.force_login(admin)
+
+        with patch('apps.clientes.views.obtener_roles_de_usuario', side_effect=RuntimeError('sin conexión')):
+            response = client.post(reverse('clientes:aprobar_solicitud_cliente', kwargs={'pk': solicitud.pk}))
+
+        assert response.status_code == 302
+        solicitud.refresh_from_db()
+        assert solicitud.estado == SolicitudCliente.ESTADO_APROBADA
+        assert solicitud.cliente_creado is not None
+
+    def test_aprobar_le_manda_un_email_de_aviso_al_usuario(self, client):
+        usuario = User.objects.create_user(username='avisado-aprobado', email='avisado-aprobado@test.com', password='x')
+        solicitud = SolicitudCliente.objects.create(usuario=usuario, nombre='Avisado', apellido='Aprobado', identificador='6161610')
+        admin = User.objects.create_user(username='admin-avisa', password='x', is_staff=True)
+        client.force_login(admin)
+
+        with patch('apps.clientes.views.obtener_roles_de_usuario', return_value=[]), \
+             patch('apps.clientes.views.actualizar_roles_de_usuario'):
+            client.post(reverse('clientes:aprobar_solicitud_cliente', kwargs={'pk': solicitud.pk}))
+
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].to == ['avisado-aprobado@test.com']
+        assert 'aprobada' in mail.outbox[0].subject.lower()
+
+    def test_rechazar_le_manda_un_email_con_el_motivo(self, client):
+        usuario = User.objects.create_user(username='avisado-rechazado', email='avisado-rechazado@test.com', password='x')
+        solicitud = SolicitudCliente.objects.create(usuario=usuario, nombre='Avisado', apellido='Rechazado', identificador='6262620')
+        admin = User.objects.create_user(username='admin-avisa-2', password='x', is_staff=True)
+        client.force_login(admin)
+
+        client.post(reverse('clientes:rechazar_solicitud_cliente', kwargs={'pk': solicitud.pk}), {'motivo': 'CI no coincide.'})
+
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].to == ['avisado-rechazado@test.com']
+        assert 'rechazada' in mail.outbox[0].subject.lower()
+        assert 'CI no coincide.' in mail.outbox[0].body
+
+    def test_sin_email_no_se_manda_ningun_aviso_ni_rompe_nada(self, client):
+        usuario = User.objects.create_user(username='sin-email-aviso', password='x')
+        solicitud = SolicitudCliente.objects.create(usuario=usuario, nombre='Sin', apellido='Email', identificador='6363630')
+        admin = User.objects.create_user(username='admin-sin-email', password='x', is_staff=True)
+        client.force_login(admin)
+
+        response = client.post(reverse('clientes:aprobar_solicitud_cliente', kwargs={'pk': solicitud.pk}))
+
+        assert response.status_code == 302
+        assert len(mail.outbox) == 0
+
+    def test_solicitud_juridica_se_puede_enviar_y_aprobar_con_razon_social(self, client):
+        """Una solicitud jurídica pide razón social (no nombre/apellido) y crea un Cliente JURIDICA."""
+        usuario = User.objects.create_user(username='empresa-solicitante', password='x')
+        _loguear_con_rol_cliente(client, usuario)
+
+        response = client.post(reverse('clientes:solicitar_cliente'), {
+            'tipo_cliente': 'JURIDICA', 'razon_social': 'Importadora SA', 'identificador': '80099999-1',
+        })
+
+        assert response.status_code == 302
+        solicitud = SolicitudCliente.objects.get(usuario=usuario)
+        assert solicitud.tipo_cliente == 'JURIDICA'
+        assert solicitud.razon_social == 'Importadora SA'
+        assert solicitud.nombre_completo == 'Importadora SA'
+
+        admin = User.objects.create_user(username='admin-aprueba-juridica', password='x', is_staff=True)
+        client.force_login(admin)
+        client.post(reverse('clientes:aprobar_solicitud_cliente', kwargs={'pk': solicitud.pk}))
+
+        solicitud.refresh_from_db()
+        assert solicitud.cliente_creado.tipo_cliente == 'JURIDICA'
+        assert solicitud.cliente_creado.razon_social == 'Importadora SA'
+
+    def test_solicitud_fisica_sin_apellido_se_rechaza_y_juridica_sin_razon_social_tambien(self, client):
+        usuario = User.objects.create_user(username='sin-datos-completos', password='x')
+        _loguear_con_rol_cliente(client, usuario)
+
+        respuesta_fisica = client.post(reverse('clientes:solicitar_cliente'), {
+            'tipo_cliente': 'FISICA', 'nombre': 'Solo Nombre', 'identificador': '6060606',
+        })
+        assert respuesta_fisica.status_code == 200  # el form vuelve a mostrarse con el error
+        assert not SolicitudCliente.objects.filter(identificador='6060606').exists()
+
+        respuesta_juridica = client.post(reverse('clientes:solicitar_cliente'), {
+            'tipo_cliente': 'JURIDICA', 'identificador': '7070707',
+        })
+        assert respuesta_juridica.status_code == 200
+        assert not SolicitudCliente.objects.filter(identificador='7070707').exists()
+
+    def test_admin_rechaza_exige_motivo_y_no_crea_ningun_cliente(self, client):
+        usuario = User.objects.create_user(username='sera-rechazado', password='x')
+        solicitud = SolicitudCliente.objects.create(usuario=usuario, nombre='Jorge', apellido='Ferreira', identificador='8888888')
+        admin = User.objects.create_user(username='admin-rechaza', password='x', is_staff=True)
+        client.force_login(admin)
+
+        response = client.post(reverse('clientes:rechazar_solicitud_cliente', kwargs={'pk': solicitud.pk}), {
+            'motivo': 'Datos insuficientes.',
+        })
+
+        assert response.status_code == 302
+        solicitud.refresh_from_db()
+        assert solicitud.estado == SolicitudCliente.ESTADO_RECHAZADA
+        assert solicitud.motivo_rechazo == 'Datos insuficientes.'
+        assert not Cliente.objects.filter(identificador='8888888').exists()
+
+        # El usuario puede volver a solicitar después del rechazo.
+        _loguear_con_rol_cliente(client, usuario)
+        response = client.get(reverse('clientes:solicitar_cliente'))
+        assert response.status_code == 200
+        assert b'Datos insuficientes.' in response.content
+
+    def test_un_cliente_comun_no_puede_administrar_solicitudes(self, client):
+        usuario = User.objects.create_user(username='cliente-comun', password='x')
+        solicitud = SolicitudCliente.objects.create(usuario=usuario, nombre='Jorge', apellido='Ferreira', identificador='9999990')
+        _loguear_con_rol_cliente(client, usuario)
+
+        assert client.get(reverse('clientes:solicitudes_cliente')).status_code == 403
+        assert client.post(reverse('clientes:aprobar_solicitud_cliente', kwargs={'pk': solicitud.pk})).status_code == 403
+        assert client.post(reverse('clientes:rechazar_solicitud_cliente', kwargs={'pk': solicitud.pk})).status_code == 403
+
+    def test_el_link_para_solicitar_aparece_solo_para_quien_corresponde(self, client):
+        """El link/tarjeta se ve en las pantallas donde corresponde; en home, directamente lo redirige."""
+        sin_cliente = User.objects.create_user(username='ve-el-link', password='x')
+        _loguear_con_rol_cliente(client, sin_cliente)
+        # home() lo redirige directo a solicitar_cliente (ver test de redirección aparte);
+        # la tarjeta/link se verifica en una pantalla donde sí aterriza, como tasas vigentes.
+        assert b'Solicitar ser cliente' in client.get(reverse('divisas:tasas_vigentes')).content
+
+        con_cliente = User.objects.create_user(username='no-ve-el-link', password='x')
+        cliente = Cliente.objects.create(tipo_cliente='FISICA', nombre='Con', apellido='Cliente', identificador='0101010', is_active=True)
+        cliente.usuarios.add(con_cliente)
+        _loguear_con_rol_cliente(client, con_cliente)
+        response_home = client.get(reverse('home'))
+        assert response_home.status_code == 200
+        assert b'Solicitar ser cliente' not in response_home.content
+
+    def test_home_redirige_directo_a_solicitar_cliente_si_no_tiene_ninguno(self, client):
+        """Un usuario con rol 'cliente' sin Cliente asociado aterriza directo en la solicitud, no en home."""
+        sin_cliente = User.objects.create_user(username='aterriza-en-solicitud', password='x')
+        _loguear_con_rol_cliente(client, sin_cliente)
+
+        response = client.get(reverse('home'))
+
+        assert response.status_code == 302
+        assert response.url == reverse('clientes:solicitar_cliente')
+
+    def test_home_no_redirige_a_un_admin_ni_a_quien_ya_tiene_cliente(self, client):
+        admin = User.objects.create_user(username='admin-home', password='x', is_staff=True)
+        client.force_login(admin)
+        session = client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+        assert client.get(reverse('home')).status_code == 200
+
+        con_cliente = User.objects.create_user(username='con-cliente-home', password='x')
+        cliente = Cliente.objects.create(tipo_cliente='FISICA', nombre='Ya', apellido='Tiene', identificador='0202020', is_active=True)
+        cliente.usuarios.add(con_cliente)
+        _loguear_con_rol_cliente(client, con_cliente)
+        assert client.get(reverse('home')).status_code == 200
