@@ -642,12 +642,113 @@ class MisFacturasElectronicasListViewTest(FacturaElectronicaTestCase):
             calculo_operacion=self.transaccion, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
             numero_documento='0000900', estado=DocumentoElectronico.ESTADO_GENERADO, cdc='CDC-PROPIA',
         )
+        self.url = reverse('divisas:mis_facturas_electronicas')
+
+    def _transaccion_propia(self, monto_final=Decimal('100.00')):
+        """Crea, para el mismo cliente, una compra 'Pagada' adicional lista para facturar."""
+        usuario = self.cliente.user
+        return CalculoOperacion.objects.create(
+            usuario=usuario, cliente=self.cliente, tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('10.00'),
+            tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('740.00'), monto_final=monto_final,
+            estado=CalculoOperacion.ESTADO_PAGADA, vence_en=timezone.now() + timedelta(seconds=300),
+            confirmado_en=timezone.now(),
+        )
 
     def test_el_cliente_ve_su_propia_factura(self):
-        response = self.client.get(reverse('divisas:mis_facturas_electronicas'))
+        response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '0000900')
+        self.assertContains(response, 'CDC-PROPIA')
+
+    def test_criterio_2_el_listado_muestra_numero_cdc_transaccion_fecha_de_emision_y_monto(self):
+        """Criterio 2: cada factura muestra número/CDC, transacción asociada, fecha de emisión, monto y estado."""
+        self.documento.estado = DocumentoElectronico.ESTADO_APROBADO
+        self.documento.emitida_en = timezone.make_aware(datetime(2026, 10, 15, 9, 30))
+        self.documento.save(update_fields=['estado', 'emitida_en'])
+
+        response = self.client.get(self.url)
+
+        self.assertContains(response, '0000900')  # número
+        self.assertContains(response, 'CDC-PROPIA')  # CDC
+        self.assertContains(response, 'Compra USD')  # transacción asociada
+        self.assertContains(response, '15/10/2026 09:30')  # fecha de emisión
+        self.assertContains(response, '747.400,00')  # monto (de la transacción, no del documento)
+        self.assertContains(response, 'Aprobado')  # estado
+
+    def test_criterio_4_hacer_clic_en_una_factura_lleva_al_detalle_completo_del_comprobante(self):
+        """Criterio 4: el listado enlaza al detalle de la transacción, que incluye el comprobante completo."""
+        url_detalle = reverse('divisas:detalle_transaccion_operacion', kwargs={'pk': self.transaccion.pk})
+
+        response = self.client.get(self.url)
+        self.assertContains(response, url_detalle)
+
+        detalle = self.client.get(url_detalle)
+        self.assertContains(detalle, '0000900')
+        self.assertContains(detalle, 'CDC-PROPIA')
+
+    def test_criterio_5_sin_facturas_emitidas_muestra_un_mensaje_sin_error(self):
+        """Criterio 5: sin ninguna factura, se muestra un mensaje explícito en vez de un error."""
+        self.documento.delete()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Todavía no tenés ninguna factura electrónica emitida.')
+
+    def test_criterio_1_el_listado_esta_paginado(self):
+        """Criterio 1: con más de 20 facturas, el listado se pagina en vez de mostrarlas todas juntas."""
+        for indice in range(25):
+            transaccion = self._transaccion_propia()
+            DocumentoElectronico.objects.create(
+                calculo_operacion=transaccion, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+                numero_documento=f'{910 + indice:07d}', estado=DocumentoElectronico.ESTADO_APROBADO,
+                cdc=f'CDC-{indice}',
+            )
+
+        response = self.client.get(self.url)
+
+        self.assertTrue(response.context['is_paginated'])
+        self.assertEqual(len(response.context['documentos']), 20)
+        self.assertContains(response, 'Página 1 de')
+
+    def test_criterio_3_filtra_por_rango_de_fechas_de_emision(self):
+        """Criterio 3: filtrar por rango de fechas actualiza el listado mostrando solo las que coinciden."""
+        transaccion_vieja = self._transaccion_propia()
+        documento_viejo = DocumentoElectronico.objects.create(
+            calculo_operacion=transaccion_vieja, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+            numero_documento='0000911', estado=DocumentoElectronico.ESTADO_APROBADO, cdc='CDC-VIEJA',
+            emitida_en=timezone.make_aware(datetime(2026, 1, 10, 12, 0)),
+        )
+        transaccion_reciente = self._transaccion_propia()
+        documento_reciente = DocumentoElectronico.objects.create(
+            calculo_operacion=transaccion_reciente, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+            numero_documento='0000912', estado=DocumentoElectronico.ESTADO_APROBADO, cdc='CDC-RECIENTE',
+            emitida_en=timezone.make_aware(datetime(2026, 10, 20, 12, 0)),
+        )
+
+        response = self.client.get(self.url, {'fecha_desde': '2026-10-01', 'fecha_hasta': '2026-10-31'})
+
+        documentos = list(response.context['documentos'])
+        self.assertIn(documento_reciente, documentos)
+        self.assertNotIn(documento_viejo, documentos)
+        self.assertNotIn(self.documento, documentos)  # sin emitida_en: tampoco coincide con el rango
+        self.assertContains(response, 'CDC-RECIENTE')
+        self.assertNotContains(response, 'CDC-VIEJA')
+
+    def test_criterio_3_un_rango_sin_coincidencias_informa_sin_romper(self):
+        """Un filtro de fechas sin ninguna factura que coincida no es un error: muestra un mensaje aparte."""
+        response = self.client.get(self.url, {'fecha_desde': '2020-01-01', 'fecha_hasta': '2020-01-31'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No se encontraron facturas para el rango de fechas seleccionado.')
+
+    def test_criterio_3_limpiar_filtros_vuelve_a_mostrar_todo(self):
+        """Sin ningún filtro en la URL, vuelve a verse la factura que el filtro anterior había ocultado."""
+        response = self.client.get(self.url)
+
         self.assertContains(response, 'CDC-PROPIA')
 
     def test_no_ve_la_factura_de_otro_cliente(self):
