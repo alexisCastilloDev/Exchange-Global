@@ -14,7 +14,7 @@ para no tener dos implementaciones compitiendo por la misma URL.
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.static import serve as static_serve
 
 from apps.divisas.models import Divisa
@@ -27,8 +27,25 @@ def home(request):
     Vista pública de bienvenida.
 
     Para visitantes sin sesión iniciada, muestra las tasas vigentes de las
-    divisas activas del sistema en lugar de valores de ejemplo.
+    divisas activas del sistema en lugar de valores de ejemplo. Un usuario
+    logueado cuyos roles de Keycloak sean, como mucho, 'cliente' (sin
+    ningún otro rol de negocio) y que todavía no tenga ningún ``Cliente``
+    asociado (recién registrado, ver
+    ``apps.clientes.views.SolicitarClienteView``) no tiene nada útil que
+    hacer en este panel general: se lo redirige directo a pedir su alta,
+    mismo criterio que ``puede_solicitar_cliente`` en
+    ``apps.authentication.context_processors``. Un usuario con otro rol de
+    negocio (analista_cambiario, cajero, etc.) nunca entra en esta
+    condición, aunque tampoco tenga cliente — es personal, no alguien que
+    deba pedir ser cliente.
     """
+    if request.user.is_authenticated:
+        roles = request.session.get('keycloak_roles', [])
+        es_admin = 'admin' in roles or request.user.is_staff or request.user.is_superuser
+        tiene_cliente = request.user.clientes.filter(is_active=True).exists()
+        if not (set(roles) - {'cliente'}) and not es_admin and not tiene_cliente:
+            return redirect('clientes:solicitar_cliente')
+
     divisas_publicas = [
         divisa
         for divisa in Divisa.objects.filter(activa=True).order_by('codigo')

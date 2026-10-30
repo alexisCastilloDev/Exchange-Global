@@ -79,6 +79,19 @@ Contexto esperado: transaccion.
                     <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-clockwise me-1"></i> Reintentar {% if transaccion.tipo == 'VENTA' %}retiro{% else %}entrega{% endif %}</button>
                 </form>
             {% endif %}
+
+            {% if transaccion.documento_electronico %}
+                <div class="ge-card__header mb-3 mt-4">
+                    <h2>Factura electrónica</h2>
+                </div>
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Número: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.numero_documento }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Estado: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.get_estado_display }}</strong></div>
+                    {% if transaccion.documento_electronico.cdc %}
+                    <div class="operation-summary__row"><span class="operation-summary__label">CDC: </span><strong class="operation-summary__value">{{ transaccion.documento_electronico.cdc }}</strong></div>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>

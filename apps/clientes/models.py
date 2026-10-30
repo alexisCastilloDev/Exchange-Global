@@ -175,6 +175,96 @@ class Cliente(models.Model):
         return f'{nombre_completo} ({self.identificador}) - [{estado}]'
 
 
+class SolicitudCliente(models.Model):
+    """Pedido de un usuario de Keycloak para que se le dé de alta como cliente.
+
+    Implementa el autoservicio de alta: hoy un administrador tiene que
+    crear el ``Cliente`` a mano (``ClienteCreateView``) y asociarlo
+    después a un usuario existente (``AsociarUsuariosClienteView``) sin
+    que el usuario mismo inicie nada. Esta solicitud es el paso que
+    falta: cualquier usuario sin ningún ``Cliente`` asociado todavía
+    puede pedirlo, como persona física (nombre, apellido, CI) o
+    jurídica (razón social, RUC) — mismas dos variantes y la misma
+    validación condicional que ya usa ``Cliente``/``ClienteForm``; un
+    administrador la aprueba (lo que crea el ``Cliente`` del tipo
+    correspondiente y lo asocia) o la rechaza (con un motivo).
+    """
+
+    ESTADO_PENDIENTE = 'PENDIENTE'
+    ESTADO_APROBADA = 'APROBADA'
+    ESTADO_RECHAZADA = 'RECHAZADA'
+    ESTADO_CHOICES = [
+        (ESTADO_PENDIENTE, 'Pendiente de revisión'),
+        (ESTADO_APROBADA, 'Aprobada'),
+        (ESTADO_RECHAZADA, 'Rechazada'),
+    ]
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='solicitudes_cliente',
+        verbose_name='Usuario solicitante',
+    )
+    tipo_cliente = models.CharField(
+        max_length=10,
+        choices=Cliente.TIPO_CLIENTE_CHOICES,
+        default=Cliente.TIPO_FISICA,
+        verbose_name='Tipo de cliente',
+    )
+    nombre = models.CharField(max_length=100, blank=True, verbose_name='Nombre')
+    apellido = models.CharField(max_length=100, blank=True, verbose_name='Apellido')
+    razon_social = models.CharField(max_length=150, blank=True, verbose_name='Razón social')
+    identificador = models.CharField(max_length=20, verbose_name='Cédula/RUC')
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
+    motivo_rechazo = models.CharField(
+        max_length=255, blank=True, verbose_name='Motivo de rechazo',
+        help_text='Solo se completa cuando un administrador rechaza la solicitud.',
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+    revisado_en = models.DateTimeField(null=True, blank=True)
+    revisado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='solicitudes_revisadas',
+        verbose_name='Administrador que revisó',
+    )
+    cliente_creado = models.OneToOneField(
+        'Cliente',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='solicitud_origen',
+        verbose_name='Cliente creado',
+        help_text='El Cliente que se creó al aprobar esta solicitud (vacío si está pendiente o fue rechazada).',
+    )
+
+    class Meta:
+        """Como mucho una solicitud pendiente por usuario, garantizado por la base de datos."""
+        verbose_name = 'Solicitud de cliente'
+        verbose_name_plural = 'Solicitudes de cliente'
+        ordering = ['-creado_en']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['usuario'],
+                condition=models.Q(estado='PENDIENTE'),
+                name='una_solicitud_pendiente_por_usuario',
+            ),
+        ]
+
+    @property
+    def nombre_completo(self):
+        """Nombre a mostrar: razón social si es jurídica, nombre y apellido si es física."""
+        if self.tipo_cliente == Cliente.TIPO_JURIDICA:
+            return self.razon_social
+        return f'{self.nombre} {self.apellido}'.strip()
+
+    def __str__(self):
+        """Devuelve una descripción legible de la solicitud y su estado."""
+        return f'{self.nombre_completo} ({self.identificador}) - [{self.get_estado_display()}]'
+
+
 class MetodoPago(models.Model):
     """
     Modelo para gestionar los métodos de pago registrados por un usuario cliente.

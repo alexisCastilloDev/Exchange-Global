@@ -105,7 +105,21 @@ MESSAGE_TAGS = {
     messages_constants.ERROR: 'danger',
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Por defecto, "console" (imprime el correo en la terminal, no manda nada
+# real) — así venía desde el principio de este proyecto. Para que se manden
+# correos de verdad (p. ej. al aprobar/rechazar una "Solicitud de cliente",
+# ver apps.clientes.views), hay que sobrescribir estas variables en el .env
+# con un SMTP real (mismo criterio que FACTURASEGURA_*: nunca se completa
+# un valor real acá, solo el default seguro). Django reemplaza esto por su
+# propio backend en memoria durante los tests, sin importar lo que diga
+# este setting, así que nunca se manda un correo real al correr la suite.
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'Global Exchange <no-reply@globalexchange.com.py>')
 
 AUTHENTICATION_BACKENDS = (
     'apps.authentication.backends.KeycloakOIDCAuthenticationBackend',
@@ -181,3 +195,48 @@ CONFIRMACION_OPERACION_VIGENCIA_SEGUNDOS = 300
 # así que es el valor por defecto elegido para que la sesión de Stripe y
 # la tasa fijada venzan juntas en el caso por defecto.
 PAGO_OPERACION_VIGENCIA_SEGUNDOS = 1800
+
+# --- Factura Segura (emisión de documentos electrónicos ante SIFEN) ---
+# Factura Segura es un ESI (External Systems Interoperation) registrado
+# ante el SIFEN del Paraguay: a diferencia de SIPAP, sí tiene un entorno
+# de test real (ver apps.divisas.factura_electronica), pero con rangos
+# de numeración de documento fijos y limitados por la habilitación del
+# emisor, así que nunca se simula localmente — se usa directamente.
+# FACTURASEGURA_AUTH_TOKEN se genera una sola vez (POST /login, ver
+# manual) y queda vigente hasta que cambie la contraseña del usuario
+# ESI: no hace falta volver a loguearse en cada llamada.
+FACTURASEGURA_BASE_URL = env(
+    'FACTURASEGURA_BASE_URL', default='https://apitest.facturasegura.com.py/misife00/v1/esi',
+)
+FACTURASEGURA_AUTH_TOKEN = env('FACTURASEGURA_AUTH_TOKEN', default='')
+
+# Datos fijos del emisor habilitado (los mismos para cualquier documento
+# que se emita): RUC, timbrado, domicilio y actividades económicas tal
+# como quedaron registrados en Factura Segura. Configurables por entorno
+# (cada integrante del equipo tiene su propia habilitación de prueba),
+# nunca hardcodeados en apps.divisas.factura_electronica.
+FACTURASEGURA_EMISOR_RUC = env('FACTURASEGURA_EMISOR_RUC', default='')
+FACTURASEGURA_EMISOR_DV = env('FACTURASEGURA_EMISOR_DV', default='')
+FACTURASEGURA_EMISOR_TIPO_CONTRIBUYENTE = env('FACTURASEGURA_EMISOR_TIPO_CONTRIBUYENTE', default='1')
+FACTURASEGURA_EMISOR_NUM_TIMBRADO = env('FACTURASEGURA_EMISOR_NUM_TIMBRADO', default='')
+FACTURASEGURA_EMISOR_FECHA_INICIO_TIMBRADO = env('FACTURASEGURA_EMISOR_FECHA_INICIO_TIMBRADO', default='')
+FACTURASEGURA_EMISOR_NOMBRE = env('FACTURASEGURA_EMISOR_NOMBRE', default='Global Exchange S.A.')
+FACTURASEGURA_EMISOR_DIRECCION = env('FACTURASEGURA_EMISOR_DIRECCION', default='')
+FACTURASEGURA_EMISOR_NUMERO_CASA = env('FACTURASEGURA_EMISOR_NUMERO_CASA', default='0')
+FACTURASEGURA_EMISOR_COD_DEPARTAMENTO = env('FACTURASEGURA_EMISOR_COD_DEPARTAMENTO', default='1')
+FACTURASEGURA_EMISOR_DESC_DEPARTAMENTO = env('FACTURASEGURA_EMISOR_DESC_DEPARTAMENTO', default='CAPITAL')
+FACTURASEGURA_EMISOR_COD_CIUDAD = env('FACTURASEGURA_EMISOR_COD_CIUDAD', default='1')
+FACTURASEGURA_EMISOR_DESC_CIUDAD = env('FACTURASEGURA_EMISOR_DESC_CIUDAD', default='ASUNCION (DISTRITO)')
+FACTURASEGURA_EMISOR_TELEFONO = env('FACTURASEGURA_EMISOR_TELEFONO', default='')
+FACTURASEGURA_EMISOR_EMAIL = env('FACTURASEGURA_EMISOR_EMAIL', default='')
+# Lista de {"cActEco", "dDesActEco"} tal como la exige el JSON de SIFEN.
+# No hay forma razonable de que esto venga de una variable de entorno
+# plana, así que queda fija acá (no en el módulo, para que un fork de
+# este proyecto con otra habilitación solo tenga que tocar settings).
+FACTURASEGURA_EMISOR_ACTIVIDADES_ECONOMICAS = [
+    {'cActEco': '62010', 'dDesActEco': 'Actividades de programación informática'},
+    {'cActEco': '74909', 'dDesActEco': 'Otras actividades profesionales, científicas y técnicas n.c.p.'},
+]
+# Establecimiento y punto de expedición habilitados para este ESI.
+FACTURASEGURA_ESTABLECIMIENTO = env('FACTURASEGURA_ESTABLECIMIENTO', default='001')
+FACTURASEGURA_PUNTO_EXPEDICION = env('FACTURASEGURA_PUNTO_EXPEDICION', default='003')

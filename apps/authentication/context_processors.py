@@ -21,11 +21,23 @@ def permisos_ui_context(request):
             'puede_ver_roles': False,
             'puede_ver_historial_propio': False,
             'puede_ver_caja': False,
+            'puede_solicitar_cliente': False,
         }
 
     roles = request.session.get('keycloak_roles', [])
     es_admin = 'admin' in roles or request.user.is_staff or request.user.is_superuser
     tiene_clientes_asociados = request.user.is_authenticated and request.user.clientes.filter(is_active=True).exists()
+    # Puede autogestionar su alta (ver apps.clientes.views.SolicitarClienteView)
+    # cualquiera cuyos roles de Keycloak sean, como mucho, 'cliente' (sin
+    # ningún otro rol de negocio) y que todavía no tenga un Cliente
+    # asociado: cubre tanto al usuario recién registrado sin ningún rol
+    # todavía, como a quien ya tiene el rol 'cliente' pero nadie le creó
+    # el Cliente. Alguien con OTRO rol de negocio (analista_cambiario,
+    # cajero, etc.) es personal, no un cliente en potencia, y nunca
+    # debería terminar en esta pantalla aunque tampoco tenga cliente.
+    puede_solicitar_cliente = (
+        not (set(roles) - {'cliente'}) and not es_admin and not tiene_clientes_asociados
+    )
     # Solo administración gestiona el catálogo de divisas. Analistas y
     # clientes tienen accesos separados sobre las tasas.
     puede_ver_divisas = es_admin
@@ -53,4 +65,5 @@ def permisos_ui_context(request):
         'puede_ver_tasas': puede_ver_tasas,
         'puede_configurar_comisiones': puede_configurar_comisiones,
         'puede_ver_caja': puede_ver_caja,
+        'puede_solicitar_cliente': puede_solicitar_cliente,
     }
