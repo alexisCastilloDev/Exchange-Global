@@ -37,6 +37,9 @@ services:
       KC_DB_PASSWORD: ${DB_PASSWORD}
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # TEMPORAL: diagnóstico del registro que falla solo en producción (ver
+      # hotfix/V1.4.1). Revertir una vez resuelto.
+      KC_LOG_LEVEL: "INFO,org.keycloak.authentication:DEBUG,org.keycloak.events:DEBUG,org.keycloak.userprofile:DEBUG"
     volumes:
       - ../../keycloak/themes/global-exchange:/opt/keycloak/themes/global-exchange:ro
       # Realm exportado desde desarrollo. Vive fuera del repo, solo en el servidor.
