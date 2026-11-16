@@ -22,7 +22,7 @@ Contexto esperado: usuarios, query y roles_por_usuario.
 
 <div class="contenedor-filtro">
     <form method="GET" action="" class="d-flex align-items-center gap-2 mb-0" style="flex: 1;">
-        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo...">
+        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por usuario o correo...">
         <button type="submit" class="btn btn-secondary text-nowrap">
             <i class="bi bi-search me-1"></i>Buscar
         </button>
@@ -34,7 +34,7 @@ Contexto esperado: usuarios, query y roles_por_usuario.
         <table class="table mb-0">
             <thead>
                 <tr>
-                    <th>Nombre</th>
+                    <th>Usuario</th>
                     <th>Correo</th>
                     <th>Estado</th>
                     <th>Rol</th>
@@ -44,7 +44,7 @@ Contexto esperado: usuarios, query y roles_por_usuario.
             <tbody>
                 {% for u in usuarios %}
                 <tr>
-                    <td>{{ u.first_name }} {{ u.last_name }}</td>
+                    <td>{{ u.username }}</td>
                     <td>{{ u.email }}</td>
                     <td>
                         {% if u.is_active %}
