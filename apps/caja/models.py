@@ -182,6 +182,19 @@ class OperacionVentanilla(models.Model):
     Es exactamente la lectura que usa el Criterio 3 de la HU al describir
     qué moneda debe entregar el cajero en cada caso ("la divisa en una
     venta, guaraníes en una compra").
+
+    ``cliente_identificador``/``cliente_nombre``/``cliente_email`` existen
+    para que, al igual que una compra/venta online
+    (``apps.divisas.models.CalculoOperacion``), esta operación también
+    pueda facturarse ante SIFEN (ver
+    ``apps.divisas.factura_electronica``): a diferencia del cliente
+    online, uno de mostrador no tiene ningún ``apps.clientes.models.Cliente``
+    asociado, así que estos tres campos hacen ese mismo papel de receptor
+    ("No Contribuyente" por cédula/RUC). Quedan en blanco a nivel de
+    modelo (para no romper una creación directa que no los necesite,
+    como en los tests) pero son obligatorios en
+    ``apps.caja.forms.OperacionVentanillaForm``: el cajero siempre los
+    carga al registrar la operación desde la pantalla real.
     """
 
     TIPO_COMPRA = 'COMPRA'
@@ -216,6 +229,13 @@ class OperacionVentanilla(models.Model):
     comision_porcentaje = models.DecimalField(max_digits=6, decimal_places=3, verbose_name='Comisión (%)')
     comision = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='Comisión')
     monto_pyg = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='Monto en guaraníes')
+    cliente_identificador = models.CharField(
+        max_length=20, blank=True, verbose_name='CI o RUC del cliente',
+    )
+    cliente_nombre = models.CharField(max_length=150, blank=True, verbose_name='Nombre del cliente')
+    cliente_email = models.EmailField(
+        blank=True, verbose_name='Email del cliente (para la factura electrónica)',
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

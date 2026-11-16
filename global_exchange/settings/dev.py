@@ -38,3 +38,22 @@ if 'test' in sys.argv:
     # usar esta URL.
     FACTURASEGURA_BASE_URL = 'http://127.0.0.1:1/'
     FACTURASEGURA_AUTH_TOKEN = ''
+
+if 'test' in sys.argv or 'pytest' in sys.modules:
+    # mozilla_django_oidc.middleware.SessionRefresh (ver MIDDLEWARE en
+    # base.py) solo deja pasar una request autenticada si la sesión tiene
+    # 'oidc_id_token_expiration' vigente — un valor que solo pone un login
+    # real contra Keycloak. client.force_login()/client.login() (los que
+    # usan los tests) nunca lo setean, así que sin esto cualquier test que
+    # haga un GET después de loguearse quedaría redirigido a Keycloak en
+    # vez de recibir la respuesta esperada. 'pytest' in sys.modules cubre
+    # también a pytest (tests/test_auth.py y compañía), que 'test' in
+    # sys.argv no detecta.
+    MIDDLEWARE = [m for m in MIDDLEWARE if m != 'mozilla_django_oidc.middleware.SessionRefresh']
+
+    # PBKDF2 (el hasher por defecto) es lento a propósito, incluso para los
+    # tests: con cientos de tests que crean usuarios (User.objects.create_user),
+    # ese costo se repite una enormidad de veces y es puro tiempo de
+    # ejecución, sin ningún valor de seguridad real (nunca se expone nada
+    # de esta base de test). MD5 es inseguro, pero acá no importa.
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']

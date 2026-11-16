@@ -35,7 +35,7 @@ Contexto esperado: documentos.
                 <tr>
                     <td>{{ documento.creado_en }}</td>
                     <td>{{ documento.numero_documento }}</td>
-                    <td>{{ documento.transaccion.cliente }}</td>
+                    <td>{{ documento.nombre_receptor }}</td>
                     <td>
                         {% if documento.estado == 'ERROR_GENERACION' %}
                             <span class="badge bg-danger">{{ documento.get_estado_display }}</span>

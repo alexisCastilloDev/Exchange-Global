@@ -1683,12 +1683,16 @@ class DocumentoElectronico(models.Model):
     independiente de la entrega del dinero: una falla acá nunca bloquea
     ni revierte el pago ya confirmado, y viceversa (criterio 3).
 
-    Puede asociarse tanto a una compra/venta (``calculo_operacion``)
-    como a un cambio entre divisas (``calculo_triangulacion``):
-    exactamente una de las dos, nunca ambas ni ninguna (mismo patrón
-    que ``Pago`` — ver ``clean``). Cada una es un ``OneToOneField``, así
-    que la base de datos garantiza por sí sola que una transacción no
-    puede tener más de un documento (criterio 5: nunca se duplica).
+    Puede asociarse a una compra/venta online (``calculo_operacion``), a
+    un cambio entre divisas online (``calculo_triangulacion``) o a una
+    compra/venta en ventanilla (``operacion_ventanilla`` —
+    ``apps.caja.models.OperacionVentanilla``, referenciada por string para
+    evitar un import circular entre ``apps.divisas`` y ``apps.caja``):
+    exactamente una de las tres, nunca más de una ni ninguna (mismo
+    patrón que ``Pago`` — ver ``clean``). Cada una es un
+    ``OneToOneField``, así que la base de datos garantiza por sí sola que
+    una transacción no puede tener más de un documento (criterio 5:
+    nunca se duplica).
     """
 
     ESTADO_GENERADO = 'GENERADO'
@@ -1721,6 +1725,14 @@ class DocumentoElectronico(models.Model):
         blank=True,
         related_name='documento_electronico',
         verbose_name='Cambio de divisas facturado',
+    )
+    operacion_ventanilla = models.OneToOneField(
+        'caja.OperacionVentanilla',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='documento_electronico',
+        verbose_name='Operación de ventanilla facturada',
     )
     tipo_documento = models.CharField(
         max_length=1,
@@ -1789,8 +1801,9 @@ class DocumentoElectronico(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    models.Q(calculo_operacion__isnull=False, calculo_triangulacion__isnull=True)
-                    | models.Q(calculo_operacion__isnull=True, calculo_triangulacion__isnull=False)
+                    models.Q(calculo_operacion__isnull=False, calculo_triangulacion__isnull=True, operacion_ventanilla__isnull=True)
+                    | models.Q(calculo_operacion__isnull=True, calculo_triangulacion__isnull=False, operacion_ventanilla__isnull=True)
+                    | models.Q(calculo_operacion__isnull=True, calculo_triangulacion__isnull=True, operacion_ventanilla__isnull=False)
                 ),
                 name='documento_electronico_exactamente_una_transaccion',
             ),
@@ -1802,13 +1815,33 @@ class DocumentoElectronico(models.Model):
 
     def clean(self):
         """Valida que el documento pertenezca a exactamente una transacción."""
-        if bool(self.calculo_operacion_id) == bool(self.calculo_triangulacion_id):
+        cantidad = sum(
+            bool(valor) for valor in (self.calculo_operacion_id, self.calculo_triangulacion_id, self.operacion_ventanilla_id)
+        )
+        if cantidad != 1:
             raise ValidationError('Un documento electrónico debe pertenecer a exactamente una transacción.')
 
     @property
     def transaccion(self):
-        """Devuelve la compra/venta o el cambio al que pertenece este documento."""
-        return self.calculo_operacion or self.calculo_triangulacion
+        """Devuelve la compra/venta online, el cambio o la operación de ventanilla de este documento."""
+        return self.calculo_operacion or self.calculo_triangulacion or self.operacion_ventanilla
+
+    @property
+    def nombre_receptor(self):
+        """Nombre a mostrar del receptor, sea un ``Cliente`` del sistema o uno de mostrador (ventanilla).
+
+        Pensado para plantillas: a diferencia de encadenar
+        ``transaccion.cliente|default:transaccion.cliente_nombre`` ahí
+        mismo (el argumento de un filtro no tiene la tolerancia a
+        atributos inexistentes que sí tiene una variable normal, y
+        truena si ``transaccion`` no tiene ``cliente_nombre``), esta
+        property resuelve la diferencia en Python, donde es seguro.
+        """
+        transaccion = self.transaccion
+        cliente = getattr(transaccion, 'cliente', None)
+        if cliente is not None:
+            return str(cliente)
+        return getattr(transaccion, 'cliente_nombre', '')
 
     @property
     def factura_pendiente(self):

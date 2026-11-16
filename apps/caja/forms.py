@@ -67,7 +67,7 @@ class AperturaCajaForm(forms.Form):
 
 
 class OperacionVentanillaForm(forms.Form):
-    """Valida la divisa y el monto de una compra o venta de divisas en ventanilla.
+    """Valida la divisa, el monto y los datos del cliente de una compra o venta de divisas en ventanilla.
 
     Mismo criterio de validación que ``apps.divisas.forms.CalculoOperacionForm``
     usa para el flujo online del cliente: rechaza un monto negativo, en cero
@@ -75,8 +75,38 @@ class OperacionVentanillaForm(forms.Form):
     operable (es la moneda contra la que siempre se opera, nunca la que se
     compra o vende), y tampoco una divisa sin cotización vigente, porque no
     hay con qué calcular la tasa aplicada.
+
+    ``cliente_identificador``/``cliente_nombre``/``cliente_email`` son el
+    receptor de la Factura Electrónica que se le emite al cliente de
+    mostrador (ver ``apps.divisas.factura_electronica``): a diferencia de
+    ``apps.caja.models.OperacionVentanilla``, donde quedan en blanco a
+    nivel de modelo, acá CI/RUC y nombre son obligatorios — sin esos dos
+    datos no hay forma de facturar la operación. El email es el único
+    opcional: Factura Segura lo exige para aprobar la factura, pero si el
+    cliente no lo tiene a mano la operación en sí igual se registra (la
+    factura queda "pendiente de generación", visible para un
+    administrador, en vez de bloquear el cobro en caja).
     """
 
+    cliente_identificador = forms.CharField(
+        label='CI o RUC del cliente',
+        max_length=20,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        error_messages={'required': 'Debe ingresar la CI o el RUC del cliente.'},
+    )
+    cliente_nombre = forms.CharField(
+        label='Nombre del cliente',
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        error_messages={'required': 'Debe ingresar el nombre del cliente.'},
+    )
+    cliente_email = forms.EmailField(
+        label='Email del cliente (opcional)',
+        required=False,
+        widget=forms.EmailInput(attrs={'class': 'form-control'}),
+        error_messages={'invalid': 'Ingresá un email válido.'},
+        help_text='Si no lo cargás, la factura queda pendiente de generación hasta que se complete.',
+    )
     divisa = forms.ChoiceField(
         label='Divisa',
         choices=[],
