@@ -57,3 +57,18 @@ if 'test' in sys.argv or 'pytest' in sys.modules:
     # ejecución, sin ningún valor de seguridad real (nunca se expone nada
     # de esta base de test). MD5 es inseguro, pero acá no importa.
     PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
+    # apps.divisas.views._verificar_saldo_casa_de_cambio y
+    # apps.divisas.entrega.realizar_entrega consultan el saldo real a
+    # sipap-sim (apps.divisas.casa_de_cambio.consultar_saldo_casa_de_cambio)
+    # antes de confirmar o entregar. Ningún test de confirmación/entrega
+    # mockea esa llamada puntual (solo entrega.requests.post, el envío de
+    # la transferencia en sí); sin esto, apuntarían al SIPAP_BASE_URL real
+    # del .env, que durante una corrida local puede incluso estar
+    # arriba (ver sipap_sim/, "runserver 8001"), mezclando datos de la
+    # base de desarrollo con los tests. Un puerto cerrado hace que la
+    # consulta falle rápido (SipapComunicacionError) y caiga al espejo
+    # local (CuentaPropia), el mismo valor que ya usaban estas dos
+    # funciones antes de este chequeo en vivo — ningún test existente
+    # cambia de comportamiento.
+    SIPAP_BASE_URL = 'http://127.0.0.1:1'

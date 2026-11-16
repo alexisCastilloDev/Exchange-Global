@@ -91,11 +91,21 @@ def _verificar_saldo_casa_de_cambio(transaccion):
 
     Se llama al confirmar, después del chequeo de cambio de cotización
     (que tiene prioridad): no tiene sentido que el cliente pague algo
-    que Global Exchange no va a poder entregarle. El saldo propio se
-    lleva en esta misma base (``CuentaPropia``, espejado contra las
-    transferencias reales que se mandan a sipap-sim al entregar, ver
-    ``apps.divisas.entrega``), así que esto es una consulta local, sin
-    red y sin depender de que sipap-sim esté arriba en este instante.
+    que Global Exchange no va a poder entregarle.
+
+    Consulta primero el saldo **real** a sipap-sim
+    (``consultar_saldo_casa_de_cambio``): el espejo local (``CuentaPropia``)
+    solo se corrige al visitar "Fondos propios" o al completar una
+    entrega, así que confiar únicamente en él arriesga confirmar contra
+    un saldo desactualizado (por ejemplo, si alguien movió fondos de esa
+    cuenta directamente en sipap-sim desde la última sincronización). De
+    paso, corrige el espejo si quedó desalineado, igual que ya hace
+    ``CuentaPropiaListView``. Si sipap-sim no responde
+    (``SipapComunicacionError``), cae al espejo local en vez de bloquear
+    la confirmación por completo — más vale una verificación algo vieja
+    que ninguna; ``apps.divisas.entrega.realizar_entrega`` vuelve a
+    chequear el saldo real, ahora sí obligatorio, justo antes de
+    transferir de verdad.
 
     Returns:
         str | None: ``None`` si hay saldo suficiente (se puede
@@ -105,8 +115,14 @@ def _verificar_saldo_casa_de_cambio(transaccion):
     """
     divisa = divisa_a_entregar(transaccion)
     monto = monto_a_entregar(transaccion)
-    cuenta = CuentaPropia.objects.filter(divisa=divisa).first()
-    if cuenta is None or cuenta.saldo < monto:
+    try:
+        saldo = consultar_saldo_casa_de_cambio(divisa.codigo)
+    except SipapComunicacionError:
+        cuenta = CuentaPropia.objects.filter(divisa=divisa).first()
+        saldo = cuenta.saldo if cuenta else None
+    else:
+        CuentaPropia.objects.update_or_create(divisa=divisa, defaults={'saldo': saldo or Decimal('0.00')})
+    if saldo is None or saldo < monto:
         return (
             f'Global Exchange no dispone de fondos suficientes en {divisa.codigo} para completar '
             'esta operación en este momento. La operación fue cancelada; intentá nuevamente más tarde.'
