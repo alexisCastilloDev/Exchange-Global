@@ -2005,7 +2005,7 @@ class DocumentosElectronicosListView(AdminDivisasMixin, ListView):
     def get_queryset(self):
         """Trae de una sola vez el cliente de cada transacción facturada, para no repetir consultas."""
         return DocumentoElectronico.objects.select_related(
-            'calculo_operacion__cliente', 'calculo_triangulacion__cliente',
+            'calculo_operacion__cliente', 'calculo_triangulacion__cliente', 'operacion_ventanilla',
         )
 
 

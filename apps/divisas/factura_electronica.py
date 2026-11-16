@@ -12,6 +12,17 @@ revierte el pago ya confirmado, y viceversa (criterio 3): se usa
 siempre ``intentar_emitir_documento_electronico``, que no relanza nada
 hacia quien la llama.
 
+También factura una compra/venta registrada en ventanilla
+(``apps.caja.models.OperacionVentanilla`` — ver
+``apps.caja.views.RegistrarOperacionVentanillaView``): a diferencia de
+una transacción online, se la considera "pagada" de inmediato (se cobra
+en efectivo, en el momento), así que ahí se llama a
+``intentar_emitir_documento_electronico`` apenas se registra la
+operación, no desde un webhook/confirmación de pago. El receptor de la
+factura (``_datos_receptor``) se arma distinto en ese caso: una
+``OperacionVentanilla`` no tiene ningún ``Cliente`` del sistema, así que
+usa sus propios datos de mostrador en vez de los del ``Cliente``.
+
 Autenticación: vía un ``Authentication-Token`` de larga duración
 (``settings.FACTURASEGURA_AUTH_TOKEN``), obtenido una sola vez por un
 administrador contra ``POST /login?include_auth_token`` y válido hasta
@@ -81,6 +92,7 @@ from django.conf import settings
 from django.db import IntegrityError
 from django.utils import timezone
 
+from apps.caja.models import OperacionVentanilla
 from apps.clientes.models import MetodoPago
 from apps.divisas.models import (
     CalculoOperacion,
@@ -175,10 +187,17 @@ def _total_en_pyg(transaccion):
     hacía ``monto_final`` para una compra/venta (bug corregido).
     El redondeo a entero reutiliza el mismo criterio que
     ``apps.divisas.pagos_stripe`` ya usa para cobrar en PYG (moneda sin
-    decimales, tanto en Stripe como en SIFEN).
+    decimales, tanto en Stripe como en SIFEN). Una ``OperacionVentanilla``
+    (compra/venta en ventanilla, nunca un cambio entre divisas: ver
+    ``apps.caja.models.OperacionVentanilla``) ya trae su propio total en
+    PYG en ``monto_pyg``, calculado por la misma
+    ``apps.divisas.views._calcular_importe_operacion`` que usa el flujo
+    online — ninguna conversión adicional hace falta.
     """
     if isinstance(transaccion, CalculoTriangulacion):
         monto = transaccion.monto_final * transaccion.tasa_venta_aplicada
+    elif isinstance(transaccion, OperacionVentanilla):
+        monto = transaccion.monto_pyg
     else:
         monto = transaccion.monto_final
     return monto.to_integral_value(rounding=ROUND_HALF_UP)
@@ -192,7 +211,9 @@ def _comision_en_pyg(transaccion):
     En un cambio, ``comision`` se calculó en la divisa de **destino**
     (Paso B de ``_calcular_triangulacion``): se convierte a PYG con la
     misma tasa usada en ese paso (``tasa_venta_aplicada``), igual que
-    ``_total_en_pyg``.
+    ``_total_en_pyg``. Una ``OperacionVentanilla`` también trae su
+    ``comision`` ya en PYG, igual que una compra/venta online: comparte
+    la rama "else".
     """
     if isinstance(transaccion, CalculoTriangulacion):
         comision = transaccion.comision * transaccion.tasa_venta_aplicada
@@ -274,18 +295,39 @@ def _tipo_transaccion(transaccion):
 
     ``dDesTipTra`` es obligatorio siempre que se envíe ``iTipTra``: no
     alcanza con mandar el código solo, hay que mandar también su texto.
+
+    Una ``OperacionVentanilla`` no tiene un ``tipo`` directamente
+    comparable: el suyo está escrito desde la perspectiva de la casa de
+    cambio ("Compra" es la casa comprándole al cliente), mientras que
+    ``CalculoOperacion.tipo`` (contra el que se compara arriba) está
+    escrito desde la perspectiva del cliente. Por eso se traduce primero
+    a su equivalente de ``CalculoOperacion`` con la misma inversión que ya
+    usa ``apps.caja.views.RegistrarOperacionVentanillaView`` para calcular
+    el monto ("Compra" de ventanilla ≡ "Venta" de ``CalculoOperacion``, y
+    viceversa — ver el docstring de ``apps.caja.models.OperacionVentanilla``),
+    en vez de reinterpretar el código SIFEN de cero para un modelo
+    distinto.
     """
     if isinstance(transaccion, CalculoTriangulacion):
         return '5', 'Venta de divisas'
-    if transaccion.tipo == CalculoOperacion.TIPO_COMPRA:
+    if isinstance(transaccion, OperacionVentanilla):
+        tipo_equivalente = (
+            CalculoOperacion.TIPO_VENTA if transaccion.tipo == OperacionVentanilla.TIPO_COMPRA
+            else CalculoOperacion.TIPO_COMPRA
+        )
+    else:
+        tipo_equivalente = transaccion.tipo
+    if tipo_equivalente == CalculoOperacion.TIPO_COMPRA:
         return '6', 'Compra de divisas'
     return '5', 'Venta de divisas'
 
 
 def _descripcion_operacion(transaccion):
-    """Descripción legible del ítem, distinta para una compra/venta o un cambio entre divisas."""
+    """Descripción legible del ítem, distinta para una compra/venta, un cambio, o una operación de ventanilla."""
     if isinstance(transaccion, CalculoTriangulacion):
         return f'Cambio de {transaccion.codigo_divisa_origen} a {transaccion.codigo_divisa_destino}'
+    if isinstance(transaccion, OperacionVentanilla):
+        return f'{transaccion.get_tipo_display()} de {transaccion.divisa.codigo}'
     return f'{transaccion.get_tipo_display()} de {transaccion.codigo_divisa}'
 
 
@@ -312,6 +354,22 @@ def _email_receptor(cliente):
     return cliente.email or ''
 
 
+def _datos_receptor(transaccion):
+    """CI/RUC, nombre y email del receptor, sea el ``Cliente`` de una transacción online o uno de ventanilla.
+
+    Una ``OperacionVentanilla`` no tiene ningún ``apps.clientes.models.
+    Cliente`` del sistema asociado (es un cliente de mostrador, sin
+    cuenta): sus propios ``cliente_identificador``/``cliente_nombre``/
+    ``cliente_email``, cargados por el cajero al registrar la operación
+    (ver ``apps.caja.forms.OperacionVentanillaForm``), hacen ese mismo
+    papel de receptor.
+    """
+    if isinstance(transaccion, OperacionVentanilla):
+        return transaccion.cliente_identificador, transaccion.cliente_nombre, transaccion.cliente_email
+    cliente = transaccion.cliente
+    return cliente.identificador, cliente.nombre_completo, _email_receptor(cliente)
+
+
 def _info_adicional(transaccion):
     """Texto para ``dInfAdic``: deja constancia de la tasa aplicada, impresa en el KuDE.
 
@@ -330,16 +388,24 @@ def _info_adicional(transaccion):
             f'Tasa aplicada: {transaccion.tasa_cruzada} '
             f'({transaccion.codigo_divisa_origen}/{transaccion.codigo_divisa_destino})'
         )
+    if isinstance(transaccion, OperacionVentanilla):
+        return f'Tasa aplicada: {transaccion.tasa_aplicada} ({transaccion.divisa.codigo}/PYG)'
     return f'Tasa aplicada: {transaccion.tasa_aplicada} ({transaccion.codigo_divisa}/PYG)'
 
 
 def _grupo_pago(transaccion, monto):
-    """Mapea el medio de pago real (``Pago.medio_pago``) al tipo de pago que espera la API.
+    """Mapea el medio de pago real al tipo de pago que espera la API.
 
     Un único pago por el total de la operación, ya en PYG (ver
     ``_total_en_pyg``): esta HU no reparte el cobro en más de un medio.
+    Una ``OperacionVentanilla`` no tiene ningún ``Pago`` (se cobra en
+    efectivo, en el momento, en la propia ventanilla): se mapea directo
+    a ``iTiPago='1'`` (Efectivo), sin mirar ``transaccion.pago`` en
+    absoluto.
     """
     base = {'dMonTiPag': str(monto), 'cMoneTiPag': 'PYG', 'dTiCamTiPag': '1'}
+    if isinstance(transaccion, OperacionVentanilla):
+        return {**base, 'iTiPago': '1'}
     if transaccion.pago.medio_pago == MetodoPago.TIPO_TARJETA:
         return {**base, 'iTiPago': '3', 'iDenTarj': '1', 'iForProPa': '1'}
     return {**base, 'iTiPago': '5'}
@@ -365,7 +431,7 @@ def _armar_resumido_de(documento, transaccion, monto):
     ``dDesTipTra`` (ver ``_tipo_transaccion``) sí están verificados
     contra la tabla real del manual.
     """
-    cliente = transaccion.cliente
+    identificador_receptor, nombre_receptor, email_receptor = _datos_receptor(transaccion)
     ahora = timezone.localtime(timezone.now())
     tipo_transaccion, descripcion_tipo_transaccion = _tipo_transaccion(transaccion)
     return {
@@ -398,9 +464,9 @@ def _armar_resumido_de(documento, transaccion, monto):
         'iTiOpe': '2',
         'cPaisRec': 'PRY',
         'iTipIDRec': '1',
-        'dNumIDRec': cliente.identificador,
-        'dNomRec': cliente.nombre_completo,
-        'dEmailRec': _email_receptor(cliente),
+        'dNumIDRec': identificador_receptor,
+        'dNomRec': nombre_receptor,
+        'dEmailRec': email_receptor,
         'iIndPres': '1',
         'iCondOpe': '1',
         'gPaConEIni': [_grupo_pago(transaccion, monto)],
@@ -448,19 +514,20 @@ def _generar(documento, transaccion):
     y el número ya reservado queda igual de "quemado" por diseño (ver
     el docstring del módulo).
 
-    Antes de llamar a la API, valida que el cliente tenga un email
-    cargado (``_email_receptor``): ``dEmailRec`` es obligatorio para
+    Antes de llamar a la API, valida que el receptor tenga un email
+    cargado (``_datos_receptor``): ``dEmailRec`` es obligatorio para
     Factura Segura (lo confirmó un rechazo real, ``code=-10009``,
     durante las pruebas de esta HU). Si falta, no se llama a la API en
     absoluto: es un dato que nunca va a cambiar solo reintentando
     contra el mismo número.
     """
     limite = DocumentoElectronico._meta.get_field('error_generacion').max_length
-    if not _email_receptor(transaccion.cliente):
+    _, _, email_receptor = _datos_receptor(transaccion)
+    if not email_receptor:
         documento.error_generacion = (
-            'El cliente no tiene un email cargado (ni en su usuario de Keycloak ni en el '
-            'campo legado). dEmailRec es obligatorio para Factura Segura: cargar el email '
-            'del cliente y reintentar.'
+            'El cliente no tiene un email cargado (ni en su usuario de Keycloak, ni en el '
+            'campo legado, ni cargado a mano en ventanilla). dEmailRec es obligatorio para '
+            'Factura Segura: cargar el email del cliente y reintentar.'
         )[:limite]
         documento.estado = DocumentoElectronico.ESTADO_ERROR_GENERACION
         documento.save(update_fields=['estado', 'error_generacion', 'actualizado_en'])
@@ -534,8 +601,10 @@ def emitir_documento_electronico(transaccion):
     (exitoso o no), lo devuelve sin volver a llamar a Factura Segura.
 
     Args:
-        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``
-            recién marcada "Pagada".
+        transaccion: Una ``CalculoOperacion``/``CalculoTriangulacion``
+            recién marcada "Pagada", o una ``OperacionVentanilla`` recién
+            registrada (siempre "pagada" en los hechos: se cobra en
+            efectivo en el momento).
 
     Returns:
         DocumentoElectronico | None: El documento (nuevo o ya
@@ -549,7 +618,12 @@ def emitir_documento_electronico(transaccion):
     if documento_existente is not None:
         return documento_existente
 
-    campo = 'calculo_operacion' if isinstance(transaccion, CalculoOperacion) else 'calculo_triangulacion'
+    if isinstance(transaccion, CalculoOperacion):
+        campo = 'calculo_operacion'
+    elif isinstance(transaccion, OperacionVentanilla):
+        campo = 'operacion_ventanilla'
+    else:
+        campo = 'calculo_triangulacion'
     try:
         numero_documento = ContadorDocumentoElectronico.siguiente_numero(ContadorDocumentoElectronico.TIPO_FACTURA)
     except RangoDocumentosAgotadoError:
