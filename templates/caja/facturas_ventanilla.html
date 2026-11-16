@@ -1,0 +1,116 @@
+<!--
+Lista las Facturas Electrónicas de las operaciones de ventanilla del propio cajero, de solo lectura.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: documentos (paginado), page_obj, is_paginated, tiene_facturas,
+fecha_desde_actual, fecha_hasta_actual, querystring.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Facturas de ventanilla - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-cash-stack"></i> Caja</span>
+        <h1>Facturas de ventanilla</h1>
+        <p>Facturas electrónicas emitidas ante SIFEN por tus propias compras y ventas en ventanilla.</p>
+    </div>
+    <a href="{% url 'caja:panel' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver</a>
+</div>
+
+<div class="contenedor-filtro">
+    <form method="GET" action="" class="d-flex align-items-end gap-3 flex-wrap mb-0">
+        <div>
+            <label for="fecha_desde" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Emitida desde</label>
+            <input type="date" name="fecha_desde" id="fecha_desde" value="{{ fecha_desde_actual }}" class="form-control">
+        </div>
+        <div>
+            <label for="fecha_hasta" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Emitida hasta</label>
+            <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ fecha_hasta_actual }}" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+        </button>
+        {% if fecha_desde_actual or fecha_hasta_actual %}
+            <a href="{% url 'caja:facturas' %}" style="font-size: 13px; color: var(--ge-brick);">Limpiar filtros</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha de emisión</th>
+                    <th>Número</th>
+                    <th>CDC</th>
+                    <th>Operación</th>
+                    <th>Cliente</th>
+                    <th>Monto (PYG)</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for documento in documentos %}
+                <tr>
+                    <td>{% if documento.emitida_en %}{{ documento.emitida_en|date:"d/m/Y H:i" }}{% else %}—{% endif %}</td>
+                    <td>{{ documento.numero_documento }}</td>
+                    <td>{{ documento.cdc|default:"—" }}</td>
+                    <td>{{ documento.operacion_ventanilla.get_tipo_display }} {{ documento.operacion_ventanilla.divisa.codigo }}</td>
+                    <td>{{ documento.operacion_ventanilla.cliente_nombre }}</td>
+                    <td class="ge-num">{{ documento.operacion_ventanilla.monto_pyg|floatformat:2 }}</td>
+                    <td>
+                        {% if documento.factura_pendiente %}
+                            <span class="badge bg-warning text-dark">Pendiente de generación</span>
+                        {% elif documento.es_definitivo %}
+                            <span class="badge bg-success">{{ documento.get_estado_display }}</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">{{ documento.get_estado_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if documento.cdc and not documento.factura_pendiente %}
+                        <a href="{% url 'caja:descargar_factura_operacion' pk=documento.operacion_ventanilla.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-file-pdf me-1"></i>Imprimir
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        {% if tiene_facturas %}
+                            No se encontraron facturas para el rango de fechas seleccionado.
+                        {% else %}
+                            Todavía no generaste ninguna factura electrónica en ventanilla.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación de facturas de ventanilla">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Anterior</a>
+                    </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

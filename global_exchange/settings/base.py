@@ -39,6 +39,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
+    # Renueva el token OIDC en segundo plano (ver OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS
+    # más abajo): sin esto, los roles de Keycloak que guarda la sesión
+    # (apps.authentication.backends.KeycloakOIDCAuthenticationBackend) solo se
+    # actualizan al volver a loguearse. Con esto, un cliente recién aprobado
+    # (apps.clientes.views.AprobarSolicitudClienteView) ve el cambio solo con
+    # seguir navegando, sin tipear usuario/contraseña de nuevo: Keycloak todavía
+    # tiene su sesión SSO activa, así que la renovación es un redirect
+    # silencioso, no un login real.
+    'mozilla_django_oidc.middleware.SessionRefresh',
+
     'apps.clientes.middleware.ClienteActivoMiddleware',
 ]
 
@@ -152,6 +162,12 @@ OIDC_STORE_ID_TOKEN = True
 # Sin la opción "Mantener la sesión iniciada", la sesión de Django termina al
 # cerrar el navegador, igual que la de Keycloak.
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Cada cuánto SessionRefresh (ver MIDDLEWARE) revalida el token contra
+# Keycloak. 15 minutos: que un cliente recién aprobado vea sus roles nuevos
+# sin desloguearse tarde relativamente poco, sin agregarle a todos los
+# usuarios demasiados redirects de fondo (el default de mozilla_django_oidc
+# es 1 hora).
+OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 
 # A dónde redirige después de login/logout exitoso
 LOGIN_REDIRECT_URL = '/'

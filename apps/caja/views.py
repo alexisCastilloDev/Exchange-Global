@@ -3,9 +3,10 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import IntegrityError, transaction
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
+from django.views.generic import ListView
 
 from apps.caja.forms import (
     AperturaCajaForm,
@@ -21,8 +22,13 @@ from apps.caja.models import (
     OperacionVentanilla,
     SaldoInicialCaja,
 )
-from apps.divisas.models import CalculoOperacion, Divisa
-from apps.divisas.views import _calcular_importe_operacion
+from apps.divisas.factura_electronica import (
+    consultar_estado_sifen,
+    descargar_kude,
+    intentar_emitir_documento_electronico,
+)
+from apps.divisas.models import CalculoOperacion, Divisa, DocumentoElectronico
+from apps.divisas.views import _calcular_importe_operacion, _parsear_fecha
 
 
 def _avisar_divisas_sin_cotizar(request, form):
@@ -218,7 +224,7 @@ class PanelCajaView(LoginRequiredMixin, UserPassesTestMixin, View):
         if caja is not None:
             divisas = Divisa.objects.filter(activa=True).order_by('codigo')
             saldos_actuales = [(divisa, caja.saldo_actual(divisa)) for divisa in divisas]
-            operaciones = caja.operaciones.select_related('divisa')[:20]
+            operaciones = caja.operaciones.select_related('divisa', 'documento_electronico')[:20]
             movimientos_extraordinarios = caja.movimientos_extraordinarios.select_related('divisa')[:20]
         return render(
             request,
@@ -358,7 +364,7 @@ class RegistrarOperacionVentanillaView(LoginRequiredMixin, UserPassesTestMixin, 
             )
             return render(request, 'caja/operacion_ventanilla.html', {'form': form, 'tipo': tipo, 'caja': caja})
 
-        OperacionVentanilla.objects.create(
+        operacion = OperacionVentanilla.objects.create(
             caja=caja,
             cajero=request.user,
             tipo=tipo,
@@ -368,9 +374,116 @@ class RegistrarOperacionVentanillaView(LoginRequiredMixin, UserPassesTestMixin, 
             comision_porcentaje=porcentaje,
             comision=comision,
             monto_pyg=monto_pyg,
+            cliente_identificador=form.cleaned_data['cliente_identificador'],
+            cliente_nombre=form.cleaned_data['cliente_nombre'],
+            cliente_email=form.cleaned_data['cliente_email'],
         )
+        # Se cobra en efectivo en el momento: a diferencia de una compra/venta
+        # online (que factura recién cuando un webhook confirma el pago), acá
+        # se considera "pagada" de inmediato. Nunca bloquea ni revierte el
+        # registro de la operación si falla (mismo criterio de contención que
+        # los otros 3 puntos que ya llaman a esta función).
+        intentar_emitir_documento_electronico(operacion)
         messages.success(request, 'La operación se registró correctamente y el saldo de la caja fue actualizado.')
         return redirect('caja:panel')
+
+
+class DescargarFacturaVentanillaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Descarga el KuDE (PDF) de la Factura Electrónica de una operación de ventanilla, para imprimirla.
+
+    Mismo criterio de permisos que el resto de caja (``test_func``): solo
+    el rol cajero, y solo sobre una operación de su propia autoría
+    (``cajero=request.user``) — un cajero no puede imprimir la factura de
+    una operación registrada por otro. Mismo criterio de "solo se
+    descarga una factura aprobada por SIFEN" que ya usa
+    ``apps.divisas.views.DescargarDocumentoElectronicoView`` (GE-86): si
+    todavía está pendiente de generación o de aprobación, se explica el
+    motivo en vez de descargar cualquier cosa.
+    """
+
+    def test_func(self):
+        """Solo el rol cajero puede descargar la factura de una operación de ventanilla."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cajero' in roles
+
+    def get(self, request, pk):
+        """Entrega el KuDE como adjunto, o redirige al panel con el motivo si no se puede todavía."""
+        operacion = get_object_or_404(OperacionVentanilla, pk=pk, cajero=request.user)
+        documento = getattr(operacion, 'documento_electronico', None)
+        if documento is None:
+            messages.error(request, 'Esta operación todavía no tiene ninguna factura electrónica generada.')
+            return redirect('caja:panel')
+
+        if documento.cdc and documento.estado == documento.ESTADO_GENERADO:
+            consultar_estado_sifen(documento)
+        if not documento.descargable:
+            messages.error(request, documento.motivo_no_descargable)
+            return redirect('caja:panel')
+
+        contenido = descargar_kude(documento)
+        if contenido is None:
+            messages.error(request, 'No se pudo descargar la factura desde Factura Segura. Volvé a intentarlo más tarde.')
+            return redirect('caja:panel')
+
+        respuesta = HttpResponse(contenido, content_type='application/pdf')
+        respuesta['Content-Disposition'] = f'attachment; filename="factura_{documento.cdc}.pdf"'
+        return respuesta
+
+
+class FacturasVentanillaListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista las Facturas Electrónicas de las operaciones de ventanilla del propio cajero.
+
+    Equivalente, para un cajero, a
+    ``apps.divisas.views.MisFacturasElectronicasListView`` (el cliente) o
+    ``apps.divisas.views.DocumentosElectronicosListView`` (el
+    administrador, con todas): acá el alcance es siempre
+    ``operacion_ventanilla__cajero=request.user`` — un cajero nunca ve las
+    facturas de operaciones registradas por otro, ni las de compras/ventas/
+    cambios online. A diferencia del historial de "Últimas operaciones de
+    ventanilla" del panel (``PanelCajaView``, que solo muestra las 20 más
+    recientes de la caja abierta), este listado es paginado y filtrable por
+    fecha de emisión, y no se limita a ninguna caja en particular ni a si
+    está abierta o cerrada.
+    """
+
+    model = DocumentoElectronico
+    template_name = 'caja/facturas_ventanilla.html'
+    context_object_name = 'documentos'
+    paginate_by = 20
+
+    def test_func(self):
+        """Solo el rol cajero puede ver sus propias facturas de ventanilla."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cajero' in roles
+
+    def get_queryset(self):
+        """Documentos de operaciones de ventanilla del cajero, filtrados por fecha de emisión."""
+        queryset = DocumentoElectronico.objects.filter(
+            operacion_ventanilla__cajero=self.request.user,
+        ).select_related('operacion_ventanilla', 'operacion_ventanilla__divisa')
+
+        desde = _parsear_fecha(self.request.GET.get('fecha_desde'))
+        if desde:
+            queryset = queryset.filter(emitida_en__date__gte=desde)
+
+        hasta = _parsear_fecha(self.request.GET.get('fecha_hasta'))
+        if hasta:
+            queryset = queryset.filter(emitida_en__date__lte=hasta)
+
+        return queryset.order_by('-creado_en')
+
+    def get_context_data(self, **kwargs):
+        """Agrega si el cajero tiene alguna factura sin filtrar y el estado de los filtros de fecha."""
+        context = super().get_context_data(**kwargs)
+        context['tiene_facturas'] = DocumentoElectronico.objects.filter(
+            operacion_ventanilla__cajero=self.request.user,
+        ).exists()
+        context['fecha_desde_actual'] = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta_actual'] = self.request.GET.get('fecha_hasta', '')
+        querystring = self.request.GET.copy()
+        querystring.pop('page', None)
+        context['querystring'] = querystring.urlencode()
+        return context
 
 
 class RegistrarMovimientoExtraordinarioView(LoginRequiredMixin, UserPassesTestMixin, View):

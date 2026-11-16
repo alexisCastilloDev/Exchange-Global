@@ -41,8 +41,14 @@ class RegistrarOperacionVentanillaTest(TestCase):
         self.url_panel = reverse('caja:panel')
 
     def _datos(self, monto='100.00'):
-        """Arma el POST de una operación con la divisa de prueba y el monto dado."""
-        return {'divisa': str(self.usd.pk), 'monto': monto}
+        """Arma el POST de una operación con la divisa de prueba, el monto dado y un cliente de mostrador."""
+        return {
+            'divisa': str(self.usd.pk),
+            'monto': monto,
+            'cliente_identificador': '4123456',
+            'cliente_nombre': 'Cliente de Prueba',
+            'cliente_email': 'cliente-ventanilla@test.com',
+        }
 
     # --- Criterio 1 ---
 
@@ -250,7 +256,15 @@ class RegistrarOperacionVentanillaSinDivisaPygTest(TestCase):
     def test_comprar_divisas_funciona_sin_que_nadie_haya_dado_de_alta_pyg_a_mano(self):
         """Una compra resuelve el saldo en PYG sin ningún paso de configuración previo."""
         response = self.client.post(
-            self.url_comprar, {'divisa': str(self.usd.pk), 'monto': '100.00'}, follow=True,
+            self.url_comprar,
+            {
+                'divisa': str(self.usd.pk),
+                'monto': '100.00',
+                'cliente_identificador': '4123456',
+                'cliente_nombre': 'Cliente de Prueba',
+                'cliente_email': 'cliente-ventanilla@test.com',
+            },
+            follow=True,
         )
 
         self.assertContains(response, 'La operación se registró correctamente')
