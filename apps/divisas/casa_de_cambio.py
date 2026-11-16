@@ -1,15 +1,16 @@
 """Consulta a sipap-sim el saldo real de la cuenta de la casa de cambio.
 
-Global Exchange lleva su propio espejo del saldo propio
-(``apps.divisas.models.CuentaPropia``), actualizado en cada entrega,
-para que confirmar una operación sea una consulta local, sin depender
-de que sipap-sim esté arriba en ese instante (ver
-``apps.divisas.views._verificar_saldo_casa_de_cambio``). Este módulo es
-para el otro uso: mantener esa cuenta propia sincronizada con la
-cuenta real en sipap-sim (``apps.divisas.views.CuentaPropiaListView``),
-donde un administrador gestiona las cuentas bancarias/billeteras de
-verdad — así el saldo que ve un administrador en "Fondos propios"
-nunca se desincroniza de lo que hay realmente cargado en sipap-sim.
+Global Exchange también lleva su propio espejo del saldo propio
+(``apps.divisas.models.CuentaPropia``), pero ya no es la fuente de
+verdad para decidir si una operación puede confirmarse o entregarse:
+``apps.divisas.views._verificar_saldo_casa_de_cambio`` y
+``apps.divisas.entrega.realizar_entrega`` consultan el saldo real acá
+mismo, cayendo al espejo local solo si sipap-sim no responde. El
+espejo sigue existiendo para que "Fondos propios"
+(``apps.divisas.views.CuentaPropiaListView``) tenga algo que mostrar
+sin depender de una consulta en vivo, y se corrige cada vez que se
+visita esa pantalla, se completa una entrega, o se hace cualquiera de
+esas dos verificaciones.
 """
 
 from datetime import datetime

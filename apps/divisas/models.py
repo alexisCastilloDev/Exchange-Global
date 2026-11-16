@@ -182,16 +182,21 @@ class CuentaPropia(models.Model):
        Global Exchange le transfirió a cambio, recién después de que
        esa transferencia se confirma de verdad contra sipap-sim.
     2. Al visitar el panel de administración ("Fondos propios",
-       ``CuentaPropiaListView``): se vuelve a consultar el saldo real a
-       sipap-sim y se corrige cualquier diferencia (por ejemplo, si un
-       administrador fondeó la cuenta directamente en sipap-sim), ver
+       ``CuentaPropiaListView``), al confirmar una operación
+       (``apps.divisas.views._verificar_saldo_casa_de_cambio``) o al
+       entregarla (``apps.divisas.entrega.realizar_entrega``): las tres
+       vuelven a consultar el saldo real a sipap-sim y corrigen
+       cualquier diferencia (por ejemplo, si un administrador fondeó la
+       cuenta directamente en sipap-sim), ver
        ``apps.divisas.casa_de_cambio``.
 
-    Antes de confirmar una operación, un chequeo rápido contra esta
-    misma fila (sin red, sin depender de que sipap-sim esté arriba en
-    ese instante) decide si Global Exchange puede llegar a entregarla;
-    por eso conviene que el espejo exista en esta base, en vez de
-    consultar a sipap-sim en ese momento tan sensible al tiempo.
+    Confirmar o entregar una operación ya no decide contra este espejo:
+    las dos verificaciones consultan el saldo real a sipap-sim primero,
+    y caen a esta fila solo si sipap-sim no responde en ese instante —
+    más vale una verificación algo vieja que ninguna, pero nunca a
+    propósito. El espejo sigue existiendo para que "Fondos propios"
+    tenga algo que mostrar sin depender de una consulta en vivo en cada
+    render, y como respaldo ante una falla de comunicación puntual.
     """
 
     divisa = models.OneToOneField(Divisa, on_delete=models.PROTECT, related_name='cuenta_propia')
