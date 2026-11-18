@@ -39,7 +39,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 23. [Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos](#sesión-23--27102026--ge-24--retiro-de-fondos)
 24. [Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)](#sesión-27--30102026--generación-de-factura-electrónica-hu-del-cliente)
 25. [Sesión 28 — 30/10/2026 — GE-86 — Descarga de facturas electrónicas](#sesión-28--30102026--ge-86--descarga-de-facturas-electrónicas)
-26. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+26. [Sesión 29 — 16/11/2026 — Historial y evolución de tasas de cambio](#sesión-29--16112026--historial-y-evolución-de-tasas-de-cambio)
+27. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4240,6 +4241,81 @@ por lo que en el KuDE se valida que sea un PDF y se confía en que Factura Segur
 del contenido. Ninguno genera una factura: los documentos se crean directo en la base de pruebas, `requests` está
 mockeado y cada test de la vista comprueba al terminar que no se llamó a `calcular_de`/`generar_de` ni se
 reservó un número del rango.
+
+## Sesión 29 — 16/11/2026 — Historial y evolución de tasas de cambio
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Historial y evolución de tasas de cambio (Epic de Divisas)
+**Participantes:** Rodrigo Mereles
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: dado una divisa y un período (7/30/90 días o un rango propio), mostrar un
+gráfico de líneas con la evolución de la tasa de compra y de venta, con tooltip al pasar el cursor, más
+una tabla de cambios de más reciente a más antigua; sin datos en el período, avisar sin romper; un rango
+inválido (fechas invertidas o futuras), rechazarlo; quién actualizó cada cotización, solo visible para
+administración y análisis, nunca para un cliente; y PYG nunca como opción.
+
+### Qué ya existía
+
+`HistorialCotizacionesView` ya listaba las cotizaciones de una divisa (`Cotizacion.Meta.ordering` ya las
+entrega de la más reciente a la más antigua, criterio 3 gratis), pero: sin período ni rango de fechas
+(traía todo el historial siempre), sin gráfico, sin validación de rango, y **solo accesible a admin/analista
+cambiario** — un cliente no tenía ninguna forma de llegar a esta pantalla, ni siquiera un link, porque el
+botón "Historial" en "Tasas vigentes" estaba atado al mismo permiso que "Actualizar".
+
+### Decisiones
+
+- **Mismos roles que "Tasas vigentes" (admin, analista cambiario o cliente)**, no solo admin/analista como
+  antes: la HU habla de "como usuario", y el propio criterio 6 distingue explícitamente qué ve un cliente
+  (nunca quién actualizó) de lo que ve admin/analista — eso solo tiene sentido si un cliente puede entrar
+  a la pantalla. Se agregó el link "Historial" también para clientes en `tasas_vigentes.html` (antes solo
+  aparecía detrás de `puede_actualizar_tasas`).
+- **El período se resuelve en `dispatch`, no en `get_queryset`**: tanto la tabla como el gráfico necesitan
+  el mismo rango ya decidido, incluido el caso de un rango inválido (criterio 5) — en vez de levantar un
+  error 500, la vista responde 200 con el motivo explicado y sin resultados, conservando el resto de la
+  pantalla. Un rango propio completo (`fecha_desde`+`fecha_hasta`) tiene prioridad sobre `periodo`; sin
+  ninguno de los dos, el valor por defecto es 30 días.
+- **El gráfico recibe los puntos en orden cronológico, la tabla no**: son dos necesidades opuestas sobre
+  el mismo queryset (la línea tiene que avanzar de izquierda a derecha; la tabla, mostrar lo último
+  primero), así que `get_context_data` arma `datos_grafico` (JSON) invirtiendo la lista ya traída, sin
+  tocar el orden que usa la tabla.
+- **Chart.js por CDN, sin backend nuevo para el gráfico**: un gráfico de líneas con tooltip (criterio 2) no
+  justifica agregar una API JSON ni una librería de build; se sirve como datos ya calculados
+  (`datos_grafico`) en el HTML, y el propio `<script>` arma el gráfico en el navegador. Paleta de colores
+  (azul `#2a78d6` para compra, naranja `#eb6834` para venta) validada con el script de la skill de dataviz
+  del propio Claude Code (separación CVD y de visión normal, piso de contraste) en vez de reutilizar los
+  colores de marca existentes (`--ge-teal` no pasó el piso de croma del validador).
+  Si Chart.js no carga (red cortada, bloqueador), un aviso de reserva (`#graficoTasasSinJs`) deja claro que
+  los mismos datos siguen disponibles en la tabla de abajo — el gráfico nunca es la única forma de leer un
+  valor (criterio de accesibilidad de la skill: la tabla es la vista alternativa obligatoria).
+- **PYG, 404 directo, no solo ausente de la lista**: `dispatch` ya excluye `Divisa.CODIGO_BASE` al resolver
+  la divisa (mismo patrón que `ActualizarCotizacionView.get_object`), así que entrar por URL directa a su
+  historial da 404 en vez de una pantalla vacía o confusa.
+
+### Tests
+
+`tests/test_divisas.py::HistorialEvolucionTasasTest` (nueva clase, 14 tests): los tres períodos fijos
+filtran correctamente (7/30/90 días, con cotizaciones sembradas en distintos momentos del último año), un
+rango propio completo tiene prioridad sobre `periodo` e incluye lo que un período fijo no alcanzaría, los
+datos del gráfico van en orden cronológico mientras la tabla sigue de más reciente a más antigua, una
+divisa sin cotizaciones en el período avisa sin mostrar el `<canvas>` ni romper, un rango con la fecha
+inicial posterior a la final o con cualquier fecha futura se rechaza con el mensaje de validación
+correspondiente, admin ve quién actualizó cada cotización y un cliente no (ni el dato ni la columna),
+PYG da 404 por URL directa, un cliente ya puede acceder (antes no podía) y un rol sin ninguno de los tres
+permitidos sigue sin poder. Suite completa: 561 tests (`pytest -n auto`) + 489 (`manage.py test --parallel
+auto --keepdb`), todos en verde.
+
+### Verificación
+
+`manage.py check` y `manage.py makemigrations --check --dry-run` limpios (no hizo falta ninguna migración:
+`Cotizacion`/`Divisa` no cambiaron). Sphinx (`python -m sphinx -b html docs/source -W`) sin advertencias
+nuevas — no hizo falta tocar ningún `.rst`: `HistorialCotizacionesView` ya estaba documentada con
+`autoclass`/`:members:`, que recoge el docstring actualizado y los métodos públicos solo (los privados,
+como `_resolver_periodo`, quedan sin exponer a propósito, mismo criterio que ya usa el resto del proyecto
+para los métodos privados de una vista — a diferencia de las funciones privadas a nivel de módulo, que sí
+se listan una por una, como en `apps.divisas.factura_electronica`).
 
 ## Enlaces externos (conversaciones completas)
 

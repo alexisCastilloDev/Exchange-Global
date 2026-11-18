@@ -1,5 +1,6 @@
 """Vistas para consultar, administrar y simular cotizaciones de divisas."""
 
+import json
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -399,30 +400,106 @@ class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
 
 
 class HistorialCotizacionesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    """Muestra cada cambio registrado para las tasas de una divisa."""
+    """Muestra la evolución de las tasas de una divisa: gráfico de líneas y tabla de cambios.
+
+    Implementa la HU "Historial y evolución de tasas de cambio". Accesible
+    a los mismos roles que ya pueden ver las tasas vigentes (ver
+    ``apps.authentication.context_processors.puede_ver_tasas``: admin,
+    analista cambiario o cliente) — antes de esta HU, solo administración y
+    análisis podían entrar acá; un cliente no tenía forma de consultar la
+    evolución de una tasa (criterio implícito de "como usuario").
+
+    El período se resuelve en ``dispatch`` (ver ``_resolver_periodo``), no
+    en ``get_queryset``, porque tanto la tabla como el gráfico (armado en
+    ``get_context_data``) necesitan el mismo rango ya decidido, incluido el
+    caso de un rango inválido (criterio 5): en vez de levantar un error, la
+    vista sigue respondiendo 200 con el motivo explicado y sin resultados,
+    para no perder el resto de la pantalla (divisa, filtros ya cargados).
+
+    Quién actualizó cada cotización (``puede_ver_usuario`` en el contexto)
+    solo se calcula para mostrarlo a administración y análisis (criterio
+    6): un cliente nunca lo ve, ni en la tabla ni en ningún dato que viaje
+    a la plantilla.
+    """
 
     model = Cotizacion
     template_name = 'divisas/historial_cotizaciones.html'
     context_object_name = 'cotizaciones'
 
+    PERIODOS_VALIDOS = ('7', '30', '90')
+    PERIODO_POR_DEFECTO = '30'
+
     def test_func(self):
-        """Autoriza la consulta del historial a administración y análisis."""
+        """Autoriza la consulta del historial a los mismos roles que ya ven las tasas vigentes."""
         roles = self.request.session.get('keycloak_roles', [])
-        return bool({'admin', 'analista_cambiario'} & set(roles))
+        return bool({'admin', 'analista_cambiario', 'cliente'} & set(roles))
 
     def dispatch(self, request, *args, **kwargs):
-        """Resuelve la divisa antes de despachar la solicitud."""
-        self.divisa = get_object_or_404(Divisa, pk=kwargs['divisa_id'])
+        """Resuelve la divisa (nunca PYG, ver ``TasasVigentesListView``) y el período antes de despachar."""
+        self.divisa = get_object_or_404(
+            Divisa.objects.exclude(codigo=Divisa.CODIGO_BASE), pk=kwargs['divisa_id'],
+        )
+        self.error_rango = None
+        self.desde, self.hasta, self.periodo = self._resolver_periodo(request)
         return super().dispatch(request, *args, **kwargs)
 
+    def _resolver_periodo(self, request):
+        """Decide el rango de fechas a partir de ``?periodo=`` o ``?fecha_desde=``/``?fecha_hasta=``.
+
+        Un rango propio (las dos fechas presentes en la URL) tiene
+        prioridad sobre ``periodo``. Si es inválido —fecha inicial
+        posterior a la final, o cualquiera de las dos en el futuro
+        (criterio 5)— lo rechaza (deja el motivo en ``self.error_rango``,
+        que ``get_queryset`` usa para no traer nada) y cae al período por
+        defecto, en vez de reventar con un error 500 o devolver un rango
+        parcialmente inválido.
+        """
+        hoy = timezone.localdate()
+        fecha_desde = _parsear_fecha(request.GET.get('fecha_desde'))
+        fecha_hasta = _parsear_fecha(request.GET.get('fecha_hasta'))
+        if fecha_desde and fecha_hasta:
+            if fecha_desde > fecha_hasta:
+                self.error_rango = 'La fecha inicial no puede ser posterior a la fecha final.'
+            elif fecha_desde > hoy or fecha_hasta > hoy:
+                self.error_rango = 'No se puede consultar un rango con fechas futuras.'
+            else:
+                return fecha_desde, fecha_hasta, 'custom'
+
+        periodo = request.GET.get('periodo', self.PERIODO_POR_DEFECTO)
+        if periodo not in self.PERIODOS_VALIDOS:
+            periodo = self.PERIODO_POR_DEFECTO
+        return hoy - timedelta(days=int(periodo)), hoy, periodo
+
     def get_queryset(self):
-        """Devuelve las cotizaciones históricas de la divisa seleccionada."""
-        return self.divisa.cotizaciones.select_related('usuario')
+        """Cotizaciones de la divisa dentro del rango ya resuelto, o ninguna si el rango era inválido."""
+        if self.error_rango:
+            return Cotizacion.objects.none()
+        return self.divisa.cotizaciones.select_related('usuario').filter(
+            fecha_actualizacion__date__gte=self.desde, fecha_actualizacion__date__lte=self.hasta,
+        )
 
     def get_context_data(self, **kwargs):
-        """Agrega la divisa consultada al contexto de la plantilla."""
+        """Agrega la divisa, el período resuelto, el error de validación y los puntos del gráfico."""
         context = super().get_context_data(**kwargs)
         context['divisa'] = self.divisa
+        context['periodo_actual'] = self.periodo
+        context['fecha_desde_actual'] = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta_actual'] = self.request.GET.get('fecha_hasta', '')
+        context['error_rango'] = self.error_rango
+        roles = self.request.session.get('keycloak_roles', [])
+        context['puede_ver_usuario'] = bool({'admin', 'analista_cambiario'} & set(roles))
+        # El gráfico necesita orden cronológico (más antigua primero) para
+        # que la línea avance de izquierda a derecha; la tabla, en cambio,
+        # mantiene el orden del modelo (más reciente primero, Cotizacion.Meta),
+        # así que no se reutiliza una lista para la otra.
+        context['datos_grafico'] = json.dumps([
+            {
+                'fecha': timezone.localtime(cotizacion.fecha_actualizacion).isoformat(),
+                'compra': str(cotizacion.tasa_compra),
+                'venta': str(cotizacion.tasa_venta),
+            }
+            for cotizacion in reversed(context['cotizaciones'])
+        ])
         return context
 
 
