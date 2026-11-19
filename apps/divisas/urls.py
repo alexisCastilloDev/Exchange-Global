@@ -32,6 +32,8 @@ from .views import (
     HistorialTransaccionesView,
     MiHistorialTransaccionesView,
     MisFacturasElectronicasListView,
+    ReporteTransaccionesClienteView,
+    DescargarReporteTransaccionesView,
     DetalleTransaccionOperacionView,
     DetalleTransaccionCambioView,
     PagarTransaccionOperacionView,
@@ -106,6 +108,16 @@ urlpatterns = [
     path('transacciones/', HistorialTransaccionesView.as_view(), name='historial_transacciones'),
     path('transacciones/mias/', MiHistorialTransaccionesView.as_view(), name='mis_transacciones'),
     path('transacciones/mias/facturas/', MisFacturasElectronicasListView.as_view(), name='mis_facturas_electronicas'),
+    path(
+        'transacciones/mias/<int:cliente_pk>/reporte/',
+        ReporteTransaccionesClienteView.as_view(),
+        name='reporte_transacciones',
+    ),
+    path(
+        'transacciones/mias/<int:cliente_pk>/reporte/descargar/<str:formato>/',
+        DescargarReporteTransaccionesView.as_view(),
+        name='descargar_reporte_transacciones',
+    ),
     path(
         'transacciones/mias/operacion/<uuid:pk>/',
         DetalleTransaccionOperacionView.as_view(),

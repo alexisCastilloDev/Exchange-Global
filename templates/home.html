@@ -205,6 +205,17 @@ Contexto esperado: user, cliente_activo y permisos de UI.
             </div>
         </a>
     </div>
+    {% if cliente_activo %}
+    <div class="col-md-4">
+        <a href="{% url 'divisas:reporte_transacciones' cliente_activo.pk %}" class="text-decoration-none">
+            <div class="ge-card h-100">
+                <i class="bi bi-file-earmark-bar-graph" style="font-size: 22px; color: var(--ge-brass);"></i>
+                <h2 style="font-size:16px; margin: 10px 0 4px;">Reporte de transacciones</h2>
+                <p style="color: var(--ge-text-muted); font-size: 13.5px; margin:0;">Generá y descargá en PDF o Excel un resumen de tus operaciones.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
     {% endif %}
     {% if puede_ver_divisas or puede_ver_tasas %}
     <div class="col-md-4">

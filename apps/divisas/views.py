@@ -67,6 +67,12 @@ from apps.divisas.models import (
     monto_a_entregar,
     monto_a_pagar,
 )
+from apps.divisas.reportes import (
+    TIPO_CHOICES,
+    generar_excel,
+    generar_pdf,
+    generar_reporte,
+)
 
 
 def _puede_pagarse(transaccion):
@@ -802,6 +808,125 @@ class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, L
         querystring.pop('page', None)
         context['querystring'] = querystring.urlencode()
         return context
+
+
+def _cliente_propio(request, cliente_pk):
+    """Devuelve el ``Cliente`` con ``cliente_pk`` si está asociado al usuario autenticado, o deniega el acceso.
+
+    Usada por las vistas del reporte de transacciones para que un cliente
+    nunca pueda generar ni descargar el reporte de otro, ni siquiera
+    manipulando el ``cliente_pk`` en la URL (criterio 6 de la HU "Reporte
+    de transacciones del cliente", GE-39) — a diferencia de
+    ``MiHistorialTransaccionesView``/``MisFacturasElectronicasListView``,
+    que solo exponen el ``cliente_activo`` de la sesión (ya acotado a los
+    propios por ``ClienteActivoMiddleware``), el reporte recibe el cliente
+    explícitamente en la URL para permitir elegirlo cuando el usuario
+    tiene más de uno asociado, así que esta vista repite ese chequeo de
+    pertenencia por su cuenta, igual que
+    ``DescargarDocumentoElectronicoView._puede_ver``.
+
+    Raises:
+        Http404: No existe ningún ``Cliente`` con ese ``pk``.
+        PermissionDenied: Existe, pero no está asociado al usuario autenticado.
+    """
+    cliente = get_object_or_404(Cliente, pk=cliente_pk)
+    if not request.user.clientes.filter(pk=cliente.pk, is_active=True).exists():
+        raise PermissionDenied
+    return cliente
+
+
+class ReporteTransaccionesClienteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Genera, con filtros, el reporte de transacciones de un cliente propio y sus totales.
+
+    Implementa la HU "Reporte de transacciones del cliente" (GE-39): a
+    partir de un rango de fechas obligatorio y, opcionalmente, el tipo de
+    operación (compra/venta/cambio) y el estado, muestra el listado de
+    transacciones que los cumplen junto con los totales por tipo y por
+    divisa, calculados solo sobre las completadas (criterios 1 y 2; ver
+    ``apps.divisas.reportes.generar_reporte``). Sin las dos fechas, solo
+    se ve el formulario vacío: no es un error, todavía no se pidió nada.
+    Un rango inválido se informa como error de validación sin listar nada
+    (criterio 5); sin resultados, se avisa que no hay datos y no se
+    ofrece ninguna descarga (criterio 4; ver la plantilla). Desde esta
+    misma pantalla se descarga el reporte en PDF o en Excel con los
+    mismos filtros aplicados (criterio 3, ver
+    ``DescargarReporteTransaccionesView``). Solo accede al cliente propio
+    (criterio 6; ver ``_cliente_propio``).
+    """
+
+    template_name = 'divisas/reporte_transacciones.html'
+
+    def test_func(self):
+        """Autoriza a los mismos roles que ``MiHistorialTransaccionesView``."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cliente' in roles and not self.request.user.is_staff
+
+    def get(self, request, cliente_pk):
+        """Resuelve el cliente propio y arma el reporte con los filtros de la URL."""
+        cliente = _cliente_propio(request, cliente_pk)
+        resultado = generar_reporte(cliente, request.GET)
+        querystring = request.GET.copy()
+        querystring.pop('page', None)
+        contexto = {
+            'cliente': cliente,
+            'tipos_disponibles': TIPO_CHOICES,
+            'estados_disponibles': CalculoOperacion.ESTADO_CHOICES,
+            'querystring': querystring.urlencode(),
+            **resultado,
+        }
+        return render(request, self.template_name, contexto)
+
+
+class DescargarReporteTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Descarga, en PDF o en Excel, el mismo reporte que ya se ve en pantalla (criterio 3).
+
+    Rearma el reporte con los mismos filtros de la URL (ver
+    ``apps.divisas.reportes.generar_reporte``) en vez de recibir los datos
+    ya calculados, para no poder quedar desincronizada de
+    ``ReporteTransaccionesClienteView`` ni confiar en nada que haya
+    viajado por la URL salvo los filtros. No ofrece ningún archivo sin
+    datos (criterio 4) ni para un rango inválido (criterio 5): en ambos
+    casos vuelve a la pantalla del reporte con el motivo, en vez de
+    descargar un archivo vacío o roto.
+    """
+
+    FORMATOS = {
+        'pdf': (generar_pdf, 'application/pdf', 'pdf'),
+        'excel': (generar_excel, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'),
+    }
+
+    def test_func(self):
+        """Autoriza a los mismos roles que ``ReporteTransaccionesClienteView``."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cliente' in roles and not self.request.user.is_staff
+
+    def get(self, request, cliente_pk, formato):
+        """Valida el formato, los filtros y los datos antes de generar el archivo."""
+        if formato not in self.FORMATOS:
+            raise Http404('Formato de descarga desconocido.')
+
+        cliente = _cliente_propio(request, cliente_pk)
+        resultado = generar_reporte(cliente, request.GET)
+        destino = reverse('divisas:reporte_transacciones', kwargs={'cliente_pk': cliente.pk})
+        querystring = request.GET.urlencode()
+        if querystring:
+            destino = f'{destino}?{querystring}'
+
+        if resultado['error_rango']:
+            messages.error(request, resultado['error_rango'])
+            return redirect(destino)
+        if not resultado['reporte_generado']:
+            messages.error(request, 'Indicá un rango de fechas para generar el reporte.')
+            return redirect(destino)
+        if not resultado['filas']:
+            messages.error(request, 'No hay transacciones para los filtros elegidos.')
+            return redirect(destino)
+
+        funcion, content_type, extension = self.FORMATOS[formato]
+        contenido = funcion(cliente, resultado['filas'], resultado['totales'], resultado['filtros'], resultado['generado_en'])
+        respuesta = HttpResponse(contenido, content_type=content_type)
+        respuesta['Content-Disposition'] = f'attachment; filename="reporte_transacciones_{cliente.pk}.{extension}"'
+        return respuesta
 
 
 class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):
