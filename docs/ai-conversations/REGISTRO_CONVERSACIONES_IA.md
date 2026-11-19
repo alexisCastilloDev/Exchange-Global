@@ -41,7 +41,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 25. [Sesión 28 — 30/10/2026 — GE-86 — Descarga de facturas electrónicas](#sesión-28--30102026--ge-86--descarga-de-facturas-electrónicas)
 26. [Sesión 29 — 16/11/2026 — Historial y evolución de tasas de cambio](#sesión-29--16112026--historial-y-evolución-de-tasas-de-cambio)
 27. [Sesión 30 — 18/11/2026 — GE-39 — Reporte de transacciones del cliente](#sesión-30--18112026--ge-39--reporte-de-transacciones-del-cliente)
-28. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+28. [Sesión 31 — 18/11/2026 — Tablero de control de ganancias](#sesión-31--18112026--tablero-de-control-de-ganancias)
+29. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4420,6 +4421,115 @@ docs/source -W`) sin advertencias nuevas: se agregó `docs/source/reference/apps
 (`ReporteTransaccionesClienteView`/`DescargarReporteTransaccionesView`) y `_cliente_propio` se agregaron a
 `apps.divisas.views.rst` en el mismo estilo que el resto del archivo (`autoclass`/`:members:` para las
 vistas, `autofunction` para la función privada a nivel de módulo).
+
+## Sesión 31 — 18/11/2026 — Tablero de control de ganancias
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Tablero de control de ganancias (Epic "Gestión de Transacciones, Historial y
+Reportes", GE-14)
+**Participantes:** Rodrigo Mereles
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: un tablero solo para administración con, para el período seleccionado (hoy,
+última semana, último mes, último año o un rango propio), la ganancia total en guaraníes, la cantidad de
+operaciones completadas, el monto total operado y la ganancia promedio por operación; un gráfico con la
+evolución de la ganancia agrupada por día, semana o mes según la duración del período; la distribución de
+la ganancia por divisa, por tipo de operación y por canal; la variación porcentual contra el período
+anterior equivalente; cero indicadores y un aviso (sin error) cuando no hay operaciones completadas; y
+acceso denegado para quien no sea administrador.
+
+### Qué ya existía
+
+No había ningún concepto de "ganancia" ni de "canal" en el código. Sí había, ya resueltos y reutilizables:
+el criterio de "completada" (``apps.divisas.reportes.ESTADOS_COMPLETADOS``, de la HU anterior — "Acreditada"
+o "Retirada", no "Pagada"); la inversión de perspectiva entre el tipo de una compra/venta online
+(``CalculoOperacion``, perspectiva del cliente) y uno de ventanilla (``apps.caja.models.OperacionVentanilla``,
+perspectiva de la casa), ya resuelta una vez para ``apps.divisas.factura_electronica._tipo_transaccion``; y
+el patrón completo de período/rango con validación y variación porcentual de
+``apps.divisas.views.HistorialCotizacionesView``.
+
+### Decisiones
+
+- **La ganancia es la comisión que cobra la casa, siempre normalizada a PYG**: para una compra/venta
+  online o una operación de ventanilla la comisión ya está en PYG (ambas comparten
+  ``apps.divisas.views._calcular_importe_operacion``); para un cambio entre divisas
+  (``CalculoTriangulacion``) la comisión queda en la divisa de **destino** (ver
+  ``_calcular_triangulacion``: el monto bruto que la descuenta está en destino, no en PYG), así que se
+  reconvierte multiplicándola por ``tasa_venta_aplicada``, la misma tasa con la que se descontó del bruto
+  en destino.
+- **El "tipo de operación" del tablero está en la perspectiva de la casa (``CASA_COMPRA``/``CASA_VENTA``),
+  no en la del cliente**: agrupar literalmente por ``CalculoOperacion.tipo``/``OperacionVentanilla.tipo``
+  mezclaría operaciones económicamente opuestas bajo la misma etiqueta, porque ambos modelos usan los
+  mismos nombres (`'COMPRA'`/`'VENTA'`) con significados invertidos entre sí (ver el docstring de
+  ``OperacionVentanilla``: su "compra" ya es "la casa compra"). Es la misma inversión que ya hizo falta
+  resolver, y corregir tras un primer intento equivocado, para la factura electrónica de ventanilla —
+  documentada ahora en el docstring del módulo nuevo para no tener que re-derivarla de nuevo.
+- **Canal = origen del dato, no un campo nuevo**: "online" son ``CalculoOperacion``/``CalculoTriangulacion``;
+  "ventanilla" es ``OperacionVentanilla``. No hizo falta agregar ningún campo a ningún modelo.
+- **Una ``OperacionVentanilla`` no tiene ningún estado propio**: se liquida en efectivo en el momento del
+  registro (no hay confirmación ni entrega posterior, a diferencia de una compra/venta online), así que
+  toda fila de ventanilla cuenta como completada por definición — a diferencia de
+  ``CalculoOperacion``/``CalculoTriangulacion``, que sí se filtran por ``estado_efectivo in
+  ESTADOS_COMPLETADOS``.
+- **Períodos fijos por cantidad de días (1/7/30/365), no por mes calendario**: mismo criterio ya usado por
+  ``HistorialCotizacionesView`` (7/30/90 días) para "último mes"/"último año" — simple, consistente con el
+  resto del proyecto, y no hacía falta más precisión para la HU.
+- **El período anterior equivalente es la misma duración, inmediatamente antes**: generaliza igual para un
+  período fijo que para un rango propio de cualquier longitud (``_rango_anterior_equivalente``), en vez de
+  tener un caso especial por cada período nombrado.
+- **La variación porcentual es ``None`` (no 0% ni un error) cuando el período anterior no tiene ninguna
+  ganancia**: no hay un porcentaje que tenga sentido mostrar al dividir por cero, así que la plantilla
+  muestra "Sin datos del período anterior" en vez de inventar un número.
+- **La agrupación de la evolución (día/semana/mes) depende de la duración del rango, no del nombre del
+  período**: así también funciona correctamente sobre un rango propio de cualquier longitud, no solo sobre
+  los cuatro períodos con nombre (``_agrupacion_segun_duracion``: ≤31 días por día, ≤180 por semana, el
+  resto por mes).
+- **Gráfico de barras (no de líneas) para la evolución**: cada punto es una suma agregada por bucket, no
+  una medición puntual continua como la tasa de cambio del tablero de tasas — un bloque de barras lee mejor
+  un total discreto por período que una línea, que sugiere interpolación entre puntos. Un solo color (el
+  azul de marca ya validado, slot 1 de la paleta categórica) porque es una sola serie: la skill de dataviz
+  solo exige validar CVD/contraste entre colores de una paleta categórica multi-serie, no para un color
+  único. La distribución por tipo/canal/divisa se muestra en tablas simples, mismo criterio que ya se usó
+  para "totales por tipo"/"totales por divisa" en el reporte de transacciones del cliente (Sesión 30): no
+  son más de 2-3 categorías cada una, y una tabla ya cumple el criterio de "verla" sin forzar un gráfico que
+  la HU no pide explícitamente.
+
+### Tests
+
+`tests/test_tablero_ganancias.py` (archivo nuevo, 28 tests):
+- `FilaNormalizadaTest`: el tipo de una compra/venta online se invierte a la perspectiva de la casa; el de
+  una operación de ventanilla no (ya lo está); la ganancia de un cambio se reconvierte correctamente de la
+  divisa de destino a PYG.
+- `CalcularIndicadoresTest`/`CalcularVariacionTest`: todo en cero sin filas; el promedio es la ganancia
+  total sobre la cantidad; sin ganancia anterior la variación es indefinida; aumento y caída dan el
+  porcentaje con el signo correcto.
+- `ResolverPeriodoTest`: el período por defecto, cada período fijo, un rango propio con prioridad sobre
+  `periodo`, un rango invertido o con fecha futura es inválido.
+- `AgrupacionYEvolucionTest`: cada umbral de duración agrupa por día/semana/mes; la evolución queda en
+  orden cronológico.
+- `CalcularDistribucionTest`: agrupa correctamente por tipo, canal y divisa, con cero para un tipo sin
+  ninguna operación.
+- `GenerarTableroIntegracionTest`: pendiente/cancelada/vencida/pago expirado/pagada no suman ganancia, solo
+  acreditada; una operación de ventanilla siempre cuenta; una transacción fuera del período no se cuenta;
+  un rango inválido no calcula ningún indicador; la variación compara correctamente contra el período
+  anterior equivalente.
+- `TableroGananciasViewTest`: un administrador ve el tablero; un usuario sin ese rol recibe 403; sin
+  operaciones completadas se ven ceros con el aviso informativo, sin error; un rango inválido muestra el
+  error de validación; con datos se ven los indicadores y el gráfico.
+
+Suite completa: 613 tests (`pytest tests/ -n auto`) + 541 (`manage.py test tests --parallel auto --keepdb
+--noinput`), todos en verde.
+
+### Verificación
+
+`manage.py check` y `manage.py makemigrations --check --dry-run` limpios (no hizo falta ninguna migración:
+el tablero solo lee modelos ya existentes). Sphinx (`python -m sphinx -b html docs/source -W`) sin
+advertencias nuevas: se agregó `docs/source/reference/apps.divisas.ganancias.rst` (una entrada por función
+del módulo, incluidas las privadas, mismo criterio que `apps.divisas.factura_electronica.rst`/
+`apps.divisas.reportes.rst`) referenciado desde `apps.divisas.rst`, y `TableroGananciasView` se agregó a
+`apps.divisas.views.rst` en el mismo estilo que el resto del archivo (`autoclass`/`:members:`).
 
 ## Enlaces externos (conversaciones completas)
 

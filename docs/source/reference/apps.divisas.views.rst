@@ -134,3 +134,7 @@ apps.divisas.views module
 .. autoclass:: apps.divisas.views.DescargarDocumentoElectronicoView
    :members:
    :show-inheritance:
+
+.. autoclass:: apps.divisas.views.TableroGananciasView
+   :members:
+   :show-inheritance:
