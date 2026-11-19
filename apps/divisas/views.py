@@ -50,6 +50,12 @@ from apps.divisas.forms import (
     SimulacionDivisasForm,
     TriangulacionForm,
 )
+from apps.divisas.ganancias import (
+    CANAL_CHOICES as CANAL_CHOICES_GANANCIAS,
+    PERIODOS as PERIODOS_GANANCIAS,
+    TIPO_CHOICES as TIPO_CHOICES_GANANCIAS,
+    generar_tablero,
+)
 from apps.divisas.models import (
     CalculoOperacion,
     CalculoTriangulacion,
@@ -1976,6 +1982,45 @@ class AdminDivisasMixin(LoginRequiredMixin, UserPassesTestMixin):
         """Comprueba que el rol de administrador esté en la sesión."""
         roles = self.request.session.get('keycloak_roles', [])
         return 'admin' in roles
+
+
+class TableroGananciasView(AdminDivisasMixin, TemplateView):
+    """Tablero de control de ganancias: indicadores, evolución y distribución, solo para administración.
+
+    Implementa la HU "Tablero de control de ganancias" (epic GE-14). Todo
+    el cálculo vive en ``apps.divisas.ganancias.generar_tablero`` (ver su
+    docstring de módulo para la definición exacta de "ganancia", "tipo de
+    operación" y "completada"); esta vista solo resuelve los parámetros de
+    la URL y arma el contexto, incluido el JSON que consume el gráfico de
+    evolución (criterio 3) con Chart.js, mismo patrón que
+    ``HistorialCotizacionesView``. Sin operaciones completadas en el
+    período, los indicadores quedan en cero y la plantilla muestra un
+    aviso en vez de un gráfico vacío o un error (criterio 7). Un rango de
+    fechas inválido tampoco es un error 500: la plantilla explica el
+    motivo y no calcula nada (criterio implícito de validación). Solo
+    accede un administrador (criterio 8, ver ``AdminDivisasMixin``).
+    """
+
+    template_name = 'divisas/tablero_ganancias.html'
+
+    def get_context_data(self, **kwargs):
+        """Arma el tablero con los filtros de la URL y lo serializa para la plantilla."""
+        context = super().get_context_data(**kwargs)
+        resultado = generar_tablero(self.request.GET)
+        context.update(resultado)
+        context['periodos_disponibles'] = PERIODOS_GANANCIAS
+        context['tipos_disponibles'] = TIPO_CHOICES_GANANCIAS
+        context['canales_disponibles'] = CANAL_CHOICES_GANANCIAS
+        context['fecha_desde_actual'] = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta_actual'] = self.request.GET.get('fecha_hasta', '')
+        if resultado['evolucion']:
+            context['evolucion_json'] = json.dumps(
+                [
+                    {'periodo': punto['periodo'], 'ganancia': str(punto['ganancia'])}
+                    for punto in resultado['evolucion']['puntos']
+                ]
+            )
+        return context
 
 
 class ConfiguracionVigenciaUpdateView(AdminDivisasMixin, UpdateView):

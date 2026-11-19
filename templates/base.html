@@ -66,6 +66,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                         </a>
                     </li>
                     <li>
+                        <a href="{% url 'divisas:tablero_ganancias' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'tablero_ganancias' %}is-active{% endif %}">
+                            <i class="bi bi-graph-up-arrow"></i> Tablero de ganancias
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'divisas:configuracion_vigencia' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'configuracion_vigencia' %}is-active{% endif %}">
                             <i class="bi bi-stopwatch"></i> Tiempos de espera
                         </a>
