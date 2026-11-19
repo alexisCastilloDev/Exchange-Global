@@ -166,6 +166,13 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                             <i class="bi bi-receipt"></i> Mis facturas electrónicas
                         </a>
                     </li>
+                    {% if cliente_activo %}
+                    <li>
+                        <a href="{% url 'divisas:reporte_transacciones' cliente_activo.pk %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'reporte_transacciones' %}is-active{% endif %}">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Reporte de transacciones
+                        </a>
+                    </li>
+                    {% endif %}
                     {% endif %}
                     <li>
                         <a href="{% url 'divisas:simulacion_divisas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'simulacion_divisas' %}is-active{% endif %}">

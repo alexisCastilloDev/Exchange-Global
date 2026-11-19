@@ -25,6 +25,16 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autofunction:: apps.divisas.views._cliente_propio
+
+.. autoclass:: apps.divisas.views.ReporteTransaccionesClienteView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DescargarReporteTransaccionesView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.DetalleTransaccionOperacionView
    :members:
    :show-inheritance:

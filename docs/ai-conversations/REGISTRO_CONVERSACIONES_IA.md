@@ -40,7 +40,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 24. [Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)](#sesión-27--30102026--generación-de-factura-electrónica-hu-del-cliente)
 25. [Sesión 28 — 30/10/2026 — GE-86 — Descarga de facturas electrónicas](#sesión-28--30102026--ge-86--descarga-de-facturas-electrónicas)
 26. [Sesión 29 — 16/11/2026 — Historial y evolución de tasas de cambio](#sesión-29--16112026--historial-y-evolución-de-tasas-de-cambio)
-27. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+27. [Sesión 30 — 18/11/2026 — GE-39 — Reporte de transacciones del cliente](#sesión-30--18112026--ge-39--reporte-de-transacciones-del-cliente)
+28. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4316,6 +4317,109 @@ nuevas — no hizo falta tocar ningún `.rst`: `HistorialCotizacionesView` ya es
 como `_resolver_periodo`, quedan sin exponer a propósito, mismo criterio que ya usa el resto del proyecto
 para los métodos privados de una vista — a diferencia de las funciones privadas a nivel de módulo, que sí
 se listan una por una, como en `apps.divisas.factura_electronica`).
+
+## Sesión 30 — 18/11/2026 — GE-39 — Reporte de transacciones del cliente
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** GE-39 — Reporte de transacciones del cliente (Epic "Gestión de Transacciones, Historial
+y Reportes", GE-14)
+**Participantes:** Rodrigo Mereles
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: dado un cliente activo, generar un reporte de sus transacciones con un rango de
+fechas obligatorio y, opcionalmente, tipo de operación y estado; mostrar totales por tipo y por divisa
+(cantidad y monto), calculados solo sobre las transacciones completadas; descargar el reporte en PDF y en
+Excel, ambos con los mismos datos, los filtros aplicados y la fecha de generación; sin transacciones para
+los filtros, avisar sin ofrecer ninguna descarga; un rango de fechas inválido, rechazarlo; y denegar el
+acceso a quien intente generar o descargar el reporte de un cliente que no está asociado a su usuario.
+
+### Qué ya existía
+
+`MiHistorialTransaccionesView` (HU "Consultar el historial de transacciones") ya armaba y filtraba, por
+fecha y por estado, el mismo universo de datos (`CalculoOperacion`/`CalculoTriangulacion` del cliente
+activo), pero: sin filtro por tipo de operación, sin ningún total, sin ninguna descarga, y siempre atada al
+`cliente_activo` de la sesión — nunca a un cliente explícito en la URL, así que no había ningún lugar donde
+el criterio de "cliente no asociado" pudiera manifestarse. No había ninguna librería de generación de PDF
+ni de Excel instalada en el proyecto.
+
+### Decisiones
+
+- **Lógica de negocio en un módulo nuevo (`apps/divisas/reportes.py`), no en `views.py`**: mismo patrón ya
+  establecido en el proyecto para separar reglas de negocio de las vistas (`casa_de_cambio.py`,
+  `entrega.py`, `factura_electronica.py`). `generar_reporte(cliente, parametros)` es el único punto de
+  entrada que usan tanto la pantalla como las dos descargas, para que los tres vean siempre los mismos
+  datos con los mismos filtros (criterio 3) sin poder desincronizarse.
+- **Fila normalizada propia, no reutilizada de `MiHistorialTransaccionesView`**: el reporte necesita, además
+  de lo que ya armaba el historial, el filtro por tipo de operación (ausente ahí) y un monto en PYG
+  uniforme entre compra, venta y cambio (`monto_pyg`) para poder totalizar los tres tipos sin mezclar
+  unidades — un cambio entre divisas no liquida en PYG como una compra/venta, pero sí tiene un
+  `monto_equivalente_pyg` ya calculado en el modelo. Se eligió esta pequeña duplicación (ya es el patrón que
+  usa el propio proyecto entre `HistorialTransaccionesView` y `MiHistorialTransaccionesView`) en vez de
+  forzar una abstracción compartida entre dos vistas con necesidades distintas.
+- **"Completada" = `ACREDITADA` o `RETIRADA`, no `PAGADA`**: son los dos estados en los que el dinero ya
+  llegó a destino (acreditado en una cuenta o retirado en efectivo, ver `apps.divisas.entrega`); "Pagada" es
+  un estado intermedio donde todavía no se le entregó nada al cliente, así que no cuenta para el criterio 2.
+- **Totales por divisa suman el monto operado en la moneda de origen** (`monto_origen`), igual que ya se
+  muestra en la columna "Monto" del historial; un cambio aparece agrupado bajo su propio par
+  "ORIGEN → DESTINO", igual que en esa tabla, en vez de partirlo en dos entradas por divisa.
+- **El cliente va explícito en la URL (`<int:cliente_pk>`), no implícito como `cliente_activo`**: a
+  diferencia de `MiHistorialTransaccionesView`/`MisFacturasElectronicasListView`, el criterio 6 exige poder
+  denegar el acceso a "un cliente que no está asociado a mi usuario" — algo que nunca podría probarse ni
+  dispararse si la vista solo mirara el `cliente_activo` de la sesión (que `ClienteActivoMiddleware` ya
+  acota de entrada a los clientes propios). `_cliente_propio` repite ese chequeo de pertenencia por su
+  cuenta (mismo patrón que `DescargarDocumentoElectronicoView._puede_ver`), devolviendo 404 si el cliente no
+  existe y 403 si existe pero no es propio.
+- **`reportlab` para el PDF, `openpyxl` para el Excel** (ambas nuevas en `requirements.txt`): se consultó
+  explícitamente antes de instalar nada. Para el PDF se eligió armar el documento directamente en Python
+  (tablas y texto con `reportlab`) en vez de renderizar una plantilla HTML con `xhtml2pdf`, porque da control
+  fino sobre el layout de una tabla con totales y evita cualquier dependencia de sistema en el Dockerfile de
+  producción (a diferencia de WeasyPrint, que necesita Cairo/Pango). `openpyxl` es la librería estándar para
+  Excel, pura en Python, sin alternativa que discutir.
+- **Sin las dos fechas, no es un error**: el rango es obligatorio para generar el reporte (criterio 1), pero
+  llegar a la pantalla sin haber elegido ninguna fecha todavía (primera visita) solo muestra el formulario
+  vacío — `reporte_generado=False` sin `error_rango`, para no mostrar un error antes de que el cliente pida
+  nada.
+- **Las descargas rearman el reporte en vez de recibir los datos ya calculados**: `DescargarReporteTransaccionesView`
+  vuelve a llamar `generar_reporte` con los mismos filtros de la URL, en vez de confiar en cualquier dato ya
+  calculado que hubiera viajado desde la pantalla — así nunca puede descargarse algo distinto de lo que
+  realmente corresponde a esos filtros, y un rango inválido o sin resultados nunca llega a generar ningún
+  archivo (criterios 4 y 5): la vista redirige con el mensaje de error en vez de ofrecer un PDF/Excel vacío o
+  roto.
+
+### Tests
+
+`tests/test_reporte_transacciones.py` (archivo nuevo, 24 tests):
+- `CalcularTotalesTest`: una transacción pendiente o cancelada no aporta a ningún total; `RETIRADA` cuenta
+  como completada igual que `ACREDITADA`; los totales por tipo usan el equivalente en PYG y separan
+  correctamente compra, venta y cambio; los totales por divisa agrupan dos compras en USD en una sola
+  entrada.
+- `GenerarReporteTest`: sin rango no se genera nada y no es un error; un rango invertido o con fechas
+  futuras es inválido; un rango válido sin coincidencias genera el reporte pero sin filas; el tipo de
+  operación y el estado filtran correctamente.
+- `ReporteTransaccionesClienteViewTest`: sin filtros se ve solo el formulario; con un rango válido se ven el
+  listado y los totales, con los botones de descarga; un rango inválido muestra el error sin listar nada ni
+  ofrecer descarga; sin resultados se avisa sin ofrecer descarga; un cliente no asociado al usuario da 403;
+  un `cliente_pk` inexistente da 404; un administrador no puede acceder a la pantalla.
+- `DescargarReporteTransaccionesViewTest`: la descarga en PDF devuelve un archivo `application/pdf`
+  adjunto; la de Excel devuelve un `.xlsx` legible con `openpyxl` que incluye los filtros aplicados y la
+  fecha de generación; sin resultados, con un rango inválido, o sin ningún rango, no se descarga ningún
+  archivo (redirección, no 200); un cliente ajeno da 403; un formato desconocido da 404.
+
+Suite completa: 585 tests (`pytest tests/ -n auto`) + 513 (`manage.py test tests --parallel auto --keepdb
+--noinput`), todos en verde.
+
+### Verificación
+
+`manage.py check` limpio; no hizo falta ninguna migración (el reporte solo lee `CalculoOperacion`/
+`CalculoTriangulacion`, ya existentes, sin agregar ningún campo). Sphinx (`python -m sphinx -b html
+docs/source -W`) sin advertencias nuevas: se agregó `docs/source/reference/apps.divisas.reportes.rst`
+(listando cada función del módulo nuevo, incluidas las privadas, una por una — mismo criterio que
+`apps.divisas.factura_electronica.rst`) y se referenció desde `apps.divisas.rst`; las dos vistas nuevas
+(`ReporteTransaccionesClienteView`/`DescargarReporteTransaccionesView`) y `_cliente_propio` se agregaron a
+`apps.divisas.views.rst` en el mismo estilo que el resto del archivo (`autoclass`/`:members:` para las
+vistas, `autofunction` para la función privada a nivel de módulo).
 
 ## Enlaces externos (conversaciones completas)
 

@@ -15,6 +15,7 @@ Submodules
    apps.divisas.models
    apps.divisas.pagos_sipap
    apps.divisas.pagos_stripe
+   apps.divisas.reportes
    apps.divisas.urls
    apps.divisas.views
 
