@@ -195,6 +195,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                             <i class="bi bi-clock-history"></i> Historial de transacciones
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'divisas:monitoreo_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'monitoreo_transacciones,monitoreo_detalle' %}is-active{% endif %}">
+                            <i class="bi bi-binoculars"></i> Monitoreo de transacciones
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
             </div>

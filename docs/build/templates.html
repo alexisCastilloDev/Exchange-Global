@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
@@ -499,12 +500,12 @@ metodos_sin_divisa y cliente_activo (vía context processor).
 </pre></div>
 </div>
 <div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
-<span class="cm">Historial de cotizaciones registradas para una divisa.</span>
+<span class="cm">Historial y evolución de tasas de cambio de una divisa: gráfico de líneas y tabla de cambios.</span>
 <span class="cm">Hereda de: base.html.</span>
-<span class="cm">Bloques definidos: title, content.</span>
-<span class="cm">Contexto esperado: divisa y cotizaciones.</span>
+<span class="cm">Bloques definidos: title, content, extra_scripts.</span>
+<span class="cm">Contexto esperado: divisa, cotizaciones, periodo_actual, fecha_desde_actual, fecha_hasta_actual,</span>
+<span class="cm">error_rango, puede_ver_usuario, datos_grafico (JSON).</span>
 <span class="cm">--&gt;</span>
-{% extends 'base.html' %}
 </pre></div>
 </div>
 <div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
@@ -514,6 +515,23 @@ metodos_sin_divisa y cliente_activo (vía context processor).
 <span class="cm">Contexto esperado: transacciones, page_obj, is_paginated.</span>
 <span class="cm">--&gt;</span>
 {% extends 'base.html' %}
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Monitoreo de solo consulta de todas las transacciones del sistema, con filtros, totales y descarga PDF/Excel.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: filtros, error_rango, transacciones, page_obj, is_paginated, totales, generado_en,</span>
+<span class="cm">tipos_disponibles, estados_disponibles, canales_disponibles, querystring.</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Detalle de solo lectura de una transacción para el monitoreo: pago, medios de origen y destino y factura.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: fila, transaccion, pago, medio_origen, medio_destino, factura.</span>
+<span class="cm">--&gt;</span>
 </pre></div>
 </div>
 <div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
@@ -529,7 +547,7 @@ metodos_sin_divisa y cliente_activo (vía context processor).
 <span class="cm">Detalle completo, de solo lectura, de una compra o venta del cliente activo.</span>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
-<span class="cm">Contexto esperado: transaccion.</span>
+<span class="cm">Contexto esperado: transaccion, factura_pendiente, nota_credito.</span>
 <span class="cm">--&gt;</span>
 {% extends 'base.html' %}
 </pre></div>
@@ -538,7 +556,7 @@ metodos_sin_divisa y cliente_activo (vía context processor).
 <span class="cm">Detalle completo, de solo lectura, de un cambio entre divisas del cliente activo.</span>
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
-<span class="cm">Contexto esperado: transaccion.</span>
+<span class="cm">Contexto esperado: transaccion, factura_pendiente, nota_credito.</span>
 <span class="cm">--&gt;</span>
 {% extends 'base.html' %}
 </pre></div>

@@ -43,7 +43,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 27. [Sesión 30 — 18/11/2026 — GE-39 — Reporte de transacciones del cliente](#sesión-30--18112026--ge-39--reporte-de-transacciones-del-cliente)
 28. [Sesión 31 — 18/11/2026 — Tablero de control de ganancias](#sesión-31--18112026--tablero-de-control-de-ganancias)
 29. [Sesión 32 — 18/11/2026 — Nota de crédito](#sesión-32--18112026--nota-de-crédito)
-30. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+30. [Sesión 33 — 20/11/2026 — Monitoreo de transacciones y reportes](#sesión-33--20112026--monitoreo-de-transacciones-y-reportes)
+31. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4642,6 +4643,88 @@ html docs/source -W`) sin advertencias nuevas: `apps.divisas.factura_electronica
 que el resto del archivo); `apps.divisas.models.rst` no necesitó ningún cambio (`DocumentoElectronico` ya
 se documenta con `autoclass`/`:members:`, que recoge los campos y properties nuevos solo con actualizar
 sus docstrings).
+
+## Sesión 33 — 20/11/2026 — Monitoreo de transacciones y reportes
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Monitoreo de transacciones y reportes (Epic "Gestión de Transacciones, Historial y
+Reportes", GE-14)
+**Participantes:** Adriana Benítez
+
+### Pedido
+
+Antes de la HU, dos arreglos de entorno: un `pull` de `develop` que había dejado un merge con 15 archivos
+en conflicto (los 7 commits locales ya estaban en el remoto con parches idénticos, verificado con
+`git cherry`; se abortó el merge, se dejó la rama `backup/develop-local-pre-sync` y `develop` quedó igual
+al remoto) y un `ModuleNotFoundError: openpyxl` al correr `makemigrations` (faltaba instalar
+`requirements.txt` en el `.venv`).
+
+Luego, implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: como analista cambiario, monitorear todas las transacciones del sistema con un
+listado paginado (cliente, tipo, divisas, montos, tasa, canal, estado y fecha), filtros (fechas, cliente,
+tipo, divisa, estado, canal), destacado y filtro de las que requieren atención (entrega pendiente,
+entrega incierta, pago fuera de plazo), detalle con pago, medios de origen/destino y factura, descarga en
+PDF y Excel del listado filtrado con totales por tipo, divisa y estado, acceso denegado sin rol de
+analista o administrador, y pantalla de solo consulta.
+
+### Qué ya existía
+
+- `HistorialTransaccionesView` (listado sin filtros, sin ventanilla, sin paginado real de filas
+  normalizadas) y `apps.divisas.reportes` (reporte de *un* cliente, con PDF/Excel): se reutilizó el patrón
+  (filas normalizadas en Python, un único `generar_*` compartido entre pantalla y descargas) pero no el
+  código, porque el monitoreo necesita todos los clientes y canales y todos los estados.
+- `apps.divisas.ganancias` ya resolvía la perspectiva de la casa para el tipo de operación y el canal
+  online/ventanilla: se importaron sus constantes (`CASA_COMPRA`/`CASA_VENTA`/`CAMBIO`, `TIPO_CHOICES`).
+- El rol `analista_cambiario` ya existía en Keycloak/sesión (`keycloak_roles`); `puede_configurar_comisiones`
+  ya agrupa admin + analista en el menú.
+
+### Decisiones
+
+- **Módulo propio `apps/divisas/monitoreo.py`**, de solo lectura, con `generar_monitoreo` como único punto
+  de entrada (pantalla, PDF y Excel ven siempre los mismos datos) y `detalle_transaccion` para el detalle.
+- **Tipo en perspectiva de la casa**, igual que el tablero de ganancias: sin invertir
+  `CalculoOperacion.TIPO_COMPRA` (el cliente compra = la casa vende), filtrar por tipo mezclaría
+  operaciones opuestas contra la ventanilla.
+- **Canales**: solo los que existen en el sistema, en línea y ventanilla. La HU menciona también
+  "terminal", pero no existe ningún canal así, por lo que se quitó del filtro (se había agregado primero
+  y Adriana pidió retirarlo).
+- **"Requiere atención"** se mapea a estados existentes (no hay un estado "incierta" propio):
+  `PAGADA` = entrega pendiente (pagó y no se entregó), `ENTREGA_FALLIDA` = entrega incierta (la transferencia
+  no respondió o fue rechazada; reintentar es seguro por la idempotencia de sipap-sim) y `PAGO_EXPIRADO` =
+  pago fuera de plazo. Documentado en `MOTIVOS_ATENCION`.
+- **Ventanilla** no tiene estado ni pago: se muestra siempre "Completada (ventanilla)", medios "Efectivo en
+  ventanilla" y sin pago electrónico. El filtro por cliente es por texto (nombre o documento, sin
+  distinguir mayúsculas) porque una operación de mostrador no tiene `Cliente` asociado.
+- **Solo consulta (criterio 7)**: las vistas fijan `http_method_names` a GET/HEAD/OPTIONS (un POST responde
+  405) y las plantillas no tienen formularios de cambio de estado ni el botón "Reintentar" del detalle del
+  cliente.
+- **Acceso (criterio 6)**: `MonitoreoMixin` autoriza solo `admin` y `analista_cambiario`; cliente, cajero o
+  sin rol reciben 403. Los totales incluyen todos los estados (el analista supervisa también lo cancelado),
+  a diferencia del reporte del cliente, que solo suma las completadas.
+
+### Archivos
+
+`apps/divisas/monitoreo.py` (nuevo), `apps/divisas/views.py` (`MonitoreoMixin`,
+`MonitoreoTransaccionesView`, `DescargarMonitoreoView`, `DetalleMonitoreoTransaccionView`),
+`apps/divisas/urls.py` (`/divisas/transacciones/monitoreo/`, `.../descargar/<formato>/`,
+`.../<tipo>/<uuid>/`), `templates/divisas/monitoreo_transacciones.html`, `monitoreo_detalle.html`, enlaces
+en `base.html` y `home.html`.
+
+### Tests
+
+`tests/test_monitoreo_transacciones.py` (archivo nuevo, 47 tests): normalización de filas por modelo;
+listado de todos los clientes/canales, paginado y acceso por rol (admin y analista sí; cliente, cajero, sin
+rol y anónimo no; descarga y detalle también denegados); cada filtro y combinaciones, rangos inválidos y
+paginación que conserva los filtros; destacado y filtro de atención; detalle con/sin pago y factura, de
+cambio y de ventanilla, 404 y solo lectura (POST → 405, sin formularios); totales por tipo/divisa/estado,
+PDF y Excel filtrados (contenido verificado con `openpyxl`) y redirección sin datos o con rango inválido.
+
+### Verificación
+
+Suite completa: 682 tests (`pytest tests -n auto`) en verde; `manage.py check` limpio; Sphinx
+(`python -m sphinx -b html docs/source docs/build`) con `apps.divisas.monitoreo.rst` nuevo,
+`apps.divisas.views.rst` y `templates.rst` ampliados y sin advertencias nuevas (queda una preexistente de
+resaltado en `templates.rst`).
 
 ## Enlaces externos (conversaciones completas)
 

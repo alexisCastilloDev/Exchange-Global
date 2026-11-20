@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
@@ -488,6 +489,18 @@ a una «Compra» para <code class="docutils literal notranslate"><span class="pr
 <p>Es exactamente la lectura que usa el Criterio 3 de la HU al describir
 qué moneda debe entregar el cajero en cada caso («la divisa en una
 venta, guaraníes en una compra»).</p>
+<p><code class="docutils literal notranslate"><span class="pre">cliente_identificador</span></code>/<code class="docutils literal notranslate"><span class="pre">cliente_nombre</span></code>/<code class="docutils literal notranslate"><span class="pre">cliente_email</span></code> existen
+para que, al igual que una compra/venta online
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.CalculoOperacion</span></code>), esta operación también
+pueda facturarse ante SIFEN (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.factura_electronica</span></code>): a diferencia del cliente
+online, uno de mostrador no tiene ningún <code class="docutils literal notranslate"><span class="pre">apps.clientes.models.Cliente</span></code>
+asociado, así que estos tres campos hacen ese mismo papel de receptor
+(«No Contribuyente» por cédula/RUC). Quedan en blanco a nivel de
+modelo (para no romper una creación directa que no los necesite,
+como en los tests) pero son obligatorios en
+<code class="docutils literal notranslate"><span class="pre">apps.caja.forms.OperacionVentanillaForm</span></code>: el cajero siempre los
+carga al registrar la operación desde la pantalla real.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.DoesNotExist">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.DoesNotExist" title="Link to this definition"></a></dt>
@@ -558,6 +571,27 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.cliente_email">
+<span class="sig-name descname"><span class="pre">cliente_email</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.cliente_email" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.cliente_identificador">
+<span class="sig-name descname"><span class="pre">cliente_identificador</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.cliente_identificador" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.cliente_nombre">
+<span class="sig-name descname"><span class="pre">cliente_nombre</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.cliente_nombre" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.comision">
 <span class="sig-name descname"><span class="pre">comision</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.comision" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
@@ -595,6 +629,19 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 <dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.divisa_id">
 <span class="sig-name descname"><span class="pre">divisa_id</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.divisa_id" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.documento_electronico">
+<span class="sig-name descname"><span class="pre">documento_electronico</span></span><a class="headerlink" href="#apps.caja.models.OperacionVentanilla.documento_electronico" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the reverse side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'restaurant'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Place.restaurant</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.caja.models.OperacionVentanilla.get_next_by_creado_en">

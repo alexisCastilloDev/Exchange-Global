@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.ganancias module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.divisas.models module" href="apps.divisas.models.html" />
+    <link rel="prev" title="apps.divisas.forms module" href="apps.divisas.forms.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.divisas.html">apps.divisas package</a></li>
+      <li class="breadcrumb-item active">apps.divisas.ganancias module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apps-divisas-ganancias-module">
+<h1>apps.divisas.ganancias module<a class="headerlink" href="#apps-divisas-ganancias-module" title="Link to this heading"></a></h1>
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.TIPO_CHOICES">
+<span class="sig-name descname"><span class="pre">TIPO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(('CASA_COMPRA',</span> <span class="pre">'Compra'),</span> <span class="pre">('CASA_VENTA',</span> <span class="pre">'Venta'),</span> <span class="pre">('CAMBIO',</span> <span class="pre">'Cambio'))</span></span><a class="headerlink" href="#apps.divisas.ganancias.TIPO_CHOICES" title="Link to this definition"></a></dt>
+<dd><p>Built-in immutable sequence.</p>
+<p>If no argument is given, the constructor returns an empty tuple.
+If iterable is specified the tuple is initialized from iterable’s items.</p>
+<p>If the argument is a tuple, the return value is the same object.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.CANAL_CHOICES">
+<span class="sig-name descname"><span class="pre">CANAL_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(('online',</span> <span class="pre">'Online'),</span> <span class="pre">('ventanilla',</span> <span class="pre">'Ventanilla'))</span></span><a class="headerlink" href="#apps.divisas.ganancias.CANAL_CHOICES" title="Link to this definition"></a></dt>
+<dd><p>Built-in immutable sequence.</p>
+<p>If no argument is given, the constructor returns an empty tuple.
+If iterable is specified the tuple is initialized from iterable’s items.</p>
+<p>If the argument is a tuple, the return value is the same object.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.PERIODOS">
+<span class="sig-name descname"><span class="pre">PERIODOS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'anio':</span> <span class="pre">'Último</span> <span class="pre">año',</span> <span class="pre">'hoy':</span> <span class="pre">'Hoy',</span> <span class="pre">'mes':</span> <span class="pre">'Último</span> <span class="pre">mes',</span> <span class="pre">'semana':</span> <span class="pre">'Última</span> <span class="pre">semana'}</span></span><a class="headerlink" href="#apps.divisas.ganancias.PERIODOS" title="Link to this definition"></a></dt>
+<dd><p>Dictionary that remembers insertion order</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._parsear_fecha">
+<span class="sig-name descname"><span class="pre">_parsear_fecha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_parsear_fecha"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._parsear_fecha" title="Link to this definition"></a></dt>
+<dd><p>Convierte <code class="docutils literal notranslate"><span class="pre">'YYYY-MM-DD'</span></code> a <code class="docutils literal notranslate"><span class="pre">date</span></code>, o <code class="docutils literal notranslate"><span class="pre">None</span></code> si falta o no es válido.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._fila_operacion">
+<span class="sig-name descname"><span class="pre">_fila_operacion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_fila_operacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._fila_operacion" title="Link to this definition"></a></dt>
+<dd><p>Normaliza una compra o venta online para el tablero de ganancias.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._fila_cambio">
+<span class="sig-name descname"><span class="pre">_fila_cambio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cambio</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_fila_cambio"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._fila_cambio" title="Link to this definition"></a></dt>
+<dd><p>Normaliza un cambio entre divisas online para el tablero de ganancias.</p>
+<p>Ver el docstring del módulo: la comisión de un cambio está en la divisa
+de destino, así que se reconvierte a PYG con la misma tasa de venta con
+la que se descontó del monto bruto en destino.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._fila_ventanilla">
+<span class="sig-name descname"><span class="pre">_fila_ventanilla</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_fila_ventanilla"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._fila_ventanilla" title="Link to this definition"></a></dt>
+<dd><p>Normaliza una operación de ventanilla para el tablero de ganancias.</p>
+<p>A diferencia de <code class="docutils literal notranslate"><span class="pre">_fila_operacion</span></code>, no hace falta invertir el tipo:
+<code class="docutils literal notranslate"><span class="pre">OperacionVentanilla.TIPO_COMPRA</span></code>/<code class="docutils literal notranslate"><span class="pre">TIPO_VENTA</span></code> ya están escritos en
+la perspectiva de la casa (ver el docstring de ese modelo).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._todas_las_ganancias">
+<span class="sig-name descname"><span class="pre">_todas_las_ganancias</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_todas_las_ganancias"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._todas_las_ganancias" title="Link to this definition"></a></dt>
+<dd><p>Todas las transacciones completadas de ambos canales, normalizadas (criterio 6).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._en_rango">
+<span class="sig-name descname"><span class="pre">_en_rango</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_desde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_hasta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_en_rango"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._en_rango" title="Link to this definition"></a></dt>
+<dd><p>Filtra las filas cuya fecha de creación (hora local) cae dentro del rango, ambos límites inclusive.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._rango_por_periodo">
+<span class="sig-name descname"><span class="pre">_rango_por_periodo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">periodo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hoy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_rango_por_periodo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._rango_por_periodo" title="Link to this definition"></a></dt>
+<dd><p>Traduce un período fijo (hoy/semana/mes/año) a un rango de fechas terminado hoy.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.resolver_periodo">
+<span class="sig-name descname"><span class="pre">resolver_periodo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parametros</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#resolver_periodo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias.resolver_periodo" title="Link to this definition"></a></dt>
+<dd><p>Decide el rango de fechas a partir de <code class="docutils literal notranslate"><span class="pre">?periodo=</span></code> o <code class="docutils literal notranslate"><span class="pre">?fecha_desde=</span></code>/<code class="docutils literal notranslate"><span class="pre">?fecha_hasta=</span></code>.</p>
+<p>Un rango propio (las dos fechas presentes) tiene prioridad sobre
+<code class="docutils literal notranslate"><span class="pre">periodo</span></code>. Si es inválido —fecha inicial posterior a la final, o
+cualquiera de las dos en el futuro (criterio implícito de validación,
+mismo criterio que ya usa <code class="docutils literal notranslate"><span class="pre">apps.divisas.views.HistorialCotizacionesView</span></code>)—
+se devuelve el motivo en vez de un rango, para no calcular nada sobre
+fechas que no tienen sentido.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">(fecha_desde,</span> <span class="pre">fecha_hasta,</span> <span class="pre">periodo,</span> <span class="pre">error)</span></code>. <code class="docutils literal notranslate"><span class="pre">periodo</span></code>
+es <code class="docutils literal notranslate"><span class="pre">'custom'</span></code> para un rango propio; <code class="docutils literal notranslate"><span class="pre">error</span></code> es <code class="docutils literal notranslate"><span class="pre">None</span></code> si el
+rango es válido.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._rango_anterior_equivalente">
+<span class="sig-name descname"><span class="pre">_rango_anterior_equivalente</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fecha_desde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_hasta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_rango_anterior_equivalente"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._rango_anterior_equivalente" title="Link to this definition"></a></dt>
+<dd><p>Rango de la misma duración, inmediatamente anterior al rango dado (criterio 5).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.calcular_indicadores">
+<span class="sig-name descname"><span class="pre">calcular_indicadores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#calcular_indicadores"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias.calcular_indicadores" title="Link to this definition"></a></dt>
+<dd><p>Ganancia total, cantidad de operaciones, monto total operado y ganancia promedio (criterio 1).</p>
+<p>Todo en guaraníes: <code class="docutils literal notranslate"><span class="pre">monto_pyg</span></code> es el volumen de negocio (el principal
+operado, no la ganancia), para distinguirlo de <code class="docutils literal notranslate"><span class="pre">ganancia_total</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.calcular_variacion">
+<span class="sig-name descname"><span class="pre">calcular_variacion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ganancia_actual</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ganancia_anterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#calcular_variacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias.calcular_variacion" title="Link to this definition"></a></dt>
+<dd><p>Variación porcentual de <code class="docutils literal notranslate"><span class="pre">ganancia_actual</span></code> respecto de <code class="docutils literal notranslate"><span class="pre">ganancia_anterior</span></code> (criterio 5).</p>
+<p><code class="docutils literal notranslate"><span class="pre">None</span></code> si el período anterior no tiene ninguna ganancia contra la que
+comparar (división por cero): no hay un porcentaje que tenga sentido
+mostrar en ese caso, ni siquiera «0%» ni «100%».</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._agrupacion_segun_duracion">
+<span class="sig-name descname"><span class="pre">_agrupacion_segun_duracion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fecha_desde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_hasta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_agrupacion_segun_duracion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._agrupacion_segun_duracion" title="Link to this definition"></a></dt>
+<dd><p>Decide si la evolución se agrupa por día, semana o mes, según la duración del rango (criterio 3).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._clave_periodo">
+<span class="sig-name descname"><span class="pre">_clave_periodo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fecha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agrupacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_clave_periodo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._clave_periodo" title="Link to this definition"></a></dt>
+<dd><p>Clave ordenable del bucket al que pertenece <code class="docutils literal notranslate"><span class="pre">fecha</span></code>, según la agrupación elegida.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.calcular_evolucion">
+<span class="sig-name descname"><span class="pre">calcular_evolucion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_desde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_hasta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#calcular_evolucion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias.calcular_evolucion" title="Link to this definition"></a></dt>
+<dd><p>Ganancia agrupada por día, semana o mes dentro del rango, en orden cronológico (criterio 3).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias._agrupar_por">
+<span class="sig-name descname"><span class="pre">_agrupar_por</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obtener_clave</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#_agrupar_por"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias._agrupar_por" title="Link to this definition"></a></dt>
+<dd><p>Cantidad y ganancia total por cada valor distinto que devuelve <code class="docutils literal notranslate"><span class="pre">obtener_clave</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.calcular_distribucion">
+<span class="sig-name descname"><span class="pre">calcular_distribucion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#calcular_distribucion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias.calcular_distribucion" title="Link to this definition"></a></dt>
+<dd><p>Ganancia distribuida por divisa, por tipo de operación y por canal (criterio 4).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.ganancias.generar_tablero">
+<span class="sig-name descname"><span class="pre">generar_tablero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parametros</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/ganancias.html#generar_tablero"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.ganancias.generar_tablero" title="Link to this definition"></a></dt>
+<dd><p>Resuelve el período y arma el tablero completo: indicadores, variación, evolución y distribución.</p>
+<p>Punto de entrada único de <code class="docutils literal notranslate"><span class="pre">apps.divisas.views.TableroGananciasView</span></code>.
+<code class="docutils literal notranslate"><span class="pre">parametros</span></code> es cualquier mapeo tipo <code class="docutils literal notranslate"><span class="pre">QueryDict</span></code> con las claves
+<code class="docutils literal notranslate"><span class="pre">periodo</span></code>, <code class="docutils literal notranslate"><span class="pre">fecha_desde</span></code> y <code class="docutils literal notranslate"><span class="pre">fecha_hasta</span></code> (las de <code class="docutils literal notranslate"><span class="pre">request.GET</span></code>).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.divisas.forms.html" class="btn btn-neutral float-left" title="apps.divisas.forms module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.models.html" class="btn btn-neutral float-right" title="apps.divisas.models module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
