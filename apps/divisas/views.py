@@ -32,10 +32,12 @@ from apps.divisas.casa_de_cambio import (
 from apps.divisas.entrega import reintentar_entrega
 from apps.divisas.factura_electronica import (
     consultar_estado_sifen,
+    emitir_nota_credito,
     factura_pendiente_de_generacion,
     descargar_kude,
     descargar_xml,
     reintentar_emision,
+    ultima_nota_credito,
 )
 from apps.divisas.forms import (
     CalculoOperacionForm,
@@ -969,6 +971,7 @@ class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, V
         return render(request, 'divisas/detalle_transaccion_operacion.html', {
             'transaccion': transaccion,
             'factura_pendiente': factura_pendiente_de_generacion(transaccion),
+            'nota_credito': ultima_nota_credito(transaccion),
         })
 
     def post(self, request, *args, **kwargs):
@@ -1021,6 +1024,7 @@ class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View
         return render(request, 'divisas/detalle_transaccion_cambio.html', {
             'transaccion': transaccion,
             'factura_pendiente': factura_pendiente_de_generacion(transaccion),
+            'nota_credito': ultima_nota_credito(transaccion),
         })
 
     def post(self, request, *args, **kwargs):
@@ -2266,10 +2270,16 @@ class DocumentosElectronicosListView(AdminDivisasMixin, ListView):
     context_object_name = 'documentos'
 
     def get_queryset(self):
-        """Trae de una sola vez el cliente de cada transacción facturada, para no repetir consultas."""
+        """Trae de una sola vez el cliente de cada transacción facturada y la factura de cada nota de crédito."""
         return DocumentoElectronico.objects.select_related(
-            'calculo_operacion__cliente', 'calculo_triangulacion__cliente', 'operacion_ventanilla',
+            'calculo_operacion__cliente', 'calculo_triangulacion__cliente', 'operacion_ventanilla', 'factura_anulada',
         )
+
+    def get_context_data(self, **kwargs):
+        """Agrega el catálogo de motivos de emisión para el formulario inline de "Emitir nota de crédito"."""
+        context = super().get_context_data(**kwargs)
+        context['motivos_emision'] = DocumentoElectronico.MOTIVO_EMISION_CHOICES
+        return context
 
 
 class ReintentarEmisionDocumentoElectronicoView(AdminDivisasMixin, View):
@@ -2317,6 +2327,30 @@ class ConsultarEstadoSifenDocumentoElectronicoView(AdminDivisasMixin, View):
             messages.success(request, f'Estado consultado: {documento.get_estado_display()}.')
         else:
             messages.error(request, 'No se pudo consultar el estado ante SIFEN (sin respuesta de Factura Segura).')
+        return redirect('divisas:documentos_electronicos')
+
+
+class EmitirNotaCreditoView(AdminDivisasMixin, View):
+    """Emite, a pedido de un administrador, una nota de crédito que anula una factura aprobada.
+
+    Implementa la HU "Nota de crédito": ``pk`` es la factura a anular,
+    ``motivo_emision`` (del catálogo SIFEN) llega por el ``POST`` del
+    formulario inline de ``documentos_electronicos.html``. Toda la
+    validación (criterio 4) y el armado del documento (criterio 1)
+    viven en ``apps.divisas.factura_electronica.emitir_nota_credito``;
+    esta vista solo la llama y refleja el resultado. Solo accede un
+    administrador (criterio 8, ver ``AdminDivisasMixin``).
+    """
+
+    def post(self, request, pk):
+        """Llama a ``emitir_nota_credito`` y refleja el resultado en un mensaje."""
+        factura = get_object_or_404(DocumentoElectronico, pk=pk)
+        motivo_emision = request.POST.get('motivo_emision', '')
+        documento, mensaje = emitir_nota_credito(factura, motivo_emision)
+        if documento is not None and documento.estado == DocumentoElectronico.ESTADO_GENERADO:
+            messages.success(request, mensaje)
+        else:
+            messages.error(request, mensaje)
         return redirect('divisas:documentos_electronicos')
 
 

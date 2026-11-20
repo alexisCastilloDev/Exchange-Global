@@ -29,6 +29,7 @@ from .views import (
     ConsultarEstadoSifenDocumentoElectronicoView,
     DescargarDocumentoElectronicoView,
     DocumentosElectronicosListView,
+    EmitirNotaCreditoView,
     ReintentarEmisionDocumentoElectronicoView,
     HistorialTransaccionesView,
     MiHistorialTransaccionesView,
@@ -166,6 +167,11 @@ urlpatterns = [
         'administrar/documentos-electronicos/<int:pk>/consultar-estado-sifen/',
         ConsultarEstadoSifenDocumentoElectronicoView.as_view(),
         name='consultar_estado_sifen_documento_electronico',
+    ),
+    path(
+        'administrar/documentos-electronicos/<int:pk>/emitir-nota-credito/',
+        EmitirNotaCreditoView.as_view(),
+        name='emitir_nota_credito',
     ),
     path(
         'documentos-electronicos/<int:pk>/descargar/<str:formato>/',

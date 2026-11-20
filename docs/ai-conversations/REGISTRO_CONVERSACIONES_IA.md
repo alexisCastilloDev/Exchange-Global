@@ -42,7 +42,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 26. [Sesión 29 — 16/11/2026 — Historial y evolución de tasas de cambio](#sesión-29--16112026--historial-y-evolución-de-tasas-de-cambio)
 27. [Sesión 30 — 18/11/2026 — GE-39 — Reporte de transacciones del cliente](#sesión-30--18112026--ge-39--reporte-de-transacciones-del-cliente)
 28. [Sesión 31 — 18/11/2026 — Tablero de control de ganancias](#sesión-31--18112026--tablero-de-control-de-ganancias)
-29. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+29. [Sesión 32 — 18/11/2026 — Nota de crédito](#sesión-32--18112026--nota-de-crédito)
+30. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4530,6 +4531,117 @@ advertencias nuevas: se agregó `docs/source/reference/apps.divisas.ganancias.rs
 del módulo, incluidas las privadas, mismo criterio que `apps.divisas.factura_electronica.rst`/
 `apps.divisas.reportes.rst`) referenciado desde `apps.divisas.rst`, y `TableroGananciasView` se agregó a
 `apps.divisas.views.rst` en el mismo estilo que el resto del archivo (`autoclass`/`:members:`).
+
+## Sesión 32 — 18/11/2026 — Nota de crédito
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Nota de crédito (Epic de Facturación Electrónica / SIFEN)
+**Participantes:** Rodrigo Mereles
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: un administrador emite, para una factura aprobada por SIFEN y sin nota de
+crédito vigente, una nota de crédito por el total de la factura, con un motivo del catálogo SIFEN,
+referenciando el CDC de la factura y repitiendo su receptor e ítems; aprobada por SIFEN, pasa a
+"Aprobada" con su propio CDC y la factura asociada a "Anulada por nota de crédito"; rechazada, la
+factura sigue "Aprobada" y se puede emitir una nueva; no se puede emitir sobre una factura no aprobada,
+ya anulada, o con una nota de crédito pendiente o aprobada; un timeout o error de comunicación no se
+reintenta solo y no genera una nota de crédito duplicada; el cliente ve la nota de crédito de su factura
+anulada y la descarga en PDF/XML, solo de su cliente activo; no mueve dinero ni cambia el estado de la
+transacción; y un usuario sin rol de administrador no puede emitirla.
+
+### Qué ya existía
+
+`ContadorDocumentoElectronico.TIPO_NOTA_CREDITO` ya estaba definido (sin usar en ningún lado): la
+numeración por tipo de documento ya soportaba una nota de crédito desde que se diseñó esa HU. También
+estaban resueltos, reutilizables sin tocarlos: el envío síncrono a Factura Segura sin reintento
+automático ante un timeout (`_generar`/`ESTADO_ERROR_GENERACION`/`reintentar_emision`), el poll de estado
+ante SIFEN (`consultar_estado_sifen`), la descarga bajo demanda (`descargar_kude`/`descargar_xml`), y el
+control de acceso por cliente activo de `DescargarDocumentoElectronicoView._puede_ver`. Nada de esto se
+reescribió: la nota de crédito se diseñó para encajar en esa misma maquinaria, no en paralelo a ella.
+
+### Decisiones
+
+- **La nota de crédito es un `DocumentoElectronico` más** (`tipo_documento=TIPO_NOTA_CREDITO`), no un
+  modelo nuevo: reutiliza sin cambios sus mismos estados, su mismo CDC, su mismo poll de SIFEN y sus
+  mismas descargas. El único costo es que el modelo pasa a tener dos formas válidas: una factura (con
+  exactamente una transacción, como antes) o una nota de crédito (con `factura_anulada` y ninguna
+  transacción propia) — la `CheckConstraint` original se amplió con un cuarto caso en vez de reemplazarse.
+- **`factura_anulada` es un `ForeignKey`, no un `OneToOneField`**: a propósito, para que una factura
+  rechazada por SIFEN libere el paso para una nueva (criterio 3) sin que la base lo impida — puede haber
+  más de una fila histórica para la misma factura, nunca más de una *vigente* a la vez. Esa regla la
+  impone una `UniqueConstraint` condicional (`~Q(estado='RECHAZADO')` sobre `factura_anulada`), mismo
+  patrón ya usado en este proyecto para "una solicitud pendiente por usuario" — la base de datos lo
+  impide, no solo la vista, ni siquiera ante dos llamadas simultáneas.
+- **`DocumentoElectronico.transaccion` delega en `factura_anulada.transaccion` para una nota de
+  crédito**: en vez de copiarle su propia referencia a la transacción (que además el `OneToOneField` de
+  `calculo_operacion`/`calculo_triangulacion`/`operacion_ventanilla` jamás permitiría, porque esa
+  transacción ya está "ocupada" por la factura), la nota de crédito la resuelve indirectamente. Esto hizo
+  que **toda** la maquinaria existente (`_generar`, el control de acceso por cliente activo, `nombre_receptor`)
+  funcionara para una nota de crédito sin tocarla: solo `_armar_resumido_de` necesitó una rama nueva
+  (`iMotEmi`/`gCamDEAsoc`), condicionada por `documento.tipo_documento`.
+- **El "tipo de operación" del tablero de ganancias (sesión anterior) no tiene nada que ver con esto**:
+  un apunte para no confundir — la inversión de perspectiva de esa HU es sobre `tipo` (compra/venta), un
+  concepto distinto del tipo de documento (factura/nota de crédito) de esta.
+- **Catálogo de motivos de emisión reconstruido de memoria, no verificado campo por campo**: igual
+  criterio que ya usa el propio módulo para `iTipEmi`/`iTImp`/`iIndPres` (y que antes el campo
+  `gCamDEAsoc`/`iTipDocAso`/`dCdCDERef` del documento asociado) — ninguna prueba de este proyecto llama a
+  la API real, así que el riesgo de un nombre de campo equivocado queda contenido y documentado para
+  revisar antes de la primera emisión real.
+- **La factura anulada sigue siendo descargable**: se agregó `ESTADO_ANULADA` a `ESTADOS_DESCARGABLES` a
+  propósito — la nota de crédito anula su efecto tributario, no su existencia como comprobante histórico
+  (SIFEN tampoco la "borra"). Un cliente puede seguir viendo y descargando la factura original, además de
+  la nota de crédito que la anuló.
+- **La transición a "Anulada" vive dentro de `consultar_estado_sifen`, no en una vista aparte**: en la
+  misma llamada que ya resuelve si SIFEN aprobó o rechazó la nota de crédito, si aprueba también marca la
+  factura — sin necesidad de ningún cron ni botón adicional, y sin duplicar el poll de estado que ya existía.
+- **`DocumentoElectronico.puede_emitir_nota_credito` (property, solo booleano) vs.
+  `apps.divisas.factura_electronica.puede_emitir_nota_credito` (función, con el motivo)**: la property
+  existe solo para que la plantilla de administración decida si mostrar el botón sin importar el módulo de
+  negocio desde un template (y sin arriesgar un import circular, porque `factura_electronica` ya importa de
+  `models`). Debe mantenerse en los mismos términos que la función — documentado en ambos lados para que
+  no se desincronicen con un cambio futuro.
+
+### Tests
+
+`tests/test_nota_credito.py` (archivo nuevo, 22 tests):
+- `PuedeEmitirNotaCreditoTest`: elegible con una factura aprobada sin nota vigente; no elegible si no está
+  aprobada, si ya fue anulada, o si tiene una nota pendiente/aprobada; sí elegible con una nota rechazada
+  (criterio 3).
+- `EmitirNotaCreditoTest`: la emisión exitosa repite el total/receptor/ítems de la factura y referencia su
+  CDC (criterio 1, verificado contra el `JSON_RESUMIDO_DE` real enviado a `calcular_de`); una factura no
+  elegible o un motivo inválido no crean nada ni llaman a Factura Segura (criterio 4); un timeout deja la
+  nota de crédito en "Error al generar" sin reintentar sola, y una segunda llamada no duplica nada mientras
+  esté así (criterio 5); una carrera simultánea choca contra la `UniqueConstraint` de la base.
+- `ConsultarEstadoDeNotaCreditoTest`: aprobada (con o sin observación) anula la factura (criterio 2);
+  rechazada no la toca y libera el paso para una nueva (criterio 3).
+- `UltimaNotaCreditoTest`: sin ninguna nota de crédito, `None`; con varias, la más reciente.
+- `EmitirNotaCreditoViewTest`: un administrador la emite; sin elegibilidad no se emite nada; un usuario sin
+  rol admin recibe 403 (criterio 8).
+- `ClienteVeLaNotaDeCreditoTest`: el detalle de la transacción muestra la nota de crédito asociada; el
+  cliente la descarga en PDF y en XML; un cliente ajeno recibe 403 al intentarlo (criterio 6).
+
+Suite completa: 635 tests (`pytest tests/ -n auto`) + 563 (`manage.py test tests --keepdb --noinput`; en
+paralelo, un detalle ajeno a esta HU del runner de Django al serializar un traceback entre procesos —
+`TypeError: cannot pickle 'traceback' object` — oscurece el resultado real, así que se verificó sin
+`--parallel`), todos en verde. Un detalle de depuración durante la escritura de los tests: mockear
+`apps.divisas.views.descargar_kude`/`descargar_xml` no alcanza para `DescargarDocumentoElectronicoView`,
+porque su diccionario `FORMATOS` ya capturó esas referencias al definirse la clase (en el import del
+módulo), antes de que corra cualquier `patch()` del test — hay que mockear `apps.divisas.factura_electronica.
+requests.get`, un nivel más abajo, igual criterio que ya usa `tests/test_factura_electronica.py`.
+
+### Verificación
+
+`manage.py check` limpio. Migración nueva (`apps/divisas/migrations/0031_remove_documentoelectronico_
+documento_electronico_exactamente_una_transaccion_and_more.py`): agrega `factura_anulada`/`motivo_emision`,
+el nuevo estado `ANULADA`, y reemplaza la `CheckConstraint`/agrega la `UniqueConstraint` descriptas arriba;
+`manage.py makemigrations --check --dry-run` limpio después de aplicarla. Sphinx (`python -m sphinx -b
+html docs/source -W`) sin advertencias nuevas: `apps.divisas.factura_electronica.rst` y
+`apps.divisas.views.rst` ampliados con las funciones/vista nuevas (mismo estilo `autofunction`/`autoclass`
+que el resto del archivo); `apps.divisas.models.rst` no necesitó ningún cambio (`DocumentoElectronico` ya
+se documenta con `autoclass`/`:members:`, que recoge los campos y properties nuevos solo con actualizar
+sus docstrings).
 
 ## Enlaces externos (conversaciones completas)
 
