@@ -68,7 +68,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -175,6 +177,16 @@ a este módulo exactamente desde los mismos 3 puntos que ya disparan
 revierte el pago ya confirmado, y viceversa (criterio 3): se usa
 siempre <code class="docutils literal notranslate"><span class="pre">intentar_emitir_documento_electronico</span></code>, que no relanza nada
 hacia quien la llama.</p>
+<p>También factura una compra/venta registrada en ventanilla
+(<code class="docutils literal notranslate"><span class="pre">apps.caja.models.OperacionVentanilla</span></code> — ver
+<code class="docutils literal notranslate"><span class="pre">apps.caja.views.RegistrarOperacionVentanillaView</span></code>): a diferencia de
+una transacción online, se la considera «pagada» de inmediato (se cobra
+en efectivo, en el momento), así que ahí se llama a
+<code class="docutils literal notranslate"><span class="pre">intentar_emitir_documento_electronico</span></code> apenas se registra la
+operación, no desde un webhook/confirmación de pago. El receptor de la
+factura (<code class="docutils literal notranslate"><span class="pre">_datos_receptor</span></code>) se arma distinto en ese caso: una
+<code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> no tiene ningún <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> del sistema, así que
+usa sus propios datos de mostrador en vez de los del <code class="docutils literal notranslate"><span class="pre">Cliente</span></code>.</p>
 <p>Autenticación: vía un <code class="docutils literal notranslate"><span class="pre">Authentication-Token</span></code> de larga duración
 (<code class="docutils literal notranslate"><span class="pre">settings.FACTURASEGURA_AUTH_TOKEN</span></code>), obtenido una sola vez por un
 administrador contra <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/login?include_auth_token</span></code> y válido hasta
@@ -230,6 +242,42 @@ Manual Técnico SIFEN (<code class="docutils literal notranslate"><span class="p
 plausible según la guía, no una verificación campo por campo contra el
 Manual Técnico de SIFEN 150 completo: revisar antes de la primera
 emisión real.</p>
+<p>Nota de crédito (HU «Nota de crédito»): <code class="docutils literal notranslate"><span class="pre">emitir_nota_credito</span></code> anula
+una factura ya aprobada, con el mismo total, receptor e ítems (porque
+<code class="docutils literal notranslate"><span class="pre">documento.transaccion</span></code>, para una nota de crédito, delega en
+<code class="docutils literal notranslate"><span class="pre">factura_anulada.transaccion</span></code> — ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.</span>
+<span class="pre">DocumentoElectronico.transaccion</span></code>), más <code class="docutils literal notranslate"><span class="pre">iMotEmi</span></code> (motivo de
+emisión, elegido del catálogo) y el grupo de documento asociado
+(<code class="docutils literal notranslate"><span class="pre">gCamDEAsoc</span></code>) que referencia el CDC de la factura (ver
+<code class="docutils literal notranslate"><span class="pre">_armar_resumido_de</span></code>). Reutiliza toda la infraestructura ya existente
+para una factura —<code class="docutils literal notranslate"><span class="pre">_generar</span></code>/<code class="docutils literal notranslate"><span class="pre">_calcular</span></code>/<code class="docutils literal notranslate"><span class="pre">reintentar_emision</span></code>/
+<code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code>/<code class="docutils literal notranslate"><span class="pre">descargar_kude</span></code>/<code class="docutils literal notranslate"><span class="pre">descargar_xml</span></code>— sin
+ninguna rama paralela: la única diferencia real es qué campos arma
+<code class="docutils literal notranslate"><span class="pre">_armar_resumido_de</span></code> según <code class="docutils literal notranslate"><span class="pre">documento.tipo_documento</span></code>. El nombre
+del campo del grupo de documento asociado (<code class="docutils literal notranslate"><span class="pre">gCamDEAsoc</span></code>/<code class="docutils literal notranslate"><span class="pre">iTipDocAso</span></code>/
+<code class="docutils literal notranslate"><span class="pre">dCdCDERef</span></code>) no está verificado contra el esquema real de Factura
+Segura (mismo criterio de «revisar antes de la primera emisión real»
+que el resto de los campos no confirmados del módulo) — ninguna prueba
+de este proyecto llama a la API real, siempre está mockeada.</p>
+<p>Cuando SIFEN aprueba una nota de crédito (<code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code>),
+la factura que anula pasa a <code class="docutils literal notranslate"><span class="pre">ESTADO_ANULADA</span></code> en la misma llamada —
+no hace falta ninguna vista ni tarea separada para completar el
+criterio 2. Mientras tanto, no se puede emitir una segunda nota de
+crédito para la misma factura (ver <code class="docutils literal notranslate"><span class="pre">puede_emitir_nota_credito</span></code>,
+respaldado por la <code class="docutils literal notranslate"><span class="pre">UniqueConstraint</span></code> del modelo): si SIFEN la
+rechaza, la anterior deja de contar como vigente y un administrador
+puede emitir una nueva (criterio 3); si falló por timeout o error de
+comunicación (<code class="docutils literal notranslate"><span class="pre">ESTADO_ERROR_GENERACION</span></code>), sigue contando como
+vigente —igual que una factura en el mismo estado— así que la única
+forma de continuar es «Reintentar» sobre esa misma fila, nunca una
+nota de crédito nueva (criterio 5).</p>
+<p>Una nota de crédito no mueve ningún dinero ni cambia el estado de la
+transacción (criterio 7): solo pasa el estado de la <em>factura</em> a
+«Anulada por nota de crédito», nunca el de <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>/
+<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>/<code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code>, que siguen
+reflejando la operación real (acreditada, retirada, etc.) tal como
+quedó. La devolución de fondos, si corresponde, es un proceso
+administrativo aparte, fuera del alcance de esta HU.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.factura_electronica.FacturaSeguraRechazadaError">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">FacturaSeguraRechazadaError</span></span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#FacturaSeguraRechazadaError"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.FacturaSeguraRechazadaError" title="Link to this definition"></a></dt>
@@ -302,7 +350,12 @@ efecto de la comisión en un cambio, a diferencia de lo que ya
 hacía <code class="docutils literal notranslate"><span class="pre">monto_final</span></code> para una compra/venta (bug corregido).
 El redondeo a entero reutiliza el mismo criterio que
 <code class="docutils literal notranslate"><span class="pre">apps.divisas.pagos_stripe</span></code> ya usa para cobrar en PYG (moneda sin
-decimales, tanto en Stripe como en SIFEN).</p>
+decimales, tanto en Stripe como en SIFEN). Una <code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code>
+(compra/venta en ventanilla, nunca un cambio entre divisas: ver
+<code class="docutils literal notranslate"><span class="pre">apps.caja.models.OperacionVentanilla</span></code>) ya trae su propio total en
+PYG en <code class="docutils literal notranslate"><span class="pre">monto_pyg</span></code>, calculado por la misma
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views._calcular_importe_operacion</span></code> que usa el flujo
+online — ninguna conversión adicional hace falta.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -314,7 +367,9 @@ decimales, tanto en Stripe como en SIFEN).</p>
 En un cambio, <code class="docutils literal notranslate"><span class="pre">comision</span></code> se calculó en la divisa de <strong>destino</strong>
 (Paso B de <code class="docutils literal notranslate"><span class="pre">_calcular_triangulacion</span></code>): se convierte a PYG con la
 misma tasa usada en ese paso (<code class="docutils literal notranslate"><span class="pre">tasa_venta_aplicada</span></code>), igual que
-<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>. Una <code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> también trae su
+<code class="docutils literal notranslate"><span class="pre">comision</span></code> ya en PYG, igual que una compra/venta online: comparte
+la rama «else».</p>
 </dd></dl>
 
 <dl class="py function">
@@ -366,12 +421,23 @@ cliente (la divisa de destino), igual criterio que ya usa
 <code class="docutils literal notranslate"><span class="pre">_descripcion_operacion</span></code> («Cambio de X a Y»).</p>
 <p><code class="docutils literal notranslate"><span class="pre">dDesTipTra</span></code> es obligatorio siempre que se envíe <code class="docutils literal notranslate"><span class="pre">iTipTra</span></code>: no
 alcanza con mandar el código solo, hay que mandar también su texto.</p>
+<p>Una <code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> no tiene un <code class="docutils literal notranslate"><span class="pre">tipo</span></code> directamente
+comparable: el suyo está escrito desde la perspectiva de la casa de
+cambio («Compra» es la casa comprándole al cliente), mientras que
+<code class="docutils literal notranslate"><span class="pre">CalculoOperacion.tipo</span></code> (contra el que se compara arriba) está
+escrito desde la perspectiva del cliente. Por eso se traduce primero
+a su equivalente de <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> con la misma inversión que ya
+usa <code class="docutils literal notranslate"><span class="pre">apps.caja.views.RegistrarOperacionVentanillaView</span></code> para calcular
+el monto («Compra» de ventanilla ≡ «Venta» de <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>, y
+viceversa — ver el docstring de <code class="docutils literal notranslate"><span class="pre">apps.caja.models.OperacionVentanilla</span></code>),
+en vez de reinterpretar el código SIFEN de cero para un modelo
+distinto.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="apps.divisas.factura_electronica._descripcion_operacion">
 <span class="sig-name descname"><span class="pre">_descripcion_operacion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_descripcion_operacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._descripcion_operacion" title="Link to this definition"></a></dt>
-<dd><p>Descripción legible del ítem, distinta para una compra/venta o un cambio entre divisas.</p>
+<dd><p>Descripción legible del ítem, distinta para una compra/venta, un cambio, o una operación de ventanilla.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -409,9 +475,24 @@ el campo legado solo como último respaldo.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="apps.divisas.factura_electronica._grupo_pago">
 <span class="sig-name descname"><span class="pre">_grupo_pago</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monto</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_grupo_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._grupo_pago" title="Link to this definition"></a></dt>
-<dd><p>Mapea el medio de pago real (<code class="docutils literal notranslate"><span class="pre">Pago.medio_pago</span></code>) al tipo de pago que espera la API.</p>
+<dd><p>Mapea el medio de pago real al tipo de pago que espera la API.</p>
 <p>Un único pago por el total de la operación, ya en PYG (ver
-<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>): esta HU no reparte el cobro en más de un medio.</p>
+<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code>): esta HU no reparte el cobro en más de un medio.
+Una <code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> no tiene ningún <code class="docutils literal notranslate"><span class="pre">Pago</span></code> (se cobra en
+efectivo, en el momento, en la propia ventanilla): se mapea directo
+a <code class="docutils literal notranslate"><span class="pre">iTiPago='1'</span></code> (Efectivo), sin mirar <code class="docutils literal notranslate"><span class="pre">transaccion.pago</span></code> en
+absoluto.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica._grupo_documento_asociado">
+<span class="sig-name descname"><span class="pre">_grupo_documento_asociado</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#_grupo_documento_asociado"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica._grupo_documento_asociado" title="Link to this definition"></a></dt>
+<dd><p>Grupo <code class="docutils literal notranslate"><span class="pre">gCamDEAsoc</span></code> de una nota de crédito: referencia el CDC de la factura que anula.</p>
+<p>Nombre de campo no verificado contra el esquema real de Factura
+Segura (ver el docstring del módulo): <code class="docutils literal notranslate"><span class="pre">iTipDocAso='1'</span></code> (Electrónico)
+y <code class="docutils literal notranslate"><span class="pre">dCdCDERef</span></code> con el CDC de <code class="docutils literal notranslate"><span class="pre">documento.factura_anulada</span></code>, que a
+esta altura ya tiene que estar aprobada (ver
+<code class="docutils literal notranslate"><span class="pre">puede_emitir_nota_credito</span></code>), así que siempre tiene un CDC.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -425,7 +506,14 @@ cambio), y la comisión de Global Exchange, gravada al 10%.
 Receptor modelado siempre como «No Contribuyente»/consumidor final
 por cédula (<code class="docutils literal notranslate"><span class="pre">iNatRec='2'</span></code>), lo que a su vez implica
 <code class="docutils literal notranslate"><span class="pre">iTiOpe='2'</span></code> (B2C): un «No Contribuyente» nunca es la contraparte
-de una operación B2B.</p>
+de una operación B2B. Para una nota de crédito
+(<code class="docutils literal notranslate"><span class="pre">documento.tipo_documento</span> <span class="pre">==</span> <span class="pre">TIPO_NOTA_CREDITO</span></code>), <code class="docutils literal notranslate"><span class="pre">transaccion</span></code>
+y <code class="docutils literal notranslate"><span class="pre">monto</span></code> ya son los de la factura que anula (vienen de
+<code class="docutils literal notranslate"><span class="pre">documento.transaccion</span></code>/<code class="docutils literal notranslate"><span class="pre">_total_en_pyg</span></code> sobre esa misma
+transacción, ver <code class="docutils literal notranslate"><span class="pre">emitir_nota_credito</span></code>): se agregan, además, el
+motivo de emisión (<code class="docutils literal notranslate"><span class="pre">iMotEmi</span></code>) y el documento asociado
+(<code class="docutils literal notranslate"><span class="pre">gCamDEAsoc</span></code>, ver <code class="docutils literal notranslate"><span class="pre">_grupo_documento_asociado</span></code>), que una
+factura nunca lleva.</p>
 <p>Nota: varios códigos de clasificación documentados solo como
 «ver Manual SIFEN» (<code class="docutils literal notranslate"><span class="pre">iTipEmi</span></code>, <code class="docutils literal notranslate"><span class="pre">iTImp</span></code>, <code class="docutils literal notranslate"><span class="pre">iIndPres</span></code>) quedan
 con el valor más plausible según la guía de Factura Segura, no una
@@ -467,8 +555,8 @@ excepción hacia quien llama a esta función interna. Una falla en
 en <code class="docutils literal notranslate"><span class="pre">generar_de</span></code>: en ambos casos no se generó nada del otro lado,
 y el número ya reservado queda igual de «quemado» por diseño (ver
 el docstring del módulo).</p>
-<p>Antes de llamar a la API, valida que el cliente tenga un email
-cargado (<code class="docutils literal notranslate"><span class="pre">_email_receptor</span></code>): <code class="docutils literal notranslate"><span class="pre">dEmailRec</span></code> es obligatorio para
+<p>Antes de llamar a la API, valida que el receptor tenga un email
+cargado (<code class="docutils literal notranslate"><span class="pre">_datos_receptor</span></code>): <code class="docutils literal notranslate"><span class="pre">dEmailRec</span></code> es obligatorio para
 Factura Segura (lo confirmó un rechazo real, <code class="docutils literal notranslate"><span class="pre">code=-10009</span></code>,
 durante las pruebas de esta HU). Si falta, no se llama a la API en
 absoluto: es un dato que nunca va a cambiar solo reintentando
@@ -511,8 +599,10 @@ que disparan <code class="docutils literal notranslate"><span class="pre">apps.d
 (exitoso o no), lo devuelve sin volver a llamar a Factura Segura.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parámetros<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>transaccion</strong> – Una <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> o <code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>
-recién marcada «Pagada».</p>
+<dd class="field-odd"><p><strong>transaccion</strong> – Una <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>/<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>
+recién marcada «Pagada», o una <code class="docutils literal notranslate"><span class="pre">OperacionVentanilla</span></code> recién
+registrada (siempre «pagada» en los hechos: se cobra en
+efectivo en el momento).</p>
 </dd>
 <dt class="field-even">Devuelve<span class="colon">:</span></dt>
 <dd class="field-even"><p>El documento (nuevo o ya
@@ -587,6 +677,71 @@ condiciones de reintentarse o si volvió a fallar.</p>
 </dd>
 <dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.ultima_nota_credito">
+<span class="sig-name descname"><span class="pre">ultima_nota_credito</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#ultima_nota_credito"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.ultima_nota_credito" title="Link to this definition"></a></dt>
+<dd><p>Devuelve la nota de crédito más reciente de la factura de <code class="docutils literal notranslate"><span class="pre">transaccion</span></code>, o <code class="docutils literal notranslate"><span class="pre">None</span></code> si no tiene ninguna.</p>
+<p>Para que las pantallas de detalle del cliente (criterio 6) y de
+administración puedan mostrar siempre el estado más actual de la
+relación factura/nota de crédito con una sola llamada, sin
+importar si hubo una nota de crédito rechazada antes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.puede_emitir_nota_credito">
+<span class="sig-name descname"><span class="pre">puede_emitir_nota_credito</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factura</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#puede_emitir_nota_credito"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.puede_emitir_nota_credito" title="Link to this definition"></a></dt>
+<dd><p>Indica si se puede emitir una nota de crédito para <code class="docutils literal notranslate"><span class="pre">factura</span></code>, y por qué no si no se puede (criterio 4).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>factura</strong> (<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico"><em>DocumentoElectronico</em></a>) – El documento a anular (debe ser
+una factura, <code class="docutils literal notranslate"><span class="pre">tipo_documento=TIPO_FACTURA</span></code>).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(True,</span> <span class="pre">'')</span></code> si se puede, o <code class="docutils literal notranslate"><span class="pre">(False,</span>
+<span class="pre">motivo)</span></code> listo para mostrarle al administrador.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[bool, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.factura_electronica.emitir_nota_credito">
+<span class="sig-name descname"><span class="pre">emitir_nota_credito</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factura</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motivo_emision</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/factura_electronica.html#emitir_nota_credito"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.factura_electronica.emitir_nota_credito" title="Link to this definition"></a></dt>
+<dd><p>Emite una nota de crédito que anula <code class="docutils literal notranslate"><span class="pre">factura</span></code> por <code class="docutils literal notranslate"><span class="pre">motivo_emision</span></code> (criterio 1).</p>
+<p>Repite el total, el receptor y los ítems de <code class="docutils literal notranslate"><span class="pre">factura</span></code> porque
+comparte su misma transacción (<code class="docutils literal notranslate"><span class="pre">documento.transaccion</span></code>, para una
+nota de crédito, delega en <code class="docutils literal notranslate"><span class="pre">factura_anulada.transaccion</span></code> — ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.models.DocumentoElectronico.transaccion</span></code>): ni este
+módulo ni <code class="docutils literal notranslate"><span class="pre">_armar_resumido_de</span></code> tienen que repetir ningún dato a
+mano. Repite <code class="docutils literal notranslate"><span class="pre">puede_emitir_nota_credito</span></code> acá adentro (no solo en
+la vista) para que esta función sea segura de llamar directamente,
+incluso en una prueba o en otro punto de entrada futuro.</p>
+<p>No mueve ningún dinero ni cambia el estado de la transacción
+(criterio 7, ver el docstring del módulo): solo crea el
+<code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code> de la nota de crédito y lo envía. La
+factura pasa a «Anulada» más adelante, solo si SIFEN aprueba esta
+nota de crédito (ver <code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>factura</strong> (<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico"><em>DocumentoElectronico</em></a>) – La factura a anular.</p></li>
+<li><p><strong>motivo_emision</strong> (<em>str</em>) – Uno de <code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_EMISION_CHOICES</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El documento de la
+nota de crédito (<code class="docutils literal notranslate"><span class="pre">None</span></code> si no se pudo crear) y un mensaje
+para mostrarle al administrador, de éxito o del motivo por el
+que no se pudo.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico">DocumentoElectronico</a> | None, str]</p>
 </dd>
 </dl>
 </dd></dl>

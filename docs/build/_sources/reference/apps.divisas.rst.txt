@@ -12,9 +12,13 @@ Submodules
    apps.divisas.entrega
    apps.divisas.factura_electronica
    apps.divisas.forms
+   apps.divisas.ganancias
    apps.divisas.models
+   apps.divisas.monitoreo
    apps.divisas.pagos_sipap
    apps.divisas.pagos_stripe
+   apps.divisas.reporte_ganancias
+   apps.divisas.reportes
    apps.divisas.urls
    apps.divisas.views
 

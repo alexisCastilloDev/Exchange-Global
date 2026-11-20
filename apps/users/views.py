@@ -38,8 +38,7 @@ def lista_usuarios_view(request):
 
     if query:
         usuarios = usuarios.filter(
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query) |
+            Q(username__icontains=query) |
             Q(email__icontains=query)
         )
 

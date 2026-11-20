@@ -49,6 +49,9 @@ extraordinarios de la caja).
         <a href="{% url 'caja:historial_cajas' %}" class="btn btn-outline-secondary">
             <i class="bi bi-archive me-1"></i> Historial de cajas
         </a>
+        <a href="{% url 'caja:facturas' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-file-pdf me-1"></i> Facturas
+        </a>
     </div>
 </div>
 
@@ -90,20 +93,34 @@ extraordinarios de la caja).
                         <thead>
                             <tr>
                                 <th>Tipo</th>
+                                <th>Cliente</th>
                                 <th>Divisa</th>
                                 <th>Monto divisa</th>
                                 <th>Monto guaraníes</th>
                                 <th>Fecha</th>
+                                <th>Factura</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for operacion in operaciones %}
                             <tr>
                                 <td>{{ operacion.get_tipo_display }}</td>
+                                <td>{{ operacion.cliente_nombre }}</td>
                                 <td>{{ operacion.divisa.codigo }}</td>
                                 <td class="ge-num">{{ operacion.monto_divisa|floatformat:2 }}</td>
                                 <td class="ge-num">{{ operacion.monto_pyg|floatformat:2 }}</td>
                                 <td>{{ operacion.creado_en|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    {% if operacion.documento_electronico.cdc and not operacion.documento_electronico.factura_pendiente %}
+                                    <a href="{% url 'caja:descargar_factura_operacion' pk=operacion.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-file-pdf me-1"></i>Imprimir
+                                    </a>
+                                    {% elif operacion.documento_electronico %}
+                                    <span class="badge bg-warning text-dark">{{ operacion.documento_electronico.get_estado_display }}</span>
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

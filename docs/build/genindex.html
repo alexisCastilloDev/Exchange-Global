@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -65,7 +66,9 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -216,11 +219,27 @@
       </ul></li>
       <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._a_dict">_a_dict() (en el módulo apps.divisas.pagos_stripe)</a>
 </li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._agrupacion_segun_duracion">_agrupacion_segun_duracion() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._agrupar_por">_agrupar_por() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin._al_cambiar_estado">_al_cambiar_estado() (método de SeguimientoEstadoMixin)</a>
+</li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._armar_resumido_de">_armar_resumido_de() (en el módulo apps.divisas.factura_electronica)</a>
+</li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._atencion">_atencion() (en el módulo apps.divisas.monitoreo)</a>
 </li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views._avisar_divisas_sin_cotizar">_avisar_divisas_sin_cotizar() (en el módulo apps.caja.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._cajas_del_periodo">_cajas_del_periodo() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._calcular">_calcular() (en el módulo apps.divisas.factura_electronica)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._clave_periodo">_clave_periodo() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._clave_y_etiqueta">_clave_y_etiqueta() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views._cliente_propio">_cliente_propio() (en el módulo apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._comision_en_pyg">_comision_en_pyg() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
@@ -230,21 +249,69 @@
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._descargar_archivo">_descargar_archivo() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._descripcion_filtros">_descripcion_filtros() (en el módulo apps.divisas.monitoreo)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._descripcion_filtros">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._descripcion_operacion">_descripcion_operacion() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._email_receptor">_email_receptor() (en el módulo apps.divisas.factura_electronica)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._en_rango">_en_rango() (en el módulo apps.divisas.ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.entrega.html#apps.divisas.entrega._enviar_transferencia_saliente">_enviar_transferencia_saliente() (en el módulo apps.divisas.entrega)</a>
 </li>
       <li><a href="reference/apps.divisas.entrega.html#apps.divisas.entrega._es_retiro">_es_retiro() (en el módulo apps.divisas.entrega)</a>
 </li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._etiqueta_cliente">_etiqueta_cliente() (en el módulo apps.divisas.monitoreo)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._fila_cambio">_fila_cambio() (en el módulo apps.divisas.ganancias)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._fila_cambio">(en el módulo apps.divisas.monitoreo)</a>
+</li>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._fila_cambio">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._fila_operacion">_fila_operacion() (en el módulo apps.divisas.ganancias)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._fila_operacion">(en el módulo apps.divisas.monitoreo)</a>
+</li>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._fila_operacion">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._fila_ventanilla">_fila_ventanilla() (en el módulo apps.divisas.ganancias)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._fila_ventanilla">(en el módulo apps.divisas.monitoreo)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_tabla">_filas_tabla() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_totales">_filas_totales() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._firma_valida">_firma_valida() (en el módulo apps.divisas.pagos_sipap)</a>
+</li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._formatear_fecha">_formatear_fecha() (en el módulo apps.divisas.monitoreo)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_fecha">(en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._formatear_fecha">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_momento">_formatear_momento() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._generar">_generar() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
       <li><a href="reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._generar_referencia">_generar_referencia() (en el módulo apps.divisas.pagos_sipap)</a>
+</li>
+      <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupo_documento_asociado">_grupo_documento_asociado() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupo_item">_grupo_item() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
@@ -258,13 +325,31 @@
 </li>
       <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._monto_en_unidad_minima_stripe">_monto_en_unidad_minima_stripe() (en el módulo apps.divisas.pagos_stripe)</a>
 </li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._nombre_cajero">_nombre_cajero() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._nombre_cliente">_nombre_cliente() (en el módulo apps.divisas.reportes)</a>
+</li>
       <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._obtener_o_crear_cliente_stripe">_obtener_o_crear_cliente_stripe() (en el módulo apps.divisas.pagos_stripe)</a>
 </li>
       <li><a href="reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._obtener_o_crear_solicitud">_obtener_o_crear_solicitud() (en el módulo apps.divisas.pagos_sipap)</a>
 </li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._obtener_o_none">_obtener_o_none() (en el módulo apps.divisas.monitoreo)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._orden_de_grupo">_orden_de_grupo() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._parsear_fecha">_parsear_fecha() (en el módulo apps.divisas.ganancias)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._parsear_fecha">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._primer_resultado">_primer_resultado() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
       <li><a href="reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._procesar_confirmacion_sipap">_procesar_confirmacion_sipap() (en el módulo apps.divisas.pagos_sipap)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._rango_anterior_equivalente">_rango_anterior_equivalente() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._rango_por_periodo">_rango_por_periodo() (en el módulo apps.divisas.ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.entrega.html#apps.divisas.entrega._referencia_entrega">_referencia_entrega() (en el módulo apps.divisas.entrega)</a>
 </li>
@@ -274,9 +359,25 @@
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._solicitar">_solicitar() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._texto_celda">_texto_celda() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._tipo_transaccion">_tipo_transaccion() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._todas_las_ganancias">_todas_las_ganancias() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._todas_las_transacciones">_todas_las_transacciones() (en el módulo apps.divisas.monitoreo)</a>
+</li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._total_en_pyg">_total_en_pyg() (en el módulo apps.divisas.factura_electronica)</a>
+</li>
+      <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._transacciones_cliente">_transacciones_cliente() (en el módulo apps.divisas.reportes)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._validar_rango">_validar_rango() (en el módulo apps.divisas.reporte_ganancias)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._validar_rango">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._valor_excel">_valor_excel() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -287,6 +388,8 @@
       <li><a href="reference/apps.caja.models.html#apps.caja.models.Caja.abierta_en">abierta_en (atributo de Caja)</a>
 </li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.AbrirCajaView">AbrirCajaView (clase en apps.caja.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView">AbrirNotificacionClienteView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.acreditado_en">acreditado_en (atributo de CalculoOperacion)</a>
 
@@ -321,6 +424,12 @@
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin">AdminDivisasMixin (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AgregarTarjetaStripeForm">AgregarTarjetaStripeForm (clase en apps.clientes.forms)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.AGRUPACION_POR_DEFECTO">AGRUPACION_POR_DEFECTO (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.AGRUPACIONES">AGRUPACIONES (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.agrupar_ganancias">agrupar_ganancias() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.apellido">apellido (atributo de Cliente)</a>
 
@@ -491,6 +600,13 @@
 
       <ul>
         <li><a href="reference/apps.divisas.factura_electronica.html#module-apps.divisas.factura_electronica">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.divisas.reporte_ganancias
+
+      <ul>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#module-apps.divisas.reporte_ganancias">module</a>
 </li>
       </ul></li>
       <li>
@@ -682,9 +798,25 @@
         <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.cajero_id">(atributo de OperacionVentanilla)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_distribucion">calcular_distribucion() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_evolucion">calcular_evolucion() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_indicadores">calcular_indicadores() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.calcular_totales">calcular_totales() (en el módulo apps.divisas.monitoreo)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.calcular_totales">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_variacion">calcular_variacion() (en el módulo apps.divisas.ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.calculo_operacion">calculo_operacion (atributo de DocumentoElectronico)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.calculo_operacion">(atributo de NotificacionCliente)</a>
+</li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.calculo_operacion">(atributo de Pago)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.calculo_operacion">(atributo de SolicitudPagoSipap)</a>
@@ -693,6 +825,8 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.calculo_operacion_id">calculo_operacion_id (atributo de DocumentoElectronico)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.calculo_operacion_id">(atributo de NotificacionCliente)</a>
+</li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.calculo_operacion_id">(atributo de Pago)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.calculo_operacion_id">(atributo de SolicitudPagoSipap)</a>
@@ -701,6 +835,8 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.calculo_triangulacion">calculo_triangulacion (atributo de DocumentoElectronico)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.calculo_triangulacion">(atributo de NotificacionCliente)</a>
+</li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.calculo_triangulacion">(atributo de Pago)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.calculo_triangulacion">(atributo de SolicitudPagoSipap)</a>
@@ -709,6 +845,8 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.calculo_triangulacion_id">calculo_triangulacion_id (atributo de DocumentoElectronico)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.calculo_triangulacion_id">(atributo de NotificacionCliente)</a>
+</li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.calculo_triangulacion_id">(atributo de Pago)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.calculo_triangulacion_id">(atributo de SolicitudPagoSipap)</a>
@@ -743,6 +881,32 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.NotUpdated">CalculoTriangulacion.NotUpdated</a>
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.cambiar_cliente_view">cambiar_cliente_view() (en el módulo apps.clientes.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.CANAL_CHOICES">CANAL_CHOICES (en el módulo apps.divisas.ganancias)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.CANAL_CHOICES">(en el módulo apps.divisas.monitoreo)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.categoria">categoria (NotificacionCliente propiedad)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_ANULADA">CATEGORIA_ANULADA (atributo de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_APROBADA">CATEGORIA_APROBADA (atributo de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_ATENCION">CATEGORIA_ATENCION (atributo de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_CANCELADA">CATEGORIA_CANCELADA (atributo de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_COMPLETADA">CATEGORIA_COMPLETADA (atributo de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.categoria_display">categoria_display (NotificacionCliente propiedad)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_ETIQUETAS">CATEGORIA_ETIQUETAS (atributo de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_PAGADA">CATEGORIA_PAGADA (atributo de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_RECHAZADA">CATEGORIA_RECHAZADA (atributo de NotificacionCliente)</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.causa">causa (atributo de HistorialBaja)</a>
 </li>
@@ -827,7 +991,11 @@
 </li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.cliente">(atributo de MetodoPago)</a>
 </li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.cliente">(atributo de NotificacionCliente)</a>
+</li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente">Cliente (clase en apps.clientes.models)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.DoesNotExist">Cliente.DoesNotExist</a>
@@ -842,6 +1010,8 @@
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.cliente_creado_id">cliente_creado_id (atributo de SolicitudCliente)</a>
 </li>
+      <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.cliente_email">cliente_email (atributo de OperacionVentanilla)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.cliente_id">cliente_id (atributo de CalculoOperacion)</a>
 
       <ul>
@@ -849,9 +1019,13 @@
 </li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.cliente_id">(atributo de MetodoPago)</a>
 </li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.cliente_id">(atributo de NotificacionCliente)</a>
+</li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.cliente_identificador">cliente_identificador (atributo de OperacionVentanilla)</a>
+</li>
+      <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.cliente_nombre">cliente_nombre (atributo de OperacionVentanilla)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.ClienteActiveManager">ClienteActiveManager (clase en apps.clientes.models)</a>
 </li>
       <li><a href="reference/apps.clientes.middleware.html#apps.clientes.middleware.ClienteActivoMiddleware">ClienteActivoMiddleware (clase en apps.clientes.middleware)</a>
@@ -946,6 +1120,8 @@
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView">ConsultarEstadoSifenDocumentoElectronicoView (clase en apps.divisas.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView">ConsultarEstadoSifenMiFacturaView (clase en apps.divisas.views)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico">ContadorDocumentoElectronico (clase en apps.divisas.models)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico.DoesNotExist">ContadorDocumentoElectronico.DoesNotExist</a>
@@ -1000,8 +1176,12 @@
 </li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta">CotizacionForm.Meta (clase en apps.divisas.forms)</a>
 </li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.creada_en">creada_en (atributo de NotificacionTasa)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.creada_en">creada_en (atributo de NotificacionCliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.creada_en">(atributo de NotificacionTasa)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.ArqueoCaja.creado_en">creado_en (atributo de ArqueoCaja)</a>
 
       <ul>
@@ -1098,11 +1278,25 @@
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarDocumentoElectronicoView">DescargarDocumentoElectronicoView (clase en apps.divisas.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView">DescargarMonitoreoView (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView">DescargarReporteGananciasView (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView">DescargarReporteTransaccionesView (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.descripcion_filtros">descripcion_filtros() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico.desde">desde (atributo de ContadorDocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.desglosar_por_caja">desglosar_por_caja() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.DesignacionCuentaPropiaError">DesignacionCuentaPropiaError</a>
 </li>
       <li><a href="reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.designar_cuenta_casa_de_cambio">designar_cuenta_casa_de_cambio() (en el módulo apps.divisas.casa_de_cambio)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.destinatarios">destinatarios() (método estático de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.detalle_transaccion">detalle_transaccion() (en el módulo apps.divisas.monitoreo)</a>
 </li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.DetalleArqueoCaja">DetalleArqueoCaja (clase en apps.caja.models)</a>
 </li>
@@ -1114,20 +1308,22 @@
 </li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView">DetalleArqueoCajaView (clase en apps.caja.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView">DetalleMonitoreoTransaccionView (clase en apps.divisas.views)</a>
+</li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.ArqueoCaja.detalles">detalles (atributo de ArqueoCaja)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleTransaccionCambioView">DetalleTransaccionCambioView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleTransaccionOperacionView">DetalleTransaccionOperacionView (clase en apps.divisas.views)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.diferencia">diferencia (atributo de Pago)</a>
 
       <ul>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.diferencia">(DetalleArqueoCaja propiedad)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.dispatch">dispatch() (método de HistorialCotizacionesView)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.divisa">divisa (atributo de CalculoOperacion)</a>
@@ -1203,7 +1399,13 @@
       <ul>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.documento_electronico">(atributo de CalculoTriangulacion)</a>
 </li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.documento_electronico">(atributo de NotificacionCliente)</a>
+</li>
+        <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.documento_electronico">(atributo de OperacionVentanilla)</a>
+</li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.documento_electronico_id">documento_electronico_id (atributo de NotificacionCliente)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.documento_titular">documento_titular (atributo de MetodoPago)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico">DocumentoElectronico (clase en apps.divisas.models)</a>
@@ -1232,6 +1434,10 @@
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.emitir_documento_electronico">emitir_documento_electronico() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
+      <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.emitir_nota_credito">emitir_nota_credito() (en el módulo apps.divisas.factura_electronica)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.EmitirNotaCreditoView">EmitirNotaCreditoView (clase en apps.divisas.views)</a>
+</li>
       <li><a href="reference/apps.authentication.templatetags.ge_extras.html#apps.authentication.templatetags.ge_extras.en_lista">en_lista() (en el módulo apps.authentication.templatetags.ge_extras)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.entidad_financiera">entidad_financiera (atributo de MetodoPago)</a>
@@ -1243,6 +1449,8 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.es_base">es_base (Divisa propiedad)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.es_definitivo">es_definitivo (DocumentoElectronico propiedad)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.es_factura">es_factura (NotificacionCliente propiedad)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.es_predeterminado">es_predeterminado (atributo de MetodoPago)</a>
 </li>
@@ -1265,6 +1473,8 @@
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.estado">(atributo de DocumentoElectronico)</a>
 </li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.estado">(atributo de NotificacionCliente)</a>
+</li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.estado">(atributo de SolicitudCliente)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.estado">(atributo de SolicitudPagoSipap)</a>
@@ -1280,6 +1490,8 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.ESTADO_ACREDITADA">(atributo de SolicitudPagoSipap)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_ANULADA">ESTADO_ANULADA (atributo de DocumentoElectronico)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.ESTADO_APROBADA">ESTADO_APROBADA (atributo de SolicitudCliente)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_APROBADO">ESTADO_APROBADO (atributo de DocumentoElectronico)</a>
@@ -1310,10 +1522,10 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE">(atributo de CalculoTriangulacion)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.Caja.ESTADO_CERRADA">ESTADO_CERRADA (atributo de Caja)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.Caja.ESTADO_CHOICES">ESTADO_CHOICES (atributo de Caja)</a>
 
       <ul>
@@ -1327,13 +1539,19 @@
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.ESTADO_CHOICES">(atributo de SolicitudPagoSipap)</a>
 </li>
+        <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.ESTADO_CHOICES">(en el módulo apps.divisas.monitoreo)</a>
+</li>
       </ul></li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.ESTADO_COMPLETADA">ESTADO_COMPLETADA (en el módulo apps.divisas.monitoreo)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.ESTADO_CONFIRMADA">ESTADO_CONFIRMADA (atributo de CalculoOperacion)</a>
 
       <ul>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.ESTADO_CONFIRMADA">(atributo de CalculoTriangulacion)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.estado_display">estado_display (atributo de NotificacionCliente)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.estado_efectivo">estado_efectivo (CalculoOperacion propiedad)</a>
 
       <ul>
@@ -1398,9 +1616,15 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.ESTADO_VENCIDA">(atributo de SolicitudPagoSipap)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.ESTADOS_COMPLETADOS">ESTADOS_COMPLETADOS (en el módulo apps.divisas.reportes)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.estados_con_pago_ya_registrado">estados_con_pago_ya_registrado() (en el módulo apps.divisas.models)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADOS_DESCARGABLES">ESTADOS_DESCARGABLES (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.ESTADOS_NOTIFICABLES_FACTURA">ESTADOS_NOTIFICABLES_FACTURA (atributo de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION">ESTADOS_NOTIFICABLES_TRANSACCION (atributo de NotificacionCliente)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADOS_PENDIENTES">ESTADOS_PENDIENTES (atributo de DocumentoElectronico)</a>
 </li>
@@ -1412,6 +1636,10 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.factura_anulada">factura_anulada (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.factura_anulada_id">factura_anulada_id (atributo de DocumentoElectronico)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.factura_pendiente">factura_pendiente (DocumentoElectronico propiedad)</a>
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.factura_pendiente_de_generacion">factura_pendiente_de_generacion() (en el módulo apps.divisas.factura_electronica)</a>
@@ -1438,10 +1666,10 @@
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.SolicitudClienteForm.Meta.fields">(atributo de SolicitudClienteForm.Meta)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.filter_users_by_claims">filter_users_by_claims() (método de KeycloakOIDCAuthenticationBackend)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.form_class">form_class (atributo de ActualizarComisionView)</a>
 
       <ul>
@@ -1465,6 +1693,16 @@
 </li>
       </ul></li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarDocumentoElectronicoView.FORMATOS">FORMATOS (atributo de DescargarDocumentoElectronicoView)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView.FORMATOS">(atributo de DescargarMonitoreoView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView.FORMATOS">(atributo de DescargarReporteGananciasView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.FORMATOS">(atributo de DescargarReporteTransaccionesView)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin.from_db">from_db() (método de clase de SeguimientoEstadoMixin)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.fuera_de_plazo">fuera_de_plazo (atributo de Pago)</a>
 </li>
@@ -1474,6 +1712,30 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.generar_excel">generar_excel() (en el módulo apps.divisas.monitoreo)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_excel">(en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_excel">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.generar_monitoreo">generar_monitoreo() (en el módulo apps.divisas.monitoreo)</a>
+</li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.generar_pdf">generar_pdf() (en el módulo apps.divisas.monitoreo)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_pdf">(en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_pdf">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_reporte">generar_reporte() (en el módulo apps.divisas.reportes)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_reporte_ganancias">generar_reporte_ganancias() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.generar_tablero">generar_tablero() (en el módulo apps.divisas.ganancias)</a>
+</li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.AbrirCajaView.get">get() (método de AbrirCajaView)</a>
 
       <ul>
@@ -1492,6 +1754,12 @@
         <li><a href="reference/apps.authentication.views.html#apps.authentication.views.CustomOIDCLogoutView.get">(método de CustomOIDCLogoutView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarDocumentoElectronicoView.get">(método de DescargarDocumentoElectronicoView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView.get">(método de DescargarMonitoreoView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView.get">(método de DescargarReporteGananciasView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.get">(método de DescargarReporteTransaccionesView)</a>
 </li>
         <li><a href="reference/apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView.get">(método de DetalleArqueoCajaView)</a>
 </li>
@@ -1525,6 +1793,8 @@
 </li>
         <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.get">(método de RegistrarOperacionVentanillaView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.get">(método de ReporteTransaccionesClienteView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitarClienteView.get">(método de SolicitarClienteView)</a>
 </li>
       </ul></li>
@@ -1541,15 +1811,29 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView.get_context_data">(método de ConfiguracionComisionListView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView.get_context_data">(método de DetalleMonitoreoTransaccionView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView.get_context_data">(método de DocumentosElectronicosListView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_context_data">(método de HistorialCotizacionesView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MiHistorialTransaccionesView.get_context_data">(método de MiHistorialTransaccionesView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.get_context_data">(método de MisFacturasElectronicasListView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_context_data">(método de MisNotificacionesView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.get_context_data">(método de MonitoreoTransaccionesView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_context_data">(método de PanelAdminView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.get_context_data">(método de ReporteGananciasView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.get_context_data">(método de SimulacionDivisasView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitudesClienteListView.get_context_data">(método de SolicitudesClienteListView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TableroGananciasView.get_context_data">(método de TableroGananciasView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TriangulacionOperacionView.get_context_data">(método de TriangulacionOperacionView)</a>
 </li>
@@ -1582,6 +1866,8 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.get_medio_pago_display">(método de SolicitudPagoSipap)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.get_motivo_emision_display">get_motivo_emision_display() (método de DocumentoElectronico)</a>
+</li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.Caja.get_next_by_abierta_en">get_next_by_abierta_en() (método de Caja)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.get_next_by_actualizado_en">get_next_by_actualizado_en() (método de ConfiguracionComision)</a>
@@ -1592,8 +1878,12 @@
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_next_by_actualizado_en">(método de MetodoPago)</a>
 </li>
       </ul></li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.get_next_by_creada_en">get_next_by_creada_en() (método de NotificacionTasa)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.get_next_by_creada_en">get_next_by_creada_en() (método de NotificacionCliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.get_next_by_creada_en">(método de NotificacionTasa)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.ArqueoCaja.get_next_by_creado_en">get_next_by_creado_en() (método de ArqueoCaja)</a>
 
       <ul>
@@ -1616,6 +1906,8 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.get_next_by_creado_en">(método de SolicitudPagoSipap)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_next_by_fecha">get_next_by_fecha() (método de HistorialBaja)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.get_next_by_fecha_actualizacion">get_next_by_fecha_actualizacion() (método de Cotizacion)</a>
@@ -1630,8 +1922,6 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.get_next_by_vence_en">(método de SolicitudPagoSipap)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.get_object">get_object() (método de ActualizarComisionView)</a>
 
       <ul>
@@ -1648,8 +1938,12 @@
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_previous_by_actualizado_en">(método de MetodoPago)</a>
 </li>
       </ul></li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.get_previous_by_creada_en">get_previous_by_creada_en() (método de NotificacionTasa)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.get_previous_by_creada_en">get_previous_by_creada_en() (método de NotificacionCliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.get_previous_by_creada_en">(método de NotificacionTasa)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.ArqueoCaja.get_previous_by_creado_en">get_previous_by_creado_en() (método de ArqueoCaja)</a>
 
       <ul>
@@ -1736,6 +2030,8 @@
 
       <ul>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.get_tipo_display">(método de MovimientoExtraordinario)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.get_tipo_display">(método de NotificacionCliente)</a>
 </li>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.get_tipo_display">(método de OperacionVentanilla)</a>
 </li>
@@ -1839,12 +2135,12 @@
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.DoesNotExist">HistorialBaja.DoesNotExist</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.MultipleObjectsReturned">HistorialBaja.MultipleObjectsReturned</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.NotUpdated">HistorialBaja.NotUpdated</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.HistorialCajasView">HistorialCajasView (clase en apps.caja.views)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView">HistorialCotizacionesView (clase en apps.divisas.views)</a>
@@ -1853,8 +2149,20 @@
 </li>
       <li><a href="reference/global_exchange.views.html#global_exchange.views.home">home() (en el módulo global_exchange.views)</a>
 </li>
-      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView.http_method_names">http_method_names (atributo de MarcarNotificacionLeidaView)</a>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView.http_method_names">http_method_names (atributo de AbrirNotificacionClienteView)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.http_method_names">(atributo de ConsultarEstadoSifenMiFacturaView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView.http_method_names">(atributo de DetalleMonitoreoTransaccionView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView.http_method_names">(atributo de MarcarNotificacionLeidaView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.http_method_names">(atributo de MonitoreoTransaccionesView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.http_method_names">(atributo de ReporteGananciasView)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -1889,6 +2197,8 @@
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.id">(atributo de MetodoPago)</a>
 </li>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.id">(atributo de MovimientoExtraordinario)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.id">(atributo de NotificacionCliente)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.id">(atributo de NotificacionTasa)</a>
 </li>
@@ -1955,12 +2265,20 @@
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.Meta.labels">(atributo de CotizacionForm.Meta)</a>
 </li>
       </ul></li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.leida">leida (atributo de NotificacionTasa)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.leida">leida (atributo de NotificacionCliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.leida">(atributo de NotificacionTasa)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.leida_en">leida_en (atributo de NotificacionTasa)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.leida_en">leida_en (atributo de NotificacionCliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.leida_en">(atributo de NotificacionTasa)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.link_pago">link_pago (atributo de SolicitudPagoSipap)</a>
 </li>
       <li><a href="reference/apps.users.views.html#apps.users.views.lista_usuarios_view">lista_usuarios_view() (en el módulo apps.users.views)</a>
@@ -1975,8 +2293,12 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.marcar_como_leida">marcar_como_leida() (método de NotificacionTasa)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.marcar_como_leida">marcar_como_leida() (método de NotificacionCliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.marcar_como_leida">(método de NotificacionTasa)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.marcar_vencida_si_corresponde">marcar_vencida_si_corresponde() (método de CalculoOperacion)</a>
 
       <ul>
@@ -2045,7 +2367,13 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.medio_pago">(atributo de SolicitudPagoSipap)</a>
 </li>
       </ul></li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.mensaje">mensaje (NotificacionTasa propiedad)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.mensaje">mensaje (NotificacionCliente propiedad)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.mensaje">(NotificacionTasa propiedad)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.MENSAJE_SIN_DATOS">MENSAJE_SIN_DATOS (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.metodo_pago">metodo_pago (atributo de Pago)</a>
 
@@ -2147,8 +2475,6 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.model">(atributo de TasasVigentesListView)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
 
@@ -2199,6 +2525,8 @@
 </li>
         <li><a href="reference/apps.divisas.factura_electronica.html#module-apps.divisas.factura_electronica">apps.divisas.factura_electronica</a>
 </li>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#module-apps.divisas.reporte_ganancias">apps.divisas.reporte_ganancias</a>
+</li>
         <li><a href="reference/apps.divisas.urls.html#module-apps.divisas.urls">apps.divisas.urls</a>
 </li>
         <li><a href="reference/apps.users.html#module-apps.users">apps.users</a>
@@ -2236,6 +2564,8 @@
         <li><a href="reference/global_exchange.wsgi.html#module-global_exchange.wsgi">global_exchange.wsgi</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.moneda">moneda (atributo de MetodoPago)</a>
 
       <ul>
@@ -2245,6 +2575,10 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.moneda_a_pagar">moneda_a_pagar() (en el módulo apps.divisas.models)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.moneda_id">moneda_id (atributo de MetodoPago)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoMixin">MonitoreoMixin (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView">MonitoreoTransaccionesView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.monto">monto (atributo de MovimientoExtraordinario)</a>
 
@@ -2282,9 +2616,31 @@
 </li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.motivo">motivo (atributo de MovimientoExtraordinario)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_AJUSTE_DE_PRECIO">MOTIVO_AJUSTE_DE_PRECIO (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_BONIFICACION">MOTIVO_BONIFICACION (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_CREDITO_INCOBRABLE">MOTIVO_CREDITO_INCOBRABLE (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_DESCUENTO">MOTIVO_DESCUENTO (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_DEVOLUCION_Y_AJUSTE">MOTIVO_DEVOLUCION_Y_AJUSTE (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.motivo_emision">motivo_emision (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_EMISION_CHOICES">MOTIVO_EMISION_CHOICES (atributo de DocumentoElectronico)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.motivo_no_descargable">motivo_no_descargable (DocumentoElectronico propiedad)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_OTRO">MOTIVO_OTRO (atributo de DocumentoElectronico)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.motivo_rechazo">motivo_rechazo (atributo de SolicitudCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_RECUPERO_DE_COSTO">MOTIVO_RECUPERO_DE_COSTO (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_RECUPERO_DE_GASTO">MOTIVO_RECUPERO_DE_GASTO (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.MOTIVOS_ATENCION">MOTIVOS_ATENCION (en el módulo apps.divisas.monitoreo)</a>
 </li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario">MovimientoExtraordinario (clase en apps.caja.models)</a>
 </li>
@@ -2336,11 +2692,33 @@
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.nombre_completo">(SolicitudCliente propiedad)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.nombre_receptor">nombre_receptor (DocumentoElectronico propiedad)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.nombre_titular">nombre_titular (atributo de MetodoPago)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.notas_credito">notas_credito (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente">NotificacionCliente (clase en apps.divisas.models)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.DoesNotExist">NotificacionCliente.DoesNotExist</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.MultipleObjectsReturned">NotificacionCliente.MultipleObjectsReturned</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.NotUpdated">NotificacionCliente.NotUpdated</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.notificaciones">notificaciones (atributo de Cotizacion)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.notificaciones">notificaciones (atributo de CalculoOperacion)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.notificaciones">(atributo de CalculoTriangulacion)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.notificaciones">(atributo de Cotizacion)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.notificaciones">(atributo de DocumentoElectronico)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.context_processors.html#apps.divisas.context_processors.notificaciones_cliente_activo">notificaciones_cliente_activo() (en el módulo apps.divisas.context_processors)</a>
 </li>
       <li><a href="reference/apps.divisas.context_processors.html#apps.divisas.context_processors.notificaciones_context">notificaciones_context() (en el módulo apps.divisas.context_processors)</a>
 </li>
@@ -2357,6 +2735,10 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.NotUpdated">NotificacionTasa.NotUpdated</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.notificar_cambios">notificar_cambios() (método de clase de NotificacionTasa)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.notificar_factura">notificar_factura() (método de clase de NotificacionCliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.notificar_transaccion">notificar_transaccion() (método de clase de NotificacionCliente)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.numero_cuenta">numero_cuenta (atributo de MetodoPago)</a>
 </li>
@@ -2399,6 +2781,8 @@
 </li>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.objects">(atributo de MovimientoExtraordinario)</a>
 </li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.objects">(atributo de NotificacionCliente)</a>
+</li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.objects">(atributo de NotificacionTasa)</a>
 </li>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.objects">(atributo de OperacionVentanilla)</a>
@@ -2419,6 +2803,10 @@
       <li><a href="reference/apps.users.services.html#apps.users.services.obtener_roles_de_usuario">obtener_roles_de_usuario() (en el módulo apps.users.services)</a>
 </li>
       <li><a href="reference/apps.users.services.html#apps.users.services.obtener_roles_disponibles">obtener_roles_disponibles() (en el módulo apps.users.services)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.operacion_ventanilla">operacion_ventanilla (atributo de DocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.operacion_ventanilla_id">operacion_ventanilla_id (atributo de DocumentoElectronico)</a>
 </li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.Caja.operaciones">operaciones (atributo de Caja)</a>
 </li>
@@ -2459,6 +2847,8 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.paginate_by">(atributo de MisNotificacionesView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.paginate_by">(atributo de MonitoreoTransaccionesView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.paginate_by">(atributo de PanelAdminView)</a>
 </li>
       </ul></li>
@@ -2492,6 +2882,12 @@
 </li>
       <li><a href="reference/global_exchange.views.html#global_exchange.views.perfil">perfil() (en el módulo global_exchange.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.PERIODO_POR_DEFECTO">PERIODO_POR_DEFECTO (atributo de HistorialCotizacionesView)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.PERIODOS">PERIODOS (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.PERIODOS_VALIDOS">PERIODOS_VALIDOS (atributo de HistorialCotizacionesView)</a>
+</li>
       <li><a href="reference/apps.authentication.context_processors.html#apps.authentication.context_processors.permisos_ui_context">permisos_ui_context() (en el módulo apps.authentication.context_processors)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.porcentaje">porcentaje (atributo de ConfiguracionComision)</a>
@@ -2501,6 +2897,8 @@
       <li><a href="reference/apps.caja.views.html#apps.caja.views.AbrirCajaView.post">post() (método de AbrirCajaView)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView.post">(método de AbrirNotificacionClienteView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarCotizacionView.post">(método de ActualizarCotizacionView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.AprobarSolicitudClienteView.post">(método de AprobarSolicitudClienteView)</a>
@@ -2519,6 +2917,8 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView.post">(método de ConsultarEstadoSifenDocumentoElectronicoView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.post">(método de ConsultarEstadoSifenMiFacturaView)</a>
+</li>
         <li><a href="reference/apps.authentication.views.html#apps.authentication.views.CustomOIDCLogoutView.post">(método de CustomOIDCLogoutView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleTransaccionCambioView.post">(método de DetalleTransaccionCambioView)</a>
@@ -2528,6 +2928,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaSoftDeleteView.post">(método de DivisaSoftDeleteView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaUpdateView.post">(método de DivisaUpdateView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.EmitirNotaCreditoView.post">(método de EmitirNotaCreditoView)</a>
 </li>
         <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarAgregarTarjetaStripeView.post">(método de IniciarAgregarTarjetaStripeView)</a>
 </li>
@@ -2572,6 +2974,10 @@
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.PROVEEDOR_STRIPE">PROVEEDOR_STRIPE (atributo de MetodoPago)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.puede_emitir_nota_credito">puede_emitir_nota_credito (DocumentoElectronico propiedad)</a>
+</li>
+      <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.puede_emitir_nota_credito">puede_emitir_nota_credito() (en el módulo apps.divisas.factura_electronica)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -2600,8 +3006,12 @@
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.recurso_nombre">recurso_nombre (atributo de HistorialBaja)</a>
 </li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.referencia">referencia (atributo de SolicitudPagoSipap)</a>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.referencia">referencia (atributo de NotificacionCliente)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.referencia">(atributo de SolicitudPagoSipap)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.referencia_acreditacion">referencia_acreditacion (atributo de CalculoOperacion)</a>
 
       <ul>
@@ -2612,10 +3022,10 @@
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.referencia_retiro">referencia_retiro (atributo de CalculoOperacion)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago">registrar_pago() (método de clase de Pago)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago_observado">registrar_pago_observado() (método de clase de Pago)</a>
 </li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView">RegistrarMovimientoExtraordinarioView (clase en apps.caja.views)</a>
@@ -2630,9 +3040,17 @@
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReintentarEntregaView">ReintentarEntregaView (clase en apps.divisas.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin">ReporteGananciasMixin (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView">ReporteGananciasView (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView">ReporteTransaccionesClienteView (clase en apps.divisas.views)</a>
+</li>
       <li><a href="reference/apps.authentication.decorators.html#apps.authentication.decorators.requiere_permiso">requiere_permiso() (en el módulo apps.authentication.decorators)</a>
 </li>
       <li><a href="reference/apps.authentication.decorators.html#apps.authentication.decorators.requiere_rol">requiere_rol() (en el módulo apps.authentication.decorators)</a>
+</li>
+      <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.resolver_periodo">resolver_periodo() (en el módulo apps.divisas.ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.retirado_en">retirado_en (atributo de CalculoOperacion)</a>
 </li>
@@ -2675,6 +3093,8 @@
 </li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.save">(método de MetodoPago)</a>
 </li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin.save">(método de SeguimientoEstadoMixin)</a>
+</li>
       </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.segmento">segmento (atributo de Cliente)</a>
 
@@ -2683,6 +3103,8 @@
 </li>
       </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.SEGMENTO_CHOICES">SEGMENTO_CHOICES (atributo de Cliente)</a>
+</li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin">SeguimientoEstadoMixin (clase en apps.divisas.models)</a>
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.seleccionar_cliente_view">seleccionar_cliente_view() (en el módulo apps.clientes.views)</a>
 </li>
@@ -2702,10 +3124,10 @@
 </li>
       <li><a href="reference/apps.clientes.validacion_sipap.html#apps.clientes.validacion_sipap.SipapComunicacionError">SipapComunicacionError</a>, <a href="reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.SipapComunicacionError">[1]</a>, <a href="reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap.SipapComunicacionError">[2]</a>
 </li>
-      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.soft_delete">soft_delete() (método de Cliente)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.soft_delete">soft_delete() (método de Cliente)</a>
+</li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitarClienteView">SolicitarClienteView (clase en apps.clientes.views)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.solicitud_origen">solicitud_origen (atributo de Cliente)</a>
@@ -2768,6 +3190,8 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TableroGananciasView">TableroGananciasView (clase en apps.divisas.views)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.tasa_anterior">tasa_anterior (atributo de NotificacionTasa)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.tasa_aplicada">tasa_aplicada (atributo de CalculoOperacion)</a>
@@ -2825,6 +3249,8 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView.template_name">(atributo de ConfiguracionComisionListView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView.template_name">(atributo de DetalleMonitoreoTransaccionView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaCreateView.template_name">(atributo de DivisaCreateView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DivisaListView.template_name">(atributo de DivisaListView)</a>
@@ -2843,13 +3269,21 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.template_name">(atributo de MisNotificacionesView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.template_name">(atributo de MonitoreoTransaccionesView)</a>
+</li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.template_name">(atributo de PanelAdminView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.template_name">(atributo de ReporteGananciasView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.template_name">(atributo de ReporteTransaccionesClienteView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.template_name">(atributo de SimulacionDivisasView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitarClienteView.template_name">(atributo de SolicitarClienteView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitudesClienteListView.template_name">(atributo de SolicitudesClienteListView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TableroGananciasView.template_name">(atributo de TableroGananciasView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.template_name">(atributo de TasasVigentesListView)</a>
 </li>
@@ -2889,6 +3323,10 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConfirmarTransaccionOperacionView.test_func">(método de ConfirmarTransaccionOperacionView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.test_func">(método de ConsultarEstadoSifenMiFacturaView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.test_func">(método de DescargarReporteTransaccionesView)</a>
+</li>
         <li><a href="reference/apps.caja.views.html#apps.caja.views.DetalleArqueoCajaView.test_func">(método de DetalleArqueoCajaView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleTransaccionCambioView.test_func">(método de DetalleTransaccionCambioView)</a>
@@ -2911,6 +3349,8 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.test_func">(método de MisFacturasElectronicasListView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoMixin.test_func">(método de MonitoreoMixin)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.NotificacionesClienteMixin.test_func">(método de NotificacionesClienteMixin)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.PagarTransaccionCambioView.test_func">(método de PagarTransaccionCambioView)</a>
@@ -2927,6 +3367,10 @@
 </li>
         <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.test_func">(método de RegistrarOperacionVentanillaView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin.test_func">(método de ReporteGananciasMixin)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.test_func">(método de ReporteTransaccionesClienteView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.test_func">(método de SimulacionDivisasView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitarClienteView.test_func">(método de SolicitarClienteView)</a>
@@ -2942,10 +3386,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.ArqueoCaja.tiene_diferencias">tiene_diferencias (ArqueoCaja propiedad)</a>
 </li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.tiene_nota_credito_vigente">tiene_nota_credito_vigente (DocumentoElectronico propiedad)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.tipo">tipo (atributo de CalculoOperacion)</a>
 
       <ul>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.tipo">(atributo de MovimientoExtraordinario)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.tipo">(atributo de NotificacionCliente)</a>
 </li>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.tipo">(atributo de OperacionVentanilla)</a>
 </li>
@@ -2959,9 +3407,15 @@
       <ul>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.TIPO_CHOICES">(atributo de MovimientoExtraordinario)</a>
 </li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.TIPO_CHOICES">(atributo de NotificacionCliente)</a>
+</li>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.TIPO_CHOICES">(atributo de OperacionVentanilla)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.SimulacionDivisasForm.TIPO_CHOICES">(atributo de SimulacionDivisasForm)</a>
+</li>
+        <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.TIPO_CHOICES">(en el módulo apps.divisas.ganancias)</a>
+</li>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.TIPO_CHOICES">(en el módulo apps.divisas.reportes)</a>
 </li>
       </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.tipo_cliente">tipo_cliente (atributo de Cliente)</a>
@@ -3001,7 +3455,11 @@
       <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.TIPO_EGRESO">TIPO_EGRESO (atributo de MovimientoExtraordinario)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico.TIPO_FACTURA">TIPO_FACTURA (atributo de ContadorDocumentoElectronico)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.TIPO_FACTURA">(atributo de NotificacionCliente)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.TIPO_FISICA">TIPO_FISICA (atributo de Cliente)</a>
 </li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.MovimientoExtraordinario.TIPO_INGRESO">TIPO_INGRESO (atributo de MovimientoExtraordinario)</a>
@@ -3034,6 +3492,8 @@
         <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView.tipo_transaccion">(atributo de IniciarPagoStripeOperacionView)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.TIPO_TRANSACCION">TIPO_TRANSACCION (atributo de NotificacionCliente)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.TIPO_TRANSFERENCIA">TIPO_TRANSFERENCIA (atributo de MetodoPago)</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.TIPO_USUARIO">TIPO_USUARIO (atributo de HistorialBaja)</a>
@@ -3072,6 +3532,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.ultima_cotizacion">ultima_cotizacion (Divisa propiedad)</a>
 </li>
+      <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.ultima_nota_credito">ultima_nota_credito() (en el módulo apps.divisas.factura_electronica)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico.ultimo_asignado">ultimo_asignado (atributo de ContadorDocumentoElectronico)</a>
 </li>
       <li><a href="reference/global_exchange.auth.html#global_exchange.auth.CustomOIDCBackend.update_user">update_user() (método de CustomOIDCBackend)</a>
@@ -3090,6 +3552,8 @@
         <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarPagoStripeCambioView.url_detalle">(atributo de IniciarPagoStripeCambioView)</a>
 </li>
         <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe.IniciarPagoStripeOperacionView.url_detalle">(atributo de IniciarPagoStripeOperacionView)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.url_detalle">(NotificacionCliente propiedad)</a>
 </li>
       </ul></li>
       <li><a href="reference/apps.authentication.views.html#apps.authentication.views.url_logout_keycloak">url_logout_keycloak() (en el módulo apps.authentication.views)</a>
@@ -3111,6 +3575,8 @@
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario">(atributo de Cotizacion)</a>
 </li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.usuario">(atributo de NotificacionCliente)</a>
+</li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuario">(atributo de NotificacionTasa)</a>
 </li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.usuario">(atributo de SolicitudCliente)</a>
@@ -3124,6 +3590,8 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.usuario_id">(atributo de CalculoTriangulacion)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario_id">(atributo de Cotizacion)</a>
+</li>
+        <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.usuario_id">(atributo de NotificacionCliente)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuario_id">(atributo de NotificacionTasa)</a>
 </li>

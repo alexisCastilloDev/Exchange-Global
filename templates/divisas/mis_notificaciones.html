@@ -1,9 +1,10 @@
 <!--
-Notificaciones de cambio de tasas del usuario cliente (HU GE-51), de la más reciente a la más antigua.
+Notificaciones del usuario cliente: transacciones y facturas del cliente activo, y cambios de tasas (HU GE-51).
 Hereda de: base.html.
 Bloques definidos: title, content.
-Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_no_leidas
-(este último lo aporta apps.divisas.context_processors.notificaciones_context).
+Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_operaciones, pagina_operaciones,
+notificaciones_no_leidas, notificaciones_tasa_no_leidas, notificaciones_operaciones_no_leidas
+(los tres últimos los aporta apps.divisas.context_processors.notificaciones_context).
 -->
 {% extends 'base.html' %}
 
@@ -12,10 +13,10 @@ Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_no_lei
 {% block content %}
 <div class="ge-page-header">
     <div>
-        <span class="ge-eyebrow"><i class="bi bi-bell"></i> Tasas de cambio</span>
+        <span class="ge-eyebrow"><i class="bi bi-bell"></i> Avisos</span>
         <h1>Mis notificaciones</h1>
         <p>
-            Avisos sobre cambios en las tasas de compra y venta.
+            Avisos sobre tus transacciones, tus facturas electrónicas y los cambios en las tasas de compra y venta.
             {% if notificaciones_no_leidas %}
                 Tenés <strong>{{ notificaciones_no_leidas }}</strong> sin leer.
             {% endif %}
@@ -23,6 +24,87 @@ Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_no_lei
     </div>
 </div>
 
+<h2 class="h5 mb-3" id="notificaciones-operaciones">
+    Transacciones y facturas
+    {% if notificaciones_operaciones_no_leidas %}<span class="badge rounded-pill bg-danger ms-1">{{ notificaciones_operaciones_no_leidas }}</span>{% endif %}
+</h2>
+<div class="ge-card p-0 mb-4">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>N.° de transacción o CDC</th>
+                    <th>Nuevo estado</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notificacion in notificaciones_operaciones %}
+                <tr class="{% if not notificacion.leida %}fw-semibold{% endif %}" data-notificacion-operacion="{{ notificacion.pk }}">
+                    <td>{{ notificacion.creada_en|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if notificacion.es_factura %}<i class="bi bi-receipt me-1"></i>{% else %}<i class="bi bi-arrow-left-right me-1"></i>{% endif %}
+                        {{ notificacion.get_tipo_display }}
+                    </td>
+                    <td><code style="word-break: break-all;">{{ notificacion.referencia }}</code></td>
+                    <td>
+                        {{ notificacion.estado_display }}
+                        {% if notificacion.categoria == 'atencion' or notificacion.categoria == 'rechazada' %}
+                            <br><span class="badge text-bg-warning">{{ notificacion.categoria_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if notificacion.leida %}
+                            <span class="text-muted">Leída</span>
+                        {% else %}
+                            <span class="badge text-bg-warning">No leída</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <form method="post" action="{% url 'divisas:abrir_notificacion_cliente' notificacion.pk %}" class="mb-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                {% if notificacion.es_factura %}Ver factura{% else %}Ver transacción{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">Todavía no tenés notificaciones sobre tus transacciones ni tus facturas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if pagina_operaciones.paginator.num_pages > 1 %}
+        <nav class="p-3" aria-label="Paginación de notificaciones de transacciones y facturas">
+            <ul class="pagination justify-content-center mb-0">
+                {% if pagina_operaciones.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?pagina_operaciones={{ pagina_operaciones.previous_page_number }}{% if page_obj %}&page={{ page_obj.number }}{% endif %}#notificaciones-operaciones">Anterior</a>
+                    </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ pagina_operaciones.number }} de {{ pagina_operaciones.paginator.num_pages }}</span>
+                </li>
+                {% if pagina_operaciones.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?pagina_operaciones={{ pagina_operaciones.next_page_number }}{% if page_obj %}&page={{ page_obj.number }}{% endif %}#notificaciones-operaciones">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+<h2 class="h5 mb-3" id="notificaciones-tasas">
+    Tasas de cambio
+    {% if notificaciones_tasa_no_leidas %}<span class="badge rounded-pill bg-danger ms-1">{{ notificaciones_tasa_no_leidas }}</span>{% endif %}
+</h2>
 <div class="ge-card p-0">
     <div class="table-responsive">
         <table class="table mb-0">
@@ -72,7 +154,7 @@ Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_no_lei
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" class="text-center py-4 text-muted">Todavía no tenés notificaciones.</td>
+                    <td colspan="8" class="text-center py-4 text-muted">Todavía no tenés notificaciones de tasas.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -83,7 +165,7 @@ Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_no_lei
             <ul class="pagination justify-content-center mb-0">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&pagina_operaciones={{ pagina_operaciones.number }}#notificaciones-tasas">Anterior</a>
                     </li>
                 {% endif %}
                 <li class="page-item active" aria-current="page">
@@ -91,7 +173,7 @@ Contexto esperado: notificaciones, page_obj, is_paginated, notificaciones_no_lei
                 </li>
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&pagina_operaciones={{ pagina_operaciones.number }}#notificaciones-tasas">Siguiente</a>
                     </li>
                 {% endif %}
             </ul>

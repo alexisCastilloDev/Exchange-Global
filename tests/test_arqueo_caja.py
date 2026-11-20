@@ -91,7 +91,12 @@ class IniciarArqueoCajaTest(TestCase):
 
         url_venta = reverse('caja:registrar_operacion', kwargs={'tipo': 'venta'})
         response = self.client.post(
-            url_venta, {'divisa': str(self.usd.pk), 'monto': '50.00'}, follow=True,
+            url_venta,
+            {
+                'divisa': str(self.usd.pk), 'monto': '50.00',
+                'cliente_identificador': '4123456', 'cliente_nombre': 'Cliente de Prueba',
+            },
+            follow=True,
         )
 
         self.assertContains(response, 'La operación se registró correctamente')

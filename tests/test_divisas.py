@@ -1,5 +1,7 @@
 """Pruebas de tasas, administración, historial y simulación de divisas."""
 
+import json
+
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -709,6 +711,177 @@ class ActualizacionCotizacionesTest(TestCase):
         """Deniega actualización a usuarios sin rol autorizado."""
         session = self.client.session
         session['keycloak_roles'] = []
+        session.save()
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+
+
+@pytest.mark.django_db
+class HistorialEvolucionTasasTest(TestCase):
+    """HU "Historial y evolución de tasas de cambio": período, rango propio, gráfico, roles y validaciones."""
+
+    def setUp(self):
+        """Prepara una divisa con tres cotizaciones en distintos momentos del último año."""
+        self.admin = User.objects.create_user(username='admin-evolucion', password='password123', is_staff=True)
+        self.cliente_user = User.objects.create_user(username='cliente-evolucion', password='password123')
+        self.divisa = Divisa.objects.create(codigo='USD', nombre='Dólar', simbolo='$', activa=True)
+        self.url = reverse('divisas:historial_cotizaciones', kwargs={'divisa_id': self.divisa.pk})
+
+        ahora = timezone.now()
+        self.cotizacion_reciente = Cotizacion.objects.create(
+            divisa=self.divisa, tasa_compra=7300, tasa_venta=7400, usuario=self.admin,
+        )
+        self.cotizacion_reciente.fecha_actualizacion = ahora - timezone.timedelta(days=5)
+        self.cotizacion_reciente.save(update_fields=['fecha_actualizacion'])
+
+        self.cotizacion_media = Cotizacion.objects.create(
+            divisa=self.divisa, tasa_compra=7200, tasa_venta=7300, usuario=self.admin,
+        )
+        self.cotizacion_media.fecha_actualizacion = ahora - timezone.timedelta(days=45)
+        self.cotizacion_media.save(update_fields=['fecha_actualizacion'])
+
+        self.cotizacion_vieja = Cotizacion.objects.create(
+            divisa=self.divisa, tasa_compra=7000, tasa_venta=7100, usuario=self.admin,
+        )
+        self.cotizacion_vieja.fecha_actualizacion = ahora - timezone.timedelta(days=200)
+        self.cotizacion_vieja.save(update_fields=['fecha_actualizacion'])
+
+    def _login_admin(self):
+        self.client.login(username='admin-evolucion', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['admin']
+        session.save()
+
+    def _login_cliente(self):
+        self.client.login(username='cliente-evolucion', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cliente']
+        session.save()
+
+    # --- Criterio 1: período (7/30/90) y rango propio ---
+
+    def test_periodo_7_dias_excluye_cotizaciones_mas_viejas(self):
+        self._login_admin()
+        response = self.client.get(self.url, {'periodo': '7'})
+        self.assertEqual(list(response.context['cotizaciones']), [self.cotizacion_reciente])
+
+    def test_periodo_30_dias_es_el_default_sin_ningun_parametro(self):
+        self._login_admin()
+        response = self.client.get(self.url)
+        self.assertEqual(response.context['periodo_actual'], '30')
+        self.assertEqual(list(response.context['cotizaciones']), [self.cotizacion_reciente])
+
+    def test_periodo_90_dias_incluye_la_reciente_y_la_media_no_la_vieja(self):
+        self._login_admin()
+        response = self.client.get(self.url, {'periodo': '90'})
+        self.assertEqual(
+            list(response.context['cotizaciones']), [self.cotizacion_reciente, self.cotizacion_media],
+        )
+
+    def test_rango_propio_tiene_prioridad_sobre_periodo_e_incluye_la_vieja(self):
+        self._login_admin()
+        hoy = timezone.localdate()
+        response = self.client.get(self.url, {
+            'periodo': '7',  # se ignora: hay un rango propio completo
+            'fecha_desde': (hoy - timezone.timedelta(days=210)).isoformat(),
+            'fecha_hasta': hoy.isoformat(),
+        })
+        self.assertEqual(response.context['periodo_actual'], 'custom')
+        self.assertEqual(
+            list(response.context['cotizaciones']),
+            [self.cotizacion_reciente, self.cotizacion_media, self.cotizacion_vieja],
+        )
+
+    # --- Criterio 2: el gráfico recibe los puntos en orden cronológico ---
+
+    def test_datos_del_grafico_van_en_orden_cronologico_no_el_de_la_tabla(self):
+        self._login_admin()
+        response = self.client.get(self.url, {'periodo': '90'})
+        datos = json.loads(response.context['datos_grafico'])
+        self.assertEqual([punto['compra'] for punto in datos], ['7200.00', '7300.00'])
+
+    # --- Criterio 3: la tabla queda de la más reciente a la más antigua ---
+
+    def test_la_tabla_queda_ordenada_de_la_mas_reciente_a_la_mas_antigua(self):
+        self._login_admin()
+        response = self.client.get(self.url, {'periodo': '90'})
+        self.assertEqual(
+            list(response.context['cotizaciones']), [self.cotizacion_reciente, self.cotizacion_media],
+        )
+
+    # --- Criterio 4: sin datos en el período, sin gráfico vacío ni error ---
+
+    def test_sin_cotizaciones_en_el_periodo_informa_sin_grafico_ni_error(self):
+        self._login_admin()
+        # Una divisa recién creada, sin ninguna actualización todavía.
+        otra = Divisa.objects.create(codigo='EUR', nombre='Euro', simbolo='€', activa=True)
+        response = self.client.get(reverse('divisas:historial_cotizaciones', kwargs={'divisa_id': otra.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context['error_rango'])
+        self.assertContains(response, 'No hay cotizaciones registradas para EUR en el período elegido.')
+        self.assertNotContains(response, '<canvas')
+
+    # --- Criterio 5: rango inválido ---
+
+    def test_fecha_inicial_posterior_a_la_final_muestra_error_de_validacion(self):
+        self._login_admin()
+        hoy = timezone.localdate()
+        response = self.client.get(self.url, {
+            'fecha_desde': hoy.isoformat(),
+            'fecha_hasta': (hoy - timezone.timedelta(days=10)).isoformat(),
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['error_rango'], 'La fecha inicial no puede ser posterior a la fecha final.')
+        self.assertEqual(list(response.context['cotizaciones']), [])
+
+    def test_fecha_futura_muestra_error_de_validacion(self):
+        self._login_admin()
+        hoy = timezone.localdate()
+        manana = (hoy + timezone.timedelta(days=1)).isoformat()
+        response = self.client.get(self.url, {'fecha_desde': manana, 'fecha_hasta': manana})
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.context['error_rango'])
+        self.assertContains(response, 'fechas futuras')
+
+    # --- Criterio 6: quién actualizó, solo para admin/analista ---
+
+    def test_admin_ve_quien_actualizo_cada_cotizacion(self):
+        self._login_admin()
+        response = self.client.get(self.url)
+        self.assertTrue(response.context['puede_ver_usuario'])
+        self.assertContains(response, 'admin-evolucion')
+
+    def test_cliente_no_ve_quien_actualizo_ninguna_cotizacion(self):
+        self._login_cliente()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['puede_ver_usuario'])
+        self.assertNotContains(response, 'admin-evolucion')
+        self.assertNotContains(response, 'Actualizado por')
+
+    # --- Criterio 7: PYG no es una opción ---
+
+    def test_pyg_no_tiene_historial_por_url_directa(self):
+        self._login_admin()
+        pyg = Divisa.objects.get(codigo='PYG')
+        response = self.client.get(reverse('divisas:historial_cotizaciones', kwargs={'divisa_id': pyg.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    # --- Acceso ---
+
+    def test_cliente_puede_acceder_al_historial(self):
+        """A diferencia del comportamiento previo a esta HU, un cliente ya puede consultar el historial."""
+        self._login_cliente()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_usuario_sin_ningun_rol_autorizado_no_puede_acceder(self):
+        otro = User.objects.create_user(username='cajero-evolucion', password='password123')
+        self.client.login(username='cajero-evolucion', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = ['cajero']
         session.save()
 
         response = self.client.get(self.url)

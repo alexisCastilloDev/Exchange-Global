@@ -1,0 +1,84 @@
+<!--
+Detalle de solo lectura de una transacción para el monitoreo: pago, medios de origen y destino y factura.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: fila, transaccion, pago, medio_origen, medio_destino, factura.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Detalle de transacción (monitoreo) - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-binoculars"></i> Monitoreo de transacciones</span>
+        <h1>Detalle de la transacción</h1>
+        <p>Consulta de solo lectura: desde acá no se puede modificar el estado de la transacción.</p>
+    </div>
+    <a href="{% url 'divisas:monitoreo_transacciones' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i> Volver al monitoreo</a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+        <div class="ge-card ge-result-panel">
+            <div class="ge-card__header mb-3">
+                <h2>Resumen de la operación</h2>
+                <span class="badge-activo">{{ fila.estado }}</span>
+            </div>
+            {% if fila.atencion %}
+            <div class="operation-expiry mb-3"><i class="bi bi-exclamation-triangle me-1"></i> Requiere atención: {{ fila.atencion }}.</div>
+            {% endif %}
+            <div class="operation-summary">
+                <div class="operation-summary__row"><span class="operation-summary__label">Cliente: </span><strong class="operation-summary__value">{{ fila.cliente }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Canal: </span><strong class="operation-summary__value">{{ fila.canal|capfirst }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Tipo: </span><strong class="operation-summary__value">{{ fila.tipo }} · {{ fila.divisa }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Monto: </span><strong class="operation-summary__value">{{ fila.monto_origen|floatformat:2 }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Tasa aplicada: </span><strong class="operation-summary__value">{{ fila.tasa|floatformat:fila.decimales_tasa }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Comisión: </span><strong class="operation-summary__value">{{ fila.comision|floatformat:2 }} {{ fila.moneda_final }}</strong></div>
+                <div class="operation-summary__row operation-summary__row--total"><span class="operation-summary__label">Importe final: </span><strong class="operation-summary__value">{{ fila.monto_final|floatformat:2 }} {{ fila.moneda_final }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Fecha de creación: </span><strong class="operation-summary__value">{{ fila.creado_en|date:"d/m/Y H:i" }}</strong></div>
+                {% if fila.canal == 'ventanilla' %}
+                <div class="operation-summary__row"><span class="operation-summary__label">Cajero: </span><strong class="operation-summary__value">{{ transaccion.cajero.get_full_name|default:transaccion.cajero.username }}</strong></div>
+                {% endif %}
+            </div>
+
+            <div class="ge-card__header mb-3 mt-4"><h2>Medios</h2></div>
+            <div class="operation-summary">
+                <div class="operation-summary__row"><span class="operation-summary__label">Medio de origen (pago): </span><strong class="operation-summary__value">{{ medio_origen|default:"Sin pago registrado" }}</strong></div>
+                <div class="operation-summary__row"><span class="operation-summary__label">Medio de destino (entrega): </span><strong class="operation-summary__value">{{ medio_destino|default:"Todavía no elegido" }}</strong></div>
+            </div>
+
+            <div class="ge-card__header mb-3 mt-4"><h2>Pago asociado</h2></div>
+            {% if pago %}
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Medio: </span><strong class="operation-summary__value">{{ pago.get_medio_pago_display }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Proveedor: </span><strong class="operation-summary__value">{{ pago.proveedor }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Monto: </span><strong class="operation-summary__value">{{ pago.monto|floatformat:2 }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Fecha: </span><strong class="operation-summary__value">{{ pago.creado_en|date:"d/m/Y H:i" }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Identificador: </span><strong class="operation-summary__value">{{ pago.identificador_externo }}</strong></div>
+                    {% if pago.fuera_de_plazo %}
+                    <div class="operation-summary__row"><span class="operation-summary__label">Observación: </span><strong class="operation-summary__value">Pago fuera de plazo</strong></div>
+                    {% endif %}
+                </div>
+            {% elif fila.canal == 'ventanilla' %}
+                <p class="text-muted">Operación liquidada en efectivo en ventanilla: no tiene un pago electrónico asociado.</p>
+            {% else %}
+                <p class="text-muted">Todavía no tiene un pago registrado.</p>
+            {% endif %}
+
+            <div class="ge-card__header mb-3 mt-4"><h2>Factura electrónica</h2></div>
+            {% if factura %}
+                <div class="operation-summary">
+                    <div class="operation-summary__row"><span class="operation-summary__label">Número: </span><strong class="operation-summary__value">{{ factura.numero_documento|default:"-" }}</strong></div>
+                    <div class="operation-summary__row"><span class="operation-summary__label">Estado: </span><strong class="operation-summary__value">{{ factura.get_estado_display }}</strong></div>
+                    {% if factura.cdc %}
+                    <div class="operation-summary__row"><span class="operation-summary__label">CDC: </span><strong class="operation-summary__value">{{ factura.cdc }}</strong></div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p class="text-muted">Todavía no tiene una factura electrónica.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

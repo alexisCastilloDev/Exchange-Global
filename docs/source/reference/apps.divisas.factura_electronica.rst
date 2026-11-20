@@ -28,6 +28,8 @@ apps.divisas.factura_electronica module
 
 .. autofunction:: apps.divisas.factura_electronica._grupo_pago
 
+.. autofunction:: apps.divisas.factura_electronica._grupo_documento_asociado
+
 .. autofunction:: apps.divisas.factura_electronica._armar_resumido_de
 
 .. autofunction:: apps.divisas.factura_electronica._calcular
@@ -43,6 +45,12 @@ apps.divisas.factura_electronica module
 .. autofunction:: apps.divisas.factura_electronica.consultar_estado_sifen
 
 .. autofunction:: apps.divisas.factura_electronica.reintentar_emision
+
+.. autofunction:: apps.divisas.factura_electronica.ultima_nota_credito
+
+.. autofunction:: apps.divisas.factura_electronica.puede_emitir_nota_credito
+
+.. autofunction:: apps.divisas.factura_electronica.emitir_nota_credito
 
 .. autofunction:: apps.divisas.factura_electronica._descargar_archivo
 

@@ -1,8 +1,9 @@
 <!--
-Lista las Facturas Electrónicas emitidas ante SIFEN, para auditarlas y reintentar las que fallaron.
+Lista las Facturas Electrónicas y notas de crédito emitidas ante SIFEN, para auditarlas,
+reintentar las que fallaron y emitir una nota de crédito sobre una factura aprobada.
 Hereda de: base.html.
 Bloques definidos: title, content.
-Contexto esperado: documentos.
+Contexto esperado: documentos, motivos_emision.
 -->
 {% extends 'base.html' %}
 
@@ -23,59 +24,98 @@ Contexto esperado: documentos.
             <thead>
                 <tr>
                     <th>Fecha</th>
+                    <th>Tipo</th>
                     <th>Número</th>
                     <th>Cliente</th>
                     <th>Estado</th>
                     <th>CDC</th>
-                    <th></th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for documento in documentos %}
                 <tr>
-                    <td>{{ documento.creado_en }}</td>
-                    <td>{{ documento.numero_documento }}</td>
-                    <td>{{ documento.transaccion.cliente }}</td>
+                    <td class="text-nowrap">{{ documento.creado_en|date:"d/m/Y H:i" }}</td>
                     <td>
+                        {{ documento.get_tipo_documento_display }}
+                        {% if documento.factura_anulada %}
+                            <small class="d-block text-muted">de la factura {{ documento.factura_anulada.numero_documento }}</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ documento.numero_documento }}</td>
+                    <td style="max-width: 200px;">
+                        <span class="d-inline-block text-truncate align-bottom" style="max-width: 100%;" title="{{ documento.nombre_receptor }}">
+                            {{ documento.nombre_receptor }}
+                        </span>
+                    </td>
+                    <td style="max-width: 190px;">
                         {% if documento.estado == 'ERROR_GENERACION' %}
                             <span class="badge bg-danger">{{ documento.get_estado_display }}</span>
                         {% elif documento.estado == 'RECHAZADO' or documento.estado == 'ERROR_SIFEN' %}
                             <span class="badge bg-warning text-dark">{{ documento.get_estado_display }}</span>
+                        {% elif documento.estado == 'ANULADA' %}
+                            <span class="badge bg-secondary">{{ documento.get_estado_display }}</span>
                         {% elif documento.es_definitivo %}
                             <span class="badge bg-success">{{ documento.get_estado_display }}</span>
                         {% else %}
                             <span class="badge bg-info text-dark">{{ documento.get_estado_display }}</span>
                         {% endif %}
                     </td>
-                    <td>{{ documento.cdc|default:"—" }}</td>
-                    <td class="text-end">
-                        {% if documento.estado == 'ERROR_GENERACION' %}
-                        <form method="post" action="{% url 'divisas:reintentar_emision_documento_electronico' pk=documento.pk %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
-                            </button>
-                        </form>
-                        {% elif documento.cdc and not documento.es_definitivo %}
-                        <form method="post" action="{% url 'divisas:consultar_estado_sifen_documento_electronico' pk=documento.pk %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-search me-1"></i>Consultar estado SIFEN
-                            </button>
-                        </form>
+                    <td style="max-width: 140px;">
+                        {% if documento.cdc %}
+                        <span class="d-inline-block text-truncate align-bottom font-monospace" style="max-width: 100%; font-size: 12px;" title="{{ documento.cdc }}">
+                            {{ documento.cdc }}
+                        </span>
+                        {% else %}
+                            —
                         {% endif %}
-                        {% if documento.cdc and not documento.factura_pendiente %}
-                        <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='kude' %}" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-file-pdf me-1"></i>KuDE
-                        </a>
-                        <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='xml' %}" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-filetype-xml me-1"></i>XML
-                        </a>
-                        {% endif %}
+                    </td>
+                    <td style="max-width: 190px;">
+                        <div class="d-flex flex-column align-items-stretch gap-1" style="min-width: 160px; max-width: 190px;">
+                            {% if documento.estado == 'ERROR_GENERACION' %}
+                            <form method="post" action="{% url 'divisas:reintentar_emision_documento_electronico' pk=documento.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-primary w-100">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
+                                </button>
+                            </form>
+                            {% elif documento.cdc and not documento.es_definitivo %}
+                            <form method="post" action="{% url 'divisas:consultar_estado_sifen_documento_electronico' pk=documento.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                                    <i class="bi bi-search me-1"></i>Consultar estado SIFEN
+                                </button>
+                            </form>
+                            {% endif %}
+                            {% if documento.cdc and not documento.factura_pendiente %}
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='kude' %}" class="btn btn-sm btn-outline-secondary flex-fill">
+                                    <i class="bi bi-file-pdf me-1"></i>KuDE
+                                </a>
+                                <a href="{% url 'divisas:descargar_documento_electronico' pk=documento.pk formato='xml' %}" class="btn btn-sm btn-outline-secondary flex-fill">
+                                    <i class="bi bi-filetype-xml me-1"></i>XML
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% if documento.puede_emitir_nota_credito %}
+                            <form method="post" action="{% url 'divisas:emitir_nota_credito' pk=documento.pk %}" class="d-flex flex-column gap-1">
+                                {% csrf_token %}
+                                <select name="motivo_emision" class="select-segmento w-100" required>
+                                    <option value="">Motivo...</option>
+                                    {% for valor, etiqueta in motivos_emision %}
+                                        <option value="{{ valor }}">{{ etiqueta }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-danger w-100">
+                                    <i class="bi bi-file-minus me-1"></i>Emitir nota de crédito
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6" class="text-center py-4 text-muted">No hay ningún documento electrónico emitido todavía.</td></tr>
+                <tr><td colspan="7" class="text-center py-4 text-muted">No hay ningún documento electrónico emitido todavía.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

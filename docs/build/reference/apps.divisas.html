@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -68,7 +69,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -176,6 +179,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.context_processors.html">apps.divisas.context_processors module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.context_processors.html#apps.divisas.context_processors.notificaciones_cliente_activo"><code class="docutils literal notranslate"><span class="pre">notificaciones_cliente_activo()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.context_processors.html#apps.divisas.context_processors.notificaciones_context"><code class="docutils literal notranslate"><span class="pre">notificaciones_context()</span></code></a></li>
 </ul>
 </li>
@@ -200,6 +204,7 @@
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._info_adicional"><code class="docutils literal notranslate"><span class="pre">_info_adicional()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._email_receptor"><code class="docutils literal notranslate"><span class="pre">_email_receptor()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupo_pago"><code class="docutils literal notranslate"><span class="pre">_grupo_pago()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupo_documento_asociado"><code class="docutils literal notranslate"><span class="pre">_grupo_documento_asociado()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._armar_resumido_de"><code class="docutils literal notranslate"><span class="pre">_armar_resumido_de()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._calcular"><code class="docutils literal notranslate"><span class="pre">_calcular()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._generar"><code class="docutils literal notranslate"><span class="pre">_generar()</span></code></a></li>
@@ -208,6 +213,9 @@
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.intentar_emitir_documento_electronico"><code class="docutils literal notranslate"><span class="pre">intentar_emitir_documento_electronico()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.consultar_estado_sifen"><code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.reintentar_emision"><code class="docutils literal notranslate"><span class="pre">reintentar_emision()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.ultima_nota_credito"><code class="docutils literal notranslate"><span class="pre">ultima_nota_credito()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.puede_emitir_nota_credito"><code class="docutils literal notranslate"><span class="pre">puede_emitir_nota_credito()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.emitir_nota_credito"><code class="docutils literal notranslate"><span class="pre">emitir_nota_credito()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._descargar_archivo"><code class="docutils literal notranslate"><span class="pre">_descargar_archivo()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.descargar_kude"><code class="docutils literal notranslate"><span class="pre">descargar_kude()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.descargar_xml"><code class="docutils literal notranslate"><span class="pre">descargar_xml()</span></code></a></li>
@@ -317,6 +325,29 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="apps.divisas.ganancias.html">apps.divisas.ganancias module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.TIPO_CHOICES"><code class="docutils literal notranslate"><span class="pre">TIPO_CHOICES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.CANAL_CHOICES"><code class="docutils literal notranslate"><span class="pre">CANAL_CHOICES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.PERIODOS"><code class="docutils literal notranslate"><span class="pre">PERIODOS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._parsear_fecha"><code class="docutils literal notranslate"><span class="pre">_parsear_fecha()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._fila_operacion"><code class="docutils literal notranslate"><span class="pre">_fila_operacion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._fila_cambio"><code class="docutils literal notranslate"><span class="pre">_fila_cambio()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._fila_ventanilla"><code class="docutils literal notranslate"><span class="pre">_fila_ventanilla()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._todas_las_ganancias"><code class="docutils literal notranslate"><span class="pre">_todas_las_ganancias()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._en_rango"><code class="docutils literal notranslate"><span class="pre">_en_rango()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._rango_por_periodo"><code class="docutils literal notranslate"><span class="pre">_rango_por_periodo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.resolver_periodo"><code class="docutils literal notranslate"><span class="pre">resolver_periodo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._rango_anterior_equivalente"><code class="docutils literal notranslate"><span class="pre">_rango_anterior_equivalente()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_indicadores"><code class="docutils literal notranslate"><span class="pre">calcular_indicadores()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_variacion"><code class="docutils literal notranslate"><span class="pre">calcular_variacion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._agrupacion_segun_duracion"><code class="docutils literal notranslate"><span class="pre">_agrupacion_segun_duracion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._clave_periodo"><code class="docutils literal notranslate"><span class="pre">_clave_periodo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_evolucion"><code class="docutils literal notranslate"><span class="pre">calcular_evolucion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias._agrupar_por"><code class="docutils literal notranslate"><span class="pre">_agrupar_por()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_distribucion"><code class="docutils literal notranslate"><span class="pre">calcular_distribucion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.ganancias.html#apps.divisas.ganancias.generar_tablero"><code class="docutils literal notranslate"><span class="pre">generar_tablero()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.models.html">apps.divisas.models module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa"><code class="docutils literal notranslate"><span class="pre">Divisa</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa.CODIGO_BASE"><code class="docutils literal notranslate"><span class="pre">Divisa.CODIGO_BASE</span></code></a></li>
@@ -363,6 +394,12 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.tasa_venta"><code class="docutils literal notranslate"><span class="pre">Cotizacion.tasa_venta</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario"><code class="docutils literal notranslate"><span class="pre">Cotizacion.usuario</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion.usuario_id"><code class="docutils literal notranslate"><span class="pre">Cotizacion.usuario_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin"><code class="docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin._al_cambiar_estado"><code class="docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin._al_cambiar_estado()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin.from_db"><code class="docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin.from_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin.save"><code class="docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin.save()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code></a><ul>
@@ -412,6 +449,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion.medio_destino_id"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion.medio_destino_id</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion.monto_final"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion.monto_final</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion.monto_origen"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion.monto_origen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion.notificaciones"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion.notificaciones</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion.objects"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion.objects</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion.pago"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion.pago</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion.referencia_acreditacion"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion.referencia_acreditacion</span></code></a></li>
@@ -475,6 +513,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.monto_equivalente_pyg"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion.monto_equivalente_pyg</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.monto_final"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion.monto_final</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.monto_origen"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion.monto_origen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.notificaciones"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion.notificaciones</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.objects"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion.objects</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.pago"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion.pago</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.referencia_acreditacion"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion.referencia_acreditacion</span></code></a></li>
@@ -639,6 +678,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.DoesNotExist</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADOS_DESCARGABLES"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADOS_DESCARGABLES</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADOS_PENDIENTES"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADOS_PENDIENTES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_ANULADA"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADO_ANULADA</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_APROBADO"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADO_APROBADO</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_APROBADO_OBS"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADO_APROBADO_OBS</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_CHOICES"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADO_CHOICES</span></code></a></li>
@@ -646,6 +686,15 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_ERROR_SIFEN"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADO_ERROR_SIFEN</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_GENERADO"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADO_GENERADO</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.ESTADO_RECHAZADO"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.ESTADO_RECHAZADO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_AJUSTE_DE_PRECIO"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_AJUSTE_DE_PRECIO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_BONIFICACION"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_BONIFICACION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_CREDITO_INCOBRABLE"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_CREDITO_INCOBRABLE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_DESCUENTO"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_DESCUENTO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_DEVOLUCION_Y_AJUSTE"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_DEVOLUCION_Y_AJUSTE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_EMISION_CHOICES"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_EMISION_CHOICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_OTRO"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_OTRO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_RECUPERO_DE_COSTO"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_RECUPERO_DE_COSTO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MOTIVO_RECUPERO_DE_GASTO"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MOTIVO_RECUPERO_DE_GASTO</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.MultipleObjectsReturned</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.NotUpdated"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.NotUpdated</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.actualizado_en"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.actualizado_en</span></code></a></li>
@@ -665,22 +714,104 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.es_definitivo"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.es_definitivo</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.estado"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.estado</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.estado_sifen"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.estado_sifen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.factura_anulada"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.factura_anulada</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.factura_anulada_id"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.factura_anulada_id</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.factura_pendiente"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.factura_pendiente</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.get_estado_display"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.get_estado_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.get_motivo_emision_display"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.get_motivo_emision_display()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.get_next_by_actualizado_en"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.get_next_by_actualizado_en()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.get_next_by_creado_en"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.get_next_by_creado_en()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.get_previous_by_actualizado_en"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.get_previous_by_actualizado_en()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.get_previous_by_creado_en"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.get_previous_by_creado_en()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.get_tipo_documento_display"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.get_tipo_documento_display()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.id"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.motivo_emision"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.motivo_emision</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.motivo_no_descargable"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.motivo_no_descargable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.nombre_receptor"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.nombre_receptor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.notas_credito"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.notas_credito</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.notificaciones"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.notificaciones</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.numero_documento"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.numero_documento</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.objects"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.operacion_ventanilla"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.operacion_ventanilla</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.operacion_ventanilla_id"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.operacion_ventanilla_id</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.operation_id"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.operation_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.puede_emitir_nota_credito"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.puede_emitir_nota_credito</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.tiene_nota_credito_vigente"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.tiene_nota_credito_vigente</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.tipo_documento"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.tipo_documento</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.transaccion"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.transaccion</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_ANULADA"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.CATEGORIA_ANULADA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_APROBADA"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.CATEGORIA_APROBADA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_ATENCION"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.CATEGORIA_ATENCION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_CANCELADA"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.CATEGORIA_CANCELADA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_COMPLETADA"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.CATEGORIA_COMPLETADA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_ETIQUETAS"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.CATEGORIA_ETIQUETAS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_PAGADA"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.CATEGORIA_PAGADA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.CATEGORIA_RECHAZADA"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.CATEGORIA_RECHAZADA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.ESTADOS_NOTIFICABLES_FACTURA"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.ESTADOS_NOTIFICABLES_FACTURA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.NotUpdated"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.TIPO_CHOICES"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.TIPO_CHOICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.TIPO_FACTURA"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.TIPO_FACTURA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.TIPO_TRANSACCION"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.TIPO_TRANSACCION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.calculo_operacion"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.calculo_operacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.calculo_operacion_id"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.calculo_operacion_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.calculo_triangulacion"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.calculo_triangulacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.calculo_triangulacion_id"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.calculo_triangulacion_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.categoria"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.categoria</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.categoria_display"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.categoria_display</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.cliente"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.cliente_id"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.cliente_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.creada_en"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.creada_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.destinatarios"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.destinatarios()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.documento_electronico"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.documento_electronico</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.documento_electronico_id"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.documento_electronico_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.es_factura"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.es_factura</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.estado"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.estado</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.estado_display"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.estado_display</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.get_next_by_creada_en"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.get_next_by_creada_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.get_previous_by_creada_en"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.get_previous_by_creada_en()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.get_tipo_display"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.get_tipo_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.id"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.leida"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.leida</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.leida_en"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.leida_en</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.marcar_como_leida"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.marcar_como_leida()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.mensaje"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.mensaje</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.notificar_factura"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.notificar_factura()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.notificar_transaccion"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.notificar_transaccion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.objects"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.referencia"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.referencia</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.tipo"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.tipo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.url_detalle"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.url_detalle</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.usuario"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.usuario</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente.usuario_id"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente.usuario_id</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.divisas.monitoreo.html">apps.divisas.monitoreo module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.CANAL_CHOICES"><code class="docutils literal notranslate"><span class="pre">CANAL_CHOICES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.ESTADO_COMPLETADA"><code class="docutils literal notranslate"><span class="pre">ESTADO_COMPLETADA</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.ESTADO_CHOICES"><code class="docutils literal notranslate"><span class="pre">ESTADO_CHOICES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.MOTIVOS_ATENCION"><code class="docutils literal notranslate"><span class="pre">MOTIVOS_ATENCION</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._etiqueta_cliente"><code class="docutils literal notranslate"><span class="pre">_etiqueta_cliente()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._atencion"><code class="docutils literal notranslate"><span class="pre">_atencion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._fila_operacion"><code class="docutils literal notranslate"><span class="pre">_fila_operacion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._fila_cambio"><code class="docutils literal notranslate"><span class="pre">_fila_cambio()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._fila_ventanilla"><code class="docutils literal notranslate"><span class="pre">_fila_ventanilla()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._todas_las_transacciones"><code class="docutils literal notranslate"><span class="pre">_todas_las_transacciones()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.calcular_totales"><code class="docutils literal notranslate"><span class="pre">calcular_totales()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.generar_monitoreo"><code class="docutils literal notranslate"><span class="pre">generar_monitoreo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._obtener_o_none"><code class="docutils literal notranslate"><span class="pre">_obtener_o_none()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.detalle_transaccion"><code class="docutils literal notranslate"><span class="pre">detalle_transaccion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._formatear_fecha"><code class="docutils literal notranslate"><span class="pre">_formatear_fecha()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo._descripcion_filtros"><code class="docutils literal notranslate"><span class="pre">_descripcion_filtros()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.generar_pdf"><code class="docutils literal notranslate"><span class="pre">generar_pdf()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.generar_excel"><code class="docutils literal notranslate"><span class="pre">generar_excel()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.pagos_sipap.html">apps.divisas.pagos_sipap module</a><ul>
@@ -735,6 +866,46 @@
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._configuracion_solo_tarjeta"><code class="docutils literal notranslate"><span class="pre">_configuracion_solo_tarjeta()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="apps.divisas.reporte_ganancias.html">apps.divisas.reporte_ganancias module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.AGRUPACIONES"><code class="docutils literal notranslate"><span class="pre">AGRUPACIONES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.AGRUPACION_POR_DEFECTO"><code class="docutils literal notranslate"><span class="pre">AGRUPACION_POR_DEFECTO</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.MENSAJE_SIN_DATOS"><code class="docutils literal notranslate"><span class="pre">MENSAJE_SIN_DATOS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._validar_rango"><code class="docutils literal notranslate"><span class="pre">_validar_rango()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._clave_y_etiqueta"><code class="docutils literal notranslate"><span class="pre">_clave_y_etiqueta()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._orden_de_grupo"><code class="docutils literal notranslate"><span class="pre">_orden_de_grupo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.agrupar_ganancias"><code class="docutils literal notranslate"><span class="pre">agrupar_ganancias()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._nombre_cajero"><code class="docutils literal notranslate"><span class="pre">_nombre_cajero()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._cajas_del_periodo"><code class="docutils literal notranslate"><span class="pre">_cajas_del_periodo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.desglosar_por_caja"><code class="docutils literal notranslate"><span class="pre">desglosar_por_caja()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_reporte_ganancias"><code class="docutils literal notranslate"><span class="pre">generar_reporte_ganancias()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_fecha"><code class="docutils literal notranslate"><span class="pre">_formatear_fecha()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.descripcion_filtros"><code class="docutils literal notranslate"><span class="pre">descripcion_filtros()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_momento"><code class="docutils literal notranslate"><span class="pre">_formatear_momento()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_tabla"><code class="docutils literal notranslate"><span class="pre">_filas_tabla()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_totales"><code class="docutils literal notranslate"><span class="pre">_filas_totales()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._texto_celda"><code class="docutils literal notranslate"><span class="pre">_texto_celda()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._valor_excel"><code class="docutils literal notranslate"><span class="pre">_valor_excel()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_pdf"><code class="docutils literal notranslate"><span class="pre">generar_pdf()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_excel"><code class="docutils literal notranslate"><span class="pre">generar_excel()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.divisas.reportes.html">apps.divisas.reportes module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes.TIPO_CHOICES"><code class="docutils literal notranslate"><span class="pre">TIPO_CHOICES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes.ESTADOS_COMPLETADOS"><code class="docutils literal notranslate"><span class="pre">ESTADOS_COMPLETADOS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes._parsear_fecha"><code class="docutils literal notranslate"><span class="pre">_parsear_fecha()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes._fila_operacion"><code class="docutils literal notranslate"><span class="pre">_fila_operacion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes._fila_cambio"><code class="docutils literal notranslate"><span class="pre">_fila_cambio()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes._transacciones_cliente"><code class="docutils literal notranslate"><span class="pre">_transacciones_cliente()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes._validar_rango"><code class="docutils literal notranslate"><span class="pre">_validar_rango()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes.calcular_totales"><code class="docutils literal notranslate"><span class="pre">calcular_totales()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes.generar_reporte"><code class="docutils literal notranslate"><span class="pre">generar_reporte()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes._formatear_fecha"><code class="docutils literal notranslate"><span class="pre">_formatear_fecha()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes._descripcion_filtros"><code class="docutils literal notranslate"><span class="pre">_descripcion_filtros()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes._nombre_cliente"><code class="docutils literal notranslate"><span class="pre">_nombre_cliente()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes.generar_pdf"><code class="docutils literal notranslate"><span class="pre">generar_pdf()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes.generar_excel"><code class="docutils literal notranslate"><span class="pre">generar_excel()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.urls.html">apps.divisas.urls module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="apps.divisas.views.html">apps.divisas.views module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.TasasVigentesListView"><code class="docutils literal notranslate"><span class="pre">TasasVigentesListView</span></code></a><ul>
@@ -760,6 +931,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.PERIODOS_VALIDOS"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView.PERIODOS_VALIDOS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.PERIODO_POR_DEFECTO"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView.PERIODO_POR_DEFECTO</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.context_object_name"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView.context_object_name</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.dispatch"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView.dispatch()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_context_data"><code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView.get_context_data()</span></code></a></li>
@@ -790,11 +963,68 @@
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.context_object_name"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView.context_object_name</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.get"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.get_context_data"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView.get_context_data()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.get_queryset"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView.get_queryset()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.model"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView.model</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.paginate_by"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView.paginate_by</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.template_name"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView.template_name</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.test_func"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView"><code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenMiFacturaView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.http_method_names"><code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenMiFacturaView.http_method_names</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.post"><code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenMiFacturaView.post()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.test_func"><code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenMiFacturaView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views._cliente_propio"><code class="docutils literal notranslate"><span class="pre">_cliente_propio()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView"><code class="docutils literal notranslate"><span class="pre">ReporteTransaccionesClienteView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.get"><code class="docutils literal notranslate"><span class="pre">ReporteTransaccionesClienteView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.template_name"><code class="docutils literal notranslate"><span class="pre">ReporteTransaccionesClienteView.template_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.test_func"><code class="docutils literal notranslate"><span class="pre">ReporteTransaccionesClienteView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView"><code class="docutils literal notranslate"><span class="pre">DescargarReporteTransaccionesView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.FORMATOS"><code class="docutils literal notranslate"><span class="pre">DescargarReporteTransaccionesView.FORMATOS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.get"><code class="docutils literal notranslate"><span class="pre">DescargarReporteTransaccionesView.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.test_func"><code class="docutils literal notranslate"><span class="pre">DescargarReporteTransaccionesView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoMixin"><code class="docutils literal notranslate"><span class="pre">MonitoreoMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoMixin.test_func"><code class="docutils literal notranslate"><span class="pre">MonitoreoMixin.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView"><code class="docutils literal notranslate"><span class="pre">MonitoreoTransaccionesView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.get_context_data"><code class="docutils literal notranslate"><span class="pre">MonitoreoTransaccionesView.get_context_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.http_method_names"><code class="docutils literal notranslate"><span class="pre">MonitoreoTransaccionesView.http_method_names</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.paginate_by"><code class="docutils literal notranslate"><span class="pre">MonitoreoTransaccionesView.paginate_by</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.template_name"><code class="docutils literal notranslate"><span class="pre">MonitoreoTransaccionesView.template_name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView"><code class="docutils literal notranslate"><span class="pre">DescargarMonitoreoView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView.FORMATOS"><code class="docutils literal notranslate"><span class="pre">DescargarMonitoreoView.FORMATOS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView.get"><code class="docutils literal notranslate"><span class="pre">DescargarMonitoreoView.get()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin"><code class="docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin.test_func"><code class="docutils literal notranslate"><span class="pre">ReporteGananciasMixin.test_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteGananciasView"><code class="docutils literal notranslate"><span class="pre">ReporteGananciasView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.get_context_data"><code class="docutils literal notranslate"><span class="pre">ReporteGananciasView.get_context_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.http_method_names"><code class="docutils literal notranslate"><span class="pre">ReporteGananciasView.http_method_names</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.template_name"><code class="docutils literal notranslate"><span class="pre">ReporteGananciasView.template_name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView"><code class="docutils literal notranslate"><span class="pre">DescargarReporteGananciasView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView.FORMATOS"><code class="docutils literal notranslate"><span class="pre">DescargarReporteGananciasView.FORMATOS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView.get"><code class="docutils literal notranslate"><span class="pre">DescargarReporteGananciasView.get()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView"><code class="docutils literal notranslate"><span class="pre">DetalleMonitoreoTransaccionView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView.get_context_data"><code class="docutils literal notranslate"><span class="pre">DetalleMonitoreoTransaccionView.get_context_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView.http_method_names"><code class="docutils literal notranslate"><span class="pre">DetalleMonitoreoTransaccionView.http_method_names</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView.template_name"><code class="docutils literal notranslate"><span class="pre">DetalleMonitoreoTransaccionView.template_name</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleTransaccionOperacionView"><code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code></a><ul>
@@ -827,6 +1057,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.context_object_name"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.context_object_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_context_data"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.get_context_data()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_queryset"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.get_queryset()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.paginate_by"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.paginate_by</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.template_name"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView.template_name</span></code></a></li>
@@ -835,6 +1066,11 @@
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView"><code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView.http_method_names"><code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView.http_method_names</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView.post"><code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView.post()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView"><code class="docutils literal notranslate"><span class="pre">AbrirNotificacionClienteView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView.http_method_names"><code class="docutils literal notranslate"><span class="pre">AbrirNotificacionClienteView.http_method_names</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView.post"><code class="docutils literal notranslate"><span class="pre">AbrirNotificacionClienteView.post()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComisionListView</span></code></a><ul>
@@ -928,6 +1164,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView"><code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView.context_object_name"><code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView.context_object_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView.get_context_data"><code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView.get_context_data()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView.get_queryset"><code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView.get_queryset()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView.model"><code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView.model</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView.template_name"><code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView.template_name</span></code></a></li>
@@ -941,9 +1178,18 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView.post"><code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenDocumentoElectronicoView.post()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.EmitirNotaCreditoView"><code class="docutils literal notranslate"><span class="pre">EmitirNotaCreditoView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.EmitirNotaCreditoView.post"><code class="docutils literal notranslate"><span class="pre">EmitirNotaCreditoView.post()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarDocumentoElectronicoView"><code class="docutils literal notranslate"><span class="pre">DescargarDocumentoElectronicoView</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarDocumentoElectronicoView.FORMATOS"><code class="docutils literal notranslate"><span class="pre">DescargarDocumentoElectronicoView.FORMATOS</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarDocumentoElectronicoView.get"><code class="docutils literal notranslate"><span class="pre">DescargarDocumentoElectronicoView.get()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.TableroGananciasView"><code class="docutils literal notranslate"><span class="pre">TableroGananciasView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.TableroGananciasView.get_context_data"><code class="docutils literal notranslate"><span class="pre">TableroGananciasView.get_context_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.TableroGananciasView.template_name"><code class="docutils literal notranslate"><span class="pre">TableroGananciasView.template_name</span></code></a></li>
 </ul>
 </li>
 </ul>

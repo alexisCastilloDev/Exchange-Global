@@ -176,6 +176,18 @@ Divisas
    :language: html
    :lines: 1-7
 
+.. literalinclude:: ../../templates/divisas/monitoreo_transacciones.html
+   :language: html
+   :lines: 1-7
+
+.. literalinclude:: ../../templates/divisas/monitoreo_detalle.html
+   :language: html
+   :lines: 1-6
+
+.. literalinclude:: ../../templates/divisas/reporte_ganancias.html
+   :language: html
+   :lines: 1-7
+
 .. literalinclude:: ../../templates/divisas/mis_transacciones.html
    :language: html
    :lines: 1-7
@@ -190,7 +202,7 @@ Divisas
 
 .. literalinclude:: ../../templates/divisas/mis_notificaciones.html
    :language: html
-   :lines: 1-7
+   :lines: 1-8
 
 Caja
 ----

@@ -38,3 +38,37 @@ if 'test' in sys.argv:
     # usar esta URL.
     FACTURASEGURA_BASE_URL = 'http://127.0.0.1:1/'
     FACTURASEGURA_AUTH_TOKEN = ''
+
+if 'test' in sys.argv or 'pytest' in sys.modules:
+    # mozilla_django_oidc.middleware.SessionRefresh (ver MIDDLEWARE en
+    # base.py) solo deja pasar una request autenticada si la sesión tiene
+    # 'oidc_id_token_expiration' vigente — un valor que solo pone un login
+    # real contra Keycloak. client.force_login()/client.login() (los que
+    # usan los tests) nunca lo setean, así que sin esto cualquier test que
+    # haga un GET después de loguearse quedaría redirigido a Keycloak en
+    # vez de recibir la respuesta esperada. 'pytest' in sys.modules cubre
+    # también a pytest (tests/test_auth.py y compañía), que 'test' in
+    # sys.argv no detecta.
+    MIDDLEWARE = [m for m in MIDDLEWARE if m != 'mozilla_django_oidc.middleware.SessionRefresh']
+
+    # PBKDF2 (el hasher por defecto) es lento a propósito, incluso para los
+    # tests: con cientos de tests que crean usuarios (User.objects.create_user),
+    # ese costo se repite una enormidad de veces y es puro tiempo de
+    # ejecución, sin ningún valor de seguridad real (nunca se expone nada
+    # de esta base de test). MD5 es inseguro, pero acá no importa.
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
+    # apps.divisas.views._verificar_saldo_casa_de_cambio y
+    # apps.divisas.entrega.realizar_entrega consultan el saldo real a
+    # sipap-sim (apps.divisas.casa_de_cambio.consultar_saldo_casa_de_cambio)
+    # antes de confirmar o entregar. Ningún test de confirmación/entrega
+    # mockea esa llamada puntual (solo entrega.requests.post, el envío de
+    # la transferencia en sí); sin esto, apuntarían al SIPAP_BASE_URL real
+    # del .env, que durante una corrida local puede incluso estar
+    # arriba (ver sipap_sim/, "runserver 8001"), mezclando datos de la
+    # base de desarrollo con los tests. Un puerto cerrado hace que la
+    # consulta falle rápido (SipapComunicacionError) y caiga al espejo
+    # local (CuentaPropia), el mismo valor que ya usaban estas dos
+    # funciones antes de este chequeo en vivo — ningún test existente
+    # cambia de comportamiento.
+    SIPAP_BASE_URL = 'http://127.0.0.1:1'

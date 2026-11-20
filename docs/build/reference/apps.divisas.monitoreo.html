@@ -1,0 +1,377 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.monitoreo module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.divisas.pagos_sipap module" href="apps.divisas.pagos_sipap.html" />
+    <link rel="prev" title="apps.divisas.models module" href="apps.divisas.models.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.divisas.html">apps.divisas package</a></li>
+      <li class="breadcrumb-item active">apps.divisas.monitoreo module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apps-divisas-monitoreo-module">
+<h1>apps.divisas.monitoreo module<a class="headerlink" href="#apps-divisas-monitoreo-module" title="Link to this heading"></a></h1>
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.CANAL_CHOICES">
+<span class="sig-name descname"><span class="pre">CANAL_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(('online',</span> <span class="pre">'En</span> <span class="pre">línea'),</span> <span class="pre">('ventanilla',</span> <span class="pre">'Ventanilla'))</span></span><a class="headerlink" href="#apps.divisas.monitoreo.CANAL_CHOICES" title="Link to this definition"></a></dt>
+<dd><p>Built-in immutable sequence.</p>
+<p>If no argument is given, the constructor returns an empty tuple.
+If iterable is specified the tuple is initialized from iterable’s items.</p>
+<p>If the argument is a tuple, the return value is the same object.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.ESTADO_COMPLETADA">
+<span class="sig-name descname"><span class="pre">ESTADO_COMPLETADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'COMPLETADA'</span></span><a class="headerlink" href="#apps.divisas.monitoreo.ESTADO_COMPLETADA" title="Link to this definition"></a></dt>
+<dd><p>str(object=””) -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.__str__() (if defined)
+or repr(object).
+encoding defaults to “utf-8”.
+errors defaults to “strict”.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.ESTADO_CHOICES">
+<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(('PENDIENTE_CONFIRMACION',</span> <span class="pre">'Pendiente</span> <span class="pre">de</span> <span class="pre">confirmación'),</span> <span class="pre">('CONFIRMADA',</span> <span class="pre">'Confirmada'),</span> <span class="pre">('CANCELADA',</span> <span class="pre">'Cancelada'),</span> <span class="pre">('VENCIDA',</span> <span class="pre">'Vencida'),</span> <span class="pre">('CANCELADA_COTIZACION',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">cambio</span> <span class="pre">de</span> <span class="pre">cotización'),</span> <span class="pre">('CANCELADA_SALDO_INSUFICIENTE',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">saldo</span> <span class="pre">insuficiente</span> <span class="pre">de</span> <span class="pre">Global</span> <span class="pre">Exchange'),</span> <span class="pre">('CANCELADA_FONDOS_CLIENTE',</span> <span class="pre">'Cancelada</span> <span class="pre">por</span> <span class="pre">fondos</span> <span class="pre">insuficientes</span> <span class="pre">del</span> <span class="pre">cliente'),</span> <span class="pre">('PAGADA',</span> <span class="pre">'Pagada'),</span> <span class="pre">('ENTREGA_FALLIDA',</span> <span class="pre">'Pagada,</span> <span class="pre">pero</span> <span class="pre">la</span> <span class="pre">entrega</span> <span class="pre">al</span> <span class="pre">cliente</span> <span class="pre">falló'),</span> <span class="pre">('PAGO_EXPIRADO',</span> <span class="pre">'Pago</span> <span class="pre">fuera</span> <span class="pre">de</span> <span class="pre">plazo'),</span> <span class="pre">('ACREDITADA',</span> <span class="pre">'Acreditada'),</span> <span class="pre">('RETIRADA',</span> <span class="pre">'Retirada'),</span> <span class="pre">('COMPLETADA',</span> <span class="pre">'Completada</span> <span class="pre">(ventanilla)'))</span></span><a class="headerlink" href="#apps.divisas.monitoreo.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<dd><p>Built-in immutable sequence.</p>
+<p>If no argument is given, the constructor returns an empty tuple.
+If iterable is specified the tuple is initialized from iterable’s items.</p>
+<p>If the argument is a tuple, the return value is the same object.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.MOTIVOS_ATENCION">
+<span class="sig-name descname"><span class="pre">MOTIVOS_ATENCION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'ENTREGA_FALLIDA':</span> <span class="pre">'Entrega</span> <span class="pre">incierta',</span> <span class="pre">'PAGADA':</span> <span class="pre">'Entrega</span> <span class="pre">pendiente',</span> <span class="pre">'PAGO_EXPIRADO':</span> <span class="pre">'Pago</span> <span class="pre">fuera</span> <span class="pre">de</span> <span class="pre">plazo'}</span></span><a class="headerlink" href="#apps.divisas.monitoreo.MOTIVOS_ATENCION" title="Link to this definition"></a></dt>
+<dd><p>Estados que requieren atención del analista (criterio 3), con su motivo.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PAGADA</span></code>: el pago se registró pero la entrega todavía no se completó
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.entrega.realizar_entrega</span></code> la pasa a «Acreditada»/»Retirada»
+apenas termina; una transacción que sigue «Pagada» quedó sin entregar).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ENTREGA_FALLIDA</span></code>: la transferencia saliente no respondió o fue
+rechazada; no se sabe si sipap-sim llegó a procesarla, por eso es
+«incierta» (reintentar es seguro porque sipap-sim es idempotente por
+referencia).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PAGO_EXPIRADO</span></code>: el pago llegó después de vencida la tasa fijada.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._etiqueta_cliente">
+<span class="sig-name descname"><span class="pre">_etiqueta_cliente</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cliente</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_etiqueta_cliente"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._etiqueta_cliente" title="Link to this definition"></a></dt>
+<dd><p>Nombre o razón social del cliente con su identificador.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._atencion">
+<span class="sig-name descname"><span class="pre">_atencion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estado_codigo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_atencion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._atencion" title="Link to this definition"></a></dt>
+<dd><p>Devuelve el motivo de atención de un estado, o <code class="docutils literal notranslate"><span class="pre">''</span></code> si no requiere atención.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._fila_operacion">
+<span class="sig-name descname"><span class="pre">_fila_operacion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_fila_operacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._fila_operacion" title="Link to this definition"></a></dt>
+<dd><p>Normaliza una compra o venta online (perspectiva del cliente invertida a la de la casa).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._fila_cambio">
+<span class="sig-name descname"><span class="pre">_fila_cambio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cambio</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_fila_cambio"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._fila_cambio" title="Link to this definition"></a></dt>
+<dd><p>Normaliza un cambio entre divisas online.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._fila_ventanilla">
+<span class="sig-name descname"><span class="pre">_fila_ventanilla</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_fila_ventanilla"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._fila_ventanilla" title="Link to this definition"></a></dt>
+<dd><p>Normaliza una operación de ventanilla (ya está en perspectiva de la casa, siempre completada).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._todas_las_transacciones">
+<span class="sig-name descname"><span class="pre">_todas_las_transacciones</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_todas_las_transacciones"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._todas_las_transacciones" title="Link to this definition"></a></dt>
+<dd><p>Todas las transacciones de todos los canales, normalizadas, de la más reciente a la más antigua.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.calcular_totales">
+<span class="sig-name descname"><span class="pre">calcular_totales</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#calcular_totales"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo.calcular_totales" title="Link to this definition"></a></dt>
+<dd><p>Calcula los totales por tipo, divisa y estado de las filas dadas (criterio 5).</p>
+<p>Los montos por tipo y por estado usan el equivalente en PYG
+(<code class="docutils literal notranslate"><span class="pre">monto_pyg</span></code>), la única unidad común entre compras/ventas y cambios;
+el monto por divisa suma el monto operado en la moneda de origen de
+cada fila (<code class="docutils literal notranslate"><span class="pre">monto_origen</span></code>), así que un cambio aparece bajo su par
+«ORIGEN → DESTINO». A diferencia del reporte del cliente, acá se
+totalizan <strong>todas</strong> las filas filtradas, sin importar su estado: el
+analista supervisa también lo cancelado o pendiente.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.generar_monitoreo">
+<span class="sig-name descname"><span class="pre">generar_monitoreo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parametros</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#generar_monitoreo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo.generar_monitoreo" title="Link to this definition"></a></dt>
+<dd><p>Resuelve filtros, filas filtradas y totales del monitoreo a partir de <code class="docutils literal notranslate"><span class="pre">parametros</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">parametros</span></code> es cualquier mapeo tipo <code class="docutils literal notranslate"><span class="pre">QueryDict</span></code> con las claves
+<code class="docutils literal notranslate"><span class="pre">fecha_desde</span></code>, <code class="docutils literal notranslate"><span class="pre">fecha_hasta</span></code>, <code class="docutils literal notranslate"><span class="pre">cliente</span></code> (texto: nombre o
+identificador, sin distinguir mayúsculas), <code class="docutils literal notranslate"><span class="pre">tipo</span></code>, <code class="docutils literal notranslate"><span class="pre">divisa</span></code>
+(código; en un cambio coincide con la divisa de origen o la de
+destino), <code class="docutils literal notranslate"><span class="pre">estado</span></code>, <code class="docutils literal notranslate"><span class="pre">canal</span></code> y <code class="docutils literal notranslate"><span class="pre">atencion</span></code> (<code class="docutils literal notranslate"><span class="pre">'1'</span></code> para ver solo
+las que requieren atención). Todos son opcionales (criterio 2); un
+rango con una fecha inválida o con inicio posterior al fin se informa
+en <code class="docutils literal notranslate"><span class="pre">error_rango</span></code> y no lista nada. Las fechas futuras no son un
+error: simplemente no hay transacciones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">filtros</span></code> (los valores ya normalizados, para repoblar el
+formulario), <code class="docutils literal notranslate"><span class="pre">error_rango</span></code>, <code class="docutils literal notranslate"><span class="pre">filas</span></code>, <code class="docutils literal notranslate"><span class="pre">totales</span></code> y
+<code class="docutils literal notranslate"><span class="pre">generado_en</span></code>.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._obtener_o_none">
+<span class="sig-name descname"><span class="pre">_obtener_o_none</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_obtener_o_none"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._obtener_o_none" title="Link to this definition"></a></dt>
+<dd><p>Devuelve una relación uno-a-uno inversa opcional, o <code class="docutils literal notranslate"><span class="pre">None</span></code> si todavía no existe.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.detalle_transaccion">
+<span class="sig-name descname"><span class="pre">detalle_transaccion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tipo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#detalle_transaccion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo.detalle_transaccion" title="Link to this definition"></a></dt>
+<dd><p>Arma el detalle, de solo lectura, de una transacción para el monitoreo (criterio 4).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tipo</strong> (<em>str</em>) – <code class="docutils literal notranslate"><span class="pre">'operacion'</span></code>, <code class="docutils literal notranslate"><span class="pre">'cambio'</span></code> o <code class="docutils literal notranslate"><span class="pre">'ventanilla'</span></code>.</p></li>
+<li><p><strong>pk</strong> – Identificador (UUID) de la transacción.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">fila</span></code> (la misma normalización que usa el listado),
+<code class="docutils literal notranslate"><span class="pre">transaccion</span></code> (el modelo), <code class="docutils literal notranslate"><span class="pre">pago</span></code> (<code class="docutils literal notranslate"><span class="pre">Pago</span></code> asociado, o <code class="docutils literal notranslate"><span class="pre">None</span></code>),
+<code class="docutils literal notranslate"><span class="pre">medio_origen</span></code> y <code class="docutils literal notranslate"><span class="pre">medio_destino</span></code> (texto), <code class="docutils literal notranslate"><span class="pre">factura</span></code> (el
+<code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code> si existe, o <code class="docutils literal notranslate"><span class="pre">None</span></code>) y <code class="docutils literal notranslate"><span class="pre">cajero</span></code>/<code class="docutils literal notranslate"><span class="pre">caja</span></code>
+solo en ventanilla. <code class="docutils literal notranslate"><span class="pre">None</span></code> si la transacción no existe.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._formatear_fecha">
+<span class="sig-name descname"><span class="pre">_formatear_fecha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_formatear_fecha"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._formatear_fecha" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">'YYYY-MM-DD'</span></code> a <code class="docutils literal notranslate"><span class="pre">'DD/MM/YYYY'</span></code>, tal como se ingresó en el filtro.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo._descripcion_filtros">
+<span class="sig-name descname"><span class="pre">_descripcion_filtros</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filtros</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#_descripcion_filtros"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo._descripcion_filtros" title="Link to this definition"></a></dt>
+<dd><p>Texto legible de los filtros aplicados, para dejarlos documentados en el archivo descargado.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.generar_pdf">
+<span class="sig-name descname"><span class="pre">generar_pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">totales</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtros</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generado_en</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#generar_pdf"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo.generar_pdf" title="Link to this definition"></a></dt>
+<dd><p>Arma el PDF del monitoreo: filtros aplicados, fecha, listado y totales por tipo, divisa y estado.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.monitoreo.generar_excel">
+<span class="sig-name descname"><span class="pre">generar_excel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">totales</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filtros</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generado_en</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/monitoreo.html#generar_excel"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.monitoreo.generar_excel" title="Link to this definition"></a></dt>
+<dd><p>Arma el Excel del monitoreo con los mismos datos, filtros y totales que el PDF.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.divisas.models.html" class="btn btn-neutral float-left" title="apps.divisas.models module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.pagos_sipap.html" class="btn btn-neutral float-right" title="apps.divisas.pagos_sipap module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

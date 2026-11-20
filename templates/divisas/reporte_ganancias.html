@@ -1,0 +1,157 @@
+<!--
+Reporte de ganancias por período, divisa, tipo de operación, canal o caja y turno, con descarga PDF/Excel.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: reporte_generado, error_rango, sin_datos, filtros, agrupacion_etiqueta, grupos, cajas,
+total, total_cajas, generado_en, agrupaciones_disponibles, mensaje_sin_datos, querystring.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Reporte de ganancias - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-file-earmark-spreadsheet"></i> Análisis cambiario</span>
+        <h1>Reporte de ganancias</h1>
+        <p>Desglosá la ganancia (comisiones en PYG de las operaciones completadas) por período, divisa, tipo de operación, canal o caja y turno.</p>
+    </div>
+</div>
+
+<div class="contenedor-filtro">
+    <form method="GET" action="" class="d-flex align-items-end gap-3 flex-wrap mb-0">
+        <div>
+            <label for="fecha_desde" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Desde</label>
+            <input type="date" name="fecha_desde" id="fecha_desde" value="{{ filtros.fecha_desde }}" class="form-control" required>
+        </div>
+        <div>
+            <label for="fecha_hasta" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Hasta</label>
+            <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ filtros.fecha_hasta }}" class="form-control" required>
+        </div>
+        <div>
+            <label for="agrupacion" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Agrupar por</label>
+            <select name="agrupacion" id="agrupacion" class="select-segmento">
+                {% for valor, etiqueta in agrupaciones_disponibles.items %}
+                    <option value="{{ valor }}" {% if filtros.agrupacion == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Generar reporte</button>
+        <a href="{% url 'divisas:reporte_ganancias' %}" class="btn btn-secondary">Limpiar</a>
+    </form>
+</div>
+
+{% if error_rango %}
+<div class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle me-1"></i>{{ error_rango }}
+</div>
+{% elif not reporte_generado %}
+<div class="ge-empty-state">Indicá un rango de fechas y un criterio de agrupación para generar el reporte.</div>
+{% elif sin_datos %}
+<div class="ge-empty-state">{{ mensaje_sin_datos }}</div>
+{% else %}
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4 mb-2">
+    <p class="mb-0 text-muted">Agrupado por {{ agrupacion_etiqueta|lower }} · generado el {{ generado_en|date:"d/m/Y H:i" }}.</p>
+    <div class="d-flex gap-2">
+        <a href="{% url 'divisas:descargar_reporte_ganancias' 'pdf' %}?{{ querystring }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
+        </a>
+        <a href="{% url 'divisas:descargar_reporte_ganancias' 'excel' %}?{{ querystring }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i>Descargar Excel
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="ge-card h-100">
+            <p class="text-muted mb-1" style="font-size: 13px;">Ganancia total (PYG)</p>
+            <p class="mb-0" style="font-size: 22px; font-weight:700;" id="ganancia-total">{{ total.ganancia_pyg|floatformat:2 }}</p>
+            <small class="text-muted">Todos los canales, igual que el tablero de ganancias.</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ge-card h-100">
+            <p class="text-muted mb-1" style="font-size: 13px;">Operaciones completadas</p>
+            <p class="mb-0" style="font-size: 22px; font-weight:700;">{{ total.cantidad }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        {% if filtros.agrupacion == 'caja' %}
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Cajero</th>
+                    <th>Apertura</th>
+                    <th>Cierre</th>
+                    <th>Operaciones de ventanilla</th>
+                    <th>Ganancia (PYG)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for caja in cajas %}
+                <tr>
+                    <td>{{ caja.cajero }}</td>
+                    <td>{{ caja.abierta_en|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if caja.en_curso %}
+                            <span class="badge text-bg-warning">En curso</span>
+                        {% else %}
+                            {{ caja.cerrada_en|date:"d/m/Y H:i" }}
+                        {% endif %}
+                    </td>
+                    <td class="ge-num">{{ caja.cantidad }}</td>
+                    <td class="ge-num">
+                        {{ caja.ganancia_pyg|floatformat:2 }}
+                        {% if caja.en_curso %}<small class="text-muted">(parcial)</small>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4 text-muted">No hubo cajas abiertas en el período elegido.</td></tr>
+                {% endfor %}
+            </tbody>
+            {% if cajas %}
+            <tfoot>
+                <tr style="font-weight:700;">
+                    <td colspan="3">Total de ventanilla{% if total_cajas.hay_en_curso %} (parcial){% endif %}</td>
+                    <td class="ge-num">{{ total_cajas.cantidad }}</td>
+                    <td class="ge-num">{{ total_cajas.ganancia_pyg|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+        {% else %}
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>{{ agrupacion_etiqueta }}</th>
+                    <th>Operaciones</th>
+                    <th>Ganancia (PYG)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for grupo in grupos %}
+                <tr>
+                    <td>{{ grupo.etiqueta }}</td>
+                    <td class="ge-num">{{ grupo.cantidad }}</td>
+                    <td class="ge-num">{{ grupo.ganancia_pyg|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="font-weight:700;">
+                    <td>Total general</td>
+                    <td class="ge-num">{{ total.cantidad }}</td>
+                    <td class="ge-num">{{ total.ganancia_pyg|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

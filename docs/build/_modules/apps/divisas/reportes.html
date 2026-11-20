@@ -1,0 +1,577 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.reportes &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.divisas.reportes</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.divisas.reportes</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Reporte de transacciones de un cliente: filtrado, totales y exportación a PDF/Excel.</span>
+
+<span class="sd">Implementa la HU "Reporte de transacciones del cliente" (GE-39). Las filas</span>
+<span class="sd">normalizadas (``_fila_operacion``/``_fila_cambio``) son una versión propia,</span>
+<span class="sd">no reutilizada, de las que ya arma</span>
+<span class="sd">``apps.divisas.views.MiHistorialTransaccionesView``: esta vista necesita,</span>
+<span class="sd">además, el filtro por tipo de operación (compra/venta/cambio, ausente en</span>
+<span class="sd">el historial) y un monto en PYG uniforme entre los tres tipos</span>
+<span class="sd">(``monto_pyg``) para poder totalizar una compra/venta junto con un cambio</span>
+<span class="sd">entre divisas sin mezclar unidades distintas.</span>
+
+<span class="sd">``generar_reporte`` es el único punto de entrada: resuelve filtros, filas</span>
+<span class="sd">y totales a partir de los parámetros de la URL, y lo usan tanto la</span>
+<span class="sd">pantalla (``apps.divisas.views.ReporteTransaccionesClienteView``) como las</span>
+<span class="sd">dos descargas (``DescargarReporteTransaccionesView``), para que los tres</span>
+<span class="sd">vean siempre los mismos datos con los mismos filtros (criterio 3).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BytesIO</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpyxl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Workbook</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpyxl.styles</span><span class="w"> </span><span class="kn">import</span> <span class="n">Font</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">colors</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.lib.pagesizes</span><span class="w"> </span><span class="kn">import</span> <span class="n">A4</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.lib.styles</span><span class="w"> </span><span class="kn">import</span> <span class="n">getSampleStyleSheet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.lib.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">cm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.platypus</span><span class="w"> </span><span class="kn">import</span> <span class="n">Paragraph</span><span class="p">,</span> <span class="n">SimpleDocTemplate</span><span class="p">,</span> <span class="n">Spacer</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">TableStyle</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalculoOperacion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span>
+
+<span class="n">TIPO_COMPRA</span> <span class="o">=</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span>
+<span class="n">TIPO_VENTA</span> <span class="o">=</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_VENTA</span>
+<span class="n">TIPO_CAMBIO</span> <span class="o">=</span> <span class="s1">'CAMBIO'</span>
+<span class="n">TIPO_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="n">TIPO_COMPRA</span><span class="p">,</span> <span class="s1">'Compra'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">TIPO_VENTA</span><span class="p">,</span> <span class="s1">'Venta'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">TIPO_CAMBIO</span><span class="p">,</span> <span class="s1">'Cambio'</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">ESTADOS_COMPLETADOS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'ACREDITADA'</span><span class="p">,</span> <span class="s1">'RETIRADA'</span><span class="p">)</span>
+<span class="sd">"""Estados efectivos que cuentan como "completada" (criterio 2): el dinero ya</span>
+<span class="sd">llegó a destino, acreditado en una cuenta o retirado en efectivo (ver</span>
+<span class="sd">``apps.divisas.entrega.realizar_entrega``). "Pagada" queda afuera a</span>
+<span class="sd">propósito: todavía no se le entregó nada al cliente."""</span>
+
+
+<div class="viewcode-block" id="_parsear_fecha">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes._parsear_fecha">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_parsear_fecha</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convierte ``'YYYY-MM-DD'`` a ``date``, o ``None`` si falta o no es válido."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">valor</span><span class="p">,</span> <span class="s1">'%Y-%m-</span><span class="si">%d</span><span class="s1">'</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="_fila_operacion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes._fila_operacion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fila_operacion</span><span class="p">(</span><span class="n">operacion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Normaliza una compra o venta para el reporte."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'id'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+        <span class="s1">'tipo_modelo'</span><span class="p">:</span> <span class="s1">'operacion'</span><span class="p">,</span>
+        <span class="s1">'tipo_codigo'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">tipo</span><span class="p">,</span>
+        <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
+        <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">(),</span>
+        <span class="s1">'estado'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">get_estado_efectivo_display</span><span class="p">(),</span>
+        <span class="s1">'estado_codigo'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">,</span>
+        <span class="s1">'divisa'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">codigo_divisa</span><span class="p">,</span>
+        <span class="s1">'monto_origen'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">monto_origen</span><span class="p">,</span>
+        <span class="s1">'tasa'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">tasa_aplicada</span><span class="p">,</span>
+        <span class="s1">'decimales_tasa'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s1">'comision'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">comision</span><span class="p">,</span>
+        <span class="s1">'monto_final'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">monto_final</span><span class="p">,</span>
+        <span class="s1">'moneda_final'</span><span class="p">:</span> <span class="s1">'PYG'</span><span class="p">,</span>
+        <span class="s1">'monto_pyg'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">monto_final</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_fila_cambio">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes._fila_cambio">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fila_cambio</span><span class="p">(</span><span class="n">cambio</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Normaliza un cambio entre divisas para el reporte.</span>
+
+<span class="sd">    ``monto_pyg`` usa ``monto_equivalente_pyg`` (no ``monto_final``, que</span>
+<span class="sd">    está en la divisa de destino, no en PYG) para que los totales por</span>
+<span class="sd">    tipo de operación puedan sumar un cambio junto con una compra o venta</span>
+<span class="sd">    sin mezclar monedas distintas.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'id'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+        <span class="s1">'tipo_modelo'</span><span class="p">:</span> <span class="s1">'cambio'</span><span class="p">,</span>
+        <span class="s1">'tipo_codigo'</span><span class="p">:</span> <span class="n">TIPO_CAMBIO</span><span class="p">,</span>
+        <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
+        <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">TIPO_DISPLAY</span><span class="p">,</span>
+        <span class="s1">'estado'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">get_estado_efectivo_display</span><span class="p">(),</span>
+        <span class="s1">'estado_codigo'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">,</span>
+        <span class="s1">'divisa'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_origen</span><span class="si">}</span><span class="s1"> → </span><span class="si">{</span><span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+        <span class="s1">'monto_origen'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">monto_origen</span><span class="p">,</span>
+        <span class="s1">'tasa'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">tasa_cruzada</span><span class="p">,</span>
+        <span class="s1">'decimales_tasa'</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+        <span class="s1">'comision'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">comision</span><span class="p">,</span>
+        <span class="s1">'monto_final'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">monto_final</span><span class="p">,</span>
+        <span class="s1">'moneda_final'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="p">,</span>
+        <span class="s1">'monto_pyg'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">monto_equivalente_pyg</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_transacciones_cliente">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes._transacciones_cliente">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_transacciones_cliente</span><span class="p">(</span><span class="n">cliente</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Todas las compras, ventas y cambios del cliente, normalizados, del más reciente al más antiguo."""</span>
+    <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_fila_operacion</span><span class="p">(</span><span class="n">operacion</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">operacion</span> <span class="ow">in</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">cliente</span><span class="o">=</span><span class="n">cliente</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">filas</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">_fila_cambio</span><span class="p">(</span><span class="n">cambio</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">cambio</span> <span class="ow">in</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">cliente</span><span class="o">=</span><span class="n">cliente</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">fila</span><span class="p">:</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_validar_rango">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes._validar_rango">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validar_rango</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Valida un rango de fechas ya parseado (criterio 5). Devuelve el error, o ``None`` si es válido."""</span>
+    <span class="n">hoy</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localdate</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&gt;</span> <span class="n">fecha_hasta</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">'La fecha inicial no puede ser posterior a la fecha final.'</span>
+    <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&gt;</span> <span class="n">hoy</span> <span class="ow">or</span> <span class="n">fecha_hasta</span> <span class="o">&gt;</span> <span class="n">hoy</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">'No se puede consultar un rango con fechas futuras.'</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="calcular_totales">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes.calcular_totales">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calcular_totales</span><span class="p">(</span><span class="n">filas</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Calcula los totales por tipo de operación y por divisa, solo sobre transacciones completadas (criterio 2).</span>
+
+<span class="sd">    El monto por tipo usa el equivalente en PYG (``monto_pyg``): es la</span>
+<span class="sd">    única unidad común entre una compra/venta (liquidada en PYG) y un</span>
+<span class="sd">    cambio entre dos divisas que no son PYG. El monto por divisa, en</span>
+<span class="sd">    cambio, suma el monto operado en la moneda de origen de cada fila</span>
+<span class="sd">    (``monto_origen``), tal como ya se muestra en la columna "Monto" del</span>
+<span class="sd">    historial — por eso un cambio aparece agrupado bajo su par</span>
+<span class="sd">    "ORIGEN → DESTINO", igual que en la tabla.</span>
+<span class="sd">    """</span>
+    <span class="n">completadas</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span> <span class="k">if</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'estado_codigo'</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ESTADOS_COMPLETADOS</span><span class="p">]</span>
+
+    <span class="n">por_tipo</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">codigo</span><span class="p">,</span> <span class="n">etiqueta</span> <span class="ow">in</span> <span class="n">TIPO_CHOICES</span><span class="p">:</span>
+        <span class="n">subconjunto</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">completadas</span> <span class="k">if</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'tipo_codigo'</span><span class="p">]</span> <span class="o">==</span> <span class="n">codigo</span><span class="p">]</span>
+        <span class="n">por_tipo</span><span class="p">[</span><span class="n">codigo</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'etiqueta'</span><span class="p">:</span> <span class="n">etiqueta</span><span class="p">,</span>
+            <span class="s1">'cantidad'</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">subconjunto</span><span class="p">),</span>
+            <span class="s1">'monto_pyg'</span><span class="p">:</span> <span class="nb">sum</span><span class="p">((</span><span class="n">fila</span><span class="p">[</span><span class="s1">'monto_pyg'</span><span class="p">]</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">subconjunto</span><span class="p">),</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)),</span>
+        <span class="p">}</span>
+
+    <span class="n">por_divisa</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">completadas</span><span class="p">:</span>
+        <span class="n">entrada</span> <span class="o">=</span> <span class="n">por_divisa</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">],</span> <span class="p">{</span><span class="s1">'cantidad'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'monto'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)})</span>
+        <span class="n">entrada</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">entrada</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'monto_origen'</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'cantidad_completadas'</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">completadas</span><span class="p">),</span>
+        <span class="s1">'por_tipo'</span><span class="p">:</span> <span class="n">por_tipo</span><span class="p">,</span>
+        <span class="s1">'por_divisa'</span><span class="p">:</span> <span class="n">por_divisa</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="generar_reporte">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_reporte">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generar_reporte</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="n">parametros</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Resuelve filtros, filas filtradas y totales para el reporte de ``cliente``.</span>
+
+<span class="sd">    ``parametros`` es cualquier mapeo tipo ``QueryDict`` con las claves</span>
+<span class="sd">    ``tipo``, ``estado``, ``fecha_desde`` y ``fecha_hasta`` (las mismas</span>
+<span class="sd">    que llegan por ``request.GET`` tanto en la pantalla como en las</span>
+<span class="sd">    descargas). El rango de fechas es obligatorio para generar el reporte</span>
+<span class="sd">    (criterio 1): si falta alguna de las dos fechas, se devuelve</span>
+<span class="sd">    ``reporte_generado=False`` sin error, para que la pantalla muestre</span>
+<span class="sd">    solo el formulario vacío. Si las dos vienen pero el rango no es</span>
+<span class="sd">    válido, se devuelve el motivo en ``error_rango`` (criterio 5). El</span>
+<span class="sd">    tipo de operación y el estado son opcionales.</span>
+<span class="sd">    """</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'tipo'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">estado</span> <span class="o">=</span> <span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'estado'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">fecha_desde_str</span> <span class="o">=</span> <span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">fecha_hasta_str</span> <span class="o">=</span> <span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="n">filtros</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'tipo'</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span>
+        <span class="s1">'estado'</span><span class="p">:</span> <span class="n">estado</span><span class="p">,</span>
+        <span class="s1">'fecha_desde'</span><span class="p">:</span> <span class="n">fecha_desde_str</span><span class="p">,</span>
+        <span class="s1">'fecha_hasta'</span><span class="p">:</span> <span class="n">fecha_hasta_str</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">resultado</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'reporte_generado'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">'error_rango'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">'filas'</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s1">'totales'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">'filtros'</span><span class="p">:</span> <span class="n">filtros</span><span class="p">,</span>
+        <span class="s1">'generado_en'</span><span class="p">:</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">fecha_desde_str</span> <span class="ow">and</span> <span class="n">fecha_hasta_str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">resultado</span>
+
+    <span class="n">fecha_desde</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">fecha_desde_str</span><span class="p">)</span>
+    <span class="n">fecha_hasta</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">fecha_hasta_str</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fecha_desde</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">fecha_hasta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Ingresá un rango de fechas válido.'</span>
+        <span class="k">return</span> <span class="n">resultado</span>
+
+    <span class="n">error_rango</span> <span class="o">=</span> <span class="n">_validar_rango</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">error_rango</span><span class="p">:</span>
+        <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]</span> <span class="o">=</span> <span class="n">error_rango</span>
+        <span class="k">return</span> <span class="n">resultado</span>
+
+    <span class="n">filas</span> <span class="o">=</span> <span class="n">_transacciones_cliente</span><span class="p">(</span><span class="n">cliente</span><span class="p">)</span>
+    <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span>
+        <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&lt;=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">fecha_hasta</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">tipo</span><span class="p">:</span>
+        <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span> <span class="k">if</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'tipo_codigo'</span><span class="p">]</span> <span class="o">==</span> <span class="n">tipo</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">estado</span><span class="p">:</span>
+        <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span> <span class="k">if</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'estado_codigo'</span><span class="p">]</span> <span class="o">==</span> <span class="n">estado</span><span class="p">]</span>
+
+    <span class="n">resultado</span><span class="p">[</span><span class="s1">'reporte_generado'</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">resultado</span><span class="p">[</span><span class="s1">'filas'</span><span class="p">]</span> <span class="o">=</span> <span class="n">filas</span>
+    <span class="n">resultado</span><span class="p">[</span><span class="s1">'totales'</span><span class="p">]</span> <span class="o">=</span> <span class="n">calcular_totales</span><span class="p">(</span><span class="n">filas</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resultado</span></div>
+
+
+
+<div class="viewcode-block" id="_formatear_fecha">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes._formatear_fecha">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_formatear_fecha</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``'YYYY-MM-DD'`` a ``'DD/MM/YYYY'``, tal como se ingresó en el filtro."""</span>
+    <span class="n">fecha</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fecha</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'</span><span class="si">%d</span><span class="s1">/%m/%Y'</span><span class="p">)</span> <span class="k">if</span> <span class="n">fecha</span> <span class="k">else</span> <span class="n">valor</span></div>
+
+
+
+<div class="viewcode-block" id="_descripcion_filtros">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes._descripcion_filtros">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_descripcion_filtros</span><span class="p">(</span><span class="n">filtros</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Texto legible de los filtros aplicados, para dejarlos documentados en el archivo descargado (criterio 3)."""</span>
+    <span class="n">partes</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"Del </span><span class="si">{</span><span class="n">_formatear_fecha</span><span class="p">(</span><span class="n">filtros</span><span class="p">[</span><span class="s1">'fecha_desde'</span><span class="p">])</span><span class="si">}</span><span class="s2"> al </span><span class="si">{</span><span class="n">_formatear_fecha</span><span class="p">(</span><span class="n">filtros</span><span class="p">[</span><span class="s1">'fecha_hasta'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">filtros</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">]:</span>
+        <span class="n">partes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Tipo: </span><span class="si">{</span><span class="nb">dict</span><span class="p">(</span><span class="n">TIPO_CHOICES</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">filtros</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">],</span><span class="w"> </span><span class="n">filtros</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">filtros</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">]:</span>
+        <span class="n">partes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Estado: </span><span class="si">{</span><span class="nb">dict</span><span class="p">(</span><span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_CHOICES</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">filtros</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">],</span><span class="w"> </span><span class="n">filtros</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s1">' · '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">partes</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_nombre_cliente">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes._nombre_cliente">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_nombre_cliente</span><span class="p">(</span><span class="n">cliente</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Nombre o razón social con el identificador, para el encabezado del archivo descargado."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cliente</span><span class="o">.</span><span class="n">nombre_completo</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">cliente</span><span class="o">.</span><span class="n">identificador</span><span class="si">}</span><span class="s1">)'</span></div>
+
+
+
+<div class="viewcode-block" id="generar_pdf">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_pdf">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generar_pdf</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="n">filas</span><span class="p">,</span> <span class="n">totales</span><span class="p">,</span> <span class="n">filtros</span><span class="p">,</span> <span class="n">generado_en</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Arma el PDF del reporte: filtros aplicados, fecha de generación, listado y totales (criterio 3)."""</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">documento</span> <span class="o">=</span> <span class="n">SimpleDocTemplate</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="n">A4</span><span class="p">,</span> <span class="n">topMargin</span><span class="o">=</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">,</span> <span class="n">bottomMargin</span><span class="o">=</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">)</span>
+    <span class="n">estilos</span> <span class="o">=</span> <span class="n">getSampleStyleSheet</span><span class="p">()</span>
+
+    <span class="n">elementos</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">Paragraph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Reporte de transacciones — </span><span class="si">{</span><span class="n">_nombre_cliente</span><span class="p">(</span><span class="n">cliente</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Title'</span><span class="p">]),</span>
+        <span class="n">Paragraph</span><span class="p">(</span><span class="n">_descripcion_filtros</span><span class="p">(</span><span class="n">filtros</span><span class="p">),</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Normal'</span><span class="p">]),</span>
+        <span class="n">Paragraph</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Generado el </span><span class="si">{</span><span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">generado_en</span><span class="p">)</span><span class="si">:</span><span class="s1">%d/%m/%Y %H:%M</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Normal'</span><span class="p">]),</span>
+        <span class="n">Spacer</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">encabezados</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'Fecha'</span><span class="p">,</span> <span class="s1">'Tipo'</span><span class="p">,</span> <span class="s1">'Estado'</span><span class="p">,</span> <span class="s1">'Divisa'</span><span class="p">,</span> <span class="s1">'Monto'</span><span class="p">,</span> <span class="s1">'Comisión'</span><span class="p">,</span> <span class="s1">'Importe final'</span><span class="p">]</span>
+    <span class="n">filas_tabla</span> <span class="o">=</span> <span class="p">[</span><span class="n">encabezados</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">:</span>
+        <span class="n">filas_tabla</span><span class="o">.</span><span class="n">append</span><span class="p">([</span>
+            <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">])</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'</span><span class="si">%d</span><span class="s1">/%m/%Y %H:%M'</span><span class="p">),</span>
+            <span class="n">fila</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">],</span>
+            <span class="n">fila</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">],</span>
+            <span class="n">fila</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">],</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fila</span><span class="p">[</span><span class="s1">'monto_origen'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fila</span><span class="p">[</span><span class="s1">'comision'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">fila</span><span class="p">[</span><span class="s1">'moneda_final'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fila</span><span class="p">[</span><span class="s1">'monto_final'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">fila</span><span class="p">[</span><span class="s1">'moneda_final'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">])</span>
+    <span class="n">tabla</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">filas_tabla</span><span class="p">,</span> <span class="n">repeatRows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">tabla</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">TableStyle</span><span class="p">([</span>
+        <span class="p">(</span><span class="s1">'BACKGROUND'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">colors</span><span class="o">.</span><span class="n">HexColor</span><span class="p">(</span><span class="s1">'#2a78d6'</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s1">'TEXTCOLOR'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">colors</span><span class="o">.</span><span class="n">white</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'FONTSIZE'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">8</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'GRID'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">colors</span><span class="o">.</span><span class="n">grey</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'ROWBACKGROUNDS'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">[</span><span class="n">colors</span><span class="o">.</span><span class="n">white</span><span class="p">,</span> <span class="n">colors</span><span class="o">.</span><span class="n">HexColor</span><span class="p">(</span><span class="s1">'#f2f2f2'</span><span class="p">)]),</span>
+    <span class="p">]))</span>
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tabla</span><span class="p">)</span>
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Spacer</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">))</span>
+
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Paragraph</span><span class="p">(</span><span class="s1">'Totales por tipo de operación (transacciones completadas)'</span><span class="p">,</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Heading3'</span><span class="p">]))</span>
+    <span class="n">totales_tipo</span> <span class="o">=</span> <span class="p">[[</span><span class="s1">'Tipo'</span><span class="p">,</span> <span class="s1">'Cantidad'</span><span class="p">,</span> <span class="s1">'Monto (PYG)'</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">datos</span> <span class="ow">in</span> <span class="n">totales</span><span class="p">[</span><span class="s1">'por_tipo'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">totales_tipo</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">datos</span><span class="p">[</span><span class="s1">'etiqueta'</span><span class="p">],</span> <span class="nb">str</span><span class="p">(</span><span class="n">datos</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">]),</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">datos</span><span class="p">[</span><span class="s1">'monto_pyg'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">])</span>
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Table</span><span class="p">(</span><span class="n">totales_tipo</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">TableStyle</span><span class="p">([(</span><span class="s1">'GRID'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">colors</span><span class="o">.</span><span class="n">grey</span><span class="p">)])))</span>
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Spacer</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">))</span>
+
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Paragraph</span><span class="p">(</span><span class="s1">'Totales por divisa (transacciones completadas)'</span><span class="p">,</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Heading3'</span><span class="p">]))</span>
+    <span class="n">totales_divisa</span> <span class="o">=</span> <span class="p">[[</span><span class="s1">'Divisa'</span><span class="p">,</span> <span class="s1">'Cantidad'</span><span class="p">,</span> <span class="s1">'Monto operado'</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">divisa</span><span class="p">,</span> <span class="n">datos</span> <span class="ow">in</span> <span class="n">totales</span><span class="p">[</span><span class="s1">'por_divisa'</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">totales_divisa</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">divisa</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">datos</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">]),</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">datos</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">totales_divisa</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">totales_divisa</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">'Sin transacciones completadas'</span><span class="p">,</span> <span class="s1">'-'</span><span class="p">,</span> <span class="s1">'-'</span><span class="p">])</span>
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Table</span><span class="p">(</span><span class="n">totales_divisa</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">TableStyle</span><span class="p">([(</span><span class="s1">'GRID'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">colors</span><span class="o">.</span><span class="n">grey</span><span class="p">)])))</span>
+
+    <span class="n">documento</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">elementos</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="generar_excel">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_excel">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generar_excel</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="n">filas</span><span class="p">,</span> <span class="n">totales</span><span class="p">,</span> <span class="n">filtros</span><span class="p">,</span> <span class="n">generado_en</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Arma el Excel del reporte con los mismos datos, filtros y fecha de generación que el PDF (criterio 3)."""</span>
+    <span class="n">libro</span> <span class="o">=</span> <span class="n">Workbook</span><span class="p">()</span>
+    <span class="n">hoja</span> <span class="o">=</span> <span class="n">libro</span><span class="o">.</span><span class="n">active</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s1">'Transacciones'</span>
+
+    <span class="n">negrita</span> <span class="o">=</span> <span class="n">Font</span><span class="p">(</span><span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="sa">f</span><span class="s1">'Reporte de transacciones — </span><span class="si">{</span><span class="n">_nombre_cliente</span><span class="p">(</span><span class="n">cliente</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
+    <span class="n">hoja</span><span class="p">[</span><span class="s1">'A1'</span><span class="p">]</span><span class="o">.</span><span class="n">font</span> <span class="o">=</span> <span class="n">Font</span><span class="p">(</span><span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">_descripcion_filtros</span><span class="p">(</span><span class="n">filtros</span><span class="p">)])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="sa">f</span><span class="s1">'Generado el </span><span class="si">{</span><span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">generado_en</span><span class="p">)</span><span class="si">:</span><span class="s1">%d/%m/%Y %H:%M</span><span class="si">}</span><span class="s1">'</span><span class="p">])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+
+    <span class="n">encabezados</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'Fecha'</span><span class="p">,</span> <span class="s1">'Tipo'</span><span class="p">,</span> <span class="s1">'Estado'</span><span class="p">,</span> <span class="s1">'Divisa'</span><span class="p">,</span> <span class="s1">'Monto'</span><span class="p">,</span> <span class="s1">'Tasa aplicada'</span><span class="p">,</span> <span class="s1">'Comisión'</span><span class="p">,</span> <span class="s1">'Moneda'</span><span class="p">,</span> <span class="s1">'Importe final'</span><span class="p">]</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">encabezados</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">celda</span> <span class="ow">in</span> <span class="n">hoja</span><span class="p">[</span><span class="n">hoja</span><span class="o">.</span><span class="n">max_row</span><span class="p">]:</span>
+        <span class="n">celda</span><span class="o">.</span><span class="n">font</span> <span class="o">=</span> <span class="n">negrita</span>
+    <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">:</span>
+        <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span>
+            <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">])</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'</span><span class="si">%d</span><span class="s1">/%m/%Y %H:%M'</span><span class="p">),</span>
+            <span class="n">fila</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">],</span>
+            <span class="n">fila</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">],</span>
+            <span class="n">fila</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">],</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'monto_origen'</span><span class="p">]),</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'tasa'</span><span class="p">]),</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'comision'</span><span class="p">]),</span>
+            <span class="n">fila</span><span class="p">[</span><span class="s1">'moneda_final'</span><span class="p">],</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'monto_final'</span><span class="p">]),</span>
+        <span class="p">])</span>
+
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">'Totales por tipo de operación (transacciones completadas)'</span><span class="p">])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">'Tipo'</span><span class="p">,</span> <span class="s1">'Cantidad'</span><span class="p">,</span> <span class="s1">'Monto (PYG)'</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">datos</span> <span class="ow">in</span> <span class="n">totales</span><span class="p">[</span><span class="s1">'por_tipo'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">datos</span><span class="p">[</span><span class="s1">'etiqueta'</span><span class="p">],</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">],</span> <span class="nb">float</span><span class="p">(</span><span class="n">datos</span><span class="p">[</span><span class="s1">'monto_pyg'</span><span class="p">])])</span>
+
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">'Totales por divisa (transacciones completadas)'</span><span class="p">])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">'Divisa'</span><span class="p">,</span> <span class="s1">'Cantidad'</span><span class="p">,</span> <span class="s1">'Monto operado'</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">divisa</span><span class="p">,</span> <span class="n">datos</span> <span class="ow">in</span> <span class="n">totales</span><span class="p">[</span><span class="s1">'por_divisa'</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">divisa</span><span class="p">,</span> <span class="n">datos</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">],</span> <span class="nb">float</span><span class="p">(</span><span class="n">datos</span><span class="p">[</span><span class="s1">'monto'</span><span class="p">])])</span>
+
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">libro</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

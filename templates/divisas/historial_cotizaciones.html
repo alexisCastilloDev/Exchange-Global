@@ -1,8 +1,9 @@
 <!--
-Historial de cotizaciones registradas para una divisa.
+Historial y evolución de tasas de cambio de una divisa: gráfico de líneas y tabla de cambios.
 Hereda de: base.html.
-Bloques definidos: title, content.
-Contexto esperado: divisa y cotizaciones.
+Bloques definidos: title, content, extra_scripts.
+Contexto esperado: divisa, cotizaciones, periodo_actual, fecha_desde_actual, fecha_hasta_actual,
+error_rango, puede_ver_usuario, datos_grafico (JSON).
 -->
 {% extends 'base.html' %}
 
@@ -12,12 +13,54 @@ Contexto esperado: divisa y cotizaciones.
 <div class="ge-page-header">
     <div>
         <h1>Historial de tasas</h1>
-        <p>{{ divisa.codigo }} · {{ divisa.nombre }}. Se conserva cada actualización realizada.</p>
+        <p>{{ divisa.codigo }} · {{ divisa.nombre }}. Evolución de la tasa de compra y de venta.</p>
     </div>
     <a href="{% url 'divisas:tasas_vigentes' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i>Volver a tasas</a>
 </div>
 
-<div class="ge-card p-0">
+<div class="contenedor-filtro">
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+        <span style="font-weight:600; font-size:13.5px;">Período:</span>
+        <a href="?periodo=7" class="btn btn-sm {% if periodo_actual == '7' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Últimos 7 días</a>
+        <a href="?periodo=30" class="btn btn-sm {% if periodo_actual == '30' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Últimos 30 días</a>
+        <a href="?periodo=90" class="btn btn-sm {% if periodo_actual == '90' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Últimos 90 días</a>
+    </div>
+    <form method="GET" action="" class="d-flex align-items-end gap-3 flex-wrap mb-0">
+        <div>
+            <label for="fecha_desde" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Desde</label>
+            <input type="date" name="fecha_desde" id="fecha_desde" value="{{ fecha_desde_actual }}" class="form-control">
+        </div>
+        <div>
+            <label for="fecha_hasta" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Hasta</label>
+            <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ fecha_hasta_actual }}" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-funnel me-1"></i>Consultar rango
+        </button>
+        {% if periodo_actual == 'custom' %}
+            <a href="?" style="font-size: 13px; color: var(--ge-brick);">Limpiar rango</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if error_rango %}
+<div class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle me-1"></i>{{ error_rango }}
+</div>
+{% endif %}
+
+{% if cotizaciones %}
+<div class="ge-card">
+    <canvas id="graficoTasas" height="90" aria-label="Evolución de la tasa de compra y de venta de {{ divisa.codigo }}" role="img"></canvas>
+    <div id="graficoTasasSinJs" style="display:none;" class="text-center text-muted py-4">
+        No se pudo cargar el gráfico. Los mismos datos están disponibles en la tabla de abajo.
+    </div>
+</div>
+{% elif not error_rango %}
+<div class="ge-empty-state">No hay cotizaciones registradas para {{ divisa.codigo }} en el período elegido.</div>
+{% endif %}
+
+<div class="ge-card p-0 mt-4">
     <div class="table-responsive">
         <table class="table mb-0">
             <thead>
@@ -25,7 +68,7 @@ Contexto esperado: divisa y cotizaciones.
                     <th>Fecha y hora</th>
                     <th>Tasa de compra</th>
                     <th>Tasa de venta</th>
-                    <th>Actualizado por</th>
+                    {% if puede_ver_usuario %}<th>Actualizado por</th>{% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -34,13 +77,86 @@ Contexto esperado: divisa y cotizaciones.
                     <td>{{ cotizacion.fecha_actualizacion|date:"d/m/Y H:i" }}</td>
                     <td class="ge-num">{{ cotizacion.tasa_compra }}</td>
                     <td class="ge-num">{{ cotizacion.tasa_venta }}</td>
-                    <td>{{ cotizacion.usuario.get_full_name|default:cotizacion.usuario.username|default:"Sistema" }}</td>
+                    {% if puede_ver_usuario %}
+                        <td>{{ cotizacion.usuario.get_full_name|default:cotizacion.usuario.username|default:"Sistema" }}</td>
+                    {% endif %}
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="text-center py-4 text-muted">Aún no hay cambios registrados para esta divisa.</td></tr>
+                <tr><td colspan="{% if puede_ver_usuario %}4{% else %}3{% endif %}" class="text-center py-4 text-muted">No hay cotizaciones registradas para este período.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if cotizaciones %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        const canvas = document.getElementById('graficoTasas');
+        if (!canvas || typeof Chart === 'undefined') {
+            const aviso = document.getElementById('graficoTasasSinJs');
+            if (aviso) { aviso.style.display = 'block'; }
+            return;
+        }
+
+        const datos = {{ datos_grafico|safe }};
+        const formatoFechaCorta = new Intl.DateTimeFormat('es-PY', { day: '2-digit', month: '2-digit' });
+        const formatoFechaCompleta = new Intl.DateTimeFormat('es-PY', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+        });
+
+        new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: datos.map((punto) => formatoFechaCorta.format(new Date(punto.fecha))),
+                datasets: [
+                    {
+                        label: 'Tasa de compra',
+                        data: datos.map((punto) => Number(punto.compra)),
+                        borderColor: '#2a78d6',
+                        backgroundColor: '#2a78d6',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.15,
+                    },
+                    {
+                        label: 'Tasa de venta',
+                        data: datos.map((punto) => Number(punto.venta)),
+                        borderColor: '#eb6834',
+                        backgroundColor: '#eb6834',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        tension: 0.15,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: { beginAtZero: false },
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            // El eje X ya muestra la fecha corta; el tooltip
+                            // (criterio 2) agrega la fecha y hora completas.
+                            title: (items) => {
+                                const indice = items[0].dataIndex;
+                                return formatoFechaCompleta.format(new Date(datos[indice].fecha));
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    })();
+</script>
+{% endif %}
 {% endblock %}

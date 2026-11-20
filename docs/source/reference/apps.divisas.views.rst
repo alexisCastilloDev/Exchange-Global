@@ -25,6 +25,48 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.ConsultarEstadoSifenMiFacturaView
+   :members:
+   :show-inheritance:
+
+.. autofunction:: apps.divisas.views._cliente_propio
+
+.. autoclass:: apps.divisas.views.ReporteTransaccionesClienteView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DescargarReporteTransaccionesView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.MonitoreoMixin
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.MonitoreoTransaccionesView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DescargarMonitoreoView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ReporteGananciasMixin
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ReporteGananciasView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DescargarReporteGananciasView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DetalleMonitoreoTransaccionView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.DetalleTransaccionOperacionView
    :members:
    :show-inheritance:
@@ -50,6 +92,10 @@ apps.divisas.views module
    :show-inheritance:
 
 .. autoclass:: apps.divisas.views.MarcarNotificacionLeidaView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.AbrirNotificacionClienteView
    :members:
    :show-inheritance:
 
@@ -121,6 +167,14 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.EmitirNotaCreditoView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.DescargarDocumentoElectronicoView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.TableroGananciasView
    :members:
    :show-inheritance:

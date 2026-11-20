@@ -50,12 +50,14 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
@@ -64,6 +66,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -157,12 +162,40 @@
   <h1>Código fuente para apps.divisas.context_processors</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""</span>
 <span class="sd">Context processor que expone en todos los templates el indicador de</span>
-<span class="sd">notificaciones de cambio de tasas (HU GE-51), para que el usuario</span>
-<span class="sd">cliente vea en la barra superior cuántas notificaciones tiene sin leer</span>
-<span class="sd">mientras navega por cualquier pantalla del sistema.</span>
+<span class="sd">notificaciones no leídas, para que el usuario cliente vea en la barra</span>
+<span class="sd">superior cuántas tiene mientras navega por cualquier pantalla del sistema.</span>
+
+<span class="sd">Suma dos orígenes: las notificaciones de cambio de tasas (HU GE-51,</span>
+<span class="sd">``NotificacionTasa``) y las de transacciones y facturas del cliente activo</span>
+<span class="sd">(HU "Notificaciones sobre transacciones y facturas", ``NotificacionCliente``).</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotificacionTasa</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotificacionCliente</span><span class="p">,</span> <span class="n">NotificacionTasa</span>
+
+
+<div class="viewcode-block" id="notificaciones_cliente_activo">
+<a class="viewcode-back" href="../../../reference/apps.divisas.context_processors.html#apps.divisas.context_processors.notificaciones_cliente_activo">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">notificaciones_cliente_activo</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Notificaciones de transacciones y facturas del usuario para su cliente activo.</span>
+
+<span class="sd">    Filtra siempre por el usuario **y** por el cliente activo, así que una</span>
+<span class="sd">    notificación de otro cliente, aunque sea del mismo usuario, nunca</span>
+<span class="sd">    aparece ni se cuenta (criterio 5). Sin cliente activo (por ejemplo, un</span>
+<span class="sd">    usuario que todavía no eligió uno), no devuelve ninguna.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        request (HttpRequest): La request actual, con ``cliente_activo`` ya</span>
+<span class="sd">            resuelto por ``apps.clientes.middleware.ClienteActivoMiddleware``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        QuerySet: Las notificaciones de ``NotificacionCliente`` que le</span>
+<span class="sd">        corresponden al usuario en este momento.</span>
+<span class="sd">    """</span>
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">NotificacionCliente</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">NotificacionCliente</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="notificaciones_context">
@@ -170,28 +203,42 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">notificaciones_context</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Expone si el usuario ve notificaciones y cuántas tiene sin leer.</span>
 
-<span class="sd">    Las notificaciones de tasas están dirigidas a usuarios clientes, así</span>
-<span class="sd">    que el indicador solo se habilita para quienes tienen el rol</span>
-<span class="sd">    ``cliente`` en su sesión de Keycloak (el mismo criterio que protege</span>
-<span class="sd">    ``MisNotificacionesView``). La cantidad sale de una única consulta de</span>
-<span class="sd">    conteo sobre el índice ``(usuario, leida)``.</span>
+<span class="sd">    Las notificaciones están dirigidas a usuarios clientes, así que el</span>
+<span class="sd">    indicador solo se habilita para quienes tienen el rol ``cliente`` en su</span>
+<span class="sd">    sesión de Keycloak (el mismo criterio que protege</span>
+<span class="sd">    ``MisNotificacionesView``). El total suma las de tasas sin leer y las</span>
+<span class="sd">    de transacciones y facturas sin leer del cliente activo (criterio 4),</span>
+<span class="sd">    con una consulta de conteo para cada una sobre sus índices.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        request (HttpRequest): La request actual.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        dict: ``puede_ver_notificaciones`` (bool) y</span>
-<span class="sd">        ``notificaciones_no_leidas`` (int).</span>
+<span class="sd">        dict: ``puede_ver_notificaciones`` (bool), ``notificaciones_no_leidas``</span>
+<span class="sd">        (int, el total), ``notificaciones_tasa_no_leidas`` (int) y</span>
+<span class="sd">        ``notificaciones_operaciones_no_leidas`` (int).</span>
 <span class="sd">    """</span>
+    <span class="n">sin_notificaciones</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'puede_ver_notificaciones'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">'notificaciones_no_leidas'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">'notificaciones_tasa_no_leidas'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">'notificaciones_operaciones_no_leidas'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s1">'puede_ver_notificaciones'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">'notificaciones_no_leidas'</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">sin_notificaciones</span>
 
     <span class="n">roles</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
     <span class="k">if</span> <span class="s1">'cliente'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roles</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s1">'puede_ver_notificaciones'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">'notificaciones_no_leidas'</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">sin_notificaciones</span>
 
-    <span class="n">no_leidas</span> <span class="o">=</span> <span class="n">NotificacionTasa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">leida</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s1">'puede_ver_notificaciones'</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">'notificaciones_no_leidas'</span><span class="p">:</span> <span class="n">no_leidas</span><span class="p">}</span></div>
+    <span class="n">tasas</span> <span class="o">=</span> <span class="n">NotificacionTasa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">leida</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">operaciones</span> <span class="o">=</span> <span class="n">notificaciones_cliente_activo</span><span class="p">(</span><span class="n">request</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">leida</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'puede_ver_notificaciones'</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s1">'notificaciones_no_leidas'</span><span class="p">:</span> <span class="n">tasas</span> <span class="o">+</span> <span class="n">operaciones</span><span class="p">,</span>
+        <span class="s1">'notificaciones_tasa_no_leidas'</span><span class="p">:</span> <span class="n">tasas</span><span class="p">,</span>
+        <span class="s1">'notificaciones_operaciones_no_leidas'</span><span class="p">:</span> <span class="n">operaciones</span><span class="p">,</span>
+    <span class="p">}</span></div>
 
 </pre></div>
 

@@ -1,0 +1,197 @@
+<!--
+Tablero de control de ganancias: indicadores, evolución y distribución, solo para administración.
+Hereda de: base.html.
+Bloques definidos: title, content, extra_scripts.
+Contexto esperado: error_rango, periodo, fecha_desde, fecha_hasta, indicadores, variacion_ganancia,
+evolucion, distribucion, periodos_disponibles, tipos_disponibles, canales_disponibles,
+fecha_desde_actual, fecha_hasta_actual, evolucion_json.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Tablero de ganancias - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-graph-up-arrow"></i> Administración</span>
+        <h1>Tablero de control de ganancias</h1>
+        <p>Indicadores, evolución y distribución de la ganancia de Global Exchange.</p>
+    </div>
+</div>
+
+<div class="contenedor-filtro">
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+        <span style="font-weight:600; font-size:13.5px;">Período:</span>
+        {% for valor, etiqueta in periodos_disponibles.items %}
+            <a href="?periodo={{ valor }}" class="btn btn-sm {% if periodo == valor %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ etiqueta }}</a>
+        {% endfor %}
+    </div>
+    <form method="GET" action="" class="d-flex align-items-end gap-3 flex-wrap mb-0">
+        <div>
+            <label for="fecha_desde" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Desde</label>
+            <input type="date" name="fecha_desde" id="fecha_desde" value="{{ fecha_desde_actual }}" class="form-control">
+        </div>
+        <div>
+            <label for="fecha_hasta" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Hasta</label>
+            <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ fecha_hasta_actual }}" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-funnel me-1"></i>Consultar rango
+        </button>
+        {% if periodo == 'custom' %}
+            <a href="?" style="font-size: 13px; color: var(--ge-brick);">Limpiar rango</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if error_rango %}
+<div class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle me-1"></i>{{ error_rango }}
+</div>
+{% else %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="ge-card h-100">
+            <p class="text-muted mb-1" style="font-size: 13px;">Ganancia total (PYG)</p>
+            <p class="mb-0" style="font-size: 22px; font-weight:700;">{{ indicadores.ganancia_total|floatformat:2 }}</p>
+            {% if variacion_ganancia is None %}
+                <small class="text-muted">Sin datos del período anterior</small>
+            {% elif variacion_ganancia >= 0 %}
+                <small style="color: var(--ge-success, #006300);"><i class="bi bi-arrow-up-short"></i> {{ variacion_ganancia }}% vs. período anterior</small>
+            {% else %}
+                <small style="color: var(--ge-brick, #d03b3b);"><i class="bi bi-arrow-down-short"></i> {{ variacion_ganancia }}% vs. período anterior</small>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ge-card h-100">
+            <p class="text-muted mb-1" style="font-size: 13px;">Operaciones completadas</p>
+            <p class="mb-0" style="font-size: 22px; font-weight:700;">{{ indicadores.cantidad_operaciones }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ge-card h-100">
+            <p class="text-muted mb-1" style="font-size: 13px;">Monto total operado (PYG)</p>
+            <p class="mb-0" style="font-size: 22px; font-weight:700;">{{ indicadores.monto_total_operado|floatformat:2 }}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ge-card h-100">
+            <p class="text-muted mb-1" style="font-size: 13px;">Ganancia promedio por operación</p>
+            <p class="mb-0" style="font-size: 22px; font-weight:700;">{{ indicadores.ganancia_promedio|floatformat:2 }}</p>
+        </div>
+    </div>
+</div>
+
+{% if indicadores.cantidad_operaciones == 0 %}
+<div class="ge-empty-state">No hay operaciones completadas en el período elegido.</div>
+{% else %}
+
+<div class="ge-card mb-4">
+    <h6>Evolución de la ganancia ({% if evolucion.agrupacion == 'dia' %}por día{% elif evolucion.agrupacion == 'semana' %}por semana{% else %}por mes{% endif %})</h6>
+    <canvas id="graficoGanancias" height="90" aria-label="Evolución de la ganancia en el período" role="img"></canvas>
+    <div id="graficoGananciasSinJs" style="display:none;" class="text-center text-muted py-4">
+        No se pudo cargar el gráfico. Los mismos datos están disponibles en las tablas de abajo.
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="ge-card">
+            <h6>Por tipo de operación</h6>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Tipo</th><th>Cantidad</th><th>Ganancia (PYG)</th></tr></thead>
+                <tbody>
+                    {% for datos in distribucion.por_tipo.values %}
+                    <tr>
+                        <td>{{ datos.etiqueta }}</td>
+                        <td class="ge-num">{{ datos.cantidad }}</td>
+                        <td class="ge-num">{{ datos.ganancia_pyg|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ge-card">
+            <h6>Por canal</h6>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Canal</th><th>Cantidad</th><th>Ganancia (PYG)</th></tr></thead>
+                <tbody>
+                    {% for datos in distribucion.por_canal.values %}
+                    <tr>
+                        <td>{{ datos.etiqueta }}</td>
+                        <td class="ge-num">{{ datos.cantidad }}</td>
+                        <td class="ge-num">{{ datos.ganancia_pyg|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ge-card">
+            <h6>Por divisa</h6>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Divisa</th><th>Cantidad</th><th>Ganancia (PYG)</th></tr></thead>
+                <tbody>
+                    {% for divisa, datos in distribucion.por_divisa.items %}
+                    <tr>
+                        <td>{{ divisa }}</td>
+                        <td class="ge-num">{{ datos.cantidad }}</td>
+                        <td class="ge-num">{{ datos.ganancia_pyg|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if not error_rango and indicadores.cantidad_operaciones > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        const canvas = document.getElementById('graficoGanancias');
+        if (!canvas || typeof Chart === 'undefined') {
+            const aviso = document.getElementById('graficoGananciasSinJs');
+            if (aviso) { aviso.style.display = 'block'; }
+            return;
+        }
+
+        const datos = {{ evolucion_json|safe }};
+        const formatoFecha = new Intl.DateTimeFormat('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: datos.map((punto) => formatoFecha.format(new Date(punto.periodo))),
+                datasets: [
+                    {
+                        label: 'Ganancia (PYG)',
+                        data: datos.map((punto) => Number(punto.ganancia)),
+                        backgroundColor: '#2a78d6',
+                        borderRadius: 4,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                },
+                scales: {
+                    y: { beginAtZero: true },
+                },
+            },
+        });
+    })();
+</script>
+{% endif %}
+{% endblock %}

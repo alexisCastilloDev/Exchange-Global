@@ -90,10 +90,10 @@ def test_acceso_a_lista_usuarios_segun_sesion_y_rol(client, usuario_cliente, usu
 
 @pytest.mark.django_db
 @patch('apps.users.views.sincronizar_usuarios_desde_keycloak')
-def test_busqueda_filtra_por_nombre_apellido_o_email(mock_sync, client, usuario_con_permiso_usuarios, usuario_objetivo):
-    """Filtra el listado por datos personales o correo."""
+def test_busqueda_filtra_por_usuario_o_email(mock_sync, client, usuario_con_permiso_usuarios, usuario_objetivo):
+    """Filtra el listado por nombre de usuario o correo, nunca por nombre/apellido (no son un dato del ``User``)."""
     _login_con_roles(client, usuario_con_permiso_usuarios, roles=['usuarios'])
-    response = client.get(reverse('lista_usuarios'), {'q': 'Ana'})
+    response = client.get(reverse('lista_usuarios'), {'q': 'objetivo1'})
     assert response.status_code == 200
     assert usuario_objetivo in response.context['usuarios']
 

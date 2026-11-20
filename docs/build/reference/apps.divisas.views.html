@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -68,7 +69,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -285,7 +288,33 @@ error de Django.</p>
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">HistorialCotizacionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
-<p>Muestra cada cambio registrado para las tasas de una divisa.</p>
+<p>Muestra la evolución de las tasas de una divisa: gráfico de líneas y tabla de cambios.</p>
+<p>Implementa la HU «Historial y evolución de tasas de cambio». Accesible
+a los mismos roles que ya pueden ver las tasas vigentes (ver
+<code class="docutils literal notranslate"><span class="pre">apps.authentication.context_processors.puede_ver_tasas</span></code>: admin,
+analista cambiario o cliente) — antes de esta HU, solo administración y
+análisis podían entrar acá; un cliente no tenía forma de consultar la
+evolución de una tasa (criterio implícito de «como usuario»).</p>
+<p>El período se resuelve en <code class="docutils literal notranslate"><span class="pre">dispatch</span></code> (ver <code class="docutils literal notranslate"><span class="pre">_resolver_periodo</span></code>), no
+en <code class="docutils literal notranslate"><span class="pre">get_queryset</span></code>, porque tanto la tabla como el gráfico (armado en
+<code class="docutils literal notranslate"><span class="pre">get_context_data</span></code>) necesitan el mismo rango ya decidido, incluido el
+caso de un rango inválido (criterio 5): en vez de levantar un error, la
+vista sigue respondiendo 200 con el motivo explicado y sin resultados,
+para no perder el resto de la pantalla (divisa, filtros ya cargados).</p>
+<p>Quién actualizó cada cotización (<code class="docutils literal notranslate"><span class="pre">puede_ver_usuario</span></code> en el contexto)
+solo se calcula para mostrarlo a administración y análisis (criterio
+6): un cliente nunca lo ve, ni en la tabla ni en ningún dato que viaje
+a la plantilla.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.PERIODOS_VALIDOS">
+<span class="sig-name descname"><span class="pre">PERIODOS_VALIDOS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('7',</span> <span class="pre">'30',</span> <span class="pre">'90')</span></span><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.PERIODOS_VALIDOS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.PERIODO_POR_DEFECTO">
+<span class="sig-name descname"><span class="pre">PERIODO_POR_DEFECTO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'30'</span></span><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.PERIODO_POR_DEFECTO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.context_object_name">
 <span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cotizaciones'</span></span><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.context_object_name" title="Link to this definition"></a></dt>
@@ -294,19 +323,19 @@ error de Django.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.dispatch">
 <span class="sig-name descname"><span class="pre">dispatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView.dispatch"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.dispatch" title="Link to this definition"></a></dt>
-<dd><p>Resuelve la divisa antes de despachar la solicitud.</p>
+<dd><p>Resuelve la divisa (nunca PYG, ver <code class="docutils literal notranslate"><span class="pre">TasasVigentesListView</span></code>) y el período antes de despachar.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.get_context_data">
 <span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.get_context_data" title="Link to this definition"></a></dt>
-<dd><p>Agrega la divisa consultada al contexto de la plantilla.</p>
+<dd><p>Agrega la divisa, el período resuelto, el error de validación y los puntos del gráfico.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.get_queryset">
 <span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.get_queryset" title="Link to this definition"></a></dt>
-<dd><p>Devuelve las cotizaciones históricas de la divisa seleccionada.</p>
+<dd><p>Cotizaciones de la divisa dentro del rango ya resuelto, o ninguna si el rango era inválido.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -323,7 +352,7 @@ error de Django.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.HistorialCotizacionesView.test_func">
 <span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#HistorialCotizacionesView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.HistorialCotizacionesView.test_func" title="Link to this definition"></a></dt>
-<dd><p>Autoriza la consulta del historial a administración y análisis.</p>
+<dd><p>Autoriza la consulta del historial a los mismos roles que ya ven las tasas vigentes.</p>
 </dd></dl>
 
 </dd></dl>
@@ -436,9 +465,23 @@ ni eliminar transacciones (ver <code class="docutils literal notranslate"><span 
 <p>Lista las Facturas Electrónicas emitidas para las transacciones del cliente activo.</p>
 <p>Simétrica a <code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code>, pero para el documento
 electrónico de cada transacción (ver <code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView</span></code>
-para el equivalente de administración, con todos los clientes). Es de
-solo lectura: el cliente no puede reintentar ni consultar el estado
-SIFEN por su cuenta, esas son acciones de administrador.</p>
+para el equivalente de administración, con todos los clientes).</p>
+<p>Implementa la HU «Consulta de facturas electrónicas»: el listado es
+paginado (Criterio 1); cada fila muestra número, CDC, la transacción
+asociada, la fecha de emisión y el monto —de <code class="docutils literal notranslate"><span class="pre">documento.transaccion</span></code>,
+ya que el documento no duplica ese dato— junto con el estado
+(Criterio 2); admite filtrar por rango de fechas de emisión mediante
+<code class="docutils literal notranslate"><span class="pre">fecha_desde</span></code>/<code class="docutils literal notranslate"><span class="pre">fecha_hasta</span></code> en la URL, mismo patrón que
+<code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code> (Criterio 3); cada fila enlaza al
+detalle de su transacción, que ya incluye la sección «Factura
+electrónica» con el comprobante completo (Criterio 4); y sin ninguna
+factura emitida, la plantilla muestra un mensaje en vez de una tabla
+vacía o un error (Criterio 5).</p>
+<p>Además, cada factura con CDC ofrece un botón «Consultar SIFEN»
+(<code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenMiFacturaView</span></code>) para que el cliente actualice
+por su cuenta su estado ante SIFEN. Es la única acción que el cliente
+puede hacer desde acá: reintentar la emisión o emitir una nota de
+crédito siguen siendo acciones del administrador.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.context_object_name">
 <span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'documentos'</span></span><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.context_object_name" title="Link to this definition"></a></dt>
@@ -451,9 +494,19 @@ SIFEN por su cuenta, esas son acciones de administrador.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisFacturasElectronicasListView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega si el cliente tiene alguna factura sin filtrar y el estado de los filtros de fecha (Criterio 3).</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.get_queryset">
 <span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisFacturasElectronicasListView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.get_queryset" title="Link to this definition"></a></dt>
-<dd><p>Documentos de las transacciones (compra/venta o cambio) del cliente activo, el más reciente primero.</p>
+<dd><p>Documentos del cliente activo, filtrados por fecha de emisión y ordenados del más reciente al más antiguo.</p>
+<p>Un documento sin <code class="docutils literal notranslate"><span class="pre">emitida_en</span></code> (todavía no generado, o rechazado)
+nunca coincide con un filtro de fecha: no hay ninguna fecha de
+emisión real contra la que comparar, así que solo aparece en el
+listado sin filtrar (Criterio 1).</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -477,6 +530,333 @@ SIFEN por su cuenta, esas son acciones de administrador.</p>
 <span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisFacturasElectronicasListView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.test_func" title="Link to this definition"></a></dt>
 <dd><p>Permite consultar las facturas propias a los mismos roles que <code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code>.</p>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenMiFacturaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ConsultarEstadoSifenMiFacturaView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenMiFacturaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenMiFacturaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Permite al cliente consultar ante SIFEN el estado de una factura de su cliente activo.</p>
+<p>Es la versión para el cliente de <code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenDocumentoElectronicoView</span></code>
+y se usa desde «Mis facturas electrónicas». Como ninguna tarea periódica
+actualiza el estado de una factura, sin esta consulta una factura ya
+aprobada o rechazada seguiría figurando «esperando aprobación» hasta que
+un administrador la consultara. <code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code> es una simple
+lectura ante Factura Segura (nunca emite un documento), así que es
+seguro ofrecérsela al cliente. Si el estado cambia, el cliente recibe
+además la notificación correspondiente (ver <code class="docutils literal notranslate"><span class="pre">NotificacionCliente</span></code>).</p>
+<p>Solo acepta POST y solo sobre una factura del <strong>cliente activo</strong>: una
+factura de otro cliente responde 404, sin revelar si existe (mismo
+criterio que <code class="docutils literal notranslate"><span class="pre">DescargarDocumentoElectronicoView</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenMiFacturaView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['post']</span></span><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenMiFacturaView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenMiFacturaView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.post" title="Link to this definition"></a></dt>
+<dd><p>Consulta el estado ante SIFEN, informa el resultado y vuelve al listado.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – La request actual; <code class="docutils literal notranslate"><span class="pre">next</span></code> en el POST
+indica a qué página del listado volver (con sus filtros).</p></li>
+<li><p><strong>pk</strong> (<em>int</em>) – Identificador de la factura.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">next</span></code> si es una URL segura, o a
+«Mis facturas electrónicas».</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+<dt class="field-even">Muestra<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Http404</strong> – La factura no existe o no es del cliente activo.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenMiFacturaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenMiFacturaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Autoriza a los mismos roles que <code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.views._cliente_propio">
+<span class="sig-name descname"><span class="pre">_cliente_propio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente_pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#_cliente_propio"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views._cliente_propio" title="Link to this definition"></a></dt>
+<dd><p>Devuelve el <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> con <code class="docutils literal notranslate"><span class="pre">cliente_pk</span></code> si está asociado al usuario autenticado, o deniega el acceso.</p>
+<p>Usada por las vistas del reporte de transacciones para que un cliente
+nunca pueda generar ni descargar el reporte de otro, ni siquiera
+manipulando el <code class="docutils literal notranslate"><span class="pre">cliente_pk</span></code> en la URL (criterio 6 de la HU «Reporte
+de transacciones del cliente», GE-39) — a diferencia de
+<code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code>/<code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView</span></code>,
+que solo exponen el <code class="docutils literal notranslate"><span class="pre">cliente_activo</span></code> de la sesión (ya acotado a los
+propios por <code class="docutils literal notranslate"><span class="pre">ClienteActivoMiddleware</span></code>), el reporte recibe el cliente
+explícitamente en la URL para permitir elegirlo cuando el usuario
+tiene más de uno asociado, así que esta vista repite ese chequeo de
+pertenencia por su cuenta, igual que
+<code class="docutils literal notranslate"><span class="pre">DescargarDocumentoElectronicoView._puede_ver</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Muestra<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Http404</strong> – No existe ningún <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> con ese <code class="docutils literal notranslate"><span class="pre">pk</span></code>.</p></li>
+<li><p><strong>PermissionDenied</strong> – Existe, pero no está asociado al usuario autenticado.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteTransaccionesClienteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ReporteTransaccionesClienteView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteTransaccionesClienteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteTransaccionesClienteView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Genera, con filtros, el reporte de transacciones de un cliente propio y sus totales.</p>
+<p>Implementa la HU «Reporte de transacciones del cliente» (GE-39): a
+partir de un rango de fechas obligatorio y, opcionalmente, el tipo de
+operación (compra/venta/cambio) y el estado, muestra el listado de
+transacciones que los cumplen junto con los totales por tipo y por
+divisa, calculados solo sobre las completadas (criterios 1 y 2; ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.reportes.generar_reporte</span></code>). Sin las dos fechas, solo
+se ve el formulario vacío: no es un error, todavía no se pidió nada.
+Un rango inválido se informa como error de validación sin listar nada
+(criterio 5); sin resultados, se avisa que no hay datos y no se
+ofrece ninguna descarga (criterio 4; ver la plantilla). Desde esta
+misma pantalla se descarga el reporte en PDF o en Excel con los
+mismos filtros aplicados (criterio 3, ver
+<code class="docutils literal notranslate"><span class="pre">DescargarReporteTransaccionesView</span></code>). Solo accede al cliente propio
+(criterio 6; ver <code class="docutils literal notranslate"><span class="pre">_cliente_propio</span></code>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteTransaccionesClienteView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente_pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteTransaccionesClienteView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteTransaccionesClienteView.get" title="Link to this definition"></a></dt>
+<dd><p>Resuelve el cliente propio y arma el reporte con los filtros de la URL.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteTransaccionesClienteView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/reporte_transacciones.html'</span></span><a class="headerlink" href="#apps.divisas.views.ReporteTransaccionesClienteView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteTransaccionesClienteView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteTransaccionesClienteView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteTransaccionesClienteView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Autoriza a los mismos roles que <code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteTransaccionesView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DescargarReporteTransaccionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarReporteTransaccionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarReporteTransaccionesView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Descarga, en PDF o en Excel, el mismo reporte que ya se ve en pantalla (criterio 3).</p>
+<p>Rearma el reporte con los mismos filtros de la URL (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.reportes.generar_reporte</span></code>) en vez de recibir los datos
+ya calculados, para no poder quedar desincronizada de
+<code class="docutils literal notranslate"><span class="pre">ReporteTransaccionesClienteView</span></code> ni confiar en nada que haya
+viajado por la URL salvo los filtros. No ofrece ningún archivo sin
+datos (criterio 4) ni para un rango inválido (criterio 5): en ambos
+casos vuelve a la pantalla del reporte con el motivo, en vez de
+descargar un archivo vacío o roto.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteTransaccionesView.FORMATOS">
+<span class="sig-name descname"><span class="pre">FORMATOS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'excel':</span> <span class="pre">(&lt;function</span> <span class="pre">generar_excel&gt;,</span> <span class="pre">'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',</span> <span class="pre">'xlsx'),</span> <span class="pre">'pdf':</span> <span class="pre">(&lt;function</span> <span class="pre">generar_pdf&gt;,</span> <span class="pre">'application/pdf',</span> <span class="pre">'pdf')}</span></span><a class="headerlink" href="#apps.divisas.views.DescargarReporteTransaccionesView.FORMATOS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteTransaccionesView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cliente_pk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formato</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarReporteTransaccionesView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarReporteTransaccionesView.get" title="Link to this definition"></a></dt>
+<dd><p>Valida el formato, los filtros y los datos antes de generar el archivo.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteTransaccionesView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarReporteTransaccionesView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarReporteTransaccionesView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Autoriza a los mismos roles que <code class="docutils literal notranslate"><span class="pre">ReporteTransaccionesClienteView</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.MonitoreoMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MonitoreoMixin</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#MonitoreoMixin"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MonitoreoMixin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code></p>
+<p>Control de acceso del monitoreo: solo administración y análisis cambiario (criterio 6).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MonitoreoMixin.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MonitoreoMixin.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MonitoreoMixin.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el rol “admin” o “analista_cambiario” esté en la sesión.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.MonitoreoTransaccionesView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MonitoreoTransaccionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#MonitoreoTransaccionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MonitoreoTransaccionesView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.MonitoreoMixin" title="apps.divisas.views.MonitoreoMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonitoreoMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Monitoreo, de solo consulta, de todas las transacciones del sistema.</p>
+<p>Implementa la HU «Monitoreo de transacciones y reportes» (epic
+GE-14). Muestra un listado paginado (<code class="docutils literal notranslate"><span class="pre">paginate_by</span></code>) de las
+transacciones de todos los clientes y de todos los canales (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.monitoreo</span></code>), filtrable por rango de fechas, cliente,
+tipo, divisa, estado, canal y «requiere atención» (entrega
+pendiente, entrega incierta o pago fuera de plazo), que se destacan
+en la tabla. Es de solo consulta: no define <code class="docutils literal notranslate"><span class="pre">post</span></code> y no ofrece
+ningún control que cambie el estado de una transacción (criterio 7).
+Desde acá se descarga el mismo listado filtrado en PDF o en Excel
+(<code class="docutils literal notranslate"><span class="pre">DescargarMonitoreoView</span></code>). Solo acceden administradores y
+analistas cambiarios (criterio 6, ver <code class="docutils literal notranslate"><span class="pre">MonitoreoMixin</span></code>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MonitoreoTransaccionesView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MonitoreoTransaccionesView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MonitoreoTransaccionesView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Arma el listado paginado, los totales y los datos del formulario de filtros.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MonitoreoTransaccionesView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['get',</span> <span class="pre">'head',</span> <span class="pre">'options']</span></span><a class="headerlink" href="#apps.divisas.views.MonitoreoTransaccionesView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MonitoreoTransaccionesView.paginate_by">
+<span class="sig-name descname"><span class="pre">paginate_by</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span><a class="headerlink" href="#apps.divisas.views.MonitoreoTransaccionesView.paginate_by" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.MonitoreoTransaccionesView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/monitoreo_transacciones.html'</span></span><a class="headerlink" href="#apps.divisas.views.MonitoreoTransaccionesView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarMonitoreoView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DescargarMonitoreoView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarMonitoreoView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarMonitoreoView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.MonitoreoMixin" title="apps.divisas.views.MonitoreoMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonitoreoMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Descarga, en PDF o en Excel, el mismo listado filtrado que se ve en pantalla (criterio 5).</p>
+<p>Rearma el listado con los mismos filtros de la URL (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.monitoreo.generar_monitoreo</span></code>) en vez de recibir datos
+ya calculados, para no poder quedar desincronizada de
+<code class="docutils literal notranslate"><span class="pre">MonitoreoTransaccionesView</span></code>. Con un rango inválido o sin
+transacciones para los filtros elegidos, vuelve a la pantalla con el
+motivo en vez de descargar un archivo vacío o roto.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarMonitoreoView.FORMATOS">
+<span class="sig-name descname"><span class="pre">FORMATOS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'excel':</span> <span class="pre">(&lt;function</span> <span class="pre">generar_excel&gt;,</span> <span class="pre">'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',</span> <span class="pre">'xlsx'),</span> <span class="pre">'pdf':</span> <span class="pre">(&lt;function</span> <span class="pre">generar_pdf&gt;,</span> <span class="pre">'application/pdf',</span> <span class="pre">'pdf')}</span></span><a class="headerlink" href="#apps.divisas.views.DescargarMonitoreoView.FORMATOS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarMonitoreoView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formato</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarMonitoreoView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarMonitoreoView.get" title="Link to this definition"></a></dt>
+<dd><p>Valida el formato y los datos antes de generar el archivo.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ReporteGananciasMixin</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteGananciasMixin"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteGananciasMixin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code></p>
+<p>Control de acceso del reporte de ganancias: solo administración y análisis cambiario (criterio 7).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasMixin.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteGananciasMixin.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteGananciasMixin.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el rol “admin” o “analista_cambiario” esté en la sesión.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ReporteGananciasView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteGananciasView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteGananciasView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.ReporteGananciasMixin" title="apps.divisas.views.ReporteGananciasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Genera el reporte de ganancias de un período, agrupado según el criterio elegido.</p>
+<p>Implementa la HU «Reporte de ganancias». A partir de un rango de
+fechas obligatorio y un criterio de agrupación (día, mes, divisa, tipo
+de operación, canal o caja y turno), muestra la ganancia y la cantidad
+de operaciones de cada grupo junto con el total general (criterios 1 y
+2). Todo el cálculo vive en
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.reporte_ganancias.generar_reporte_ganancias</span></code>, que
+reutiliza las filas y el total del tablero de ganancias para que ambos
+coincidan (criterio 4). Sin las dos fechas solo se ve el formulario;
+un rango inválido se informa sin calcular nada; sin operaciones se
+avisa que no hay datos, sin error y sin ofrecer descargas (criterio 6).
+Desde esta pantalla se descarga el mismo reporte en PDF o en Excel
+(criterio 5, ver <code class="docutils literal notranslate"><span class="pre">DescargarReporteGananciasView</span></code>). Solo acceden
+administradores y analistas cambiarios (criterio 7, ver
+<code class="docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteGananciasView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteGananciasView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Arma el reporte con los filtros de la URL y las opciones del formulario.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['get',</span> <span class="pre">'head',</span> <span class="pre">'options']</span></span><a class="headerlink" href="#apps.divisas.views.ReporteGananciasView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/reporte_ganancias.html'</span></span><a class="headerlink" href="#apps.divisas.views.ReporteGananciasView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteGananciasView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DescargarReporteGananciasView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarReporteGananciasView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarReporteGananciasView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.ReporteGananciasMixin" title="apps.divisas.views.ReporteGananciasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Descarga, en PDF o en Excel, el mismo reporte de ganancias que se ve en pantalla (criterio 5).</p>
+<p>Rearma el reporte con los mismos filtros de la URL (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.reporte_ganancias.generar_reporte_ganancias</span></code>) en vez
+de recibir datos ya calculados, para no poder quedar desincronizada de
+<code class="docutils literal notranslate"><span class="pre">ReporteGananciasView</span></code>. Sin rango de fechas, con un rango inválido o
+sin operaciones en el período, vuelve a la pantalla con el motivo en
+vez de descargar un archivo vacío o roto.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteGananciasView.FORMATOS">
+<span class="sig-name descname"><span class="pre">FORMATOS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'excel':</span> <span class="pre">(&lt;function</span> <span class="pre">generar_excel&gt;,</span> <span class="pre">'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',</span> <span class="pre">'xlsx'),</span> <span class="pre">'pdf':</span> <span class="pre">(&lt;function</span> <span class="pre">generar_pdf&gt;,</span> <span class="pre">'application/pdf',</span> <span class="pre">'pdf')}</span></span><a class="headerlink" href="#apps.divisas.views.DescargarReporteGananciasView.FORMATOS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteGananciasView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formato</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarReporteGananciasView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarReporteGananciasView.get" title="Link to this definition"></a></dt>
+<dd><p>Valida el formato, los filtros y los datos antes de generar el archivo.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleMonitoreoTransaccionView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DetalleMonitoreoTransaccionView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleMonitoreoTransaccionView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleMonitoreoTransaccionView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.MonitoreoMixin" title="apps.divisas.views.MonitoreoMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonitoreoMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Detalle de solo lectura de una transacción: pago, medios de origen y destino y factura (criterio 4).</p>
+<p>No define <code class="docutils literal notranslate"><span class="pre">post</span></code> ni ofrece botones de reintento, confirmación o
+cancelación (criterio 7): a diferencia de <code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code>,
+que el cliente usa para reintentar su propia entrega, esta pantalla
+solo consulta. <code class="docutils literal notranslate"><span class="pre">tipo</span></code> es <code class="docutils literal notranslate"><span class="pre">'operacion'</span></code>, <code class="docutils literal notranslate"><span class="pre">'cambio'</span></code> o
+<code class="docutils literal notranslate"><span class="pre">'ventanilla'</span></code> (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.monitoreo.detalle_transaccion</span></code>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleMonitoreoTransaccionView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DetalleMonitoreoTransaccionView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DetalleMonitoreoTransaccionView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Resuelve la transacción o responde 404 si no existe.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleMonitoreoTransaccionView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['get',</span> <span class="pre">'head',</span> <span class="pre">'options']</span></span><a class="headerlink" href="#apps.divisas.views.DetalleMonitoreoTransaccionView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DetalleMonitoreoTransaccionView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/monitoreo_detalle.html'</span></span><a class="headerlink" href="#apps.divisas.views.DetalleMonitoreoTransaccionView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -666,21 +1046,35 @@ ni modificar notificaciones ajenas.</p>
 <dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MisNotificacionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisNotificacionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.NotificacionesClienteMixin" title="apps.divisas.views.NotificacionesClienteMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">NotificacionesClienteMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
-<p>Lista las notificaciones de cambio de tasa del usuario autenticado.</p>
-<p>Criterio de aceptación 4 de GE-51: las notificaciones se muestran
-ordenadas de la más reciente a la más antigua. Cada una muestra la
-divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;
-las no leídas ofrecen la acción de marcarlas como leídas (ver
-<code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code>).</p>
+<p>Lista las notificaciones del usuario autenticado: transacciones y facturas, y tasas de cambio.</p>
+<p>Criterio de aceptación 4 de GE-51: las notificaciones de tasas se
+muestran ordenadas de la más reciente a la más antigua. Cada una
+muestra la divisa, el tipo de tasa, la tasa anterior, la nueva y si ya
+fue leída; las no leídas ofrecen la acción de marcarlas como leídas
+(ver <code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code>).</p>
+<p>HU «Notificaciones sobre transacciones y facturas»: arriba, en su
+propia sección con paginación independiente (parámetro
+<code class="docutils literal notranslate"><span class="pre">pagina_operaciones</span></code>), se listan las notificaciones de transacciones
+y facturas, solo las del <strong>cliente activo</strong> (criterio 5, ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.context_processors.notificaciones_cliente_activo</span></code>).
+Cada una muestra el número de transacción o el CDC y el nuevo estado, y
+se abre con <code class="docutils literal notranslate"><span class="pre">AbrirNotificacionClienteView</span></code>, que la marca como leída y
+lleva al detalle correspondiente (criterio 3).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.context_object_name">
 <span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'notificaciones'</span></span><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.context_object_name" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisNotificacionesView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega la página de notificaciones de transacciones y facturas del cliente activo.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.get_queryset">
 <span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisNotificacionesView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.get_queryset" title="Link to this definition"></a></dt>
-<dd><p>Devuelve solo las notificaciones propias, de la más nueva a la más vieja.</p>
+<dd><p>Devuelve solo las notificaciones de tasas propias, de la más nueva a la más vieja.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -725,6 +1119,43 @@ revelar cuál de los dos casos es.</p>
 <dd class="field-even"><p>A la URL indicada en <code class="docutils literal notranslate"><span class="pre">next</span></code> si es segura
 (por ejemplo, para conservar la página del listado), o al
 listado de notificaciones en caso contrario.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.AbrirNotificacionClienteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AbrirNotificacionClienteView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#AbrirNotificacionClienteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.AbrirNotificacionClienteView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.NotificacionesClienteMixin" title="apps.divisas.views.NotificacionesClienteMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">NotificacionesClienteMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Abre una notificación de transacción o factura: la marca como leída y lleva a su detalle (criterio 3).</p>
+<p>Solo acepta POST, como <code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code>, porque modifica
+datos (protegido por CSRF). Responde 404 si la notificación no existe,
+es de otro usuario o es de un cliente que no es el activo, sin revelar
+cuál de los casos es (criterio 5). El detalle al que redirige vuelve a
+comprobar por su cuenta que la transacción sea del cliente activo.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.AbrirNotificacionClienteView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['post']</span></span><a class="headerlink" href="#apps.divisas.views.AbrirNotificacionClienteView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.AbrirNotificacionClienteView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#AbrirNotificacionClienteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.AbrirNotificacionClienteView.post" title="Link to this definition"></a></dt>
+<dd><p>Marca la notificación como leída y redirige al detalle de su transacción o factura.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – La request actual.</p></li>
+<li><p><strong>pk</strong> (<em>int</em>) – Identificador de la notificación.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">NotificacionCliente.url_detalle</span></code>.</p>
 </dd>
 <dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
 <dd class="field-odd"><p>HttpResponseRedirect</p>
@@ -1291,9 +1722,15 @@ sin tener que abrir cada transacción una por una.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DocumentosElectronicosListView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DocumentosElectronicosListView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DocumentosElectronicosListView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega el catálogo de motivos de emisión para el formulario inline de «Emitir nota de crédito».</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.DocumentosElectronicosListView.get_queryset">
 <span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DocumentosElectronicosListView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DocumentosElectronicosListView.get_queryset" title="Link to this definition"></a></dt>
-<dd><p>Trae de una sola vez el cliente de cada transacción facturada, para no repetir consultas.</p>
+<dd><p>Trae de una sola vez el cliente de cada transacción facturada y la factura de cada nota de crédito.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1343,6 +1780,26 @@ generado.</p>
 <dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView.post">
 <span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenDocumentoElectronicoView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenDocumentoElectronicoView.post" title="Link to this definition"></a></dt>
 <dd><p>Llama a <code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code> y refleja el resultado en un mensaje.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.EmitirNotaCreditoView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">EmitirNotaCreditoView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#EmitirNotaCreditoView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.EmitirNotaCreditoView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Emite, a pedido de un administrador, una nota de crédito que anula una factura aprobada.</p>
+<p>Implementa la HU «Nota de crédito»: <code class="docutils literal notranslate"><span class="pre">pk</span></code> es la factura a anular,
+<code class="docutils literal notranslate"><span class="pre">motivo_emision</span></code> (del catálogo SIFEN) llega por el <code class="docutils literal notranslate"><span class="pre">POST</span></code> del
+formulario inline de <code class="docutils literal notranslate"><span class="pre">documentos_electronicos.html</span></code>. Toda la
+validación (criterio 4) y el armado del documento (criterio 1)
+viven en <code class="docutils literal notranslate"><span class="pre">apps.divisas.factura_electronica.emitir_nota_credito</span></code>;
+esta vista solo la llama y refleja el resultado. Solo accede un
+administrador (criterio 8, ver <code class="docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.EmitirNotaCreditoView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#EmitirNotaCreditoView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.EmitirNotaCreditoView.post" title="Link to this definition"></a></dt>
+<dd><p>Llama a <code class="docutils literal notranslate"><span class="pre">emitir_nota_credito</span></code> y refleja el resultado en un mensaje.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1398,6 +1855,36 @@ lista de facturas con el motivo si no se pudo descargar.</p>
 </dd>
 </dl>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.TableroGananciasView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">TableroGananciasView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#TableroGananciasView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TableroGananciasView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.AdminDivisasMixin" title="apps.divisas.views.AdminDivisasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Tablero de control de ganancias: indicadores, evolución y distribución, solo para administración.</p>
+<p>Implementa la HU «Tablero de control de ganancias» (epic GE-14). Todo
+el cálculo vive en <code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias.generar_tablero</span></code> (ver su
+docstring de módulo para la definición exacta de «ganancia», «tipo de
+operación» y «completada»); esta vista solo resuelve los parámetros de
+la URL y arma el contexto, incluido el JSON que consume el gráfico de
+evolución (criterio 3) con Chart.js, mismo patrón que
+<code class="docutils literal notranslate"><span class="pre">HistorialCotizacionesView</span></code>. Sin operaciones completadas en el
+período, los indicadores quedan en cero y la plantilla muestra un
+aviso en vez de un gráfico vacío o un error (criterio 7). Un rango de
+fechas inválido tampoco es un error 500: la plantilla explica el
+motivo y no calcula nada (criterio implícito de validación). Solo
+accede un administrador (criterio 8, ver <code class="docutils literal notranslate"><span class="pre">AdminDivisasMixin</span></code>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.TableroGananciasView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#TableroGananciasView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.TableroGananciasView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Arma el tablero con los filtros de la URL y lo serializa para la plantilla.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.TableroGananciasView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/tablero_ganancias.html'</span></span><a class="headerlink" href="#apps.divisas.views.TableroGananciasView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
