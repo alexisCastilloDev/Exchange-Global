@@ -21,7 +21,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Índice" href="../genindex.html" />
     <link rel="search" title="Búsqueda" href="../search.html" />
-    <link rel="next" title="apps.authentication package" href="apps.authentication.html" />
+    <link rel="next" title="apps.auditoria package" href="apps.auditoria.html" />
     <link rel="prev" title="Referencia API" href="modules.html" /> 
 </head>
 
@@ -72,6 +72,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -100,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
@@ -108,6 +110,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
@@ -168,6 +171,49 @@
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.html">apps.auditoria package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.apps.html">apps.auditoria.apps module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig"><code class="docutils literal notranslate"><span class="pre">AuditoriaConfig</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.forms.html">apps.auditoria.forms module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm"><code class="docutils literal notranslate"><span class="pre">FiltroRegistroActividadForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.UsuarioChoiceField"><code class="docutils literal notranslate"><span class="pre">UsuarioChoiceField</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.middleware.html">apps.auditoria.middleware module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.middleware.html#apps.auditoria.middleware.AuditoriaMiddleware"><code class="docutils literal notranslate"><span class="pre">AuditoriaMiddleware</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html">apps.auditoria.models module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad"><code class="docutils literal notranslate"><span class="pre">RegistroActividad</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividadQuerySet"><code class="docutils literal notranslate"><span class="pre">RegistroActividadQuerySet</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.registro.html">apps.auditoria.registro module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.establecer_request_actual"><code class="docutils literal notranslate"><span class="pre">establecer_request_actual()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.nombre_de_usuario"><code class="docutils literal notranslate"><span class="pre">nombre_de_usuario()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.registrar_actividad"><code class="docutils literal notranslate"><span class="pre">registrar_actividad()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.restablecer_request_actual"><code class="docutils literal notranslate"><span class="pre">restablecer_request_actual()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.usuario_responsable"><code class="docutils literal notranslate"><span class="pre">usuario_responsable()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html">apps.auditoria.signals module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.conectar_senales"><code class="docutils literal notranslate"><span class="pre">conectar_senales()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.urls.html">apps.auditoria.urls module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html">apps.auditoria.views module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.html#module-apps.auditoria">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="apps.authentication.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="apps.authentication.templatetags.html">apps.authentication.templatetags package</a><ul>
@@ -512,6 +558,7 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView"><code class="docutils literal notranslate"><span class="pre">HistorialTransaccionesView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MiHistorialTransaccionesView"><code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView"><code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView"><code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenMiFacturaView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views._cliente_propio"><code class="docutils literal notranslate"><span class="pre">_cliente_propio()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView"><code class="docutils literal notranslate"><span class="pre">ReporteTransaccionesClienteView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView"><code class="docutils literal notranslate"><span class="pre">DescargarReporteTransaccionesView</span></code></a></li>
@@ -603,7 +650,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
         <a href="modules.html" class="btn btn-neutral float-left" title="Referencia API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
-        <a href="apps.authentication.html" class="btn btn-neutral float-right" title="apps.authentication package" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="apps.auditoria.html" class="btn btn-neutral float-right" title="apps.auditoria package" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

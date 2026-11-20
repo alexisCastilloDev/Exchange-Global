@@ -91,6 +91,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                         </a>
                     </li>
                     <li>
+                        <a href="{% url 'auditoria:registro_actividades' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'registro_actividades' %}is-active{% endif %}">
+                            <i class="bi bi-shield-check"></i> Registro de actividades
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'documentacion' %}" class="ge-sidebar__link" target="_blank" rel="noopener">
                             <i class="bi bi-book"></i> Documentación
                         </a>
