@@ -1698,6 +1698,20 @@ class DocumentoElectronico(models.Model):
     ``OneToOneField``, así que la base de datos garantiza por sí sola que
     una transacción no puede tener más de un documento (criterio 5:
     nunca se duplica).
+
+    También implementa la HU "Nota de crédito" (``tipo_documento=
+    ContadorDocumentoElectronico.TIPO_NOTA_CREDITO``, ver
+    ``apps.divisas.factura_electronica.emitir_nota_credito``): una nota
+    de crédito **no** tiene ninguna transacción propia (las tres de
+    arriba quedan vacías) — en su lugar, referencia la factura que
+    anula (``factura_anulada``) y reutiliza, a través de ella, la misma
+    transacción, receptor e ítems (ver la property ``transaccion``,
+    que para una nota de crédito delega en
+    ``factura_anulada.transaccion``). Es un ``ForeignKey``, no un
+    ``OneToOneField``, porque una factura rechazada por SIFEN libera el
+    paso para una nueva (criterio 3): puede haber más de una fila
+    histórica, nunca más de una *vigente* a la vez (ver la
+    ``UniqueConstraint`` condicional abajo y ``tiene_nota_credito_vigente``).
     """
 
     ESTADO_GENERADO = 'GENERADO'
@@ -1706,6 +1720,7 @@ class DocumentoElectronico(models.Model):
     ESTADO_RECHAZADO = 'RECHAZADO'
     ESTADO_ERROR_SIFEN = 'ERROR_SIFEN'
     ESTADO_ERROR_GENERACION = 'ERROR_GENERACION'
+    ESTADO_ANULADA = 'ANULADA'
     ESTADO_CHOICES = [
         (ESTADO_GENERADO, 'Generado, esperando aprobación de SIFEN'),
         (ESTADO_APROBADO, 'Aprobado'),
@@ -1713,8 +1728,57 @@ class DocumentoElectronico(models.Model):
         (ESTADO_RECHAZADO, 'Rechazado por SIFEN'),
         (ESTADO_ERROR_SIFEN, 'Error de SIFEN al procesarlo'),
         (ESTADO_ERROR_GENERACION, 'No se pudo generar (Factura Segura no respondió, o lo rechazó)'),
+        (ESTADO_ANULADA, 'Anulada por nota de crédito'),
     ]
 
+    # Motivo de emisión de una nota de crédito (``iMotEmi`` del Manual
+    # Técnico SIFEN para Nota de Crédito/Débito Electrónica). Solo se
+    # completa en una nota de crédito (``tipo_documento=TIPO_NOTA_CREDITO``);
+    # vacío en una factura. Nota: tabla reconstruida de memoria a partir
+    # de la guía de Factura Segura, no verificada campo por campo contra
+    # el Manual Técnico completo (mismo criterio que ``iTipEmi``/``iTImp``/
+    # ``iIndPres`` en ``apps.divisas.factura_electronica._armar_resumido_de``)
+    # — revisar antes de la primera emisión real.
+    MOTIVO_DEVOLUCION_Y_AJUSTE = '1'
+    MOTIVO_DESCUENTO = '2'
+    MOTIVO_BONIFICACION = '3'
+    MOTIVO_CREDITO_INCOBRABLE = '4'
+    MOTIVO_RECUPERO_DE_COSTO = '5'
+    MOTIVO_RECUPERO_DE_GASTO = '6'
+    MOTIVO_AJUSTE_DE_PRECIO = '7'
+    MOTIVO_OTRO = '8'
+    MOTIVO_EMISION_CHOICES = [
+        (MOTIVO_DEVOLUCION_Y_AJUSTE, 'Devolución y ajuste de precios'),
+        (MOTIVO_DESCUENTO, 'Descuento'),
+        (MOTIVO_BONIFICACION, 'Bonificación'),
+        (MOTIVO_CREDITO_INCOBRABLE, 'Crédito incobrable'),
+        (MOTIVO_RECUPERO_DE_COSTO, 'Recupero de costo'),
+        (MOTIVO_RECUPERO_DE_GASTO, 'Recupero de gasto'),
+        (MOTIVO_AJUSTE_DE_PRECIO, 'Ajuste de precio'),
+        (MOTIVO_OTRO, 'Otro'),
+    ]
+
+    factura_anulada = models.ForeignKey(
+        'self',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='notas_credito',
+        verbose_name='Factura anulada',
+        help_text=(
+            'Solo en una nota de crédito: la factura que anula. Es un ForeignKey, no un '
+            'OneToOneField, porque una factura puede tener más de una nota de crédito a lo '
+            'largo del tiempo si SIFEN rechazó una anterior (criterio 3) — nunca más de una '
+            'vigente a la vez (ver "una_nota_de_credito_vigente_por_factura" abajo).'
+        ),
+    )
+    motivo_emision = models.CharField(
+        max_length=1,
+        choices=MOTIVO_EMISION_CHOICES,
+        blank=True,
+        verbose_name='Motivo de emisión',
+        help_text='Solo en una nota de crédito (criterio 1); vacío en una factura.',
+    )
     calculo_operacion = models.OneToOneField(
         CalculoOperacion,
         on_delete=models.PROTECT,
@@ -1793,24 +1857,49 @@ class DocumentoElectronico(models.Model):
     # error técnico.
     ESTADOS_PENDIENTES = (ESTADO_ERROR_GENERACION, ESTADO_RECHAZADO, ESTADO_ERROR_SIFEN)
 
-    # Únicos estados en los que la factura es un comprobante válido ante
+    # Únicos estados en los que el documento es un comprobante válido ante
     # SIFEN y, por lo tanto, se puede descargar (HU "Descarga de facturas
-    # electrónicas", GE-86).
-    ESTADOS_DESCARGABLES = (ESTADO_APROBADO, ESTADO_APROBADO_OBS)
+    # electrónicas", GE-86). "Anulada por nota de crédito" se mantiene
+    # descargable a propósito: la nota de crédito anula su efecto
+    # tributario, no su existencia como comprobante histórico — SIFEN
+    # tampoco la "borra" del todo del lado real.
+    ESTADOS_DESCARGABLES = (ESTADO_APROBADO, ESTADO_APROBADO_OBS, ESTADO_ANULADA)
 
     class Meta:
-        """Ordena por fecha de creación, define las etiquetas y exige exactamente una transacción asociada."""
+        """Ordena por fecha de creación, define las etiquetas y exige exactamente una transacción o factura asociada."""
         verbose_name = 'Documento electrónico'
         verbose_name_plural = 'Documentos electrónicos'
         ordering = ['-creado_en']
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    models.Q(calculo_operacion__isnull=False, calculo_triangulacion__isnull=True, operacion_ventanilla__isnull=True)
-                    | models.Q(calculo_operacion__isnull=True, calculo_triangulacion__isnull=False, operacion_ventanilla__isnull=True)
-                    | models.Q(calculo_operacion__isnull=True, calculo_triangulacion__isnull=True, operacion_ventanilla__isnull=False)
+                    models.Q(
+                        factura_anulada__isnull=True,
+                        calculo_operacion__isnull=False, calculo_triangulacion__isnull=True, operacion_ventanilla__isnull=True,
+                    )
+                    | models.Q(
+                        factura_anulada__isnull=True,
+                        calculo_operacion__isnull=True, calculo_triangulacion__isnull=False, operacion_ventanilla__isnull=True,
+                    )
+                    | models.Q(
+                        factura_anulada__isnull=True,
+                        calculo_operacion__isnull=True, calculo_triangulacion__isnull=True, operacion_ventanilla__isnull=False,
+                    )
+                    | models.Q(
+                        factura_anulada__isnull=False,
+                        calculo_operacion__isnull=True, calculo_triangulacion__isnull=True, operacion_ventanilla__isnull=True,
+                    )
                 ),
-                name='documento_electronico_exactamente_una_transaccion',
+                name='documento_electronico_exactamente_una_transaccion_o_factura',
+            ),
+            models.UniqueConstraint(
+                fields=['factura_anulada'],
+                # Literal 'RECHAZADO' (= ESTADO_RECHAZADO): dentro del cuerpo de
+                # ``Meta`` no se puede referenciar un atributo de la clase que la
+                # contiene todavía, porque esta Meta se evalúa como parte de su
+                # propia definición.
+                condition=~models.Q(estado='RECHAZADO'),
+                name='una_nota_de_credito_vigente_por_factura',
             ),
         ]
 
@@ -1819,16 +1908,23 @@ class DocumentoElectronico(models.Model):
         return f'{self.get_tipo_documento_display()} {self.numero_documento} ({self.get_estado_display()})'
 
     def clean(self):
-        """Valida que el documento pertenezca a exactamente una transacción."""
-        cantidad = sum(
+        """Valida que una factura tenga exactamente una transacción, y una nota de crédito, ninguna (y sí una factura)."""
+        cantidad_transaccion = sum(
             bool(valor) for valor in (self.calculo_operacion_id, self.calculo_triangulacion_id, self.operacion_ventanilla_id)
         )
-        if cantidad != 1:
+        if self.tipo_documento == ContadorDocumentoElectronico.TIPO_NOTA_CREDITO:
+            if cantidad_transaccion != 0 or not self.factura_anulada_id:
+                raise ValidationError(
+                    'Una nota de crédito debe referenciar la factura que anula, y no tener ninguna transacción propia.'
+                )
+        elif cantidad_transaccion != 1 or self.factura_anulada_id:
             raise ValidationError('Un documento electrónico debe pertenecer a exactamente una transacción.')
 
     @property
     def transaccion(self):
-        """Devuelve la compra/venta online, el cambio o la operación de ventanilla de este documento."""
+        """Devuelve la transacción de este documento: la propia, o —para una nota de crédito— la de su factura."""
+        if self.factura_anulada_id:
+            return self.factura_anulada.transaccion
         return self.calculo_operacion or self.calculo_triangulacion or self.operacion_ventanilla
 
     @property
@@ -1862,7 +1958,18 @@ class DocumentoElectronico(models.Model):
     @property
     def es_definitivo(self):
         """Indica si ya no hace falta volver a consultar su estado a SIFEN (llegó a un estado terminal)."""
-        return self.estado in (self.ESTADO_APROBADO, self.ESTADO_APROBADO_OBS, self.ESTADO_RECHAZADO)
+        return self.estado in (self.ESTADO_APROBADO, self.ESTADO_APROBADO_OBS, self.ESTADO_RECHAZADO, self.ESTADO_ANULADA)
+
+    @property
+    def tiene_nota_credito_vigente(self):
+        """Indica si esta factura ya tiene una nota de crédito pendiente o aprobada (criterio 4).
+
+        Una nota de crédito "Rechazada" por SIFEN no cuenta como
+        vigente: libera el paso para que un administrador emita una
+        nueva (criterio 3). Ver la ``UniqueConstraint`` homónima, que
+        impone esta misma regla a nivel de base de datos.
+        """
+        return self.notas_credito.exclude(estado=self.ESTADO_RECHAZADO).exists()
 
     @property
     def descargable(self):
@@ -1887,4 +1994,23 @@ class DocumentoElectronico(models.Model):
         return (
             'No podés descargar esta factura porque todavía está pendiente de aprobación por SIFEN. '
             'Vas a poder descargarla en cuanto sea aprobada.'
+        )
+
+    @property
+    def puede_emitir_nota_credito(self):
+        """Indica si esta factura está en condiciones de recibir una nueva nota de crédito (criterio 4).
+
+        Solo el booleano (sin el mensaje de motivo que sí da
+        ``apps.divisas.factura_electronica.puede_emitir_nota_credito``,
+        la función que valida de verdad antes de emitir): existe acá
+        para que una plantilla pueda decidir si mostrar el botón
+        "Emitir nota de crédito" sin importar ese módulo desde un
+        template (y sin arriesgar un import circular: ese módulo ya
+        importa de este, nunca al revés). Debe mantenerse en los
+        mismos términos que esa función.
+        """
+        return (
+            self.tipo_documento == ContadorDocumentoElectronico.TIPO_FACTURA
+            and self.estado in (self.ESTADO_APROBADO, self.ESTADO_APROBADO_OBS)
+            and not self.tiene_nota_credito_vigente
         )

@@ -131,6 +131,10 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.EmitirNotaCreditoView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.DescargarDocumentoElectronicoView
    :members:
    :show-inheritance:
