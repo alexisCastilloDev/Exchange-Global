@@ -84,6 +84,13 @@ from apps.divisas.monitoreo import (
     generar_monitoreo,
     generar_pdf as generar_pdf_monitoreo,
 )
+from apps.divisas.reporte_ganancias import (
+    AGRUPACIONES as AGRUPACIONES_REPORTE_GANANCIAS,
+    MENSAJE_SIN_DATOS as MENSAJE_SIN_DATOS_REPORTE_GANANCIAS,
+    generar_excel as generar_excel_reporte_ganancias,
+    generar_pdf as generar_pdf_reporte_ganancias,
+    generar_reporte_ganancias,
+)
 from apps.divisas.reportes import (
     TIPO_CHOICES,
     generar_excel,
@@ -1034,6 +1041,98 @@ class DescargarMonitoreoView(MonitoreoMixin, View):
         contenido = funcion(resultado['filas'], resultado['totales'], resultado['filtros'], resultado['generado_en'])
         respuesta = HttpResponse(contenido, content_type=content_type)
         respuesta['Content-Disposition'] = f'attachment; filename="monitoreo_transacciones.{extension}"'
+        return respuesta
+
+
+class ReporteGananciasMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Control de acceso del reporte de ganancias: solo administración y análisis cambiario (criterio 7)."""
+
+    def test_func(self):
+        """Comprueba que el rol 'admin' o 'analista_cambiario' esté en la sesión."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return bool({'admin', 'analista_cambiario'} & set(roles))
+
+
+class ReporteGananciasView(ReporteGananciasMixin, TemplateView):
+    """Genera el reporte de ganancias de un período, agrupado según el criterio elegido.
+
+    Implementa la HU "Reporte de ganancias". A partir de un rango de
+    fechas obligatorio y un criterio de agrupación (día, mes, divisa, tipo
+    de operación, canal o caja y turno), muestra la ganancia y la cantidad
+    de operaciones de cada grupo junto con el total general (criterios 1 y
+    2). Todo el cálculo vive en
+    ``apps.divisas.reporte_ganancias.generar_reporte_ganancias``, que
+    reutiliza las filas y el total del tablero de ganancias para que ambos
+    coincidan (criterio 4). Sin las dos fechas solo se ve el formulario;
+    un rango inválido se informa sin calcular nada; sin operaciones se
+    avisa que no hay datos, sin error y sin ofrecer descargas (criterio 6).
+    Desde esta pantalla se descarga el mismo reporte en PDF o en Excel
+    (criterio 5, ver ``DescargarReporteGananciasView``). Solo acceden
+    administradores y analistas cambiarios (criterio 7, ver
+    ``ReporteGananciasMixin``).
+    """
+
+    template_name = 'divisas/reporte_ganancias.html'
+    http_method_names = ['get', 'head', 'options']
+
+    def get_context_data(self, **kwargs):
+        """Arma el reporte con los filtros de la URL y las opciones del formulario."""
+        context = super().get_context_data(**kwargs)
+        context.update(generar_reporte_ganancias(self.request.GET))
+        context['agrupaciones_disponibles'] = AGRUPACIONES_REPORTE_GANANCIAS
+        context['mensaje_sin_datos'] = MENSAJE_SIN_DATOS_REPORTE_GANANCIAS
+        context['querystring'] = self.request.GET.urlencode()
+        return context
+
+
+class DescargarReporteGananciasView(ReporteGananciasMixin, View):
+    """Descarga, en PDF o en Excel, el mismo reporte de ganancias que se ve en pantalla (criterio 5).
+
+    Rearma el reporte con los mismos filtros de la URL (ver
+    ``apps.divisas.reporte_ganancias.generar_reporte_ganancias``) en vez
+    de recibir datos ya calculados, para no poder quedar desincronizada de
+    ``ReporteGananciasView``. Sin rango de fechas, con un rango inválido o
+    sin operaciones en el período, vuelve a la pantalla con el motivo en
+    vez de descargar un archivo vacío o roto.
+    """
+
+    FORMATOS = {
+        'pdf': (generar_pdf_reporte_ganancias, 'application/pdf', 'pdf'),
+        'excel': (
+            generar_excel_reporte_ganancias,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xlsx',
+        ),
+    }
+
+    def get(self, request, formato):
+        """Valida el formato, los filtros y los datos antes de generar el archivo."""
+        if formato not in self.FORMATOS:
+            raise Http404('Formato de descarga desconocido.')
+
+        resultado = generar_reporte_ganancias(request.GET)
+        destino = reverse('divisas:reporte_ganancias')
+        querystring = request.GET.urlencode()
+        if querystring:
+            destino = f'{destino}?{querystring}'
+
+        if resultado['error_rango']:
+            messages.error(request, resultado['error_rango'])
+            return redirect(destino)
+        if not resultado['reporte_generado']:
+            messages.error(request, 'Indicá un rango de fechas para generar el reporte.')
+            return redirect(destino)
+        if resultado['sin_datos']:
+            messages.info(request, MENSAJE_SIN_DATOS_REPORTE_GANANCIAS)
+            return redirect(destino)
+
+        funcion, content_type, extension = self.FORMATOS[formato]
+        respuesta = HttpResponse(funcion(resultado), content_type=content_type)
+        nombre = (
+            f"reporte_ganancias_{resultado['filtros']['fecha_desde']}_{resultado['filtros']['fecha_hasta']}"
+            f"_{resultado['filtros']['agrupacion']}.{extension}"
+        )
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
         return respuesta
 
 

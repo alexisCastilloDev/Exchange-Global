@@ -21,6 +21,8 @@ from .views import (
     ActualizarComisionView,
     ConfiguracionVigenciaUpdateView,
     TableroGananciasView,
+    ReporteGananciasView,
+    DescargarReporteGananciasView,
     CuentaPropiaListView,
     DesignarCuentaPropiaView,
     HistorialCuentaPropiaView,
@@ -154,6 +156,12 @@ urlpatterns = [
     path('comisiones/<str:segmento>/editar/', ActualizarComisionView.as_view(), name='actualizar_comision'),
     path('configuracion/vigencia/', ConfiguracionVigenciaUpdateView.as_view(), name='configuracion_vigencia'),
     path('administrar/tablero-ganancias/', TableroGananciasView.as_view(), name='tablero_ganancias'),
+    path('administrar/reporte-ganancias/', ReporteGananciasView.as_view(), name='reporte_ganancias'),
+    path(
+        'administrar/reporte-ganancias/descargar/<str:formato>/',
+        DescargarReporteGananciasView.as_view(),
+        name='descargar_reporte_ganancias',
+    ),
     path('administrar/cuentas-propias/', CuentaPropiaListView.as_view(), name='lista_cuentas_propias'),
     path(
         'administrar/cuentas-propias/<str:codigo>/historial/',

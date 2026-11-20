@@ -44,7 +44,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 28. [Sesión 31 — 18/11/2026 — Tablero de control de ganancias](#sesión-31--18112026--tablero-de-control-de-ganancias)
 29. [Sesión 32 — 18/11/2026 — Nota de crédito](#sesión-32--18112026--nota-de-crédito)
 30. [Sesión 33 — 20/11/2026 — Monitoreo de transacciones y reportes](#sesión-33--20112026--monitoreo-de-transacciones-y-reportes)
-31. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+31. [Sesión 34 — 20/11/2026 — Reporte de ganancias](#sesión-34--20112026--reporte-de-ganancias)
+32. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4725,6 +4726,101 @@ Suite completa: 682 tests (`pytest tests -n auto`) en verde; `manage.py check` l
 (`python -m sphinx -b html docs/source docs/build`) con `apps.divisas.monitoreo.rst` nuevo,
 `apps.divisas.views.rst` y `templates.rst` ampliados y sin advertencias nuevas (queda una preexistente de
 resaltado en `templates.rst`).
+
+## Sesión 34 — 20/11/2026 — Reporte de ganancias
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Reporte de ganancias (Epic "Gestión de Transacciones, Historial y Reportes", GE-14),
+rama `feature/GE-46`
+**Participantes:** Ruth
+
+### Pedido
+
+Antes de la HU, dos tareas de entorno:
+
+- **Sincronizar `develop` con el remoto.** Había un merge con `origin/develop` a medio terminar, con
+  conflictos en unos 15 archivos, y 13 commits locales que no estaban en el remoto. Ruth eligió descartar lo
+  local: se abortó el merge, se guardaron los 13 commits en la rama `backup/develop-local` y se hizo
+  `git reset --hard origin/develop`.
+- **Instalar `requirements.txt` en el `.venv`.** Se agregaron `openpyxl`, `reportlab`, `pillow` y
+  `pytest-xdist` (y sus dependencias `et-xmlfile` y `execnet`).
+
+Luego, implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada. La HU pide que un analista cambiario o un administrador genere un reporte de
+ganancias para un rango de fechas, agrupado por día, mes, divisa, tipo de operación, canal o caja y turno. El
+reporte muestra la ganancia y la cantidad de operaciones de cada grupo, con el total general. Además:
+
+- el desglose por caja muestra cajero, apertura, cierre, operaciones de ventanilla y ganancia;
+- una caja abierta aparece "en curso" y con ganancia parcial;
+- el total coincide con el del tablero para el mismo período;
+- se descarga en PDF y Excel con los filtros y la fecha de generación;
+- sin operaciones, se avisa que no hay datos, sin error;
+- otros roles no tienen acceso.
+
+### Qué ya existía
+
+- **El tablero de ganancias.** `apps.divisas.ganancias` ya normalizaba la ganancia de los tres orígenes a PYG
+  (`_todas_las_ganancias`): compra/venta online, cambio entre divisas reconvertido con la tasa de venta y
+  ventanilla. También resolvía el tipo desde la perspectiva de la casa y el criterio de "completada", y
+  calculaba el total (`calcular_indicadores`). La vista del tablero solo la ve el administrador.
+- **El patrón de reporte con descargas.** `apps.divisas.reportes` y `apps.divisas.monitoreo` ya lo usaban: un
+  único `generar_*` compartido entre la pantalla y las descargas en PDF (reportlab) y Excel (openpyxl).
+- **Cajas y turnos.** `apps.caja.models.Caja` ya representa el turno de un cajero, con `abierta_en`,
+  `cerrada_en` y estado `ABIERTA`/`CERRADA`.
+
+### Decisiones
+
+- **Módulo propio `apps/divisas/reporte_ganancias.py` que reutiliza el cálculo del tablero.** No recalcula
+  nada: usa `_todas_las_ganancias`, `_en_rango` y `calcular_indicadores` de `ganancias`. Así el criterio 4
+  (el mismo total que el tablero) se cumple por construcción, y un test lo verifica para las seis
+  agrupaciones.
+- **Rango obligatorio.** Sin las dos fechas solo se ve el formulario. Un rango ilegible, invertido o con
+  fechas futuras se informa como error, con los mismos mensajes que el tablero. Una agrupación desconocida
+  pasa a "día".
+- **Caja y turno.** Una caja es del período si su turno se superpone con el rango (se abrió antes del fin y
+  sigue abierta o se cerró después del inicio). Solo se cuentan sus operaciones de ventanilla dentro del
+  rango. Este desglose solo cubre la ventanilla, así que muestra un "total de ventanilla" propio, marcado
+  como parcial si alguna caja está en curso. El total general sigue sumando todos los canales para seguir
+  coincidiendo con el tablero.
+- **PDF y Excel desde las mismas filas.** `_filas_tabla` y `_filas_totales` alimentan los dos formatos, así
+  que ambos tienen exactamente los mismos datos, más los filtros aplicados y la fecha de generación.
+- **Sin datos.** Si el período no tiene operaciones completadas, se muestra un aviso y no se ofrecen
+  descargas. Una descarga pedida por URL vuelve a la pantalla con el aviso.
+- **Acceso.** `ReporteGananciasMixin` autoriza solo `admin` y `analista_cambiario`. A diferencia del
+  tablero, que es solo para el administrador, la HU pide que el analista también acceda. La pantalla es de
+  solo consulta (GET).
+
+### Archivos
+
+- `apps/divisas/reporte_ganancias.py` (nuevo).
+- `apps/divisas/views.py`: `ReporteGananciasMixin`, `ReporteGananciasView` y `DescargarReporteGananciasView`.
+- `apps/divisas/urls.py`: `/divisas/administrar/reporte-ganancias/` y `.../descargar/<pdf|excel>/`.
+- `templates/divisas/reporte_ganancias.html` (nuevo).
+- Enlaces en `base.html` y `home.html`, visibles para el administrador y el analista.
+
+### Tests
+
+`tests/test_reporte_ganancias.py` (archivo nuevo, 47 tests):
+
+- agrupación por día, mes, divisa, tipo y canal (orden, etiquetas y sumas);
+- validación de fechas, agrupación por defecto y aviso sin datos;
+- suma de los tres orígenes, con solo las operaciones online completadas;
+- que la suma de los grupos sea igual al total;
+- coincidencia con el tablero para todas las agrupaciones;
+- desglose por caja: cajero, apertura y cierre, en curso y parcial, superposición con el período, orden y
+  operaciones fuera de rango;
+- acceso: analista y administrador sí; cliente, cajero, sin rol y anónimo no;
+- PDF y Excel: contenido verificado con `openpyxl`, que coincide con la pantalla; redirección sin datos, con
+  rango inválido o sin fechas; formato desconocido responde 404.
+
+### Verificación
+
+- Suite completa: 729 tests (`pytest tests -n auto`) en verde.
+- `manage.py check`: sin problemas.
+- Sphinx (`python -m sphinx -b html docs/source docs/build`): `apps.divisas.reporte_ganancias.rst` nuevo,
+  `apps.divisas.rst`, `apps.divisas.views.rst` y `templates.rst` ampliados, y una sección nueva "Reporte de
+  ganancias" en `guia.rst`. No hay advertencias nuevas (queda la preexistente de resaltado en
+  `templates.rst`).
 
 ## Enlaces externos (conversaciones completas)
 

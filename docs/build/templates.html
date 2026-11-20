@@ -70,6 +70,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -531,6 +532,15 @@ metodos_sin_divisa y cliente_activo (vía context processor).
 <span class="cm">Hereda de: base.html.</span>
 <span class="cm">Bloques definidos: title, content.</span>
 <span class="cm">Contexto esperado: fila, transaccion, pago, medio_origen, medio_destino, factura.</span>
+<span class="cm">--&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cm">&lt;!--</span>
+<span class="cm">Reporte de ganancias por período, divisa, tipo de operación, canal o caja y turno, con descarga PDF/Excel.</span>
+<span class="cm">Hereda de: base.html.</span>
+<span class="cm">Bloques definidos: title, content.</span>
+<span class="cm">Contexto esperado: reporte_generado, error_rango, sin_datos, filtros, agrupacion_etiqueta, grupos, cajas,</span>
+<span class="cm">total, total_cajas, generado_en, agrupaciones_disponibles, mensaje_sin_datos, querystring.</span>
 <span class="cm">--&gt;</span>
 </pre></div>
 </div>

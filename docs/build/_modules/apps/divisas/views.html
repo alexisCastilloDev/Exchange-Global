@@ -67,6 +67,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -243,6 +244,13 @@
     <span class="n">generar_excel</span> <span class="k">as</span> <span class="n">generar_excel_monitoreo</span><span class="p">,</span>
     <span class="n">generar_monitoreo</span><span class="p">,</span>
     <span class="n">generar_pdf</span> <span class="k">as</span> <span class="n">generar_pdf_monitoreo</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.reporte_ganancias</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AGRUPACIONES</span> <span class="k">as</span> <span class="n">AGRUPACIONES_REPORTE_GANANCIAS</span><span class="p">,</span>
+    <span class="n">MENSAJE_SIN_DATOS</span> <span class="k">as</span> <span class="n">MENSAJE_SIN_DATOS_REPORTE_GANANCIAS</span><span class="p">,</span>
+    <span class="n">generar_excel</span> <span class="k">as</span> <span class="n">generar_excel_reporte_ganancias</span><span class="p">,</span>
+    <span class="n">generar_pdf</span> <span class="k">as</span> <span class="n">generar_pdf_reporte_ganancias</span><span class="p">,</span>
+    <span class="n">generar_reporte_ganancias</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.reportes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">TIPO_CHOICES</span><span class="p">,</span>
@@ -1315,6 +1323,116 @@
         <span class="n">contenido</span> <span class="o">=</span> <span class="n">funcion</span><span class="p">(</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filas'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'totales'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'generado_en'</span><span class="p">])</span>
         <span class="n">respuesta</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">contenido</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
         <span class="n">respuesta</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'attachment; filename="monitoreo_transacciones.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s1">"'</span>
+        <span class="k">return</span> <span class="n">respuesta</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ReporteGananciasMixin">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReporteGananciasMixin</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Control de acceso del reporte de ganancias: solo administración y análisis cambiario (criterio 7)."""</span>
+
+<div class="viewcode-block" id="ReporteGananciasMixin.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el rol 'admin' o 'analista_cambiario' esté en la sesión."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ReporteGananciasView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReporteGananciasView</span><span class="p">(</span><span class="n">ReporteGananciasMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Genera el reporte de ganancias de un período, agrupado según el criterio elegido.</span>
+
+<span class="sd">    Implementa la HU "Reporte de ganancias". A partir de un rango de</span>
+<span class="sd">    fechas obligatorio y un criterio de agrupación (día, mes, divisa, tipo</span>
+<span class="sd">    de operación, canal o caja y turno), muestra la ganancia y la cantidad</span>
+<span class="sd">    de operaciones de cada grupo junto con el total general (criterios 1 y</span>
+<span class="sd">    2). Todo el cálculo vive en</span>
+<span class="sd">    ``apps.divisas.reporte_ganancias.generar_reporte_ganancias``, que</span>
+<span class="sd">    reutiliza las filas y el total del tablero de ganancias para que ambos</span>
+<span class="sd">    coincidan (criterio 4). Sin las dos fechas solo se ve el formulario;</span>
+<span class="sd">    un rango inválido se informa sin calcular nada; sin operaciones se</span>
+<span class="sd">    avisa que no hay datos, sin error y sin ofrecer descargas (criterio 6).</span>
+<span class="sd">    Desde esta pantalla se descarga el mismo reporte en PDF o en Excel</span>
+<span class="sd">    (criterio 5, ver ``DescargarReporteGananciasView``). Solo acceden</span>
+<span class="sd">    administradores y analistas cambiarios (criterio 7, ver</span>
+<span class="sd">    ``ReporteGananciasMixin``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/reporte_ganancias.html'</span>
+    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'get'</span><span class="p">,</span> <span class="s1">'head'</span><span class="p">,</span> <span class="s1">'options'</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ReporteGananciasView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Arma el reporte con los filtros de la URL y las opciones del formulario."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">generar_reporte_ganancias</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">))</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'agrupaciones_disponibles'</span><span class="p">]</span> <span class="o">=</span> <span class="n">AGRUPACIONES_REPORTE_GANANCIAS</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'mensaje_sin_datos'</span><span class="p">]</span> <span class="o">=</span> <span class="n">MENSAJE_SIN_DATOS_REPORTE_GANANCIAS</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'querystring'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">urlencode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DescargarReporteGananciasView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DescargarReporteGananciasView</span><span class="p">(</span><span class="n">ReporteGananciasMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Descarga, en PDF o en Excel, el mismo reporte de ganancias que se ve en pantalla (criterio 5).</span>
+
+<span class="sd">    Rearma el reporte con los mismos filtros de la URL (ver</span>
+<span class="sd">    ``apps.divisas.reporte_ganancias.generar_reporte_ganancias``) en vez</span>
+<span class="sd">    de recibir datos ya calculados, para no poder quedar desincronizada de</span>
+<span class="sd">    ``ReporteGananciasView``. Sin rango de fechas, con un rango inválido o</span>
+<span class="sd">    sin operaciones en el período, vuelve a la pantalla con el motivo en</span>
+<span class="sd">    vez de descargar un archivo vacío o roto.</span>
+<span class="sd">    """</span>
+
+    <span class="n">FORMATOS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'pdf'</span><span class="p">:</span> <span class="p">(</span><span class="n">generar_pdf_reporte_ganancias</span><span class="p">,</span> <span class="s1">'application/pdf'</span><span class="p">,</span> <span class="s1">'pdf'</span><span class="p">),</span>
+        <span class="s1">'excel'</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">generar_excel_reporte_ganancias</span><span class="p">,</span>
+            <span class="s1">'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'</span><span class="p">,</span>
+            <span class="s1">'xlsx'</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="DescargarReporteGananciasView.get">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">formato</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida el formato, los filtros y los datos antes de generar el archivo."""</span>
+        <span class="k">if</span> <span class="n">formato</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">FORMATOS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'Formato de descarga desconocido.'</span><span class="p">)</span>
+
+        <span class="n">resultado</span> <span class="o">=</span> <span class="n">generar_reporte_ganancias</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">)</span>
+        <span class="n">destino</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:reporte_ganancias'</span><span class="p">)</span>
+        <span class="n">querystring</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">urlencode</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">querystring</span><span class="p">:</span>
+            <span class="n">destino</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">destino</span><span class="si">}</span><span class="s1">?</span><span class="si">{</span><span class="n">querystring</span><span class="si">}</span><span class="s1">'</span>
+
+        <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'reporte_generado'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Indicá un rango de fechas para generar el reporte.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'sin_datos'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">MENSAJE_SIN_DATOS_REPORTE_GANANCIAS</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+
+        <span class="n">funcion</span><span class="p">,</span> <span class="n">content_type</span><span class="p">,</span> <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FORMATOS</span><span class="p">[</span><span class="n">formato</span><span class="p">]</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">funcion</span><span class="p">(</span><span class="n">resultado</span><span class="p">),</span> <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
+        <span class="n">nombre</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"reporte_ganancias_</span><span class="si">{</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">][</span><span class="s1">'fecha_desde'</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">][</span><span class="s1">'fecha_hasta'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"_</span><span class="si">{</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">][</span><span class="s1">'agrupacion'</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="n">respuesta</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'attachment; filename="</span><span class="si">{</span><span class="n">nombre</span><span class="si">}</span><span class="s1">"'</span>
         <span class="k">return</span> <span class="n">respuesta</span></div>
 </div>
 

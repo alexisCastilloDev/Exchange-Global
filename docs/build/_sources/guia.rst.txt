@@ -900,6 +900,55 @@ cada solicitud en este orden:
    si no pasa la comprobación, o Factura Segura no responde, se vuelve al listado
    con un aviso.
 
+Reporte de ganancias
+--------------------
+
+Implementa la HU "Reporte de ganancias". Un analista cambiario o un
+administrador genera, en ``/divisas/administrar/reporte-ganancias/``
+(``apps.divisas.views.ReporteGananciasView``), un reporte de la ganancia de
+un rango de fechas, agrupado por **día**, **mes**, **divisa**, **tipo de
+operación**, **canal** o **caja y turno**. Cada grupo muestra su ganancia y
+su cantidad de operaciones, y el reporte cierra con el total general
+(Criterio 1). Todo el cálculo vive en
+``apps.divisas.reporte_ganancias.generar_reporte_ganancias``.
+
+**Misma ganancia que el tablero (Criterio 4).** El reporte no tiene un
+cálculo propio. Toma las mismas filas, el mismo filtro de fechas y el mismo
+total que el tablero de ganancias (``apps.divisas.ganancias``). Por eso la
+ganancia es la comisión normalizada a PYG (la de un cambio entre divisas se
+reconvierte con la tasa de venta aplicada), el tipo de operación se expresa
+desde la perspectiva de la casa de cambio y solo cuentan las operaciones
+completadas: ``ACREDITADA`` o ``RETIRADA`` online, y toda operación de
+ventanilla.
+
+**Desglose por caja y turno (Criterios 2 y 3).** Cada ``apps.caja.models.Caja``
+es el turno de un cajero. Una caja pertenece al período si su turno se
+superpone con el rango, aunque se haya abierto antes. Por cada caja se ven
+el cajero, la fecha y hora de apertura y de cierre, la cantidad de
+operaciones de ventanilla registradas dentro del período y su ganancia. Una
+caja todavía abierta aparece "En curso", sin fecha de cierre, y su ganancia
+figura como parcial. Este desglose solo cubre la ventanilla, así que muestra
+su propio total de ventanilla. El total general sigue sumando todos los
+canales, para que coincida con el tablero.
+
+**Descargas (Criterio 5).** ``apps.divisas.views.DescargarReporteGananciasView``
+(``.../reporte-ganancias/descargar/<pdf|excel>/``) rearma el reporte con los
+mismos filtros de la URL. Así el PDF y el Excel tienen los mismos datos que la
+pantalla, junto con los filtros aplicados y la fecha de generación. Los dos
+formatos se arman a partir de las mismas filas (``_filas_tabla`` y
+``_filas_totales``).
+
+**Sin datos y validación (Criterio 6).** Las dos fechas son obligatorias:
+sin ellas solo se muestra el formulario. Un rango ilegible, invertido o con
+fechas futuras se informa como error y no se calcula nada. Si el período no
+tiene operaciones completadas, se muestra el aviso "No hay operaciones
+completadas en el período elegido." sin ofrecer descargas, y una descarga
+pedida por URL vuelve a la pantalla con ese mismo aviso.
+
+**Acceso (Criterio 7).** ``ReporteGananciasMixin`` solo autoriza los roles
+``admin`` y ``analista_cambiario``. Un cliente, un cajero o un usuario sin
+rol reciben un 403, tanto en la pantalla como en las descargas.
+
 Acceso a esta documentación desde el sistema
 ----------------------------------------------
 

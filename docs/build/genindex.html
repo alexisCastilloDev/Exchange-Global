@@ -67,6 +67,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -227,9 +228,13 @@
 </li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views._avisar_divisas_sin_cotizar">_avisar_divisas_sin_cotizar() (en el módulo apps.caja.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._cajas_del_periodo">_cajas_del_periodo() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._calcular">_calcular() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
       <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._clave_periodo">_clave_periodo() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._clave_y_etiqueta">_clave_y_etiqueta() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views._cliente_propio">_cliente_propio() (en el módulo apps.divisas.views)</a>
 </li>
@@ -267,8 +272,6 @@
         <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._fila_cambio">(en el módulo apps.divisas.reportes)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._fila_operacion">_fila_operacion() (en el módulo apps.divisas.ganancias)</a>
 
       <ul>
@@ -277,20 +280,30 @@
         <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._fila_operacion">(en el módulo apps.divisas.reportes)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._fila_ventanilla">_fila_ventanilla() (en el módulo apps.divisas.ganancias)</a>
 
       <ul>
         <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._fila_ventanilla">(en el módulo apps.divisas.monitoreo)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_tabla">_filas_tabla() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_totales">_filas_totales() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._firma_valida">_firma_valida() (en el módulo apps.divisas.pagos_sipap)</a>
 </li>
       <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._formatear_fecha">_formatear_fecha() (en el módulo apps.divisas.monitoreo)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_fecha">(en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
         <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._formatear_fecha">(en el módulo apps.divisas.reportes)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_momento">_formatear_momento() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._generar">_generar() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
       <li><a href="reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._generar_referencia">_generar_referencia() (en el módulo apps.divisas.pagos_sipap)</a>
@@ -309,6 +322,8 @@
 </li>
       <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._monto_en_unidad_minima_stripe">_monto_en_unidad_minima_stripe() (en el módulo apps.divisas.pagos_stripe)</a>
 </li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._nombre_cajero">_nombre_cajero() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._nombre_cliente">_nombre_cliente() (en el módulo apps.divisas.reportes)</a>
 </li>
       <li><a href="reference/apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._obtener_o_crear_cliente_stripe">_obtener_o_crear_cliente_stripe() (en el módulo apps.divisas.pagos_stripe)</a>
@@ -316,6 +331,8 @@
       <li><a href="reference/apps.divisas.pagos_sipap.html#apps.divisas.pagos_sipap._obtener_o_crear_solicitud">_obtener_o_crear_solicitud() (en el módulo apps.divisas.pagos_sipap)</a>
 </li>
       <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo._obtener_o_none">_obtener_o_none() (en el módulo apps.divisas.monitoreo)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._orden_de_grupo">_orden_de_grupo() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._parsear_fecha">_parsear_fecha() (en el módulo apps.divisas.ganancias)</a>
 
@@ -339,6 +356,8 @@
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._solicitar">_solicitar() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._texto_celda">_texto_celda() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._tipo_transaccion">_tipo_transaccion() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
       <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias._todas_las_ganancias">_todas_las_ganancias() (en el módulo apps.divisas.ganancias)</a>
@@ -349,7 +368,13 @@
 </li>
       <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._transacciones_cliente">_transacciones_cliente() (en el módulo apps.divisas.reportes)</a>
 </li>
-      <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._validar_rango">_validar_rango() (en el módulo apps.divisas.reportes)</a>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._validar_rango">_validar_rango() (en el módulo apps.divisas.reporte_ganancias)</a>
+
+      <ul>
+        <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes._validar_rango">(en el módulo apps.divisas.reportes)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._valor_excel">_valor_excel() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -394,6 +419,12 @@
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.AdminDivisasMixin">AdminDivisasMixin (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AgregarTarjetaStripeForm">AgregarTarjetaStripeForm (clase en apps.clientes.forms)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.AGRUPACION_POR_DEFECTO">AGRUPACION_POR_DEFECTO (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.AGRUPACIONES">AGRUPACIONES (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.agrupar_ganancias">agrupar_ganancias() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.apellido">apellido (atributo de Cliente)</a>
 
@@ -564,6 +595,13 @@
 
       <ul>
         <li><a href="reference/apps.divisas.factura_electronica.html#module-apps.divisas.factura_electronica">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.divisas.reporte_ganancias
+
+      <ul>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#module-apps.divisas.reporte_ganancias">module</a>
 </li>
       </ul></li>
       <li>
@@ -1199,9 +1237,15 @@
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView">DescargarMonitoreoView (clase en apps.divisas.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView">DescargarReporteGananciasView (clase en apps.divisas.views)</a>
+</li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView">DescargarReporteTransaccionesView (clase en apps.divisas.views)</a>
 </li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.descripcion_filtros">descripcion_filtros() (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico.desde">desde (atributo de ContadorDocumentoElectronico)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.desglosar_por_caja">desglosar_por_caja() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.casa_de_cambio.html#apps.divisas.casa_de_cambio.DesignacionCuentaPropiaError">DesignacionCuentaPropiaError</a>
 </li>
@@ -1225,6 +1269,8 @@
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleTransaccionCambioView">DetalleTransaccionCambioView (clase en apps.divisas.views)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleTransaccionOperacionView">DetalleTransaccionOperacionView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.diferencia">diferencia (atributo de Pago)</a>
@@ -1233,8 +1279,6 @@
         <li><a href="reference/apps.caja.models.html#apps.caja.models.DetalleArqueoCaja.diferencia">(DetalleArqueoCaja propiedad)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.dispatch">dispatch() (método de HistorialCotizacionesView)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.divisa">divisa (atributo de CalculoOperacion)</a>
@@ -1594,6 +1638,8 @@
       <ul>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView.FORMATOS">(atributo de DescargarMonitoreoView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView.FORMATOS">(atributo de DescargarReporteGananciasView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.FORMATOS">(atributo de DescargarReporteTransaccionesView)</a>
 </li>
       </ul></li>
@@ -1608,6 +1654,8 @@
       <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.generar_excel">generar_excel() (en el módulo apps.divisas.monitoreo)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_excel">(en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
         <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_excel">(en el módulo apps.divisas.reportes)</a>
 </li>
       </ul></li>
@@ -1616,10 +1664,14 @@
       <li><a href="reference/apps.divisas.monitoreo.html#apps.divisas.monitoreo.generar_pdf">generar_pdf() (en el módulo apps.divisas.monitoreo)</a>
 
       <ul>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_pdf">(en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
         <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_pdf">(en el módulo apps.divisas.reportes)</a>
 </li>
       </ul></li>
       <li><a href="reference/apps.divisas.reportes.html#apps.divisas.reportes.generar_reporte">generar_reporte() (en el módulo apps.divisas.reportes)</a>
+</li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_reporte_ganancias">generar_reporte_ganancias() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
       <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.generar_tablero">generar_tablero() (en el módulo apps.divisas.ganancias)</a>
 </li>
@@ -1643,6 +1695,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarDocumentoElectronicoView.get">(método de DescargarDocumentoElectronicoView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView.get">(método de DescargarMonitoreoView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView.get">(método de DescargarReporteGananciasView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.get">(método de DescargarReporteTransaccionesView)</a>
 </li>
@@ -1709,6 +1763,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.get_context_data">(método de MonitoreoTransaccionesView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_context_data">(método de PanelAdminView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.get_context_data">(método de ReporteGananciasView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.get_context_data">(método de SimulacionDivisasView)</a>
 </li>
@@ -2027,6 +2083,8 @@
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.http_method_names">(atributo de MonitoreoTransaccionesView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.http_method_names">(atributo de ReporteGananciasView)</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -2220,6 +2278,8 @@
       </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.mensaje">mensaje (NotificacionTasa propiedad)</a>
 </li>
+      <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.MENSAJE_SIN_DATOS">MENSAJE_SIN_DATOS (en el módulo apps.divisas.reporte_ganancias)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.metodo_pago">metodo_pago (atributo de Pago)</a>
 
       <ul>
@@ -2369,6 +2429,8 @@
         <li><a href="reference/apps.divisas.context_processors.html#module-apps.divisas.context_processors">apps.divisas.context_processors</a>
 </li>
         <li><a href="reference/apps.divisas.factura_electronica.html#module-apps.divisas.factura_electronica">apps.divisas.factura_electronica</a>
+</li>
+        <li><a href="reference/apps.divisas.reporte_ganancias.html#module-apps.divisas.reporte_ganancias">apps.divisas.reporte_ganancias</a>
 </li>
         <li><a href="reference/apps.divisas.urls.html#module-apps.divisas.urls">apps.divisas.urls</a>
 </li>
@@ -2835,10 +2897,10 @@
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago">registrar_pago() (método de clase de Pago)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago_observado">registrar_pago_observado() (método de clase de Pago)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView">RegistrarMovimientoExtraordinarioView (clase en apps.caja.views)</a>
 </li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView">RegistrarOperacionVentanillaView (clase en apps.caja.views)</a>
@@ -2850,6 +2912,10 @@
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReintentarEmisionDocumentoElectronicoView">ReintentarEmisionDocumentoElectronicoView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReintentarEntregaView">ReintentarEntregaView (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin">ReporteGananciasMixin (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView">ReporteGananciasView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView">ReporteTransaccionesClienteView (clase en apps.divisas.views)</a>
 </li>
@@ -3076,6 +3142,8 @@
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.template_name">(atributo de PanelAdminView)</a>
 </li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.template_name">(atributo de ReporteGananciasView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.template_name">(atributo de ReporteTransaccionesClienteView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView.template_name">(atributo de SimulacionDivisasView)</a>
@@ -3165,6 +3233,8 @@
         <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView.test_func">(método de RegistrarMovimientoExtraordinarioView)</a>
 </li>
         <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.test_func">(método de RegistrarOperacionVentanillaView)</a>
+</li>
+        <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin.test_func">(método de ReporteGananciasMixin)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.test_func">(método de ReporteTransaccionesClienteView)</a>
 </li>
