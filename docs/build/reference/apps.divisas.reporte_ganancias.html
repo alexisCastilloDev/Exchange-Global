@@ -1,0 +1,455 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.reporte_ganancias module &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.divisas.reportes module" href="apps.divisas.reportes.html" />
+    <link rel="prev" title="apps.divisas.pagos_stripe module" href="apps.divisas.pagos_stripe.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+          <li class="breadcrumb-item"><a href="apps.divisas.html">apps.divisas package</a></li>
+      <li class="breadcrumb-item active">apps.divisas.reporte_ganancias module</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-apps.divisas.reporte_ganancias">
+<span id="apps-divisas-reporte-ganancias-module"></span><h1>apps.divisas.reporte_ganancias module<a class="headerlink" href="#module-apps.divisas.reporte_ganancias" title="Link to this heading"></a></h1>
+<p>Reporte de ganancias desglosado por período, divisa, tipo, canal y caja/turno (HU «Reporte de ganancias»).</p>
+<p>Complementa al tablero de control (<code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias</span></code>): el tablero
+resume la ganancia con indicadores y gráficos; este reporte la desglosa en
+una tabla, según un único criterio de agrupación elegido por el analista,
+y la descarga en PDF y en Excel.</p>
+<p>Para que el reporte y el tablero muestren <strong>siempre</strong> la misma ganancia
+total para un mismo período (criterio 4), este módulo no recalcula nada por
+su cuenta: toma las mismas filas normalizadas
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias._todas_las_ganancias</span></code>), el mismo filtro por
+fechas (<code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias._en_rango</span></code>) y el mismo total
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias.calcular_indicadores</span></code>). Por lo tanto, la
+definición de «ganancia» (la comisión, normalizada a PYG), de «tipo de
+operación» (en la perspectiva de la casa de cambio) y de «completada»
+(<code class="docutils literal notranslate"><span class="pre">ACREDITADA</span></code>/<code class="docutils literal notranslate"><span class="pre">RETIRADA</span></code> online, toda operación de ventanilla) es
+exactamente la documentada en ese módulo.</p>
+<p>El desglose por caja y turno (criterio 2) es distinto de los demás: no
+agrupa filas ya normalizadas sino que recorre las <code class="docutils literal notranslate"><span class="pre">apps.caja.models.Caja</span></code>
+del período (cada caja es un turno de un cajero) y suma sus operaciones de
+ventanilla. Una caja todavía «Abierta» se marca como «en curso» y su
+ganancia como parcial (criterio 3), porque puede seguir sumando operaciones.</p>
+<p><code class="docutils literal notranslate"><span class="pre">generar_reporte_ganancias</span></code> es el único punto de entrada: lo usan la
+pantalla (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.ReporteGananciasView</span></code>) y las dos descargas
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.DescargarReporteGananciasView</span></code>), para que los tres
+vean siempre los mismos datos con los mismos filtros (criterio 5).</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.AGRUPACIONES">
+<span class="sig-name descname"><span class="pre">AGRUPACIONES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'caja':</span> <span class="pre">'Caja</span> <span class="pre">y</span> <span class="pre">turno',</span> <span class="pre">'canal':</span> <span class="pre">'Canal',</span> <span class="pre">'dia':</span> <span class="pre">'Día',</span> <span class="pre">'divisa':</span> <span class="pre">'Divisa',</span> <span class="pre">'mes':</span> <span class="pre">'Mes',</span> <span class="pre">'tipo':</span> <span class="pre">'Tipo</span> <span class="pre">de</span> <span class="pre">operación'}</span></span><a class="headerlink" href="#apps.divisas.reporte_ganancias.AGRUPACIONES" title="Link to this definition"></a></dt>
+<dd><p>Criterios de agrupación disponibles (criterios 1 y 2), en el orden en que se ofrecen en pantalla.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.AGRUPACION_POR_DEFECTO">
+<span class="sig-name descname"><span class="pre">AGRUPACION_POR_DEFECTO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dia'</span></span><a class="headerlink" href="#apps.divisas.reporte_ganancias.AGRUPACION_POR_DEFECTO" title="Link to this definition"></a></dt>
+<dd><p>str(object=””) -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.__str__() (if defined)
+or repr(object).
+encoding defaults to “utf-8”.
+errors defaults to “strict”.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.MENSAJE_SIN_DATOS">
+<span class="sig-name descname"><span class="pre">MENSAJE_SIN_DATOS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'No</span> <span class="pre">hay</span> <span class="pre">operaciones</span> <span class="pre">completadas</span> <span class="pre">en</span> <span class="pre">el</span> <span class="pre">período</span> <span class="pre">elegido.'</span></span><a class="headerlink" href="#apps.divisas.reporte_ganancias.MENSAJE_SIN_DATOS" title="Link to this definition"></a></dt>
+<dd><p>Aviso que se muestra, en vez de un error, cuando el período no tiene operaciones (criterio 6).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._validar_rango">
+<span class="sig-name descname"><span class="pre">_validar_rango</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fecha_desde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_hasta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_validar_rango"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._validar_rango" title="Link to this definition"></a></dt>
+<dd><p>Valida un rango de fechas ya parseado. Devuelve el motivo del error, o <code class="docutils literal notranslate"><span class="pre">None</span></code> si es válido.</p>
+<p>Usa los mismos mensajes que <code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias.resolver_periodo</span></code>:
+la fecha inicial no puede ser posterior a la final ni ninguna de las dos
+puede estar en el futuro.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._clave_y_etiqueta">
+<span class="sig-name descname"><span class="pre">_clave_y_etiqueta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fila</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agrupacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_clave_y_etiqueta"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._clave_y_etiqueta" title="Link to this definition"></a></dt>
+<dd><p>Clave ordenable y etiqueta legible del grupo al que pertenece <code class="docutils literal notranslate"><span class="pre">fila</span></code> según <code class="docutils literal notranslate"><span class="pre">agrupacion</span></code>.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dia</span></code>: <code class="docutils literal notranslate"><span class="pre">'YYYY-MM-DD'</span></code> / <code class="docutils literal notranslate"><span class="pre">'DD/MM/YYYY'</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mes</span></code>: <code class="docutils literal notranslate"><span class="pre">'YYYY-MM'</span></code> / <code class="docutils literal notranslate"><span class="pre">'MM/YYYY'</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">divisa</span></code>: el código (o el par <code class="docutils literal notranslate"><span class="pre">ORIGEN</span> <span class="pre">→</span> <span class="pre">DESTINO</span></code> de un cambio).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tipo</span></code> y <code class="docutils literal notranslate"><span class="pre">canal</span></code>: el código interno / su etiqueta en
+<code class="docutils literal notranslate"><span class="pre">TIPO_CHOICES</span></code>/<code class="docutils literal notranslate"><span class="pre">CANAL_CHOICES</span></code>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._orden_de_grupo">
+<span class="sig-name descname"><span class="pre">_orden_de_grupo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">agrupacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_orden_de_grupo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._orden_de_grupo" title="Link to this definition"></a></dt>
+<dd><p>Función de orden de los grupos: cronológico, alfabético o el orden de las opciones del modelo.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.agrupar_ganancias">
+<span class="sig-name descname"><span class="pre">agrupar_ganancias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agrupacion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#agrupar_ganancias"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias.agrupar_ganancias" title="Link to this definition"></a></dt>
+<dd><p>Ganancia y cantidad de operaciones de cada grupo según <code class="docutils literal notranslate"><span class="pre">agrupacion</span></code> (criterio 1).</p>
+<p>Solo aparecen los grupos que tienen al menos una operación en <code class="docutils literal notranslate"><span class="pre">filas</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filas</strong> (<em>list</em><em>[</em><em>dict</em><em>]</em>) – Filas normalizadas de
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias._todas_las_ganancias</span></code>, ya filtradas
+por el período.</p></li>
+<li><p><strong>agrupacion</strong> (<em>str</em>) – Uno de <code class="docutils literal notranslate"><span class="pre">dia</span></code>, <code class="docutils literal notranslate"><span class="pre">mes</span></code>, <code class="docutils literal notranslate"><span class="pre">divisa</span></code>, <code class="docutils literal notranslate"><span class="pre">tipo</span></code> o
+<code class="docutils literal notranslate"><span class="pre">canal</span></code> (el desglose por caja lo resuelve
+<code class="docutils literal notranslate"><span class="pre">desglosar_por_caja</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Una entrada por grupo, con <code class="docutils literal notranslate"><span class="pre">clave</span></code>, <code class="docutils literal notranslate"><span class="pre">etiqueta</span></code>,
+<code class="docutils literal notranslate"><span class="pre">cantidad</span></code> y <code class="docutils literal notranslate"><span class="pre">ganancia_pyg</span></code>, en orden cronológico (día/mes),
+alfabético (divisa) o el de <code class="docutils literal notranslate"><span class="pre">TIPO_CHOICES</span></code>/<code class="docutils literal notranslate"><span class="pre">CANAL_CHOICES</span></code>.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._nombre_cajero">
+<span class="sig-name descname"><span class="pre">_nombre_cajero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">usuario</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_nombre_cajero"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._nombre_cajero" title="Link to this definition"></a></dt>
+<dd><p>Nombre completo del cajero o, si no lo tiene cargado, su nombre de usuario.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._cajas_del_periodo">
+<span class="sig-name descname"><span class="pre">_cajas_del_periodo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fecha_desde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_hasta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_cajas_del_periodo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._cajas_del_periodo" title="Link to this definition"></a></dt>
+<dd><p>Cajas cuyo turno se superpone con el período, de la apertura más antigua a la más reciente.</p>
+<p>Una caja pertenece al período si se abrió antes del fin del rango y,
+además, sigue abierta o se cerró después del inicio del rango (ambas
+fechas en hora local). Así entra también un turno abierto el día
+anterior al rango que siguió operando dentro de él.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.desglosar_por_caja">
+<span class="sig-name descname"><span class="pre">desglosar_por_caja</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fecha_desde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fecha_hasta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#desglosar_por_caja"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias.desglosar_por_caja" title="Link to this definition"></a></dt>
+<dd><p>Una fila por caja del período con cajero, apertura, cierre, operaciones y ganancia (criterios 2 y 3).</p>
+<p>Solo cuenta las operaciones de ventanilla de cada caja registradas
+dentro del período, con la misma ganancia (<code class="docutils literal notranslate"><span class="pre">comision</span></code>, ya en PYG) que
+usa el tablero para el canal ventanilla. Una caja todavía «Abierta» se
+marca con <code class="docutils literal notranslate"><span class="pre">en_curso=True</span></code>: no tiene fecha de cierre y su ganancia es
+parcial, porque puede seguir registrando operaciones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Una entrada por caja con <code class="docutils literal notranslate"><span class="pre">caja_id</span></code>, <code class="docutils literal notranslate"><span class="pre">cajero</span></code>,
+<code class="docutils literal notranslate"><span class="pre">abierta_en</span></code>, <code class="docutils literal notranslate"><span class="pre">cerrada_en</span></code> (<code class="docutils literal notranslate"><span class="pre">None</span></code> si sigue abierta),
+<code class="docutils literal notranslate"><span class="pre">en_curso</span></code>, <code class="docutils literal notranslate"><span class="pre">cantidad</span></code> y <code class="docutils literal notranslate"><span class="pre">ganancia_pyg</span></code>.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.generar_reporte_ganancias">
+<span class="sig-name descname"><span class="pre">generar_reporte_ganancias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parametros</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#generar_reporte_ganancias"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias.generar_reporte_ganancias" title="Link to this definition"></a></dt>
+<dd><p>Resuelve filtros, grupos y totales del reporte de ganancias a partir de los parámetros de la URL.</p>
+<p><code class="docutils literal notranslate"><span class="pre">parametros</span></code> es cualquier mapeo tipo <code class="docutils literal notranslate"><span class="pre">QueryDict</span></code> con las claves
+<code class="docutils literal notranslate"><span class="pre">fecha_desde</span></code>, <code class="docutils literal notranslate"><span class="pre">fecha_hasta</span></code> y <code class="docutils literal notranslate"><span class="pre">agrupacion</span></code> (las de
+<code class="docutils literal notranslate"><span class="pre">request.GET</span></code>). El rango de fechas es obligatorio: sin alguna de las
+dos fechas se devuelve <code class="docutils literal notranslate"><span class="pre">reporte_generado=False</span></code> sin error, para que
+la pantalla muestre solo el formulario. Un rango ilegible o inválido se
+informa en <code class="docutils literal notranslate"><span class="pre">error_rango</span></code>. Una agrupación desconocida se reemplaza por
+<code class="docutils literal notranslate"><span class="pre">AGRUPACION_POR_DEFECTO</span></code>.</p>
+<p>El <code class="docutils literal notranslate"><span class="pre">total</span></code> siempre abarca <strong>todas</strong> las operaciones completadas del
+período (ambos canales), calculado igual que el tablero, para que los
+dos coincidan (criterio 4); también con el desglose por caja, que solo
+detalla la ventanilla y por eso informa además su propio
+<code class="docutils literal notranslate"><span class="pre">total_cajas</span></code>. <code class="docutils literal notranslate"><span class="pre">sin_datos</span></code> es <code class="docutils literal notranslate"><span class="pre">True</span></code> si el período no tiene
+ninguna operación completada (criterio 6).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">reporte_generado</span></code>, <code class="docutils literal notranslate"><span class="pre">error_rango</span></code>, <code class="docutils literal notranslate"><span class="pre">sin_datos</span></code>,
+<code class="docutils literal notranslate"><span class="pre">filtros</span></code> (los valores tal como llegaron, con la agrupación ya
+resuelta), <code class="docutils literal notranslate"><span class="pre">agrupacion_etiqueta</span></code>, <code class="docutils literal notranslate"><span class="pre">grupos</span></code> (o <code class="docutils literal notranslate"><span class="pre">cajas</span></code> en el
+desglose por caja), <code class="docutils literal notranslate"><span class="pre">total</span></code> (<code class="docutils literal notranslate"><span class="pre">cantidad</span></code> y <code class="docutils literal notranslate"><span class="pre">ganancia_pyg</span></code>),
+<code class="docutils literal notranslate"><span class="pre">total_cajas</span></code> y <code class="docutils literal notranslate"><span class="pre">generado_en</span></code>.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._formatear_fecha">
+<span class="sig-name descname"><span class="pre">_formatear_fecha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_formatear_fecha"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._formatear_fecha" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">'YYYY-MM-DD'</span></code> a <code class="docutils literal notranslate"><span class="pre">'DD/MM/YYYY'</span></code>, tal como se ingresó en el filtro.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.descripcion_filtros">
+<span class="sig-name descname"><span class="pre">descripcion_filtros</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filtros</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#descripcion_filtros"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias.descripcion_filtros" title="Link to this definition"></a></dt>
+<dd><p>Texto legible de los filtros aplicados, para dejarlos documentados en el archivo descargado (criterio 5).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._formatear_momento">
+<span class="sig-name descname"><span class="pre">_formatear_momento</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_formatear_momento"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._formatear_momento" title="Link to this definition"></a></dt>
+<dd><p>Fecha y hora en hora local (<code class="docutils literal notranslate"><span class="pre">'DD/MM/YYYY</span> <span class="pre">HH:MM'</span></code>), o cadena vacía si no hay valor.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._filas_tabla">
+<span class="sig-name descname"><span class="pre">_filas_tabla</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultado</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_filas_tabla"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._filas_tabla" title="Link to this definition"></a></dt>
+<dd><p>Encabezados y filas de la tabla principal, compartidos por el PDF y el Excel.</p>
+<p>Devolver la misma estructura a los dos formatos garantiza que ambos
+archivos muestren exactamente los mismos datos (criterio 5). Los
+importes quedan como <code class="docutils literal notranslate"><span class="pre">Decimal</span></code>; cada formato decide cómo escribirlos.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._filas_totales">
+<span class="sig-name descname"><span class="pre">_filas_totales</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultado</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_filas_totales"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._filas_totales" title="Link to this definition"></a></dt>
+<dd><p>Líneas de totales (etiqueta, cantidad, ganancia) que cierran ambos archivos.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._texto_celda">
+<span class="sig-name descname"><span class="pre">_texto_celda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_texto_celda"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._texto_celda" title="Link to this definition"></a></dt>
+<dd><p>Convierte un valor de la tabla a texto para el PDF, con dos decimales en los importes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias._valor_excel">
+<span class="sig-name descname"><span class="pre">_valor_excel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#_valor_excel"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias._valor_excel" title="Link to this definition"></a></dt>
+<dd><p>Convierte un valor de la tabla a un tipo que Excel trate como número cuando corresponde.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.generar_pdf">
+<span class="sig-name descname"><span class="pre">generar_pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultado</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#generar_pdf"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias.generar_pdf" title="Link to this definition"></a></dt>
+<dd><p>Arma el PDF del reporte: filtros aplicados, fecha de generación, desglose y totales (criterio 5).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>resultado</strong> (<em>dict</em>) – El resultado de <code class="docutils literal notranslate"><span class="pre">generar_reporte_ganancias</span></code> con
+<code class="docutils literal notranslate"><span class="pre">reporte_generado=True</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El contenido del PDF.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bytes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.reporte_ganancias.generar_excel">
+<span class="sig-name descname"><span class="pre">generar_excel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resultado</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/reporte_ganancias.html#generar_excel"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.reporte_ganancias.generar_excel" title="Link to this definition"></a></dt>
+<dd><p>Arma el Excel del reporte con los mismos datos, filtros y fecha de generación que el PDF (criterio 5).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>resultado</strong> (<em>dict</em>) – El resultado de <code class="docutils literal notranslate"><span class="pre">generar_reporte_ganancias</span></code> con
+<code class="docutils literal notranslate"><span class="pre">reporte_generado=True</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>El contenido del archivo <code class="docutils literal notranslate"><span class="pre">.xlsx</span></code>.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bytes</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.divisas.pagos_stripe.html" class="btn btn-neutral float-left" title="apps.divisas.pagos_stripe module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.reportes.html" class="btn btn-neutral float-right" title="apps.divisas.reportes module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

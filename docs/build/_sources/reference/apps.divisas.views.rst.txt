@@ -47,6 +47,18 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.ReporteGananciasMixin
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.ReporteGananciasView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DescargarReporteGananciasView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.DetalleMonitoreoTransaccionView
    :members:
    :show-inheritance:

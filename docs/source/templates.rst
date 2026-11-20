@@ -184,6 +184,10 @@ Divisas
    :language: html
    :lines: 1-6
 
+.. literalinclude:: ../../templates/divisas/reporte_ganancias.html
+   :language: html
+   :lines: 1-7
+
 .. literalinclude:: ../../templates/divisas/mis_transacciones.html
    :language: html
    :lines: 1-7

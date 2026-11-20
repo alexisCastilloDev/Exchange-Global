@@ -70,6 +70,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -1011,6 +1012,49 @@ entregarlo se comprueba que el XML contenga ese CDC y que el KuDE sea un PDF;
 si no pasa la comprobación, o Factura Segura no responde, se vuelve al listado
 con un aviso.</p></li>
 </ol>
+</section>
+<section id="reporte-de-ganancias">
+<h2>Reporte de ganancias<a class="headerlink" href="#reporte-de-ganancias" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Reporte de ganancias». Un analista cambiario o un
+administrador genera, en <code class="docutils literal notranslate"><span class="pre">/divisas/administrar/reporte-ganancias/</span></code>
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.ReporteGananciasView</span></code>), un reporte de la ganancia de
+un rango de fechas, agrupado por <strong>día</strong>, <strong>mes</strong>, <strong>divisa</strong>, <strong>tipo de
+operación</strong>, <strong>canal</strong> o <strong>caja y turno</strong>. Cada grupo muestra su ganancia y
+su cantidad de operaciones, y el reporte cierra con el total general
+(Criterio 1). Todo el cálculo vive en
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.reporte_ganancias.generar_reporte_ganancias</span></code>.</p>
+<p><strong>Misma ganancia que el tablero (Criterio 4).</strong> El reporte no tiene un
+cálculo propio. Toma las mismas filas, el mismo filtro de fechas y el mismo
+total que el tablero de ganancias (<code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias</span></code>). Por eso la
+ganancia es la comisión normalizada a PYG (la de un cambio entre divisas se
+reconvierte con la tasa de venta aplicada), el tipo de operación se expresa
+desde la perspectiva de la casa de cambio y solo cuentan las operaciones
+completadas: <code class="docutils literal notranslate"><span class="pre">ACREDITADA</span></code> o <code class="docutils literal notranslate"><span class="pre">RETIRADA</span></code> online, y toda operación de
+ventanilla.</p>
+<p><strong>Desglose por caja y turno (Criterios 2 y 3).</strong> Cada <code class="docutils literal notranslate"><span class="pre">apps.caja.models.Caja</span></code>
+es el turno de un cajero. Una caja pertenece al período si su turno se
+superpone con el rango, aunque se haya abierto antes. Por cada caja se ven
+el cajero, la fecha y hora de apertura y de cierre, la cantidad de
+operaciones de ventanilla registradas dentro del período y su ganancia. Una
+caja todavía abierta aparece «En curso», sin fecha de cierre, y su ganancia
+figura como parcial. Este desglose solo cubre la ventanilla, así que muestra
+su propio total de ventanilla. El total general sigue sumando todos los
+canales, para que coincida con el tablero.</p>
+<p><strong>Descargas (Criterio 5).</strong> <code class="docutils literal notranslate"><span class="pre">apps.divisas.views.DescargarReporteGananciasView</span></code>
+(<code class="docutils literal notranslate"><span class="pre">.../reporte-ganancias/descargar/&lt;pdf|excel&gt;/</span></code>) rearma el reporte con los
+mismos filtros de la URL. Así el PDF y el Excel tienen los mismos datos que la
+pantalla, junto con los filtros aplicados y la fecha de generación. Los dos
+formatos se arman a partir de las mismas filas (<code class="docutils literal notranslate"><span class="pre">_filas_tabla</span></code> y
+<code class="docutils literal notranslate"><span class="pre">_filas_totales</span></code>).</p>
+<p><strong>Sin datos y validación (Criterio 6).</strong> Las dos fechas son obligatorias:
+sin ellas solo se muestra el formulario. Un rango ilegible, invertido o con
+fechas futuras se informa como error y no se calcula nada. Si el período no
+tiene operaciones completadas, se muestra el aviso «No hay operaciones
+completadas en el período elegido.» sin ofrecer descargas, y una descarga
+pedida por URL vuelve a la pantalla con ese mismo aviso.</p>
+<p><strong>Acceso (Criterio 7).</strong> <code class="docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code> solo autoriza los roles
+<code class="docutils literal notranslate"><span class="pre">admin</span></code> y <code class="docutils literal notranslate"><span class="pre">analista_cambiario</span></code>. Un cliente, un cajero o un usuario sin
+rol reciben un 403, tanto en la pantalla como en las descargas.</p>
 </section>
 <section id="acceso-a-esta-documentacion-desde-el-sistema">
 <h2>Acceso a esta documentación desde el sistema<a class="headerlink" href="#acceso-a-esta-documentacion-desde-el-sistema" title="Link to this heading"></a></h2>

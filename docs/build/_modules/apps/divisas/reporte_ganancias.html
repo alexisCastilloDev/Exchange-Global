@@ -1,0 +1,687 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.reporte_ganancias &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.divisas.reporte_ganancias</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.divisas.reporte_ganancias</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Reporte de ganancias desglosado por período, divisa, tipo, canal y caja/turno (HU "Reporte de ganancias").</span>
+
+<span class="sd">Complementa al tablero de control (``apps.divisas.ganancias``): el tablero</span>
+<span class="sd">resume la ganancia con indicadores y gráficos; este reporte la desglosa en</span>
+<span class="sd">una tabla, según un único criterio de agrupación elegido por el analista,</span>
+<span class="sd">y la descarga en PDF y en Excel.</span>
+
+<span class="sd">Para que el reporte y el tablero muestren **siempre** la misma ganancia</span>
+<span class="sd">total para un mismo período (criterio 4), este módulo no recalcula nada por</span>
+<span class="sd">su cuenta: toma las mismas filas normalizadas</span>
+<span class="sd">(``apps.divisas.ganancias._todas_las_ganancias``), el mismo filtro por</span>
+<span class="sd">fechas (``apps.divisas.ganancias._en_rango``) y el mismo total</span>
+<span class="sd">(``apps.divisas.ganancias.calcular_indicadores``). Por lo tanto, la</span>
+<span class="sd">definición de "ganancia" (la comisión, normalizada a PYG), de "tipo de</span>
+<span class="sd">operación" (en la perspectiva de la casa de cambio) y de "completada"</span>
+<span class="sd">(``ACREDITADA``/``RETIRADA`` online, toda operación de ventanilla) es</span>
+<span class="sd">exactamente la documentada en ese módulo.</span>
+
+<span class="sd">El desglose por caja y turno (criterio 2) es distinto de los demás: no</span>
+<span class="sd">agrupa filas ya normalizadas sino que recorre las ``apps.caja.models.Caja``</span>
+<span class="sd">del período (cada caja es un turno de un cajero) y suma sus operaciones de</span>
+<span class="sd">ventanilla. Una caja todavía "Abierta" se marca como "en curso" y su</span>
+<span class="sd">ganancia como parcial (criterio 3), porque puede seguir sumando operaciones.</span>
+
+<span class="sd">``generar_reporte_ganancias`` es el único punto de entrada: lo usan la</span>
+<span class="sd">pantalla (``apps.divisas.views.ReporteGananciasView``) y las dos descargas</span>
+<span class="sd">(``apps.divisas.views.DescargarReporteGananciasView``), para que los tres</span>
+<span class="sd">vean siempre los mismos datos con los mismos filtros (criterio 5).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BytesIO</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpyxl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Workbook</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpyxl.styles</span><span class="w"> </span><span class="kn">import</span> <span class="n">Font</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">colors</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.lib.pagesizes</span><span class="w"> </span><span class="kn">import</span> <span class="n">A4</span><span class="p">,</span> <span class="n">landscape</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.lib.styles</span><span class="w"> </span><span class="kn">import</span> <span class="n">getSampleStyleSheet</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.lib.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">cm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reportlab.platypus</span><span class="w"> </span><span class="kn">import</span> <span class="n">Paragraph</span><span class="p">,</span> <span class="n">SimpleDocTemplate</span><span class="p">,</span> <span class="n">Spacer</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">TableStyle</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.caja.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Caja</span><span class="p">,</span> <span class="n">OperacionVentanilla</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.ganancias</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CANAL_CHOICES</span><span class="p">,</span>
+    <span class="n">TIPO_CHOICES</span><span class="p">,</span>
+    <span class="n">_en_rango</span><span class="p">,</span>
+    <span class="n">_parsear_fecha</span><span class="p">,</span>
+    <span class="n">_todas_las_ganancias</span><span class="p">,</span>
+    <span class="n">calcular_indicadores</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">AGRUPACION_DIA</span> <span class="o">=</span> <span class="s1">'dia'</span>
+<span class="n">AGRUPACION_MES</span> <span class="o">=</span> <span class="s1">'mes'</span>
+<span class="n">AGRUPACION_DIVISA</span> <span class="o">=</span> <span class="s1">'divisa'</span>
+<span class="n">AGRUPACION_TIPO</span> <span class="o">=</span> <span class="s1">'tipo'</span>
+<span class="n">AGRUPACION_CANAL</span> <span class="o">=</span> <span class="s1">'canal'</span>
+<span class="n">AGRUPACION_CAJA</span> <span class="o">=</span> <span class="s1">'caja'</span>
+<span class="n">AGRUPACIONES</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([</span>
+    <span class="p">(</span><span class="n">AGRUPACION_DIA</span><span class="p">,</span> <span class="s1">'Día'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">AGRUPACION_MES</span><span class="p">,</span> <span class="s1">'Mes'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">AGRUPACION_DIVISA</span><span class="p">,</span> <span class="s1">'Divisa'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">AGRUPACION_TIPO</span><span class="p">,</span> <span class="s1">'Tipo de operación'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">AGRUPACION_CANAL</span><span class="p">,</span> <span class="s1">'Canal'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">AGRUPACION_CAJA</span><span class="p">,</span> <span class="s1">'Caja y turno'</span><span class="p">),</span>
+<span class="p">])</span>
+<span class="sd">"""Criterios de agrupación disponibles (criterios 1 y 2), en el orden en que se ofrecen en pantalla."""</span>
+
+<span class="n">AGRUPACION_POR_DEFECTO</span> <span class="o">=</span> <span class="n">AGRUPACION_DIA</span>
+
+<span class="n">MENSAJE_SIN_DATOS</span> <span class="o">=</span> <span class="s1">'No hay operaciones completadas en el período elegido.'</span>
+<span class="sd">"""Aviso que se muestra, en vez de un error, cuando el período no tiene operaciones (criterio 6)."""</span>
+
+
+<div class="viewcode-block" id="_validar_rango">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._validar_rango">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validar_rango</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Valida un rango de fechas ya parseado. Devuelve el motivo del error, o ``None`` si es válido.</span>
+
+<span class="sd">    Usa los mismos mensajes que ``apps.divisas.ganancias.resolver_periodo``:</span>
+<span class="sd">    la fecha inicial no puede ser posterior a la final ni ninguna de las dos</span>
+<span class="sd">    puede estar en el futuro.</span>
+<span class="sd">    """</span>
+    <span class="n">hoy</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localdate</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&gt;</span> <span class="n">fecha_hasta</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">'La fecha inicial no puede ser posterior a la fecha final.'</span>
+    <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&gt;</span> <span class="n">hoy</span> <span class="ow">or</span> <span class="n">fecha_hasta</span> <span class="o">&gt;</span> <span class="n">hoy</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">'No se puede consultar un rango con fechas futuras.'</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="_clave_y_etiqueta">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._clave_y_etiqueta">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_clave_y_etiqueta</span><span class="p">(</span><span class="n">fila</span><span class="p">,</span> <span class="n">agrupacion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Clave ordenable y etiqueta legible del grupo al que pertenece ``fila`` según ``agrupacion``.</span>
+
+<span class="sd">    - ``dia``: ``'YYYY-MM-DD'`` / ``'DD/MM/YYYY'``.</span>
+<span class="sd">    - ``mes``: ``'YYYY-MM'`` / ``'MM/YYYY'``.</span>
+<span class="sd">    - ``divisa``: el código (o el par ``ORIGEN → DESTINO`` de un cambio).</span>
+<span class="sd">    - ``tipo`` y ``canal``: el código interno / su etiqueta en</span>
+<span class="sd">      ``TIPO_CHOICES``/``CANAL_CHOICES``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="ow">in</span> <span class="p">(</span><span class="n">AGRUPACION_DIA</span><span class="p">,</span> <span class="n">AGRUPACION_MES</span><span class="p">):</span>
+        <span class="n">fecha</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">agrupacion</span> <span class="o">==</span> <span class="n">AGRUPACION_DIA</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fecha</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">fecha</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'</span><span class="si">%d</span><span class="s1">/%m/%Y'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fecha</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%Y-%m'</span><span class="p">),</span> <span class="n">fecha</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%m/%Y'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="o">==</span> <span class="n">AGRUPACION_DIVISA</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">],</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="o">==</span> <span class="n">AGRUPACION_TIPO</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'tipo_codigo'</span><span class="p">],</span> <span class="nb">dict</span><span class="p">(</span><span class="n">TIPO_CHOICES</span><span class="p">)[</span><span class="n">fila</span><span class="p">[</span><span class="s1">'tipo_codigo'</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'canal'</span><span class="p">],</span> <span class="nb">dict</span><span class="p">(</span><span class="n">CANAL_CHOICES</span><span class="p">)[</span><span class="n">fila</span><span class="p">[</span><span class="s1">'canal'</span><span class="p">]]</span></div>
+
+
+
+<div class="viewcode-block" id="_orden_de_grupo">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._orden_de_grupo">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_orden_de_grupo</span><span class="p">(</span><span class="n">agrupacion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Función de orden de los grupos: cronológico, alfabético o el orden de las opciones del modelo."""</span>
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="o">==</span> <span class="n">AGRUPACION_TIPO</span><span class="p">:</span>
+        <span class="n">posiciones</span> <span class="o">=</span> <span class="p">{</span><span class="n">codigo</span><span class="p">:</span> <span class="n">indice</span> <span class="k">for</span> <span class="n">indice</span><span class="p">,</span> <span class="p">(</span><span class="n">codigo</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">TIPO_CHOICES</span><span class="p">)}</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">clave</span><span class="p">:</span> <span class="n">posiciones</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clave</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">posiciones</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="o">==</span> <span class="n">AGRUPACION_CANAL</span><span class="p">:</span>
+        <span class="n">posiciones</span> <span class="o">=</span> <span class="p">{</span><span class="n">codigo</span><span class="p">:</span> <span class="n">indice</span> <span class="k">for</span> <span class="n">indice</span><span class="p">,</span> <span class="p">(</span><span class="n">codigo</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">CANAL_CHOICES</span><span class="p">)}</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">clave</span><span class="p">:</span> <span class="n">posiciones</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clave</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">posiciones</span><span class="p">))</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">clave</span><span class="p">:</span> <span class="n">clave</span></div>
+
+
+
+<div class="viewcode-block" id="agrupar_ganancias">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.agrupar_ganancias">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">agrupar_ganancias</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">agrupacion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Ganancia y cantidad de operaciones de cada grupo según ``agrupacion`` (criterio 1).</span>
+
+<span class="sd">    Solo aparecen los grupos que tienen al menos una operación en ``filas``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filas (list[dict]): Filas normalizadas de</span>
+<span class="sd">            ``apps.divisas.ganancias._todas_las_ganancias``, ya filtradas</span>
+<span class="sd">            por el período.</span>
+<span class="sd">        agrupacion (str): Uno de ``dia``, ``mes``, ``divisa``, ``tipo`` o</span>
+<span class="sd">            ``canal`` (el desglose por caja lo resuelve</span>
+<span class="sd">            ``desglosar_por_caja``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[dict]: Una entrada por grupo, con ``clave``, ``etiqueta``,</span>
+<span class="sd">        ``cantidad`` y ``ganancia_pyg``, en orden cronológico (día/mes),</span>
+<span class="sd">        alfabético (divisa) o el de ``TIPO_CHOICES``/``CANAL_CHOICES``.</span>
+<span class="sd">    """</span>
+    <span class="n">acumulado</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">:</span>
+        <span class="n">clave</span><span class="p">,</span> <span class="n">etiqueta</span> <span class="o">=</span> <span class="n">_clave_y_etiqueta</span><span class="p">(</span><span class="n">fila</span><span class="p">,</span> <span class="n">agrupacion</span><span class="p">)</span>
+        <span class="n">grupo</span> <span class="o">=</span> <span class="n">acumulado</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+            <span class="n">clave</span><span class="p">,</span> <span class="p">{</span><span class="s1">'clave'</span><span class="p">:</span> <span class="n">clave</span><span class="p">,</span> <span class="s1">'etiqueta'</span><span class="p">:</span> <span class="n">etiqueta</span><span class="p">,</span> <span class="s1">'cantidad'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)},</span>
+        <span class="p">)</span>
+        <span class="n">grupo</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">grupo</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">]</span>
+    <span class="n">orden</span> <span class="o">=</span> <span class="n">_orden_de_grupo</span><span class="p">(</span><span class="n">agrupacion</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">acumulado</span><span class="p">[</span><span class="n">clave</span><span class="p">]</span> <span class="k">for</span> <span class="n">clave</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">acumulado</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">orden</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="_nombre_cajero">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._nombre_cajero">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_nombre_cajero</span><span class="p">(</span><span class="n">usuario</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Nombre completo del cajero o, si no lo tiene cargado, su nombre de usuario."""</span>
+    <span class="k">return</span> <span class="n">usuario</span><span class="o">.</span><span class="n">get_full_name</span><span class="p">()</span> <span class="ow">or</span> <span class="n">usuario</span><span class="o">.</span><span class="n">get_username</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="_cajas_del_periodo">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._cajas_del_periodo">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_cajas_del_periodo</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Cajas cuyo turno se superpone con el período, de la apertura más antigua a la más reciente.</span>
+
+<span class="sd">    Una caja pertenece al período si se abrió antes del fin del rango y,</span>
+<span class="sd">    además, sigue abierta o se cerró después del inicio del rango (ambas</span>
+<span class="sd">    fechas en hora local). Así entra también un turno abierto el día</span>
+<span class="sd">    anterior al rango que siguió operando dentro de él.</span>
+<span class="sd">    """</span>
+    <span class="n">cajas</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">abierta_en__date__lte</span><span class="o">=</span><span class="n">fecha_hasta</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'abierta_en'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">caja</span> <span class="k">for</span> <span class="n">caja</span> <span class="ow">in</span> <span class="n">cajas</span>
+        <span class="k">if</span> <span class="n">caja</span><span class="o">.</span><span class="n">cerrada_en</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">caja</span><span class="o">.</span><span class="n">cerrada_en</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">fecha_desde</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="desglosar_por_caja">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.desglosar_por_caja">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">desglosar_por_caja</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Una fila por caja del período con cajero, apertura, cierre, operaciones y ganancia (criterios 2 y 3).</span>
+
+<span class="sd">    Solo cuenta las operaciones de ventanilla de cada caja registradas</span>
+<span class="sd">    dentro del período, con la misma ganancia (``comision``, ya en PYG) que</span>
+<span class="sd">    usa el tablero para el canal ventanilla. Una caja todavía "Abierta" se</span>
+<span class="sd">    marca con ``en_curso=True``: no tiene fecha de cierre y su ganancia es</span>
+<span class="sd">    parcial, porque puede seguir registrando operaciones.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[dict]: Una entrada por caja con ``caja_id``, ``cajero``,</span>
+<span class="sd">        ``abierta_en``, ``cerrada_en`` (``None`` si sigue abierta),</span>
+<span class="sd">        ``en_curso``, ``cantidad`` y ``ganancia_pyg``.</span>
+<span class="sd">    """</span>
+    <span class="n">cajas</span> <span class="o">=</span> <span class="n">_cajas_del_periodo</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">)</span>
+    <span class="n">operaciones</span> <span class="o">=</span> <span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">caja__in</span><span class="o">=</span><span class="n">cajas</span><span class="p">)</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="s1">'caja_id'</span><span class="p">,</span> <span class="s1">'comision'</span><span class="p">,</span> <span class="s1">'creado_en'</span><span class="p">)</span>
+
+    <span class="n">acumulado</span> <span class="o">=</span> <span class="p">{</span><span class="n">caja</span><span class="o">.</span><span class="n">pk</span><span class="p">:</span> <span class="p">{</span><span class="s1">'cantidad'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)}</span> <span class="k">for</span> <span class="n">caja</span> <span class="ow">in</span> <span class="n">cajas</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">operacion</span> <span class="ow">in</span> <span class="n">operaciones</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&lt;=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">operacion</span><span class="o">.</span><span class="n">creado_en</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">fecha_hasta</span><span class="p">:</span>
+            <span class="n">acumulado</span><span class="p">[</span><span class="n">operacion</span><span class="o">.</span><span class="n">caja_id</span><span class="p">][</span><span class="s1">'cantidad'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">acumulado</span><span class="p">[</span><span class="n">operacion</span><span class="o">.</span><span class="n">caja_id</span><span class="p">][</span><span class="s1">'ganancia_pyg'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">operacion</span><span class="o">.</span><span class="n">comision</span>
+
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s1">'caja_id'</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="s1">'cajero'</span><span class="p">:</span> <span class="n">_nombre_cajero</span><span class="p">(</span><span class="n">caja</span><span class="o">.</span><span class="n">usuario</span><span class="p">),</span>
+            <span class="s1">'abierta_en'</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">abierta_en</span><span class="p">,</span>
+            <span class="s1">'cerrada_en'</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">cerrada_en</span><span class="p">,</span>
+            <span class="s1">'en_curso'</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">Caja</span><span class="o">.</span><span class="n">ESTADO_ABIERTA</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">acumulado</span><span class="p">[</span><span class="n">caja</span><span class="o">.</span><span class="n">pk</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">caja</span> <span class="ow">in</span> <span class="n">cajas</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="generar_reporte_ganancias">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_reporte_ganancias">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generar_reporte_ganancias</span><span class="p">(</span><span class="n">parametros</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Resuelve filtros, grupos y totales del reporte de ganancias a partir de los parámetros de la URL.</span>
+
+<span class="sd">    ``parametros`` es cualquier mapeo tipo ``QueryDict`` con las claves</span>
+<span class="sd">    ``fecha_desde``, ``fecha_hasta`` y ``agrupacion`` (las de</span>
+<span class="sd">    ``request.GET``). El rango de fechas es obligatorio: sin alguna de las</span>
+<span class="sd">    dos fechas se devuelve ``reporte_generado=False`` sin error, para que</span>
+<span class="sd">    la pantalla muestre solo el formulario. Un rango ilegible o inválido se</span>
+<span class="sd">    informa en ``error_rango``. Una agrupación desconocida se reemplaza por</span>
+<span class="sd">    ``AGRUPACION_POR_DEFECTO``.</span>
+
+<span class="sd">    El ``total`` siempre abarca **todas** las operaciones completadas del</span>
+<span class="sd">    período (ambos canales), calculado igual que el tablero, para que los</span>
+<span class="sd">    dos coincidan (criterio 4); también con el desglose por caja, que solo</span>
+<span class="sd">    detalla la ventanilla y por eso informa además su propio</span>
+<span class="sd">    ``total_cajas``. ``sin_datos`` es ``True`` si el período no tiene</span>
+<span class="sd">    ninguna operación completada (criterio 6).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: ``reporte_generado``, ``error_rango``, ``sin_datos``,</span>
+<span class="sd">        ``filtros`` (los valores tal como llegaron, con la agrupación ya</span>
+<span class="sd">        resuelta), ``agrupacion_etiqueta``, ``grupos`` (o ``cajas`` en el</span>
+<span class="sd">        desglose por caja), ``total`` (``cantidad`` y ``ganancia_pyg``),</span>
+<span class="sd">        ``total_cajas`` y ``generado_en``.</span>
+<span class="sd">    """</span>
+    <span class="n">fecha_desde_str</span> <span class="o">=</span> <span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">fecha_hasta_str</span> <span class="o">=</span> <span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">agrupacion</span> <span class="o">=</span> <span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'agrupacion'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">AGRUPACIONES</span><span class="p">:</span>
+        <span class="n">agrupacion</span> <span class="o">=</span> <span class="n">AGRUPACION_POR_DEFECTO</span>
+
+    <span class="n">resultado</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'reporte_generado'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">'error_rango'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">'sin_datos'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s1">'filtros'</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">'fecha_desde'</span><span class="p">:</span> <span class="n">fecha_desde_str</span><span class="p">,</span>
+            <span class="s1">'fecha_hasta'</span><span class="p">:</span> <span class="n">fecha_hasta_str</span><span class="p">,</span>
+            <span class="s1">'agrupacion'</span><span class="p">:</span> <span class="n">agrupacion</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">'agrupacion_etiqueta'</span><span class="p">:</span> <span class="n">AGRUPACIONES</span><span class="p">[</span><span class="n">agrupacion</span><span class="p">],</span>
+        <span class="s1">'grupos'</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s1">'cajas'</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s1">'total'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">'total_cajas'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">'generado_en'</span><span class="p">:</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">fecha_desde_str</span> <span class="ow">and</span> <span class="n">fecha_hasta_str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">resultado</span>
+
+    <span class="n">fecha_desde</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">fecha_desde_str</span><span class="p">)</span>
+    <span class="n">fecha_hasta</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">fecha_hasta_str</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fecha_desde</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">fecha_hasta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Ingresá un rango de fechas válido.'</span>
+        <span class="k">return</span> <span class="n">resultado</span>
+
+    <span class="n">error_rango</span> <span class="o">=</span> <span class="n">_validar_rango</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">error_rango</span><span class="p">:</span>
+        <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]</span> <span class="o">=</span> <span class="n">error_rango</span>
+        <span class="k">return</span> <span class="n">resultado</span>
+
+    <span class="n">filas</span> <span class="o">=</span> <span class="n">_en_rango</span><span class="p">(</span><span class="n">_todas_las_ganancias</span><span class="p">(),</span> <span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">)</span>
+    <span class="n">indicadores</span> <span class="o">=</span> <span class="n">calcular_indicadores</span><span class="p">(</span><span class="n">filas</span><span class="p">)</span>
+    <span class="n">resultado</span><span class="p">[</span><span class="s1">'reporte_generado'</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">resultado</span><span class="p">[</span><span class="s1">'total'</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'cantidad'</span><span class="p">:</span> <span class="n">indicadores</span><span class="p">[</span><span class="s1">'cantidad_operaciones'</span><span class="p">],</span>
+        <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">indicadores</span><span class="p">[</span><span class="s1">'ganancia_total'</span><span class="p">],</span>
+    <span class="p">}</span>
+    <span class="n">resultado</span><span class="p">[</span><span class="s1">'sin_datos'</span><span class="p">]</span> <span class="o">=</span> <span class="n">indicadores</span><span class="p">[</span><span class="s1">'cantidad_operaciones'</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="o">==</span> <span class="n">AGRUPACION_CAJA</span><span class="p">:</span>
+        <span class="n">cajas</span> <span class="o">=</span> <span class="n">desglosar_por_caja</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">)</span>
+        <span class="n">resultado</span><span class="p">[</span><span class="s1">'cajas'</span><span class="p">]</span> <span class="o">=</span> <span class="n">cajas</span>
+        <span class="n">resultado</span><span class="p">[</span><span class="s1">'total_cajas'</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'cantidad'</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">caja</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">]</span> <span class="k">for</span> <span class="n">caja</span> <span class="ow">in</span> <span class="n">cajas</span><span class="p">),</span>
+            <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="nb">sum</span><span class="p">((</span><span class="n">caja</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">]</span> <span class="k">for</span> <span class="n">caja</span> <span class="ow">in</span> <span class="n">cajas</span><span class="p">),</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)),</span>
+            <span class="s1">'hay_en_curso'</span><span class="p">:</span> <span class="nb">any</span><span class="p">(</span><span class="n">caja</span><span class="p">[</span><span class="s1">'en_curso'</span><span class="p">]</span> <span class="k">for</span> <span class="n">caja</span> <span class="ow">in</span> <span class="n">cajas</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">resultado</span><span class="p">[</span><span class="s1">'grupos'</span><span class="p">]</span> <span class="o">=</span> <span class="n">agrupar_ganancias</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">agrupacion</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resultado</span></div>
+
+
+
+<div class="viewcode-block" id="_formatear_fecha">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_fecha">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_formatear_fecha</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``'YYYY-MM-DD'`` a ``'DD/MM/YYYY'``, tal como se ingresó en el filtro."""</span>
+    <span class="n">fecha</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fecha</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'</span><span class="si">%d</span><span class="s1">/%m/%Y'</span><span class="p">)</span> <span class="k">if</span> <span class="n">fecha</span> <span class="k">else</span> <span class="n">valor</span></div>
+
+
+
+<div class="viewcode-block" id="descripcion_filtros">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.descripcion_filtros">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">descripcion_filtros</span><span class="p">(</span><span class="n">filtros</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Texto legible de los filtros aplicados, para dejarlos documentados en el archivo descargado (criterio 5)."""</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Del </span><span class="si">{</span><span class="n">_formatear_fecha</span><span class="p">(</span><span class="n">filtros</span><span class="p">[</span><span class="s1">'fecha_desde'</span><span class="p">])</span><span class="si">}</span><span class="s2"> al </span><span class="si">{</span><span class="n">_formatear_fecha</span><span class="p">(</span><span class="n">filtros</span><span class="p">[</span><span class="s1">'fecha_hasta'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">" · Agrupado por: </span><span class="si">{</span><span class="n">AGRUPACIONES</span><span class="p">[</span><span class="n">filtros</span><span class="p">[</span><span class="s1">'agrupacion'</span><span class="p">]]</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_formatear_momento">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_momento">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_formatear_momento</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Fecha y hora en hora local (``'DD/MM/YYYY HH:MM'``), o cadena vacía si no hay valor."""</span>
+    <span class="k">return</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'</span><span class="si">%d</span><span class="s1">/%m/%Y %H:%M'</span><span class="p">)</span> <span class="k">if</span> <span class="n">valor</span> <span class="k">else</span> <span class="s1">''</span></div>
+
+
+
+<div class="viewcode-block" id="_filas_tabla">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_tabla">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_filas_tabla</span><span class="p">(</span><span class="n">resultado</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Encabezados y filas de la tabla principal, compartidos por el PDF y el Excel.</span>
+
+<span class="sd">    Devolver la misma estructura a los dos formatos garantiza que ambos</span>
+<span class="sd">    archivos muestren exactamente los mismos datos (criterio 5). Los</span>
+<span class="sd">    importes quedan como ``Decimal``; cada formato decide cómo escribirlos.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">][</span><span class="s1">'agrupacion'</span><span class="p">]</span> <span class="o">==</span> <span class="n">AGRUPACION_CAJA</span><span class="p">:</span>
+        <span class="n">encabezados</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'Cajero'</span><span class="p">,</span> <span class="s1">'Apertura'</span><span class="p">,</span> <span class="s1">'Cierre'</span><span class="p">,</span> <span class="s1">'Operaciones'</span><span class="p">,</span> <span class="s1">'Ganancia (PYG)'</span><span class="p">,</span> <span class="s1">'Observación'</span><span class="p">]</span>
+        <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="n">caja</span><span class="p">[</span><span class="s1">'cajero'</span><span class="p">],</span>
+                <span class="n">_formatear_momento</span><span class="p">(</span><span class="n">caja</span><span class="p">[</span><span class="s1">'abierta_en'</span><span class="p">]),</span>
+                <span class="s1">'En curso'</span> <span class="k">if</span> <span class="n">caja</span><span class="p">[</span><span class="s1">'en_curso'</span><span class="p">]</span> <span class="k">else</span> <span class="n">_formatear_momento</span><span class="p">(</span><span class="n">caja</span><span class="p">[</span><span class="s1">'cerrada_en'</span><span class="p">]),</span>
+                <span class="n">caja</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">],</span>
+                <span class="n">caja</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">],</span>
+                <span class="s1">'Parcial'</span> <span class="k">if</span> <span class="n">caja</span><span class="p">[</span><span class="s1">'en_curso'</span><span class="p">]</span> <span class="k">else</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">caja</span> <span class="ow">in</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'cajas'</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">encabezados</span><span class="p">,</span> <span class="n">filas</span>
+
+    <span class="n">encabezados</span> <span class="o">=</span> <span class="p">[</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'agrupacion_etiqueta'</span><span class="p">],</span> <span class="s1">'Operaciones'</span><span class="p">,</span> <span class="s1">'Ganancia (PYG)'</span><span class="p">]</span>
+    <span class="n">filas</span> <span class="o">=</span> <span class="p">[[</span><span class="n">grupo</span><span class="p">[</span><span class="s1">'etiqueta'</span><span class="p">],</span> <span class="n">grupo</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">],</span> <span class="n">grupo</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">]]</span> <span class="k">for</span> <span class="n">grupo</span> <span class="ow">in</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'grupos'</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">encabezados</span><span class="p">,</span> <span class="n">filas</span></div>
+
+
+
+<div class="viewcode-block" id="_filas_totales">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_totales">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_filas_totales</span><span class="p">(</span><span class="n">resultado</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Líneas de totales (etiqueta, cantidad, ganancia) que cierran ambos archivos."""</span>
+    <span class="n">filas</span> <span class="o">=</span> <span class="p">[[</span><span class="s1">'Total general (todos los canales)'</span><span class="p">,</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'total'</span><span class="p">][</span><span class="s1">'cantidad'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'total'</span><span class="p">][</span><span class="s1">'ganancia_pyg'</span><span class="p">]]]</span>
+    <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'total_cajas'</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">etiqueta</span> <span class="o">=</span> <span class="s1">'Total de ventanilla (cajas del período)'</span>
+        <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'total_cajas'</span><span class="p">][</span><span class="s1">'hay_en_curso'</span><span class="p">]:</span>
+            <span class="n">etiqueta</span> <span class="o">+=</span> <span class="s1">' — parcial'</span>
+        <span class="n">filas</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">etiqueta</span><span class="p">,</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'total_cajas'</span><span class="p">][</span><span class="s1">'cantidad'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'total_cajas'</span><span class="p">][</span><span class="s1">'ganancia_pyg'</span><span class="p">]])</span>
+    <span class="k">return</span> <span class="n">filas</span></div>
+
+
+
+<div class="viewcode-block" id="_texto_celda">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._texto_celda">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_texto_celda</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convierte un valor de la tabla a texto para el PDF, con dos decimales en los importes."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valor</span><span class="p">,</span> <span class="n">Decimal</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">valor</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">'</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_valor_excel">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._valor_excel">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_valor_excel</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convierte un valor de la tabla a un tipo que Excel trate como número cuando corresponde."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valor</span><span class="p">,</span> <span class="n">Decimal</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">valor</span></div>
+
+
+
+<div class="viewcode-block" id="generar_pdf">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_pdf">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generar_pdf</span><span class="p">(</span><span class="n">resultado</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Arma el PDF del reporte: filtros aplicados, fecha de generación, desglose y totales (criterio 5).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        resultado (dict): El resultado de ``generar_reporte_ganancias`` con</span>
+<span class="sd">            ``reporte_generado=True``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytes: El contenido del PDF.</span>
+<span class="sd">    """</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">documento</span> <span class="o">=</span> <span class="n">SimpleDocTemplate</span><span class="p">(</span>
+        <span class="n">buffer</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="n">landscape</span><span class="p">(</span><span class="n">A4</span><span class="p">),</span> <span class="n">topMargin</span><span class="o">=</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">,</span> <span class="n">bottomMargin</span><span class="o">=</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">estilos</span> <span class="o">=</span> <span class="n">getSampleStyleSheet</span><span class="p">()</span>
+
+    <span class="n">elementos</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">Paragraph</span><span class="p">(</span><span class="s1">'Reporte de ganancias'</span><span class="p">,</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Title'</span><span class="p">]),</span>
+        <span class="n">Paragraph</span><span class="p">(</span><span class="n">descripcion_filtros</span><span class="p">(</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">]),</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Normal'</span><span class="p">]),</span>
+        <span class="n">Paragraph</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generado el </span><span class="si">{</span><span class="n">_formatear_momento</span><span class="p">(</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'generado_en'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Normal'</span><span class="p">]),</span>
+        <span class="n">Spacer</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">encabezados</span><span class="p">,</span> <span class="n">filas</span> <span class="o">=</span> <span class="n">_filas_tabla</span><span class="p">(</span><span class="n">resultado</span><span class="p">)</span>
+    <span class="n">tabla</span> <span class="o">=</span> <span class="n">Table</span><span class="p">([</span><span class="n">encabezados</span><span class="p">]</span> <span class="o">+</span> <span class="p">[[</span><span class="n">_texto_celda</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span> <span class="k">for</span> <span class="n">valor</span> <span class="ow">in</span> <span class="n">fila</span><span class="p">]</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">],</span> <span class="n">repeatRows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">tabla</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">TableStyle</span><span class="p">([</span>
+        <span class="p">(</span><span class="s1">'BACKGROUND'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">colors</span><span class="o">.</span><span class="n">HexColor</span><span class="p">(</span><span class="s1">'#2a78d6'</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s1">'TEXTCOLOR'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">colors</span><span class="o">.</span><span class="n">white</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'FONTSIZE'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">9</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'GRID'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">colors</span><span class="o">.</span><span class="n">grey</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">'ROWBACKGROUNDS'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">[</span><span class="n">colors</span><span class="o">.</span><span class="n">white</span><span class="p">,</span> <span class="n">colors</span><span class="o">.</span><span class="n">HexColor</span><span class="p">(</span><span class="s1">'#f2f2f2'</span><span class="p">)]),</span>
+    <span class="p">]))</span>
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tabla</span><span class="p">)</span>
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Spacer</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cm</span><span class="p">))</span>
+
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Paragraph</span><span class="p">(</span><span class="s1">'Totales'</span><span class="p">,</span> <span class="n">estilos</span><span class="p">[</span><span class="s1">'Heading3'</span><span class="p">]))</span>
+    <span class="n">totales</span> <span class="o">=</span> <span class="p">[[</span><span class="s1">'Concepto'</span><span class="p">,</span> <span class="s1">'Operaciones'</span><span class="p">,</span> <span class="s1">'Ganancia (PYG)'</span><span class="p">]]</span>
+    <span class="n">totales</span><span class="o">.</span><span class="n">extend</span><span class="p">([[</span><span class="n">_texto_celda</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span> <span class="k">for</span> <span class="n">valor</span> <span class="ow">in</span> <span class="n">fila</span><span class="p">]</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">_filas_totales</span><span class="p">(</span><span class="n">resultado</span><span class="p">)])</span>
+    <span class="n">elementos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Table</span><span class="p">(</span><span class="n">totales</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">TableStyle</span><span class="p">([(</span><span class="s1">'GRID'</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">colors</span><span class="o">.</span><span class="n">grey</span><span class="p">)])))</span>
+
+    <span class="n">documento</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">elementos</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="generar_excel">
+<a class="viewcode-back" href="../../../reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_excel">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generar_excel</span><span class="p">(</span><span class="n">resultado</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Arma el Excel del reporte con los mismos datos, filtros y fecha de generación que el PDF (criterio 5).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        resultado (dict): El resultado de ``generar_reporte_ganancias`` con</span>
+<span class="sd">            ``reporte_generado=True``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bytes: El contenido del archivo ``.xlsx``.</span>
+<span class="sd">    """</span>
+    <span class="n">libro</span> <span class="o">=</span> <span class="n">Workbook</span><span class="p">()</span>
+    <span class="n">hoja</span> <span class="o">=</span> <span class="n">libro</span><span class="o">.</span><span class="n">active</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s1">'Ganancias'</span>
+
+    <span class="n">negrita</span> <span class="o">=</span> <span class="n">Font</span><span class="p">(</span><span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">'Reporte de ganancias'</span><span class="p">])</span>
+    <span class="n">hoja</span><span class="p">[</span><span class="s1">'A1'</span><span class="p">]</span><span class="o">.</span><span class="n">font</span> <span class="o">=</span> <span class="n">Font</span><span class="p">(</span><span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">descripcion_filtros</span><span class="p">(</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">])])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="sa">f</span><span class="s2">"Generado el </span><span class="si">{</span><span class="n">_formatear_momento</span><span class="p">(</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'generado_en'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+
+    <span class="n">encabezados</span><span class="p">,</span> <span class="n">filas</span> <span class="o">=</span> <span class="n">_filas_tabla</span><span class="p">(</span><span class="n">resultado</span><span class="p">)</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">encabezados</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">celda</span> <span class="ow">in</span> <span class="n">hoja</span><span class="p">[</span><span class="n">hoja</span><span class="o">.</span><span class="n">max_row</span><span class="p">]:</span>
+        <span class="n">celda</span><span class="o">.</span><span class="n">font</span> <span class="o">=</span> <span class="n">negrita</span>
+    <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">:</span>
+        <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">_valor_excel</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span> <span class="k">for</span> <span class="n">valor</span> <span class="ow">in</span> <span class="n">fila</span><span class="p">])</span>
+
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">'Totales'</span><span class="p">])</span>
+    <span class="n">hoja</span><span class="p">[</span><span class="sa">f</span><span class="s1">'A</span><span class="si">{</span><span class="n">hoja</span><span class="o">.</span><span class="n">max_row</span><span class="si">}</span><span class="s1">'</span><span class="p">]</span><span class="o">.</span><span class="n">font</span> <span class="o">=</span> <span class="n">negrita</span>
+    <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s1">'Concepto'</span><span class="p">,</span> <span class="s1">'Operaciones'</span><span class="p">,</span> <span class="s1">'Ganancia (PYG)'</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">_filas_totales</span><span class="p">(</span><span class="n">resultado</span><span class="p">):</span>
+        <span class="n">hoja</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">_valor_excel</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span> <span class="k">for</span> <span class="n">valor</span> <span class="ow">in</span> <span class="n">fila</span><span class="p">])</span>
+
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">libro</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

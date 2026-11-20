@@ -70,6 +70,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -412,7 +413,6 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.monitoreo.html">apps.divisas.monitoreo module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.CANAL_TERMINAL"><code class="docutils literal notranslate"><span class="pre">CANAL_TERMINAL</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.CANAL_CHOICES"><code class="docutils literal notranslate"><span class="pre">CANAL_CHOICES</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.ESTADO_COMPLETADA"><code class="docutils literal notranslate"><span class="pre">ESTADO_COMPLETADA</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.monitoreo.html#apps.divisas.monitoreo.ESTADO_CHOICES"><code class="docutils literal notranslate"><span class="pre">ESTADO_CHOICES</span></code></a></li>
@@ -460,6 +460,29 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.pagos_stripe.html#apps.divisas.pagos_stripe._configuracion_solo_tarjeta"><code class="docutils literal notranslate"><span class="pre">_configuracion_solo_tarjeta()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="apps.divisas.reporte_ganancias.html">apps.divisas.reporte_ganancias module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.AGRUPACIONES"><code class="docutils literal notranslate"><span class="pre">AGRUPACIONES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.AGRUPACION_POR_DEFECTO"><code class="docutils literal notranslate"><span class="pre">AGRUPACION_POR_DEFECTO</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.MENSAJE_SIN_DATOS"><code class="docutils literal notranslate"><span class="pre">MENSAJE_SIN_DATOS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._validar_rango"><code class="docutils literal notranslate"><span class="pre">_validar_rango()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._clave_y_etiqueta"><code class="docutils literal notranslate"><span class="pre">_clave_y_etiqueta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._orden_de_grupo"><code class="docutils literal notranslate"><span class="pre">_orden_de_grupo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.agrupar_ganancias"><code class="docutils literal notranslate"><span class="pre">agrupar_ganancias()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._nombre_cajero"><code class="docutils literal notranslate"><span class="pre">_nombre_cajero()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._cajas_del_periodo"><code class="docutils literal notranslate"><span class="pre">_cajas_del_periodo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.desglosar_por_caja"><code class="docutils literal notranslate"><span class="pre">desglosar_por_caja()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_reporte_ganancias"><code class="docutils literal notranslate"><span class="pre">generar_reporte_ganancias()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_fecha"><code class="docutils literal notranslate"><span class="pre">_formatear_fecha()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.descripcion_filtros"><code class="docutils literal notranslate"><span class="pre">descripcion_filtros()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._formatear_momento"><code class="docutils literal notranslate"><span class="pre">_formatear_momento()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_tabla"><code class="docutils literal notranslate"><span class="pre">_filas_tabla()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._filas_totales"><code class="docutils literal notranslate"><span class="pre">_filas_totales()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._texto_celda"><code class="docutils literal notranslate"><span class="pre">_texto_celda()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias._valor_excel"><code class="docutils literal notranslate"><span class="pre">_valor_excel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_pdf"><code class="docutils literal notranslate"><span class="pre">generar_pdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.generar_excel"><code class="docutils literal notranslate"><span class="pre">generar_excel()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.reportes.html">apps.divisas.reportes module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes.TIPO_CHOICES"><code class="docutils literal notranslate"><span class="pre">TIPO_CHOICES</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.reportes.html#apps.divisas.reportes.ESTADOS_COMPLETADOS"><code class="docutils literal notranslate"><span class="pre">ESTADOS_COMPLETADOS</span></code></a></li>
@@ -491,6 +514,9 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoMixin"><code class="docutils literal notranslate"><span class="pre">MonitoreoMixin</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView"><code class="docutils literal notranslate"><span class="pre">MonitoreoTransaccionesView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView"><code class="docutils literal notranslate"><span class="pre">DescargarMonitoreoView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin"><code class="docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ReporteGananciasView"><code class="docutils literal notranslate"><span class="pre">ReporteGananciasView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView"><code class="docutils literal notranslate"><span class="pre">DescargarReporteGananciasView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView"><code class="docutils literal notranslate"><span class="pre">DetalleMonitoreoTransaccionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleTransaccionOperacionView"><code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.DetalleTransaccionCambioView"><code class="docutils literal notranslate"><span class="pre">DetalleTransaccionCambioView</span></code></a></li>

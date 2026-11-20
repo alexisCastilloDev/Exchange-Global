@@ -70,6 +70,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -695,6 +696,80 @@ motivo en vez de descargar un archivo vacío o roto.</p>
 <dt class="sig sig-object py" id="apps.divisas.views.DescargarMonitoreoView.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formato</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarMonitoreoView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarMonitoreoView.get" title="Link to this definition"></a></dt>
 <dd><p>Valida el formato y los datos antes de generar el archivo.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ReporteGananciasMixin</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteGananciasMixin"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteGananciasMixin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code></p>
+<p>Control de acceso del reporte de ganancias: solo administración y análisis cambiario (criterio 7).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasMixin.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteGananciasMixin.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteGananciasMixin.test_func" title="Link to this definition"></a></dt>
+<dd><p>Comprueba que el rol “admin” o “analista_cambiario” esté en la sesión.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ReporteGananciasView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteGananciasView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteGananciasView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.ReporteGananciasMixin" title="apps.divisas.views.ReporteGananciasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>Genera el reporte de ganancias de un período, agrupado según el criterio elegido.</p>
+<p>Implementa la HU «Reporte de ganancias». A partir de un rango de
+fechas obligatorio y un criterio de agrupación (día, mes, divisa, tipo
+de operación, canal o caja y turno), muestra la ganancia y la cantidad
+de operaciones de cada grupo junto con el total general (criterios 1 y
+2). Todo el cálculo vive en
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.reporte_ganancias.generar_reporte_ganancias</span></code>, que
+reutiliza las filas y el total del tablero de ganancias para que ambos
+coincidan (criterio 4). Sin las dos fechas solo se ve el formulario;
+un rango inválido se informa sin calcular nada; sin operaciones se
+avisa que no hay datos, sin error y sin ofrecer descargas (criterio 6).
+Desde esta pantalla se descarga el mismo reporte en PDF o en Excel
+(criterio 5, ver <code class="docutils literal notranslate"><span class="pre">DescargarReporteGananciasView</span></code>). Solo acceden
+administradores y analistas cambiarios (criterio 7, ver
+<code class="docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ReporteGananciasView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ReporteGananciasView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Arma el reporte con los filtros de la URL y las opciones del formulario.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['get',</span> <span class="pre">'head',</span> <span class="pre">'options']</span></span><a class="headerlink" href="#apps.divisas.views.ReporteGananciasView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ReporteGananciasView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'divisas/reporte_ganancias.html'</span></span><a class="headerlink" href="#apps.divisas.views.ReporteGananciasView.template_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteGananciasView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DescargarReporteGananciasView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarReporteGananciasView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarReporteGananciasView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.ReporteGananciasMixin" title="apps.divisas.views.ReporteGananciasMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Descarga, en PDF o en Excel, el mismo reporte de ganancias que se ve en pantalla (criterio 5).</p>
+<p>Rearma el reporte con los mismos filtros de la URL (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.reporte_ganancias.generar_reporte_ganancias</span></code>) en vez
+de recibir datos ya calculados, para no poder quedar desincronizada de
+<code class="docutils literal notranslate"><span class="pre">ReporteGananciasView</span></code>. Sin rango de fechas, con un rango inválido o
+sin operaciones en el período, vuelve a la pantalla con el motivo en
+vez de descargar un archivo vacío o roto.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteGananciasView.FORMATOS">
+<span class="sig-name descname"><span class="pre">FORMATOS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'excel':</span> <span class="pre">(&lt;function</span> <span class="pre">generar_excel&gt;,</span> <span class="pre">'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',</span> <span class="pre">'xlsx'),</span> <span class="pre">'pdf':</span> <span class="pre">(&lt;function</span> <span class="pre">generar_pdf&gt;,</span> <span class="pre">'application/pdf',</span> <span class="pre">'pdf')}</span></span><a class="headerlink" href="#apps.divisas.views.DescargarReporteGananciasView.FORMATOS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.DescargarReporteGananciasView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formato</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#DescargarReporteGananciasView.get"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.DescargarReporteGananciasView.get" title="Link to this definition"></a></dt>
+<dd><p>Valida el formato, los filtros y los datos antes de generar el archivo.</p>
 </dd></dl>
 
 </dd></dl>
