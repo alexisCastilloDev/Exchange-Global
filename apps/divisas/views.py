@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -74,6 +75,14 @@ from apps.divisas.models import (
     moneda_a_pagar,
     monto_a_entregar,
     monto_a_pagar,
+)
+from apps.divisas.monitoreo import (
+    CANAL_CHOICES as CANAL_CHOICES_MONITOREO,
+    ESTADO_CHOICES as ESTADO_CHOICES_MONITOREO,
+    detalle_transaccion as detalle_transaccion_monitoreo,
+    generar_excel as generar_excel_monitoreo,
+    generar_monitoreo,
+    generar_pdf as generar_pdf_monitoreo,
 )
 from apps.divisas.reportes import (
     TIPO_CHOICES,
@@ -935,6 +944,120 @@ class DescargarReporteTransaccionesView(LoginRequiredMixin, UserPassesTestMixin,
         respuesta = HttpResponse(contenido, content_type=content_type)
         respuesta['Content-Disposition'] = f'attachment; filename="reporte_transacciones_{cliente.pk}.{extension}"'
         return respuesta
+
+
+class MonitoreoMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Control de acceso del monitoreo: solo administración y análisis cambiario (criterio 6)."""
+
+    def test_func(self):
+        """Comprueba que el rol 'admin' o 'analista_cambiario' esté en la sesión."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return bool({'admin', 'analista_cambiario'} & set(roles))
+
+
+class MonitoreoTransaccionesView(MonitoreoMixin, TemplateView):
+    """Monitoreo, de solo consulta, de todas las transacciones del sistema.
+
+    Implementa la HU "Monitoreo de transacciones y reportes" (epic
+    GE-14). Muestra un listado paginado (``paginate_by``) de las
+    transacciones de todos los clientes y de todos los canales (ver
+    ``apps.divisas.monitoreo``), filtrable por rango de fechas, cliente,
+    tipo, divisa, estado, canal y "requiere atención" (entrega
+    pendiente, entrega incierta o pago fuera de plazo), que se destacan
+    en la tabla. Es de solo consulta: no define ``post`` y no ofrece
+    ningún control que cambie el estado de una transacción (criterio 7).
+    Desde acá se descarga el mismo listado filtrado en PDF o en Excel
+    (``DescargarMonitoreoView``). Solo acceden administradores y
+    analistas cambiarios (criterio 6, ver ``MonitoreoMixin``).
+    """
+
+    template_name = 'divisas/monitoreo_transacciones.html'
+    paginate_by = 20
+    http_method_names = ['get', 'head', 'options']
+
+    def get_context_data(self, **kwargs):
+        """Arma el listado paginado, los totales y los datos del formulario de filtros."""
+        context = super().get_context_data(**kwargs)
+        resultado = generar_monitoreo(self.request.GET)
+        paginador = Paginator(resultado['filas'], self.paginate_by)
+        pagina = paginador.get_page(self.request.GET.get('page'))
+        querystring = self.request.GET.copy()
+        querystring.pop('page', None)
+        context.update({
+            **resultado,
+            'page_obj': pagina,
+            'is_paginated': paginador.num_pages > 1,
+            'transacciones': pagina.object_list,
+            'tipos_disponibles': TIPO_CHOICES_GANANCIAS,
+            'estados_disponibles': ESTADO_CHOICES_MONITOREO,
+            'canales_disponibles': CANAL_CHOICES_MONITOREO,
+            'querystring': querystring.urlencode(),
+        })
+        return context
+
+
+class DescargarMonitoreoView(MonitoreoMixin, View):
+    """Descarga, en PDF o en Excel, el mismo listado filtrado que se ve en pantalla (criterio 5).
+
+    Rearma el listado con los mismos filtros de la URL (ver
+    ``apps.divisas.monitoreo.generar_monitoreo``) en vez de recibir datos
+    ya calculados, para no poder quedar desincronizada de
+    ``MonitoreoTransaccionesView``. Con un rango inválido o sin
+    transacciones para los filtros elegidos, vuelve a la pantalla con el
+    motivo en vez de descargar un archivo vacío o roto.
+    """
+
+    FORMATOS = {
+        'pdf': (generar_pdf_monitoreo, 'application/pdf', 'pdf'),
+        'excel': (generar_excel_monitoreo, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'),
+    }
+
+    def get(self, request, formato):
+        """Valida el formato y los datos antes de generar el archivo."""
+        if formato not in self.FORMATOS:
+            raise Http404('Formato de descarga desconocido.')
+
+        resultado = generar_monitoreo(request.GET)
+        destino = reverse('divisas:monitoreo_transacciones')
+        querystring = request.GET.urlencode()
+        if querystring:
+            destino = f'{destino}?{querystring}'
+
+        if resultado['error_rango']:
+            messages.error(request, resultado['error_rango'])
+            return redirect(destino)
+        if not resultado['filas']:
+            messages.error(request, 'No hay transacciones para los filtros elegidos.')
+            return redirect(destino)
+
+        funcion, content_type, extension = self.FORMATOS[formato]
+        contenido = funcion(resultado['filas'], resultado['totales'], resultado['filtros'], resultado['generado_en'])
+        respuesta = HttpResponse(contenido, content_type=content_type)
+        respuesta['Content-Disposition'] = f'attachment; filename="monitoreo_transacciones.{extension}"'
+        return respuesta
+
+
+class DetalleMonitoreoTransaccionView(MonitoreoMixin, TemplateView):
+    """Detalle de solo lectura de una transacción: pago, medios de origen y destino y factura (criterio 4).
+
+    No define ``post`` ni ofrece botones de reintento, confirmación o
+    cancelación (criterio 7): a diferencia de ``DetalleTransaccionOperacionView``,
+    que el cliente usa para reintentar su propia entrega, esta pantalla
+    solo consulta. ``tipo`` es ``'operacion'``, ``'cambio'`` o
+    ``'ventanilla'`` (ver ``apps.divisas.monitoreo.detalle_transaccion``).
+    """
+
+    template_name = 'divisas/monitoreo_detalle.html'
+    http_method_names = ['get', 'head', 'options']
+
+    def get_context_data(self, **kwargs):
+        """Resuelve la transacción o responde 404 si no existe."""
+        context = super().get_context_data(**kwargs)
+        detalle = detalle_transaccion_monitoreo(kwargs['tipo'], kwargs['pk'])
+        if detalle is None:
+            raise Http404('La transacción no existe.')
+        context.update(detalle)
+        return context
 
 
 class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):

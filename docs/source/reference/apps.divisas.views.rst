@@ -35,6 +35,22 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.MonitoreoMixin
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.MonitoreoTransaccionesView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DescargarMonitoreoView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.DetalleMonitoreoTransaccionView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.DetalleTransaccionOperacionView
    :members:
    :show-inheritance:

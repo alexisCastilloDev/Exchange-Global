@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
@@ -209,11 +210,12 @@ deja la transacción en «Pagada» (nunca antes, y nunca si el pago ya
 existía de antes — ver los llamadores), o desde <code class="docutils literal notranslate"><span class="pre">reintentar_entrega</span></code>
 si una entrega anterior quedó fallida. Si no hay un medio de
 destino elegido (no debería pasar: se exige al pagar, ver
-<code class="docutils literal notranslate"><span class="pre">apps.divisas.forms.PagarTransaccionForm</span></code>), la llamada a sipap-sim
-falla, o el saldo propio de Global Exchange no alcanza (una
-verificación ya se hizo al confirmar, pero puede haber cambiado
-entretanto), la transacción pasa a «Entrega fallida» en vez de
-quedar «Pagada» como si nada hubiera pasado.</p>
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.forms.PagarTransaccionForm</span></code>), el saldo <strong>real</strong> de
+Global Exchange en sipap-sim no alcanza (una verificación ya se hizo
+al confirmar, pero el saldo real puede haber cambiado entretanto —
+ver el docstring del módulo), o la llamada a sipap-sim falla, la
+transacción pasa a «Entrega fallida» en vez de quedar «Pagada» como
+si nada hubiera pasado.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parámetros<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>transaccion</strong> – Una <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> o <code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>

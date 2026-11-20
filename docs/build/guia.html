@@ -68,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#como-leer-la-referencia">Cómo leer la referencia</a></li>
@@ -939,6 +940,47 @@ nueva). El listado <code class="docutils literal notranslate"><span class="pre">
 cerradas, con el período en que cada una estuvo abierta y su balance por
 moneda (Criterio 4); es una pantalla de solo lectura, sin ninguna acción
 para modificar lo ya registrado.</p>
+</section>
+<section id="consulta-de-facturas-electronicas">
+<h2>Consulta de facturas electrónicas<a class="headerlink" href="#consulta-de-facturas-electronicas" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Consulta de facturas electrónicas»: un cliente con un
+cliente activo seleccionado consulta, en <code class="docutils literal notranslate"><span class="pre">/divisas/transacciones/mias/facturas/</span></code>
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.MisFacturasElectronicasListView</span></code>), el listado
+<strong>paginado</strong> (20 por página, Criterio 1) de los <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.DocumentoElectronico</span></code>
+emitidos para sus propias transacciones (compra/venta o cambio) — el
+comprobante que la HU «Integración con API de facturación electrónica»
+genera automáticamente ante SIFEN apenas una transacción queda «Pagada». Es
+de solo lectura: a diferencia de la pantalla de administración
+(<code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView</span></code>, con todos los clientes y acciones para
+reintentar o consultar el estado SIFEN), el cliente no puede ejecutar
+ninguna acción sobre sus propios documentos, solo consultarlos.</p>
+<p>Cada fila muestra número de documento, CDC, la transacción asociada (con su
+tipo y divisa), la fecha de emisión y el monto —tomado de
+<code class="docutils literal notranslate"><span class="pre">documento.transaccion.monto_final</span></code>, porque el documento en sí no lo
+duplica— junto con el estado (Criterio 2). El estado se simplifica para el
+cliente con el mismo criterio que ya usa el detalle de una transacción:
+<code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.factura_pendiente</span></code> agrupa cualquier falla técnica
+(de generación o de SIFEN) bajo «Pendiente de generación», en vez de
+mostrarle un código de error interno.</p>
+<p>El listado admite filtrar por rango de fechas de emisión con
+<code class="docutils literal notranslate"><span class="pre">fecha_desde</span></code>/<code class="docutils literal notranslate"><span class="pre">fecha_hasta</span></code> en la URL (Criterio 3), mismo patrón y mismo
+parseo (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views._parsear_fecha</span></code>) que
+<code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code> ya usa para su propio filtro de fechas. Un
+documento sin <code class="docutils literal notranslate"><span class="pre">emitida_en</span></code> todavía (pendiente de generación, o rechazado)
+nunca coincide con ningún filtro de fecha —no hay ninguna fecha de emisión
+real contra la que comparar— así que solo aparece en el listado sin
+filtrar.</p>
+<p>Cada fila enlaza, con un botón «Ver detalle», a la pantalla de detalle de su
+transacción (<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code>/<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionCambioView</span></code>),
+que ya incluye una sección «Factura electrónica» con el comprobante completo
+—número, estado, fecha de emisión y CDC— y, si el documento ya tiene CDC,
+los enlaces de descarga del KuDE y el XML (Criterio 4). Sin ninguna factura
+emitida para el cliente activo, la plantilla muestra un mensaje explícito
+(«Todavía no tenés ninguna factura electrónica emitida.») en vez de una
+tabla vacía o un error (Criterio 5); si el cliente sí tiene facturas pero el
+rango de fechas filtrado no encuentra ninguna, el mensaje lo distingue
+(«No se encontraron facturas para el rango de fechas seleccionado.») para no
+confundir «no tengo ninguna» con «no hay ninguna con este filtro».</p>
 </section>
 <section id="descarga-de-facturas-electronicas">
 <h2>Descarga de facturas electrónicas<a class="headerlink" href="#descarga-de-facturas-electronicas" title="Link to this heading"></a></h2>

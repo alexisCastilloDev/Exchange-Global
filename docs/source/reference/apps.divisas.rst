@@ -14,6 +14,7 @@ Submodules
    apps.divisas.forms
    apps.divisas.ganancias
    apps.divisas.models
+   apps.divisas.monitoreo
    apps.divisas.pagos_sipap
    apps.divisas.pagos_stripe
    apps.divisas.reportes
