@@ -260,6 +260,18 @@
         <span class="p">},</span>
     <span class="p">),</span>
     <span class="n">ModeloAuditado</span><span class="p">(</span>
+        <span class="n">modelo</span><span class="o">=</span><span class="s1">'clientes.Cliente'</span><span class="p">,</span>
+        <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">RegistroActividad</span><span class="o">.</span><span class="n">RECURSO_CLIENTE</span><span class="p">,</span>
+        <span class="c1"># stripe_customer_id queda afuera: lo escribe el sistema al pagar</span>
+        <span class="c1"># con tarjeta (apps.divisas.pagos_stripe), no un administrador.</span>
+        <span class="n">campos</span><span class="o">=</span><span class="p">(</span>
+            <span class="s1">'tipo_cliente'</span><span class="p">,</span> <span class="s1">'identificador'</span><span class="p">,</span> <span class="s1">'nombre'</span><span class="p">,</span> <span class="s1">'apellido'</span><span class="p">,</span> <span class="s1">'razon_social'</span><span class="p">,</span>
+            <span class="s1">'email'</span><span class="p">,</span> <span class="s1">'segmento'</span><span class="p">,</span> <span class="s1">'comision_personalizada'</span><span class="p">,</span> <span class="s1">'is_active'</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">describir</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cliente</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cliente</span><span class="o">.</span><span class="n">nombre_completo</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s2">"Sin nombre"</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">cliente</span><span class="o">.</span><span class="n">identificador</span><span class="si">}</span><span class="s1">)'</span><span class="p">,</span>
+        <span class="n">campo_activo</span><span class="o">=</span><span class="s1">'is_active'</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">ModeloAuditado</span><span class="p">(</span>
         <span class="n">modelo</span><span class="o">=</span><span class="s1">'divisas.Divisa'</span><span class="p">,</span>
         <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">RegistroActividad</span><span class="o">.</span><span class="n">RECURSO_DIVISA</span><span class="p">,</span>
         <span class="n">campos</span><span class="o">=</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">,</span> <span class="s1">'nombre'</span><span class="p">,</span> <span class="s1">'simbolo'</span><span class="p">,</span> <span class="s1">'activa'</span><span class="p">),</span>

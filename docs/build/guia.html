@@ -1127,8 +1127,8 @@ administrativas realizadas en el sistema. El menú lateral lo muestra como
 «Registro de actividades». Todo vive en la aplicación <code class="docutils literal notranslate"><span class="pre">apps.auditoria</span></code>, y
 no se modificó ninguna vista ni modelo existente para implementarlo.</p>
 <p><strong>Qué se registra (Criterio 1).</strong> Cada alta, modificación o baja de
-usuarios, roles, divisas, tasas de cambio y parámetros de operación
-(comisiones y tiempos de espera) genera un
+usuarios, roles, clientes, divisas, tasas de cambio y parámetros de
+operación (comisiones y tiempos de espera) genera un
 <code class="docutils literal notranslate"><span class="pre">apps.auditoria.models.RegistroActividad</span></code>. Ese registro guarda quién realizó
 la acción, cuándo, sobre qué registro y qué cambió, con el valor anterior y
 el nuevo de cada campo. Las acciones se capturan con las señales
@@ -1137,8 +1137,8 @@ el nuevo de cada campo. Las acciones se capturan con las señales
 cada acción, <code class="docutils literal notranslate"><span class="pre">apps.auditoria.middleware.AuditoriaMiddleware</span></code> deja la
 request en curso disponible para las señales. Algunos detalles:</p>
 <ul class="simple">
-<li><p>Desactivar una divisa o un usuario (baja lógica) se registra como
-«Baja».</p></li>
+<li><p>Desactivar una divisa, un usuario o un cliente (baja lógica) se registra
+como «Baja».</p></li>
 <li><p>Cada actualización de tasas crea una cotización nueva. Por eso se compara
 contra la cotización que reemplaza.</p></li>
 <li><p>Los roles viven en Keycloak, así que no hay ningún modelo que escuchar.
