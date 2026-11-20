@@ -72,6 +72,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -100,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#parciales">Parciales</a></li>
@@ -108,6 +110,7 @@
 <li class="toctree-l1"><a class="reference internal" href="reference/modules.html">Referencia API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.clientes.html">apps.clientes package</a></li>
@@ -1114,6 +1117,62 @@ pedida por URL vuelve a la pantalla con ese mismo aviso.</p>
 <p><strong>Acceso (Criterio 7).</strong> <code class="docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code> solo autoriza los roles
 <code class="docutils literal notranslate"><span class="pre">admin</span></code> y <code class="docutils literal notranslate"><span class="pre">analista_cambiario</span></code>. Un cliente, un cajero o un usuario sin
 rol reciben un 403, tanto en la pantalla como en las descargas.</p>
+</section>
+<section id="registro-y-auditoria-de-actividades">
+<h2>Registro y auditoría de actividades<a class="headerlink" href="#registro-y-auditoria-de-actividades" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Registro y auditoría de actividades» (GE-71). Un
+administrador consulta en <code class="docutils literal notranslate"><span class="pre">/auditoria/actividades/</span></code>
+(<code class="docutils literal notranslate"><span class="pre">apps.auditoria.views.RegistroActividadListView</span></code>) las acciones
+administrativas realizadas en el sistema. El menú lateral lo muestra como
+«Registro de actividades». Todo vive en la aplicación <code class="docutils literal notranslate"><span class="pre">apps.auditoria</span></code>, y
+no se modificó ninguna vista ni modelo existente para implementarlo.</p>
+<p><strong>Qué se registra (Criterio 1).</strong> Cada alta, modificación o baja de
+usuarios, roles, divisas, tasas de cambio y parámetros de operación
+(comisiones y tiempos de espera) genera un
+<code class="docutils literal notranslate"><span class="pre">apps.auditoria.models.RegistroActividad</span></code>. Ese registro guarda quién realizó
+la acción, cuándo, sobre qué registro y qué cambió, con el valor anterior y
+el nuevo de cada campo. Las acciones se capturan con las señales
+<code class="docutils literal notranslate"><span class="pre">pre_save</span></code>, <code class="docutils literal notranslate"><span class="pre">post_save</span></code> y <code class="docutils literal notranslate"><span class="pre">post_delete</span></code> de esos modelos
+(<code class="docutils literal notranslate"><span class="pre">apps.auditoria.signals.MODELOS_AUDITADOS</span></code>). Para saber quién realiza
+cada acción, <code class="docutils literal notranslate"><span class="pre">apps.auditoria.middleware.AuditoriaMiddleware</span></code> deja la
+request en curso disponible para las señales. Algunos detalles:</p>
+<ul class="simple">
+<li><p>Desactivar una divisa o un usuario (baja lógica) se registra como
+«Baja».</p></li>
+<li><p>Cada actualización de tasas crea una cotización nueva. Por eso se compara
+contra la cotización que reemplaza.</p></li>
+<li><p>Los roles viven en Keycloak, así que no hay ningún modelo que escuchar.
+En un POST a <code class="docutils literal notranslate"><span class="pre">editar_roles</span></code>, el middleware consulta los roles del
+usuario antes y después de la vista, y registra la diferencia. Si Keycloak
+no responde a esa consulta, la edición sigue su curso normal y solo se
+omite su registro.</p></li>
+</ul>
+<p>Solo se registra lo que envía un usuario autenticado con un método que
+modifica datos (POST, PUT, PATCH, DELETE), y solo si cambió al menos un
+campo. Por eso no quedan en el registro:</p>
+<ul class="simple">
+<li><p>la sincronización con Keycloak que hace el listado de usuarios en cada
+GET;</p></li>
+<li><p>los cambios hechos fuera de una request (migraciones, comandos, shell);</p></li>
+<li><p>el envío de un formulario sin modificar nada.</p></li>
+</ul>
+<p><strong>Listado (Criterio 2).</strong> Las actividades se muestran de la más reciente a
+la más antigua, de a 20 por página.</p>
+<p><strong>Filtros (Criterio 3).</strong> Se puede filtrar por usuario, tipo de acción,
+tipo de registro y rango de fechas
+(<code class="docutils literal notranslate"><span class="pre">apps.auditoria.forms.FiltroRegistroActividadForm</span></code>). Los filtros se
+combinan entre sí. El rango incluye ambos extremos y se compara contra el
+día local (<code class="docutils literal notranslate"><span class="pre">TIME_ZONE</span></code>). El selector de usuario ofrece solo a quienes
+tienen alguna actividad registrada. Un rango invertido se informa como
+error y no muestra resultados.</p>
+<p><strong>Inmutabilidad (Criterio 4).</strong> La vista solo acepta GET: un POST, PUT o
+DELETE recibe un 405. Además, el propio modelo impide volver a guardar o
+eliminar un registro, tanto por instancia como en forma masiva
+(<code class="docutils literal notranslate"><span class="pre">RegistroActividadQuerySet</span></code>). La única excepción es la que ejecuta
+Django al eliminar al usuario que realizó la acción (<code class="docutils literal notranslate"><span class="pre">SET_NULL</span></code>). En ese
+caso el registro conserva su nombre en <code class="docutils literal notranslate"><span class="pre">usuario_nombre</span></code>.</p>
+<p><strong>Acceso (Criterio 5).</strong> Solo el rol <code class="docutils literal notranslate"><span class="pre">admin</span></code> accede. Cualquier otro rol
+recibe un 403 y un usuario sin sesión es redirigido al login.</p>
 </section>
 <section id="acceso-a-esta-documentacion-desde-el-sistema">
 <h2>Acceso a esta documentación desde el sistema<a class="headerlink" href="#acceso-a-esta-documentacion-desde-el-sistema" title="Link to this heading"></a></h2>

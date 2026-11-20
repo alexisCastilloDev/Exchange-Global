@@ -1,0 +1,470 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.auditoria.signals &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#auditoria">Auditoría</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.auditoria.html">apps.auditoria package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.auditoria.signals</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.auditoria.signals</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Receptores que registran las altas, modificaciones y bajas de los modelos administrativos.</span>
+
+<span class="sd">Implementa el primer criterio de aceptación de GE-71 sin tocar ninguna</span>
+<span class="sd">vista ni modelo existente: en vez de agregar una llamada de auditoría en</span>
+<span class="sd">cada lugar que guarda un usuario, una divisa, una tasa o un parámetro,</span>
+<span class="sd">se escuchan las señales ``pre_save``/``post_save``/``post_delete`` de esos</span>
+<span class="sd">modelos. ``pre_save`` toma una instantánea del registro tal como está en</span>
+<span class="sd">la base antes de guardar y ``post_save`` la compara con lo guardado, para</span>
+<span class="sd">dejar constancia de cada campo que cambió con su valor anterior y nuevo.</span>
+
+<span class="sd">Solo se registra lo que hace un usuario autenticado en una request que</span>
+<span class="sd">modifica datos (ver ``apps.auditoria.registro.usuario_responsable``), y</span>
+<span class="sd">solo si cambió al menos un campo auditado: guardar un formulario sin</span>
+<span class="sd">modificar nada no deja ningún registro.</span>
+
+<span class="sd">Los cambios de roles no pasan por ningún modelo (viven en Keycloak) y se</span>
+<span class="sd">registran aparte, en ``apps.auditoria.middleware.AuditoriaMiddleware``.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.apps</span><span class="w"> </span><span class="kn">import</span> <span class="n">apps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.signals</span><span class="w"> </span><span class="kn">import</span> <span class="n">post_delete</span><span class="p">,</span> <span class="n">post_save</span><span class="p">,</span> <span class="n">pre_save</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">capfirst</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.auditoria.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegistroActividad</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.auditoria.registro</span><span class="w"> </span><span class="kn">import</span> <span class="n">registrar_actividad</span><span class="p">,</span> <span class="n">usuario_responsable</span>
+
+
+<div class="viewcode-block" id="ModeloAuditado">
+<a class="viewcode-back" href="../../../reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado">[documentos]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModeloAuditado</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Describe cómo auditar un modelo.</span>
+
+<span class="sd">    Campos de la configuración:</span>
+
+<span class="sd">    - ``modelo``: etiqueta ``"app_label.NombreModelo"`` del modelo auditado.</span>
+<span class="sd">    - ``tipo_recurso``: una de ``RegistroActividad.RECURSO_CHOICES``.</span>
+<span class="sd">    - ``campos``: campos cuyo cambio se registra. Se listan explícitamente</span>
+<span class="sd">      para dejar afuera datos técnicos (contraseñas, último acceso, marcas</span>
+<span class="sd">      de tiempo, "actualizado por") que no son parte de la acción y solo</span>
+<span class="sd">      llenarían el registro de ruido.</span>
+<span class="sd">    - ``describir``: función que recibe la instancia y devuelve el texto con</span>
+<span class="sd">      el que se identifica el registro afectado.</span>
+<span class="sd">    - ``campo_activo``: campo booleano de la baja lógica; si pasa de</span>
+<span class="sd">      verdadero a falso, la acción se registra como "Baja".</span>
+<span class="sd">    - ``anterior_de``: solo para modelos históricos, donde cada</span>
+<span class="sd">      actualización crea una fila nueva en vez de modificar la existente</span>
+<span class="sd">      (``Cotizacion``). Recibe la instancia nueva y devuelve la fila que</span>
+<span class="sd">      reemplaza, para registrar qué valores cambiaron respecto de ella.</span>
+<span class="sd">    - ``etiquetas``: nombres legibles que reemplazan al ``verbose_name`` de</span>
+<span class="sd">      algunos campos. Hace falta para ``User``, cuyos ``verbose_name`` son</span>
+<span class="sd">      los de Django, en inglés (el proyecto usa ``LANGUAGE_CODE = 'en-us'``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">modelo</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tipo_recurso</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">campos</span><span class="p">:</span> <span class="nb">tuple</span>
+    <span class="n">describir</span><span class="p">:</span> <span class="n">Callable</span>
+    <span class="n">campo_activo</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">anterior_de</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">etiquetas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cotizacion_anterior</span><span class="p">(</span><span class="n">cotizacion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve la cotización vigente de la divisa antes de registrar ``cotizacion``."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cotizacion</span><span class="o">.</span><span class="n">divisa_id</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="nb">type</span><span class="p">(</span><span class="n">cotizacion</span><span class="p">)</span><span class="o">.</span><span class="n">_base_manager</span>
+        <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">divisa_id</span><span class="o">=</span><span class="n">cotizacion</span><span class="o">.</span><span class="n">divisa_id</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-fecha_actualizacion'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="p">)</span>
+
+
+<span class="n">MODELOS_AUDITADOS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">ModeloAuditado</span><span class="p">(</span>
+        <span class="n">modelo</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">RegistroActividad</span><span class="o">.</span><span class="n">RECURSO_USUARIO</span><span class="p">,</span>
+        <span class="n">campos</span><span class="o">=</span><span class="p">(</span><span class="s1">'username'</span><span class="p">,</span> <span class="s1">'email'</span><span class="p">,</span> <span class="s1">'first_name'</span><span class="p">,</span> <span class="s1">'last_name'</span><span class="p">,</span> <span class="s1">'is_active'</span><span class="p">,</span> <span class="s1">'is_staff'</span><span class="p">,</span> <span class="s1">'is_superuser'</span><span class="p">),</span>
+        <span class="n">describir</span><span class="o">=</span><span class="k">lambda</span> <span class="n">usuario</span><span class="p">:</span> <span class="n">usuario</span><span class="o">.</span><span class="n">get_username</span><span class="p">(),</span>
+        <span class="n">campo_activo</span><span class="o">=</span><span class="s1">'is_active'</span><span class="p">,</span>
+        <span class="n">etiquetas</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">'username'</span><span class="p">:</span> <span class="s1">'Nombre de usuario'</span><span class="p">,</span>
+            <span class="s1">'email'</span><span class="p">:</span> <span class="s1">'Correo electrónico'</span><span class="p">,</span>
+            <span class="s1">'first_name'</span><span class="p">:</span> <span class="s1">'Nombre'</span><span class="p">,</span>
+            <span class="s1">'last_name'</span><span class="p">:</span> <span class="s1">'Apellido'</span><span class="p">,</span>
+            <span class="s1">'is_active'</span><span class="p">:</span> <span class="s1">'Activo'</span><span class="p">,</span>
+            <span class="s1">'is_staff'</span><span class="p">:</span> <span class="s1">'Acceso al panel de Django'</span><span class="p">,</span>
+            <span class="s1">'is_superuser'</span><span class="p">:</span> <span class="s1">'Superusuario'</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">),</span>
+    <span class="n">ModeloAuditado</span><span class="p">(</span>
+        <span class="n">modelo</span><span class="o">=</span><span class="s1">'divisas.Divisa'</span><span class="p">,</span>
+        <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">RegistroActividad</span><span class="o">.</span><span class="n">RECURSO_DIVISA</span><span class="p">,</span>
+        <span class="n">campos</span><span class="o">=</span><span class="p">(</span><span class="s1">'codigo'</span><span class="p">,</span> <span class="s1">'nombre'</span><span class="p">,</span> <span class="s1">'simbolo'</span><span class="p">,</span> <span class="s1">'activa'</span><span class="p">),</span>
+        <span class="n">describir</span><span class="o">=</span><span class="k">lambda</span> <span class="n">divisa</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> - </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">nombre</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+        <span class="n">campo_activo</span><span class="o">=</span><span class="s1">'activa'</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">ModeloAuditado</span><span class="p">(</span>
+        <span class="n">modelo</span><span class="o">=</span><span class="s1">'divisas.Cotizacion'</span><span class="p">,</span>
+        <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">RegistroActividad</span><span class="o">.</span><span class="n">RECURSO_TASA</span><span class="p">,</span>
+        <span class="n">campos</span><span class="o">=</span><span class="p">(</span><span class="s1">'tasa_compra'</span><span class="p">,</span> <span class="s1">'tasa_venta'</span><span class="p">),</span>
+        <span class="n">describir</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cotizacion</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Tasa de cambio </span><span class="si">{</span><span class="n">cotizacion</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+        <span class="n">anterior_de</span><span class="o">=</span><span class="n">_cotizacion_anterior</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">ModeloAuditado</span><span class="p">(</span>
+        <span class="n">modelo</span><span class="o">=</span><span class="s1">'divisas.ConfiguracionComision'</span><span class="p">,</span>
+        <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">RegistroActividad</span><span class="o">.</span><span class="n">RECURSO_PARAMETRO</span><span class="p">,</span>
+        <span class="n">campos</span><span class="o">=</span><span class="p">(</span><span class="s1">'segmento'</span><span class="p">,</span> <span class="s1">'porcentaje'</span><span class="p">),</span>
+        <span class="n">describir</span><span class="o">=</span><span class="k">lambda</span> <span class="n">comision</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'Comisión del segmento </span><span class="si">{</span><span class="n">comision</span><span class="o">.</span><span class="n">get_segmento_display</span><span class="p">()</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">ModeloAuditado</span><span class="p">(</span>
+        <span class="n">modelo</span><span class="o">=</span><span class="s1">'divisas.ConfiguracionVigencia'</span><span class="p">,</span>
+        <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">RegistroActividad</span><span class="o">.</span><span class="n">RECURSO_PARAMETRO</span><span class="p">,</span>
+        <span class="n">campos</span><span class="o">=</span><span class="p">(</span><span class="s1">'calculo_vigencia_segundos'</span><span class="p">,</span> <span class="s1">'confirmacion_vigencia_segundos'</span><span class="p">,</span> <span class="s1">'pago_vigencia_segundos'</span><span class="p">),</span>
+        <span class="n">describir</span><span class="o">=</span><span class="k">lambda</span> <span class="n">configuracion</span><span class="p">:</span> <span class="s1">'Tiempos de espera de las operaciones'</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_valor_legible</span><span class="p">(</span><span class="n">instancia</span><span class="p">,</span> <span class="n">campo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convierte el valor de un campo en el texto que se muestra en el registro.</span>
+
+<span class="sd">    Usa la etiqueta de las opciones (``choices``) en vez del valor interno,</span>
+<span class="sd">    "Sí"/"No" para los booleanos y ``None`` para un valor vacío.</span>
+<span class="sd">    """</span>
+    <span class="n">valor</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instancia</span><span class="p">,</span> <span class="n">campo</span><span class="o">.</span><span class="n">attname</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">valor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">campo</span><span class="o">.</span><span class="n">choices</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instancia</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'get_</span><span class="si">{</span><span class="n">campo</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_display'</span><span class="p">)()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valor</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">'Sí'</span> <span class="k">if</span> <span class="n">valor</span> <span class="k">else</span> <span class="s1">'No'</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">valor</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_instantanea</span><span class="p">(</span><span class="n">instancia</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Toma los valores actuales de los campos auditados de una instancia.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: ``{nombre_campo: (valor_crudo, valor_legible)}``. El valor</span>
+<span class="sd">        crudo se usa para comparar y el legible para guardar en el registro.</span>
+<span class="sd">    """</span>
+    <span class="n">opciones</span> <span class="o">=</span> <span class="n">instancia</span><span class="o">.</span><span class="n">_meta</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">nombre</span><span class="p">:</span> <span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">instancia</span><span class="p">,</span> <span class="n">opciones</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">nombre</span><span class="p">)</span><span class="o">.</span><span class="n">attname</span><span class="p">),</span>
+            <span class="n">_valor_legible</span><span class="p">(</span><span class="n">instancia</span><span class="p">,</span> <span class="n">opciones</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">nombre</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">nombre</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">campos</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_etiqueta</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">modelo</span><span class="p">,</span> <span class="n">nombre_campo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Nombre legible de un campo: el de ``config.etiquetas`` o su ``verbose_name``."""</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">etiquetas</span> <span class="ow">and</span> <span class="n">nombre_campo</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">etiquetas</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">etiquetas</span><span class="p">[</span><span class="n">nombre_campo</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">capfirst</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">modelo</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">nombre_campo</span><span class="p">)</span><span class="o">.</span><span class="n">verbose_name</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_calcular_cambios</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">modelo</span><span class="p">,</span> <span class="n">anterior</span><span class="p">,</span> <span class="n">nuevo</span><span class="p">,</span> <span class="n">campos</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Arma la lista de campos que cambiaron entre dos instantáneas.</span>
+
+<span class="sd">    Si no hay instantánea anterior (un alta), se listan los campos que</span>
+<span class="sd">    quedaron con algún valor. Si no hay nueva (una eliminación), los que</span>
+<span class="sd">    tenían algún valor antes de eliminar.</span>
+<span class="sd">    """</span>
+    <span class="n">cambios</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">nombre</span> <span class="ow">in</span> <span class="n">campos</span><span class="p">:</span>
+        <span class="n">crudo_anterior</span><span class="p">,</span> <span class="n">legible_anterior</span> <span class="o">=</span> <span class="n">anterior</span><span class="p">[</span><span class="n">nombre</span><span class="p">]</span> <span class="k">if</span> <span class="n">anterior</span> <span class="k">else</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">crudo_nuevo</span><span class="p">,</span> <span class="n">legible_nuevo</span> <span class="o">=</span> <span class="n">nuevo</span><span class="p">[</span><span class="n">nombre</span><span class="p">]</span> <span class="k">if</span> <span class="n">nuevo</span> <span class="k">else</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">crudo_anterior</span> <span class="o">==</span> <span class="n">crudo_nuevo</span> <span class="ow">or</span> <span class="p">(</span><span class="n">anterior</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">crudo_nuevo</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s1">''</span><span class="p">)):</span>
+            <span class="k">continue</span>
+        <span class="n">cambios</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s1">'campo'</span><span class="p">:</span> <span class="n">nombre</span><span class="p">,</span>
+            <span class="s1">'etiqueta'</span><span class="p">:</span> <span class="n">_etiqueta</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">modelo</span><span class="p">,</span> <span class="n">nombre</span><span class="p">),</span>
+            <span class="s1">'anterior'</span><span class="p">:</span> <span class="n">legible_anterior</span><span class="p">,</span>
+            <span class="s1">'nuevo'</span><span class="p">:</span> <span class="n">legible_nuevo</span><span class="p">,</span>
+        <span class="p">})</span>
+    <span class="k">return</span> <span class="n">cambios</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_determinar_accion</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">anterior</span><span class="p">,</span> <span class="n">nuevo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Clasifica un guardado como alta, baja lógica o modificación."""</span>
+    <span class="k">if</span> <span class="n">anterior</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">RegistroActividad</span><span class="o">.</span><span class="n">ACCION_ALTA</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">campo_activo</span> <span class="ow">and</span> <span class="n">anterior</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">campo_activo</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">nuevo</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">campo_activo</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">RegistroActividad</span><span class="o">.</span><span class="n">ACCION_BAJA</span>
+    <span class="k">return</span> <span class="n">RegistroActividad</span><span class="o">.</span><span class="n">ACCION_MODIFICACION</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_crear_receptores</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Construye los receptores ``pre_save``, ``post_save`` y ``post_delete`` de un modelo."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">antes_de_guardar</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Guarda en la instancia cómo estaba el registro en la base antes de este guardado."""</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_auditoria_preparada</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">or</span> <span class="n">usuario_responsable</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">anterior_de</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">anterior</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">anterior_de</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">instance</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span> <span class="ow">or</span> <span class="n">instance</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">anterior</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">anterior</span> <span class="o">=</span> <span class="n">sender</span><span class="o">.</span><span class="n">_base_manager</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_auditoria_anterior</span> <span class="o">=</span> <span class="n">_instantanea</span><span class="p">(</span><span class="n">anterior</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span> <span class="k">if</span> <span class="n">anterior</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_auditoria_preparada</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">despues_de_guardar</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">created</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">update_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Registra el alta, modificación o baja si cambió algún campo auditado."""</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s1">'_auditoria_preparada'</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_auditoria_preparada</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">usuario</span> <span class="o">=</span> <span class="n">usuario_responsable</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">usuario</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">anterior</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_auditoria_anterior</span>
+        <span class="n">nuevo</span> <span class="o">=</span> <span class="n">_instantanea</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="c1"># Con update_fields, Django solo escribe esos campos: cualquier otro</span>
+        <span class="c1"># valor distinto en memoria no llegó a la base y no es un cambio real.</span>
+        <span class="n">campos</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">campos</span> <span class="k">if</span> <span class="n">update_fields</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">campos</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">update_fields</span><span class="p">]</span>
+        <span class="n">cambios</span> <span class="o">=</span> <span class="n">_calcular_cambios</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">anterior</span><span class="p">,</span> <span class="n">nuevo</span><span class="p">,</span> <span class="n">campos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cambios</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">registrar_actividad</span><span class="p">(</span>
+            <span class="n">usuario</span><span class="o">=</span><span class="n">usuario</span><span class="p">,</span>
+            <span class="n">accion</span><span class="o">=</span><span class="n">_determinar_accion</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">anterior</span><span class="p">,</span> <span class="n">nuevo</span><span class="p">),</span>
+            <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">tipo_recurso</span><span class="p">,</span>
+            <span class="n">recurso_id</span><span class="o">=</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="n">recurso_descripcion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">describir</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span>
+            <span class="n">cambios</span><span class="o">=</span><span class="n">cambios</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">despues_de_eliminar</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Registra la eliminación física de un registro con los valores que tenía."""</span>
+        <span class="n">usuario</span> <span class="o">=</span> <span class="n">usuario_responsable</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">usuario</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">cambios</span> <span class="o">=</span> <span class="n">_calcular_cambios</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">_instantanea</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">config</span><span class="p">),</span> <span class="kc">None</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">campos</span><span class="p">)</span>
+        <span class="n">registrar_actividad</span><span class="p">(</span>
+            <span class="n">usuario</span><span class="o">=</span><span class="n">usuario</span><span class="p">,</span>
+            <span class="n">accion</span><span class="o">=</span><span class="n">RegistroActividad</span><span class="o">.</span><span class="n">ACCION_ELIMINACION</span><span class="p">,</span>
+            <span class="n">tipo_recurso</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">tipo_recurso</span><span class="p">,</span>
+            <span class="n">recurso_id</span><span class="o">=</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="n">recurso_descripcion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">describir</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span>
+            <span class="n">cambios</span><span class="o">=</span><span class="n">cambios</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">antes_de_guardar</span><span class="p">,</span> <span class="n">despues_de_guardar</span><span class="p">,</span> <span class="n">despues_de_eliminar</span>
+
+
+<div class="viewcode-block" id="conectar_senales">
+<a class="viewcode-back" href="../../../reference/apps.auditoria.signals.html#apps.auditoria.signals.conectar_senales">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">conectar_senales</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Conecta los receptores de auditoría a cada modelo de ``MODELOS_AUDITADOS``.</span>
+
+<span class="sd">    Se conectan con ``weak=False`` porque los receptores son funciones</span>
+<span class="sd">    creadas en ``_crear_receptores``: sin una referencia fuerte, el</span>
+<span class="sd">    recolector de basura las eliminaría apenas termina esta función. El</span>
+<span class="sd">    ``dispatch_uid`` evita conectarlas dos veces si ``ready`` se ejecuta</span>
+<span class="sd">    más de una vez.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">MODELOS_AUDITADOS</span><span class="p">:</span>
+        <span class="n">modelo</span> <span class="o">=</span> <span class="n">apps</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">modelo</span><span class="p">)</span>
+        <span class="n">antes</span><span class="p">,</span> <span class="n">despues</span><span class="p">,</span> <span class="n">eliminar</span> <span class="o">=</span> <span class="n">_crear_receptores</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">uid</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'auditoria_</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">modelo</span><span class="si">}</span><span class="s1">'</span>
+        <span class="n">pre_save</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">antes</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">modelo</span><span class="p">,</span> <span class="n">weak</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dispatch_uid</span><span class="o">=</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s1">_pre_save'</span><span class="p">)</span>
+        <span class="n">post_save</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">despues</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">modelo</span><span class="p">,</span> <span class="n">weak</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dispatch_uid</span><span class="o">=</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s1">_post_save'</span><span class="p">)</span>
+        <span class="n">post_delete</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">eliminar</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">modelo</span><span class="p">,</span> <span class="n">weak</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dispatch_uid</span><span class="o">=</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s1">_post_delete'</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

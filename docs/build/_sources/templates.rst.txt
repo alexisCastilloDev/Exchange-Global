@@ -109,6 +109,13 @@ Clientes y bajas
    :language: html
    :lines: 1-7
 
+Auditoría
+---------
+
+.. literalinclude:: ../../templates/auditoria/registro_actividades.html
+   :language: html
+   :lines: 1-6
+
 Divisas
 -------
 

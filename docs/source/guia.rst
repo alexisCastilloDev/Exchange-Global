@@ -1012,6 +1012,67 @@ pedida por URL vuelve a la pantalla con ese mismo aviso.
 ``admin`` y ``analista_cambiario``. Un cliente, un cajero o un usuario sin
 rol reciben un 403, tanto en la pantalla como en las descargas.
 
+Registro y auditoría de actividades
+-----------------------------------
+
+Implementa la HU "Registro y auditoría de actividades" (GE-71). Un
+administrador consulta en ``/auditoria/actividades/``
+(``apps.auditoria.views.RegistroActividadListView``) las acciones
+administrativas realizadas en el sistema. El menú lateral lo muestra como
+"Registro de actividades". Todo vive en la aplicación ``apps.auditoria``, y
+no se modificó ninguna vista ni modelo existente para implementarlo.
+
+**Qué se registra (Criterio 1).** Cada alta, modificación o baja de
+usuarios, roles, divisas, tasas de cambio y parámetros de operación
+(comisiones y tiempos de espera) genera un
+``apps.auditoria.models.RegistroActividad``. Ese registro guarda quién realizó
+la acción, cuándo, sobre qué registro y qué cambió, con el valor anterior y
+el nuevo de cada campo. Las acciones se capturan con las señales
+``pre_save``, ``post_save`` y ``post_delete`` de esos modelos
+(``apps.auditoria.signals.MODELOS_AUDITADOS``). Para saber quién realiza
+cada acción, ``apps.auditoria.middleware.AuditoriaMiddleware`` deja la
+request en curso disponible para las señales. Algunos detalles:
+
+- Desactivar una divisa o un usuario (baja lógica) se registra como
+  "Baja".
+- Cada actualización de tasas crea una cotización nueva. Por eso se compara
+  contra la cotización que reemplaza.
+- Los roles viven en Keycloak, así que no hay ningún modelo que escuchar.
+  En un POST a ``editar_roles``, el middleware consulta los roles del
+  usuario antes y después de la vista, y registra la diferencia. Si Keycloak
+  no responde a esa consulta, la edición sigue su curso normal y solo se
+  omite su registro.
+
+Solo se registra lo que envía un usuario autenticado con un método que
+modifica datos (POST, PUT, PATCH, DELETE), y solo si cambió al menos un
+campo. Por eso no quedan en el registro:
+
+- la sincronización con Keycloak que hace el listado de usuarios en cada
+  GET;
+- los cambios hechos fuera de una request (migraciones, comandos, shell);
+- el envío de un formulario sin modificar nada.
+
+**Listado (Criterio 2).** Las actividades se muestran de la más reciente a
+la más antigua, de a 20 por página.
+
+**Filtros (Criterio 3).** Se puede filtrar por usuario, tipo de acción,
+tipo de registro y rango de fechas
+(``apps.auditoria.forms.FiltroRegistroActividadForm``). Los filtros se
+combinan entre sí. El rango incluye ambos extremos y se compara contra el
+día local (``TIME_ZONE``). El selector de usuario ofrece solo a quienes
+tienen alguna actividad registrada. Un rango invertido se informa como
+error y no muestra resultados.
+
+**Inmutabilidad (Criterio 4).** La vista solo acepta GET: un POST, PUT o
+DELETE recibe un 405. Además, el propio modelo impide volver a guardar o
+eliminar un registro, tanto por instancia como en forma masiva
+(``RegistroActividadQuerySet``). La única excepción es la que ejecuta
+Django al eliminar al usuario que realizó la acción (``SET_NULL``). En ese
+caso el registro conserva su nombre en ``usuario_nombre``.
+
+**Acceso (Criterio 5).** Solo el rol ``admin`` accede. Cualquier otro rol
+recibe un 403 y un usuario sin sesión es redirigido al login.
+
 Acceso a esta documentación desde el sistema
 ----------------------------------------------
 

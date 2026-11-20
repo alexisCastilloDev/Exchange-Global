@@ -69,6 +69,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -97,6 +98,7 @@
 <li class="toctree-l2"><a class="reference internal" href="templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#parciales">Parciales</a></li>
@@ -105,6 +107,7 @@
 <li class="toctree-l1"><a class="reference internal" href="reference/modules.html">Referencia API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.clientes.html">apps.clientes package</a></li>
@@ -196,6 +199,8 @@
 </li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.__init__">(método de AsociarUsuarioClienteForm)</a>
 </li>
+        <li><a href="reference/apps.auditoria.middleware.html#apps.auditoria.middleware.AuditoriaMiddleware.__init__">(método de AuditoriaMiddleware)</a>
+</li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CalculoOperacionForm.__init__">(método de CalculoOperacionForm)</a>
 </li>
         <li><a href="reference/apps.clientes.middleware.html#apps.clientes.middleware.ClienteActivoMiddleware.__init__">(método de ClienteActivoMiddleware)</a>
@@ -204,7 +209,11 @@
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfirmarTriangulacionForm.__init__">(método de ConfirmarTriangulacionForm)</a>
 </li>
+        <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.__init__">(método de FiltroRegistroActividadForm)</a>
+</li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.__init__">(método de MetodoPagoForm)</a>
+</li>
+        <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.__init__">(método de ModeloAuditado)</a>
 </li>
         <li><a href="reference/apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.__init__">(método de MovimientoExtraordinarioForm)</a>
 </li>
@@ -391,6 +400,18 @@
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView">AbrirNotificacionClienteView (clase en apps.divisas.views)</a>
 </li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.accion">accion (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_ALTA">ACCION_ALTA (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_BAJA">ACCION_BAJA (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_CHOICES">ACCION_CHOICES (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_ELIMINACION">ACCION_ELIMINACION (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_MODIFICACION">ACCION_MODIFICACION (atributo de RegistroActividad)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.acreditado_en">acreditado_en (atributo de CalculoOperacion)</a>
 
       <ul>
@@ -431,6 +452,8 @@
 </li>
       <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.agrupar_ganancias">agrupar_ganancias() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
+      <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.anterior_de">anterior_de (atributo de ModeloAuditado)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.apellido">apellido (atributo de Cliente)</a>
 
       <ul>
@@ -444,6 +467,69 @@
 
       <ul>
         <li><a href="reference/apps.html#module-apps">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria
+
+      <ul>
+        <li><a href="reference/apps.auditoria.html#module-apps.auditoria">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria.apps
+
+      <ul>
+        <li><a href="reference/apps.auditoria.apps.html#module-apps.auditoria.apps">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria.forms
+
+      <ul>
+        <li><a href="reference/apps.auditoria.forms.html#module-apps.auditoria.forms">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria.middleware
+
+      <ul>
+        <li><a href="reference/apps.auditoria.middleware.html#module-apps.auditoria.middleware">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria.models
+
+      <ul>
+        <li><a href="reference/apps.auditoria.models.html#module-apps.auditoria.models">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria.registro
+
+      <ul>
+        <li><a href="reference/apps.auditoria.registro.html#module-apps.auditoria.registro">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria.signals
+
+      <ul>
+        <li><a href="reference/apps.auditoria.signals.html#module-apps.auditoria.signals">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria.urls
+
+      <ul>
+        <li><a href="reference/apps.auditoria.urls.html#module-apps.auditoria.urls">module</a>
+</li>
+      </ul></li>
+      <li>
+    apps.auditoria.views
+
+      <ul>
+        <li><a href="reference/apps.auditoria.views.html#module-apps.auditoria.views">module</a>
 </li>
       </ul></li>
       <li>
@@ -495,6 +581,8 @@
         <li><a href="reference/apps.authentication.templatetags.html#module-apps.authentication.templatetags">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     apps.authentication.templatetags.ge_extras
 
@@ -537,8 +625,6 @@
         <li><a href="reference/apps.clientes.context_processors.html#module-apps.clientes.context_processors">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     apps.clientes.forms
 
@@ -696,6 +782,10 @@
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.AsociarUsuariosClienteView">AsociarUsuariosClienteView (clase en apps.clientes.views)</a>
 </li>
+      <li><a href="reference/apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig">AuditoriaConfig (clase en apps.auditoria.apps)</a>
+</li>
+      <li><a href="reference/apps.auditoria.middleware.html#apps.auditoria.middleware.AuditoriaMiddleware">AuditoriaMiddleware (clase en apps.auditoria.middleware)</a>
+</li>
       <li><a href="reference/apps.authentication.apps.html#apps.authentication.apps.AuthenticationConfig">AuthenticationConfig (clase en apps.authentication.apps)</a>
 </li>
   </ul></td>
@@ -730,6 +820,8 @@
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.base_fields">(atributo de CotizacionForm)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.DivisaForm.base_fields">(atributo de DivisaForm)</a>
+</li>
+        <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.base_fields">(atributo de FiltroRegistroActividadForm)</a>
 </li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.base_fields">(atributo de MetodoPagoForm)</a>
 </li>
@@ -882,6 +974,12 @@
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.cambiar_cliente_view">cambiar_cliente_view() (en el módulo apps.clientes.views)</a>
 </li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.cambios">cambios (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.campo_activo">campo_activo (atributo de ModeloAuditado)</a>
+</li>
+      <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.campos">campos (atributo de ModeloAuditado)</a>
+</li>
       <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.CANAL_CHOICES">CANAL_CHOICES (en el módulo apps.divisas.ganancias)</a>
 
       <ul>
@@ -928,6 +1026,8 @@
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.clean">(método de CotizacionForm)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.clean">(método de DocumentoElectronico)</a>
+</li>
+        <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.clean">(método de FiltroRegistroActividadForm)</a>
 </li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.clean">(método de MetodoPagoForm)</a>
 </li>
@@ -1074,6 +1174,8 @@
         <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.comision_porcentaje">(atributo de OperacionVentanilla)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.conectar_senales">conectar_senales() (en el módulo apps.auditoria.signals)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision">ConfiguracionComision (clase en apps.divisas.models)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ConfiguracionComision.DoesNotExist">ConfiguracionComision.DoesNotExist</a>
@@ -1152,6 +1254,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.context_object_name">(atributo de MisNotificacionesView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.context_object_name">(atributo de PanelAdminView)</a>
+</li>
+        <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.context_object_name">(atributo de RegistroActividadListView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitudesClienteListView.context_object_name">(atributo de SolicitudesClienteListView)</a>
 </li>
@@ -1247,6 +1351,8 @@
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.DivisaForm.declared_fields">(atributo de DivisaForm)</a>
 </li>
+        <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.declared_fields">(atributo de FiltroRegistroActividadForm)</a>
+</li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.declared_fields">(atributo de MetodoPagoForm)</a>
 </li>
         <li><a href="reference/apps.caja.forms.html#apps.caja.forms.MovimientoExtraordinarioForm.declared_fields">(atributo de MovimientoExtraordinarioForm)</a>
@@ -1264,10 +1370,20 @@
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.TriangulacionForm.declared_fields">(atributo de TriangulacionForm)</a>
 </li>
       </ul></li>
-      <li><a href="reference/apps.authentication.apps.html#apps.authentication.apps.AuthenticationConfig.default_auto_field">default_auto_field (atributo de AuthenticationConfig)</a>
+      <li><a href="reference/apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig.default_auto_field">default_auto_field (atributo de AuditoriaConfig)</a>
+
+      <ul>
+        <li><a href="reference/apps.authentication.apps.html#apps.authentication.apps.AuthenticationConfig.default_auto_field">(atributo de AuthenticationConfig)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.delete">delete() (método de Divisa)</a>
+
+      <ul>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.delete">(método de RegistroActividad)</a>
 </li>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividadQuerySet.delete">(método de RegistroActividadQuerySet)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.desc_sifen">desc_sifen (atributo de DocumentoElectronico)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.descargable">descargable (DocumentoElectronico propiedad)</a>
@@ -1283,6 +1399,8 @@
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView">DescargarReporteGananciasView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView">DescargarReporteTransaccionesView (clase en apps.divisas.views)</a>
+</li>
+      <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.describir">describir (atributo de ModeloAuditado)</a>
 </li>
       <li><a href="reference/apps.divisas.reporte_ganancias.html#apps.divisas.reporte_ganancias.descripcion_filtros">descripcion_filtros() (en el módulo apps.divisas.reporte_ganancias)</a>
 </li>
@@ -1310,14 +1428,14 @@
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView">DetalleMonitoreoTransaccionView (clase en apps.divisas.views)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.ArqueoCaja.detalles">detalles (atributo de ArqueoCaja)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleTransaccionCambioView">DetalleTransaccionCambioView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.DetalleTransaccionOperacionView">DetalleTransaccionOperacionView (clase en apps.divisas.views)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.diferencia">diferencia (atributo de Pago)</a>
 
       <ul>
@@ -1464,6 +1582,8 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.esta_vencido">(CalculoTriangulacion propiedad)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.auditoria.registro.html#apps.auditoria.registro.establecer_request_actual">establecer_request_actual() (en el módulo apps.auditoria.registro)</a>
+</li>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.Caja.estado">estado (atributo de Caja)</a>
 
       <ul>
@@ -1630,6 +1750,8 @@
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.etiqueta_corta">etiqueta_corta (MetodoPago propiedad)</a>
 </li>
+      <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.etiquetas">etiquetas (atributo de ModeloAuditado)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -1647,7 +1769,11 @@
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.FacturaSeguraRechazadaError">FacturaSeguraRechazadaError (clase en apps.divisas.factura_electronica)</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.fecha">fecha (atributo de HistorialBaja)</a>
+
+      <ul>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.fecha">(atributo de RegistroActividad)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.fecha_actualizacion">fecha_actualizacion (atributo de Cotizacion)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.fecha_registro">fecha_registro (atributo de Cliente)</a>
@@ -1670,6 +1796,10 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.filtrar">filtrar() (método de FiltroRegistroActividadForm)</a>
+</li>
+      <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm">FiltroRegistroActividadForm (clase en apps.auditoria.forms)</a>
+</li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.form_class">form_class (atributo de ActualizarComisionView)</a>
 
       <ul>
@@ -1798,6 +1928,8 @@
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitarClienteView.get">(método de SolicitarClienteView)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.get_accion_display">get_accion_display() (método de RegistroActividad)</a>
+</li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ActualizarComisionView.get_context_data">get_context_data() (método de ActualizarComisionView)</a>
 
       <ul>
@@ -1826,6 +1958,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.get_context_data">(método de MonitoreoTransaccionesView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_context_data">(método de PanelAdminView)</a>
+</li>
+        <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.get_context_data">(método de RegistroActividadListView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.get_context_data">(método de ReporteGananciasView)</a>
 </li>
@@ -1909,7 +2043,11 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_next_by_fecha">get_next_by_fecha() (método de HistorialBaja)</a>
+
+      <ul>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.get_next_by_fecha">(método de RegistroActividad)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.get_next_by_fecha_actualizacion">get_next_by_fecha_actualizacion() (método de Cotizacion)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.get_next_by_fecha_registro">get_next_by_fecha_registro() (método de Cliente)</a>
@@ -1967,7 +2105,11 @@
 </li>
       </ul></li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_previous_by_fecha">get_previous_by_fecha() (método de HistorialBaja)</a>
+
+      <ul>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.get_previous_by_fecha">(método de RegistroActividad)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.get_previous_by_fecha_actualizacion">get_previous_by_fecha_actualizacion() (método de Cotizacion)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.get_previous_by_fecha_registro">get_previous_by_fecha_registro() (método de Cliente)</a>
@@ -2000,6 +2142,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_queryset">(método de MisNotificacionesView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.get_queryset">(método de PanelAdminView)</a>
+</li>
+        <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.get_queryset">(método de RegistroActividadListView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitudesClienteListView.get_queryset">(método de SolicitudesClienteListView)</a>
 </li>
@@ -2045,7 +2189,11 @@
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.get_tipo_medio_display">get_tipo_medio_display() (método de MetodoPago)</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.get_tipo_recurso_display">get_tipo_recurso_display() (método de HistorialBaja)</a>
+
+      <ul>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.get_tipo_recurso_display">(método de RegistroActividad)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.get_tipo_tasa_display">get_tipo_tasa_display() (método de NotificacionTasa)</a>
 </li>
       <li><a href="reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.get_username">get_username() (método de KeycloakOIDCAuthenticationBackend)</a>
@@ -2139,10 +2287,10 @@
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.NotUpdated">HistorialBaja.NotUpdated</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.HistorialCajasView">HistorialCajasView (clase en apps.caja.views)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView">HistorialCotizacionesView (clase en apps.divisas.views)</a>
 </li>
       <li><a href="reference/apps.divisas.views.html#apps.divisas.views.HistorialTransaccionesView">HistorialTransaccionesView (clase en apps.divisas.views)</a>
@@ -2159,6 +2307,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView.http_method_names">(atributo de MarcarNotificacionLeidaView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.http_method_names">(atributo de MonitoreoTransaccionesView)</a>
+</li>
+        <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.http_method_names">(atributo de RegistroActividadListView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.http_method_names">(atributo de ReporteGananciasView)</a>
 </li>
@@ -2205,6 +2355,8 @@
         <li><a href="reference/apps.caja.models.html#apps.caja.models.OperacionVentanilla.id">(atributo de OperacionVentanilla)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.id">(atributo de Pago)</a>
+</li>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.id">(atributo de RegistroActividad)</a>
 </li>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.SaldoInicialCaja.id">(atributo de SaldoInicialCaja)</a>
 </li>
@@ -2258,7 +2410,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField.label_from_instance">label_from_instance() (método de AsociarUsuarioClienteForm.UsuarioModelMultipleChoiceField)</a>
+
+      <ul>
+        <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.UsuarioChoiceField.label_from_instance">(método de UsuarioChoiceField)</a>
 </li>
+      </ul></li>
       <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.ConfiguracionComisionForm.Meta.labels">labels (atributo de ConfiguracionComisionForm.Meta)</a>
 
       <ul>
@@ -2331,6 +2487,8 @@
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.CotizacionForm.media">(CotizacionForm propiedad)</a>
 </li>
         <li><a href="reference/apps.divisas.forms.html#apps.divisas.forms.DivisaForm.media">(DivisaForm propiedad)</a>
+</li>
+        <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.media">(FiltroRegistroActividadForm propiedad)</a>
 </li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.MetodoPagoForm.media">(MetodoPagoForm propiedad)</a>
 </li>
@@ -2468,6 +2626,8 @@
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.model">(atributo de PanelAdminView)</a>
 </li>
+        <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.model">(atributo de RegistroActividadListView)</a>
+</li>
         <li><a href="reference/apps.clientes.forms.html#apps.clientes.forms.SolicitudClienteForm.Meta.model">(atributo de SolicitudClienteForm.Meta)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.SolicitudesClienteListView.model">(atributo de SolicitudesClienteListView)</a>
@@ -2475,11 +2635,33 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.TasasVigentesListView.model">(atributo de TasasVigentesListView)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.modelo">modelo (atributo de ModeloAuditado)</a>
+</li>
+      <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado">ModeloAuditado (clase en apps.auditoria.signals)</a>
+</li>
       <li>
     module
 
       <ul>
         <li><a href="reference/apps.html#module-apps">apps</a>
+</li>
+        <li><a href="reference/apps.auditoria.html#module-apps.auditoria">apps.auditoria</a>
+</li>
+        <li><a href="reference/apps.auditoria.apps.html#module-apps.auditoria.apps">apps.auditoria.apps</a>
+</li>
+        <li><a href="reference/apps.auditoria.forms.html#module-apps.auditoria.forms">apps.auditoria.forms</a>
+</li>
+        <li><a href="reference/apps.auditoria.middleware.html#module-apps.auditoria.middleware">apps.auditoria.middleware</a>
+</li>
+        <li><a href="reference/apps.auditoria.models.html#module-apps.auditoria.models">apps.auditoria.models</a>
+</li>
+        <li><a href="reference/apps.auditoria.registro.html#module-apps.auditoria.registro">apps.auditoria.registro</a>
+</li>
+        <li><a href="reference/apps.auditoria.signals.html#module-apps.auditoria.signals">apps.auditoria.signals</a>
+</li>
+        <li><a href="reference/apps.auditoria.urls.html#module-apps.auditoria.urls">apps.auditoria.urls</a>
+</li>
+        <li><a href="reference/apps.auditoria.views.html#module-apps.auditoria.views">apps.auditoria.views</a>
 </li>
         <li><a href="reference/apps.authentication.html#module-apps.authentication">apps.authentication</a>
 </li>
@@ -2664,9 +2846,11 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/apps.authentication.apps.html#apps.authentication.apps.AuthenticationConfig.name">name (atributo de AuthenticationConfig)</a>
+      <li><a href="reference/apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig.name">name (atributo de AuditoriaConfig)</a>
 
       <ul>
+        <li><a href="reference/apps.authentication.apps.html#apps.authentication.apps.AuthenticationConfig.name">(atributo de AuthenticationConfig)</a>
+</li>
         <li><a href="reference/apps.users.apps.html#apps.users.apps.UsersConfig.name">(atributo de UsersConfig)</a>
 </li>
       </ul></li>
@@ -2692,6 +2876,8 @@
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.nombre_completo">(SolicitudCliente propiedad)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.auditoria.registro.html#apps.auditoria.registro.nombre_de_usuario">nombre_de_usuario() (en el módulo apps.auditoria.registro)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.nombre_receptor">nombre_receptor (DocumentoElectronico propiedad)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.nombre_titular">nombre_titular (atributo de MetodoPago)</a>
@@ -2712,6 +2898,8 @@
 
       <ul>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.notificaciones">(atributo de CalculoTriangulacion)</a>
+</li>
+        <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.notificaciones">(atributo de Cliente)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Cotizacion.notificaciones">(atributo de Cotizacion)</a>
 </li>
@@ -2789,6 +2977,8 @@
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.objects">(atributo de Pago)</a>
 </li>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.objects">(atributo de RegistroActividad)</a>
+</li>
         <li><a href="reference/apps.caja.models.html#apps.caja.models.SaldoInicialCaja.objects">(atributo de SaldoInicialCaja)</a>
 </li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.objects">(atributo de SolicitudCliente)</a>
@@ -2850,6 +3040,8 @@
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.paginate_by">(atributo de MonitoreoTransaccionesView)</a>
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.paginate_by">(atributo de PanelAdminView)</a>
+</li>
+        <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.paginate_by">(atributo de RegistroActividadListView)</a>
 </li>
       </ul></li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.pago">pago (atributo de CalculoOperacion)</a>
@@ -2992,6 +3184,8 @@
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.razon_social">(atributo de SolicitudCliente)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig.ready">ready() (método de AuditoriaConfig)</a>
+</li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.realizado_por">realizado_por (atributo de HistorialBaja)</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.realizado_por_id">realizado_por_id (atributo de HistorialBaja)</a>
@@ -3002,9 +3196,27 @@
 </li>
       <li><a href="reference/apps.clientes.views.html#apps.clientes.views.RechazarSolicitudClienteView">RechazarSolicitudClienteView (clase en apps.clientes.views)</a>
 </li>
-      <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.recurso_id">recurso_id (atributo de HistorialBaja)</a>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_CHOICES">RECURSO_CHOICES (atributo de RegistroActividad)</a>
 </li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.recurso_descripcion">recurso_descripcion (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_DIVISA">RECURSO_DIVISA (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.recurso_id">recurso_id (atributo de HistorialBaja)</a>
+
+      <ul>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.recurso_id">(atributo de RegistroActividad)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.recurso_nombre">recurso_nombre (atributo de HistorialBaja)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_PARAMETRO">RECURSO_PARAMETRO (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_ROL">RECURSO_ROL (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_TASA">RECURSO_TASA (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_USUARIO">RECURSO_USUARIO (atributo de RegistroActividad)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.referencia">referencia (atributo de NotificacionCliente)</a>
 
@@ -3022,15 +3234,29 @@
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.referencia_retiro">referencia_retiro (atributo de CalculoOperacion)</a>
 </li>
-      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago">registrar_pago() (método de clase de Pago)</a>
+      <li><a href="reference/apps.auditoria.registro.html#apps.auditoria.registro.registrar_actividad">registrar_actividad() (en el módulo apps.auditoria.registro)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago">registrar_pago() (método de clase de Pago)</a>
+</li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Pago.registrar_pago_observado">registrar_pago_observado() (método de clase de Pago)</a>
 </li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView">RegistrarMovimientoExtraordinarioView (clase en apps.caja.views)</a>
 </li>
       <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView">RegistrarOperacionVentanillaView (clase en apps.caja.views)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad">RegistroActividad (clase en apps.auditoria.models)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.DoesNotExist">RegistroActividad.DoesNotExist</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.MultipleObjectsReturned">RegistroActividad.MultipleObjectsReturned</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.NotUpdated">RegistroActividad.NotUpdated</a>
+</li>
+      <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView">RegistroActividadListView (clase en apps.auditoria.views)</a>
+</li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividadQuerySet">RegistroActividadQuerySet (clase en apps.auditoria.models)</a>
 </li>
       <li><a href="reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.reintentar_emision">reintentar_emision() (en el módulo apps.divisas.factura_electronica)</a>
 </li>
@@ -3051,6 +3277,8 @@
       <li><a href="reference/apps.authentication.decorators.html#apps.authentication.decorators.requiere_rol">requiere_rol() (en el módulo apps.authentication.decorators)</a>
 </li>
       <li><a href="reference/apps.divisas.ganancias.html#apps.divisas.ganancias.resolver_periodo">resolver_periodo() (en el módulo apps.divisas.ganancias)</a>
+</li>
+      <li><a href="reference/apps.auditoria.registro.html#apps.auditoria.registro.restablecer_request_actual">restablecer_request_actual() (en el módulo apps.auditoria.registro)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.retirado_en">retirado_en (atributo de CalculoOperacion)</a>
 </li>
@@ -3092,6 +3320,8 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.Divisa.save">(método de Divisa)</a>
 </li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.save">(método de MetodoPago)</a>
+</li>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.save">(método de RegistroActividad)</a>
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin.save">(método de SeguimientoEstadoMixin)</a>
 </li>
@@ -3273,6 +3503,8 @@
 </li>
         <li><a href="reference/apps.clientes.views.html#apps.clientes.views.PanelAdminView.template_name">(atributo de PanelAdminView)</a>
 </li>
+        <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.template_name">(atributo de RegistroActividadListView)</a>
+</li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.template_name">(atributo de ReporteGananciasView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.template_name">(atributo de ReporteTransaccionesClienteView)</a>
@@ -3366,6 +3598,8 @@
         <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarMovimientoExtraordinarioView.test_func">(método de RegistrarMovimientoExtraordinarioView)</a>
 </li>
         <li><a href="reference/apps.caja.views.html#apps.caja.views.RegistrarOperacionVentanillaView.test_func">(método de RegistrarOperacionVentanillaView)</a>
+</li>
+        <li><a href="reference/apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.test_func">(método de RegistroActividadListView)</a>
 </li>
         <li><a href="reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin.test_func">(método de ReporteGananciasMixin)</a>
 </li>
@@ -3473,7 +3707,13 @@
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico.TIPO_NOTA_CREDITO">TIPO_NOTA_CREDITO (atributo de ContadorDocumentoElectronico)</a>
 </li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.tipo_recurso">tipo_recurso (atributo de HistorialBaja)</a>
+
+      <ul>
+        <li><a href="reference/apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.tipo_recurso">(atributo de ModeloAuditado)</a>
 </li>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.tipo_recurso">(atributo de RegistroActividad)</a>
+</li>
+      </ul></li>
       <li><a href="reference/apps.authentication.models.html#apps.authentication.models.HistorialBaja.TIPO_RECURSO_CHOICES">TIPO_RECURSO_CHOICES (atributo de HistorialBaja)</a>
 </li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.MetodoPago.TIPO_TARJETA">TIPO_TARJETA (atributo de MetodoPago)</a>
@@ -3536,6 +3776,8 @@
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico.ultimo_asignado">ultimo_asignado (atributo de ContadorDocumentoElectronico)</a>
 </li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividadQuerySet.update">update() (método de RegistroActividadQuerySet)</a>
+</li>
       <li><a href="reference/global_exchange.auth.html#global_exchange.auth.CustomOIDCBackend.update_user">update_user() (método de CustomOIDCBackend)</a>
 
       <ul>
@@ -3564,8 +3806,6 @@
 </li>
       <li><a href="reference/apps.users.apps.html#apps.users.apps.UsersConfig">UsersConfig (clase en apps.users.apps)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.Caja.usuario">usuario (atributo de Caja)</a>
 
       <ul>
@@ -3579,9 +3819,13 @@
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuario">(atributo de NotificacionTasa)</a>
 </li>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.usuario">(atributo de RegistroActividad)</a>
+</li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.usuario">(atributo de SolicitudCliente)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.caja.models.html#apps.caja.models.Caja.usuario_id">usuario_id (atributo de Caja)</a>
 
       <ul>
@@ -3595,9 +3839,17 @@
 </li>
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuario_id">(atributo de NotificacionTasa)</a>
 </li>
+        <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.usuario_id">(atributo de RegistroActividad)</a>
+</li>
         <li><a href="reference/apps.clientes.models.html#apps.clientes.models.SolicitudCliente.usuario_id">(atributo de SolicitudCliente)</a>
 </li>
       </ul></li>
+      <li><a href="reference/apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.usuario_nombre">usuario_nombre (atributo de RegistroActividad)</a>
+</li>
+      <li><a href="reference/apps.auditoria.registro.html#apps.auditoria.registro.usuario_responsable">usuario_responsable() (en el módulo apps.auditoria.registro)</a>
+</li>
+      <li><a href="reference/apps.auditoria.forms.html#apps.auditoria.forms.UsuarioChoiceField">UsuarioChoiceField (clase en apps.auditoria.forms)</a>
+</li>
       <li><a href="reference/apps.clientes.models.html#apps.clientes.models.Cliente.usuarios">usuarios (atributo de Cliente)</a>
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.usuarios_clientes">usuarios_clientes() (método estático de NotificacionTasa)</a>
@@ -3614,8 +3866,6 @@
 </li>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.NotificacionTasa.variacion">variacion (NotificacionTasa propiedad)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.vence_en">vence_en (atributo de CalculoOperacion)</a>
 
       <ul>
@@ -3624,6 +3874,10 @@
         <li><a href="reference/apps.divisas.models.html#apps.divisas.models.SolicitudPagoSipap.vence_en">(atributo de SolicitudPagoSipap)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig.verbose_name">verbose_name (atributo de AuditoriaConfig)</a>
+</li>
       <li><a href="reference/apps.authentication.backends.html#apps.authentication.backends.KeycloakOIDCAuthenticationBackend.verify_claims">verify_claims() (método de KeycloakOIDCAuthenticationBackend)</a>
 </li>
   </ul></td>

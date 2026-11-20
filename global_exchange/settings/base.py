@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'apps.authentication',
     'apps.clientes',
     'apps.caja',
+    'apps.auditoria',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +51,12 @@ MIDDLEWARE = [
     'mozilla_django_oidc.middleware.SessionRefresh',
 
     'apps.clientes.middleware.ClienteActivoMiddleware',
+
+    # Deja la request en curso disponible para que las señales de
+    # auditoría sepan quién realiza cada acción, y registra los cambios
+    # de roles de Keycloak (ver apps.auditoria.middleware). Va después de
+    # AuthenticationMiddleware, que es quien carga request.user.
+    'apps.auditoria.middleware.AuditoriaMiddleware',
 ]
 
 ROOT_URLCONF = 'global_exchange.urls'
