@@ -465,9 +465,7 @@ ni eliminar transacciones (ver <code class="docutils literal notranslate"><span 
 <p>Lista las Facturas Electrónicas emitidas para las transacciones del cliente activo.</p>
 <p>Simétrica a <code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code>, pero para el documento
 electrónico de cada transacción (ver <code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView</span></code>
-para el equivalente de administración, con todos los clientes). Es de
-solo lectura: el cliente no puede reintentar ni consultar el estado
-SIFEN por su cuenta, esas son acciones de administrador.</p>
+para el equivalente de administración, con todos los clientes).</p>
 <p>Implementa la HU «Consulta de facturas electrónicas»: el listado es
 paginado (Criterio 1); cada fila muestra número, CDC, la transacción
 asociada, la fecha de emisión y el monto —de <code class="docutils literal notranslate"><span class="pre">documento.transaccion</span></code>,
@@ -479,6 +477,11 @@ detalle de su transacción, que ya incluye la sección «Factura
 electrónica» con el comprobante completo (Criterio 4); y sin ninguna
 factura emitida, la plantilla muestra un mensaje en vez de una tabla
 vacía o un error (Criterio 5).</p>
+<p>Además, cada factura con CDC ofrece un botón «Consultar SIFEN»
+(<code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenMiFacturaView</span></code>) para que el cliente actualice
+por su cuenta su estado ante SIFEN. Es la única acción que el cliente
+puede hacer desde acá: reintentar la emisión o emitir una nota de
+crédito siguen siendo acciones del administrador.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.context_object_name">
 <span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'documentos'</span></span><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.context_object_name" title="Link to this definition"></a></dt>
@@ -526,6 +529,60 @@ listado sin filtrar (Criterio 1).</p>
 <dt class="sig sig-object py" id="apps.divisas.views.MisFacturasElectronicasListView.test_func">
 <span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisFacturasElectronicasListView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisFacturasElectronicasListView.test_func" title="Link to this definition"></a></dt>
 <dd><p>Permite consultar las facturas propias a los mismos roles que <code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenMiFacturaView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ConsultarEstadoSifenMiFacturaView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenMiFacturaView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenMiFacturaView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LoginRequiredMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Permite al cliente consultar ante SIFEN el estado de una factura de su cliente activo.</p>
+<p>Es la versión para el cliente de <code class="docutils literal notranslate"><span class="pre">ConsultarEstadoSifenDocumentoElectronicoView</span></code>
+y se usa desde «Mis facturas electrónicas». Como ninguna tarea periódica
+actualiza el estado de una factura, sin esta consulta una factura ya
+aprobada o rechazada seguiría figurando «esperando aprobación» hasta que
+un administrador la consultara. <code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code> es una simple
+lectura ante Factura Segura (nunca emite un documento), así que es
+seguro ofrecérsela al cliente. Si el estado cambia, el cliente recibe
+además la notificación correspondiente (ver <code class="docutils literal notranslate"><span class="pre">NotificacionCliente</span></code>).</p>
+<p>Solo acepta POST y solo sobre una factura del <strong>cliente activo</strong>: una
+factura de otro cliente responde 404, sin revelar si existe (mismo
+criterio que <code class="docutils literal notranslate"><span class="pre">DescargarDocumentoElectronicoView</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenMiFacturaView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['post']</span></span><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenMiFacturaView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenMiFacturaView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.post" title="Link to this definition"></a></dt>
+<dd><p>Consulta el estado ante SIFEN, informa el resultado y vuelve al listado.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – La request actual; <code class="docutils literal notranslate"><span class="pre">next</span></code> en el POST
+indica a qué página del listado volver (con sus filtros).</p></li>
+<li><p><strong>pk</strong> (<em>int</em>) – Identificador de la factura.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">next</span></code> si es una URL segura, o a
+«Mis facturas electrónicas».</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+<dt class="field-even">Muestra<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Http404</strong> – La factura no existe o no es del cliente activo.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.ConsultarEstadoSifenMiFacturaView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#ConsultarEstadoSifenMiFacturaView.test_func"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.test_func" title="Link to this definition"></a></dt>
+<dd><p>Autoriza a los mismos roles que <code class="docutils literal notranslate"><span class="pre">MisFacturasElectronicasListView</span></code>.</p>
 </dd></dl>
 
 </dd></dl>

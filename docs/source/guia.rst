@@ -885,11 +885,23 @@ cliente activo seleccionado consulta, en ``/divisas/transacciones/mias/facturas/
 **paginado** (20 por página, Criterio 1) de los ``apps.divisas.models.DocumentoElectronico``
 emitidos para sus propias transacciones (compra/venta o cambio) — el
 comprobante que la HU "Integración con API de facturación electrónica"
-genera automáticamente ante SIFEN apenas una transacción queda "Pagada". Es
-de solo lectura: a diferencia de la pantalla de administración
-(``DocumentosElectronicosListView``, con todos los clientes y acciones para
-reintentar o consultar el estado SIFEN), el cliente no puede ejecutar
-ninguna acción sobre sus propios documentos, solo consultarlos.
+genera automáticamente ante SIFEN apenas una transacción queda "Pagada". A
+diferencia de la pantalla de administración (``DocumentosElectronicosListView``,
+con todos los clientes y acciones para reintentar la emisión o emitir una
+nota de crédito), la única acción que el cliente puede hacer es consultar
+ante SIFEN el estado de una factura propia con CDC, con el botón "Consultar
+SIFEN" (``apps.divisas.views.ConsultarEstadoSifenMiFacturaView``, solo POST).
+Como ninguna tarea periódica actualiza ese estado, esta consulta le permite
+ver por su cuenta si la factura ya fue aprobada o rechazada. Es una simple
+lectura ante Factura Segura (``consultar_estado_sifen`` nunca emite un
+documento), y una factura de otro cliente responde 404. Si el estado
+cambia, el cliente recibe además la notificación correspondiente.
+
+Los botones de cada fila ("Ver detalle", "KuDE", "XML" y "Consultar SIFEN")
+se acomodan dentro de su celda y, si no entran en una línea, pasan a la
+siguiente. El CDC, de 44 caracteres sin espacios, puede cortarse en varias
+líneas: así la tabla no se ensancha más que la pantalla ni deja los botones
+ocultos a la derecha.
 
 Cada fila muestra número de documento, CDC, la transacción asociada (con su
 tipo y divisa), la fecha de emisión y el monto —tomado de

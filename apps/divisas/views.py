@@ -759,9 +759,7 @@ class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, L
 
     Simétrica a ``MiHistorialTransaccionesView``, pero para el documento
     electrónico de cada transacción (ver ``DocumentosElectronicosListView``
-    para el equivalente de administración, con todos los clientes). Es de
-    solo lectura: el cliente no puede reintentar ni consultar el estado
-    SIFEN por su cuenta, esas son acciones de administrador.
+    para el equivalente de administración, con todos los clientes).
 
     Implementa la HU "Consulta de facturas electrónicas": el listado es
     paginado (Criterio 1); cada fila muestra número, CDC, la transacción
@@ -774,6 +772,12 @@ class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, L
     electrónica" con el comprobante completo (Criterio 4); y sin ninguna
     factura emitida, la plantilla muestra un mensaje en vez de una tabla
     vacía o un error (Criterio 5).
+
+    Además, cada factura con CDC ofrece un botón "Consultar SIFEN"
+    (``ConsultarEstadoSifenMiFacturaView``) para que el cliente actualice
+    por su cuenta su estado ante SIFEN. Es la única acción que el cliente
+    puede hacer desde acá: reintentar la emisión o emitir una nota de
+    crédito siguen siendo acciones del administrador.
     """
 
     model = DocumentoElectronico
@@ -2551,6 +2555,73 @@ class ConsultarEstadoSifenDocumentoElectronicoView(AdminDivisasMixin, View):
         else:
             messages.error(request, 'No se pudo consultar el estado ante SIFEN (sin respuesta de Factura Segura).')
         return redirect('divisas:documentos_electronicos')
+
+
+class ConsultarEstadoSifenMiFacturaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Permite al cliente consultar ante SIFEN el estado de una factura de su cliente activo.
+
+    Es la versión para el cliente de ``ConsultarEstadoSifenDocumentoElectronicoView``
+    y se usa desde "Mis facturas electrónicas". Como ninguna tarea periódica
+    actualiza el estado de una factura, sin esta consulta una factura ya
+    aprobada o rechazada seguiría figurando "esperando aprobación" hasta que
+    un administrador la consultara. ``consultar_estado_sifen`` es una simple
+    lectura ante Factura Segura (nunca emite un documento), así que es
+    seguro ofrecérsela al cliente. Si el estado cambia, el cliente recibe
+    además la notificación correspondiente (ver ``NotificacionCliente``).
+
+    Solo acepta POST y solo sobre una factura del **cliente activo**: una
+    factura de otro cliente responde 404, sin revelar si existe (mismo
+    criterio que ``DescargarDocumentoElectronicoView``).
+    """
+
+    http_method_names = ['post']
+
+    def test_func(self):
+        """Autoriza a los mismos roles que ``MisFacturasElectronicasListView``."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cliente' in roles and not self.request.user.is_staff
+
+    def post(self, request, pk):
+        """Consulta el estado ante SIFEN, informa el resultado y vuelve al listado.
+
+        Args:
+            request (HttpRequest): La request actual; ``next`` en el POST
+                indica a qué página del listado volver (con sus filtros).
+            pk (int): Identificador de la factura.
+
+        Returns:
+            HttpResponseRedirect: A ``next`` si es una URL segura, o a
+            "Mis facturas electrónicas".
+
+        Raises:
+            Http404: La factura no existe o no es del cliente activo.
+        """
+        cliente_activo = getattr(request, 'cliente_activo', None)
+        if cliente_activo is None:
+            raise Http404('No hay un cliente activo.')
+        documento = get_object_or_404(
+            DocumentoElectronico.objects.filter(
+                Q(calculo_operacion__cliente=cliente_activo) | Q(calculo_triangulacion__cliente=cliente_activo)
+            ),
+            pk=pk,
+        )
+
+        if not documento.cdc:
+            messages.error(request, 'Esta factura todavía no se generó, así que no se puede consultar ante SIFEN.')
+        elif consultar_estado_sifen(documento):
+            documento.refresh_from_db()
+            messages.success(
+                request, f'Factura {documento.numero_documento}: estado en SIFEN "{documento.get_estado_display()}".',
+            )
+        else:
+            messages.error(request, 'No se pudo consultar el estado ante SIFEN. Volvé a intentarlo más tarde.')
+
+        destino = request.POST.get('next')
+        if destino and url_has_allowed_host_and_scheme(
+            destino, allowed_hosts={request.get_host()}, require_https=request.is_secure(),
+        ):
+            return redirect(destino)
+        return redirect('divisas:mis_facturas_electronicas')
 
 
 class EmitirNotaCreditoView(AdminDivisasMixin, View):

@@ -46,7 +46,8 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 30. [Sesión 33 — 20/11/2026 — Monitoreo de transacciones y reportes](#sesión-33--20112026--monitoreo-de-transacciones-y-reportes)
 31. [Sesión 34 — 20/11/2026 — Reporte de ganancias](#sesión-34--20112026--reporte-de-ganancias)
 32. [Sesión 35 — 20/11/2026 — Notificaciones sobre transacciones y facturas](#sesión-35--20112026--notificaciones-sobre-transacciones-y-facturas)
-33. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+33. [Sesión 36 — 20/11/2026 — "Mis facturas electrónicas": botones visibles y consulta a SIFEN](#sesión-36--20112026--mis-facturas-electrónicas-botones-visibles-y-consulta-a-sifen)
+34. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4920,6 +4921,66 @@ notificaciones de tasas."
 - Sphinx: `SeguimientoEstadoMixin` y `NotificacionCliente` en `apps.divisas.models.rst`,
   `AbrirNotificacionClienteView` en `apps.divisas.views.rst`, `templates.rst` ajustado y una sección nueva en
   `guia.rst`. No hay advertencias nuevas (queda la preexistente de `templates.rst`).
+
+## Sesión 36 — 20/11/2026 — "Mis facturas electrónicas": botones visibles y consulta a SIFEN
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** ajuste de "Consulta de facturas electrónicas", rama `feature/GE-53`
+**Participantes:** Ruth
+
+### Pedido
+
+En la pantalla "Mis facturas electrónicas" del cliente, los botones de cada fila quedaban ocultos a la
+derecha al abrir la pantalla. Se pidió que se vean dentro de la pantalla y que se agregue un botón para
+consultar a SIFEN.
+
+### Diagnóstico
+
+La tabla quedaba más ancha que la pantalla por dos motivos:
+
+- el CDC tiene 44 caracteres sin espacios y no se podía cortar;
+- los tres botones ("Ver detalle", "KuDE" y "XML") iban en una sola línea.
+
+Dentro de `table-responsive`, la columna de acciones quedaba fuera de la vista, y para verla había que
+desplazar la tabla hacia la derecha.
+
+### Decisiones
+
+- **Diseño de la tabla.** El CDC puede cortarse en varias líneas (`word-break: break-all`, ancho máximo y letra
+  más chica), y los botones van en un contenedor flexible que pasa a la línea siguiente dentro de la celda. La
+  columna "Detalle" pasó a llamarse "Acciones".
+- **Botón "Consultar SIFEN".** Llama a la vista nueva `ConsultarEstadoSifenMiFacturaView`, que solo acepta POST.
+  Reutiliza `consultar_estado_sifen`, la misma lectura que ya usaba el administrador y que nunca emite un
+  documento. Solo se muestra si la factura tiene CDC, solo funciona sobre facturas del cliente activo (una
+  ajena responde 404 sin llamar a la API) y vuelve a la misma página del listado (`next`, validado contra el
+  host). Si el estado cambia, el cliente recibe además la notificación de la Sesión 35.
+- **Documentación.** La pantalla ya no es "de solo lectura", así que se ajustaron el docstring de
+  `MisFacturasElectronicasListView` y la sección "Consulta de facturas electrónicas" de `guia.rst`.
+
+### Archivos
+
+- `apps/divisas/views.py`: `ConsultarEstadoSifenMiFacturaView` nueva y docstring de
+  `MisFacturasElectronicasListView` ajustado.
+- `apps/divisas/urls.py`: `/divisas/transacciones/mias/facturas/<id>/consultar-sifen/`.
+- `templates/divisas/mis_facturas_electronicas.html`.
+
+### Tests
+
+En `tests/test_factura_electronica.py` se agregó `ConsultarSifenMiFacturaViewTest` (9 tests):
+
+- el botón aparece dentro de las acciones, y no aparece sin CDC;
+- la consulta actualiza el estado y vuelve al listado con un mensaje;
+- sin respuesta de Factura Segura, informa el error;
+- sin CDC, no llama a la API;
+- un `next` externo se ignora;
+- una factura de otro cliente responde 404;
+- GET responde 405, y sin rol de cliente responde 403.
+
+### Verificación
+
+- Suite completa en verde y `manage.py check` sin problemas.
+- Sphinx: `ConsultarEstadoSifenMiFacturaView` en `apps.divisas.views.rst` y `guia.rst` actualizada. No hay
+  advertencias nuevas.
 
 ## Enlaces externos (conversaciones completas)
 

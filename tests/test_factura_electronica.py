@@ -1249,3 +1249,118 @@ class FacturaPendienteParaElClienteTest(FacturaElectronicaTestCase):
         response = self.client.get(reverse('divisas:mis_facturas_electronicas'))
 
         self.assertContains(response, 'Pendiente de generación')
+
+
+class ConsultarSifenMiFacturaViewTest(FacturaElectronicaTestCase):
+    """El cliente consulta ante SIFEN, desde "Mis facturas electrónicas", el estado de sus facturas."""
+
+    def setUp(self):
+        """Logueado como el cliente, con una factura propia ya generada (con CDC) esperando a SIFEN."""
+        super().setUp()
+        self.cliente.usuarios.add(self.cliente.user)
+        self._login(['cliente'])
+        self.documento = DocumentoElectronico.objects.create(
+            calculo_operacion=self.transaccion, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+            numero_documento='0000900', estado=DocumentoElectronico.ESTADO_GENERADO, cdc='CDC-CONSULTA',
+        )
+        self.listado = reverse('divisas:mis_facturas_electronicas')
+
+    def _login(self, roles):
+        self.client.login(username='cliente-fe', password='password123')
+        session = self.client.session
+        session['keycloak_roles'] = roles
+        session.save()
+
+    def _url(self, documento=None):
+        return reverse('divisas:consultar_sifen_mi_factura', kwargs={'pk': (documento or self.documento).pk})
+
+    def test_el_listado_ofrece_consultar_sifen_dentro_de_las_acciones(self):
+        response = self.client.get(self.listado)
+
+        self.assertContains(response, self._url())
+        self.assertContains(response, 'Consultar SIFEN')
+        self.assertContains(response, 'class="acciones-factura"')
+        self.assertContains(response, 'class="celda-cdc"')
+
+    def test_sin_cdc_no_se_ofrece_la_consulta(self):
+        self.documento.cdc = ''
+        self.documento.estado = DocumentoElectronico.ESTADO_ERROR_GENERACION
+        self.documento.save()
+
+        response = self.client.get(self.listado)
+
+        self.assertNotContains(response, self._url())
+
+    def test_consultar_actualiza_el_estado_y_vuelve_al_listado_con_un_mensaje(self):
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            mock_post.return_value = _respuesta(code=0, results={'estado_sifen': 'Aprobado', 'desc_sifen': '0260 - Aprobado'})
+            response = self.client.post(self._url(), {'next': f'{self.listado}?page=1'}, follow=True)
+
+        self.assertRedirects(response, f'{self.listado}?page=1')
+        self.documento.refresh_from_db()
+        self.assertEqual(self.documento.estado, DocumentoElectronico.ESTADO_APROBADO)
+        self.assertContains(response, 'estado en SIFEN')
+        self.assertContains(response, 'Aprobado')
+
+    def test_sin_respuesta_de_factura_segura_informa_el_error_sin_cambiar_nada(self):
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            mock_post.side_effect = requests.exceptions.ConnectionError('sin red')
+            response = self.client.post(self._url(), follow=True)
+
+        self.assertRedirects(response, self.listado)
+        self.documento.refresh_from_db()
+        self.assertEqual(self.documento.estado, DocumentoElectronico.ESTADO_GENERADO)
+        self.assertContains(response, 'No se pudo consultar el estado ante SIFEN')
+
+    def test_sin_cdc_no_llama_a_la_api(self):
+        self.documento.cdc = ''
+        self.documento.save()
+
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            response = self.client.post(self._url(), follow=True)
+
+        mock_post.assert_not_called()
+        self.assertContains(response, 'todavía no se generó')
+
+    def test_next_externo_se_ignora(self):
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            mock_post.return_value = _respuesta(code=0, results={'estado_sifen': 'Aprobado'})
+            response = self.client.post(self._url(), {'next': 'https://sitio-malicioso.example/'})
+
+        self.assertRedirects(response, self.listado, fetch_redirect_response=False)
+
+    def test_la_factura_de_otro_cliente_responde_404_sin_consultar(self):
+        otro_usuario = User.objects.create_user(username='otro-fe', password='password123')
+        otro_cliente = Cliente.objects.create(
+            user=otro_usuario, identificador='5222333', nombre='Otro', apellido='Cliente',
+            email='otro-fe@test.com', is_active=True,
+        )
+        transaccion_ajena = CalculoOperacion.objects.create(
+            usuario=otro_usuario, cliente=otro_cliente, tipo=CalculoOperacion.TIPO_COMPRA,
+            divisa=self.usd, codigo_divisa='USD', monto_origen=Decimal('10.00'),
+            tasa_aplicada=Decimal('7400.00'), comision_porcentaje=Decimal('1.000'),
+            comision=Decimal('740.00'), monto_final=Decimal('74740.00'),
+            estado=CalculoOperacion.ESTADO_PAGADA, vence_en=timezone.now() + timedelta(seconds=300),
+        )
+        ajena = DocumentoElectronico.objects.create(
+            calculo_operacion=transaccion_ajena, tipo_documento=ContadorDocumentoElectronico.TIPO_FACTURA,
+            numero_documento='0000901', cdc='CDC-AJENA',
+        )
+
+        with patch('apps.divisas.factura_electronica.requests.post') as mock_post:
+            response = self.client.post(self._url(ajena))
+
+        self.assertEqual(response.status_code, 404)
+        mock_post.assert_not_called()
+
+    def test_por_get_no_esta_permitido(self):
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_sin_rol_cliente_no_accede(self):
+        self._login(['analista_cambiario'])
+
+        response = self.client.post(self._url())
+
+        self.assertEqual(response.status_code, 403)

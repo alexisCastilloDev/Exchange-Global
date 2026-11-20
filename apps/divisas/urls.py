@@ -45,6 +45,7 @@ from .views import (
     DetalleTransaccionCambioView,
     PagarTransaccionOperacionView,
     PagarTransaccionCambioView,
+    ConsultarEstadoSifenMiFacturaView,
     MisNotificacionesView,
     MarcarNotificacionLeidaView,
     AbrirNotificacionClienteView,
@@ -127,6 +128,11 @@ urlpatterns = [
     ),
     path('transacciones/mias/',MiHistorialTransaccionesView.as_view(), name='mis_transacciones'),
     path('transacciones/mias/facturas/', MisFacturasElectronicasListView.as_view(), name='mis_facturas_electronicas'),
+    path(
+        'transacciones/mias/facturas/<int:pk>/consultar-sifen/',
+        ConsultarEstadoSifenMiFacturaView.as_view(),
+        name='consultar_sifen_mi_factura',
+    ),
     path(
         'transacciones/mias/<int:cliente_pk>/reporte/',
         ReporteTransaccionesClienteView.as_view(),
