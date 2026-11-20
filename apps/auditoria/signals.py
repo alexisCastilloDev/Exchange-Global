@@ -92,6 +92,18 @@ MODELOS_AUDITADOS = (
         },
     ),
     ModeloAuditado(
+        modelo='clientes.Cliente',
+        tipo_recurso=RegistroActividad.RECURSO_CLIENTE,
+        # stripe_customer_id queda afuera: lo escribe el sistema al pagar
+        # con tarjeta (apps.divisas.pagos_stripe), no un administrador.
+        campos=(
+            'tipo_cliente', 'identificador', 'nombre', 'apellido', 'razon_social',
+            'email', 'segmento', 'comision_personalizada', 'is_active',
+        ),
+        describir=lambda cliente: f'{cliente.nombre_completo or "Sin nombre"} ({cliente.identificador})',
+        campo_activo='is_active',
+    ),
+    ModeloAuditado(
         modelo='divisas.Divisa',
         tipo_recurso=RegistroActividad.RECURSO_DIVISA,
         campos=('codigo', 'nombre', 'simbolo', 'activa'),

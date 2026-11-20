@@ -179,6 +179,26 @@ class RegistroDeAccionesTest(TestCase):
         self.assertEqual(registro.recurso_descripcion, 'Roles de cajero1')
         self.assertEqual(_cambios(registro), {'roles': ('cajero', 'admin, cajero')})
 
+    def test_baja_de_cliente_se_registra_como_baja(self):
+        """Dar de baja un cliente (``soft_delete``) queda registrado con quién lo hizo."""
+        from apps.clientes.models import Cliente
+        self.admin.is_staff = True
+        self.admin.save()
+        cliente = Cliente.objects.create(
+            tipo_cliente=Cliente.TIPO_FISICA, identificador='1234567', nombre='Carla', apellido='Cliente',
+        )
+
+        response = self.client.post(reverse('cliente_delete', args=[cliente.pk]), {'causa': 'Pidió la baja'})
+
+        cliente.refresh_from_db()
+        self.assertFalse(cliente.is_active)
+        self.assertEqual(response.status_code, 302)
+        registro = self._unico_registro(tipo_recurso=RegistroActividad.RECURSO_CLIENTE)
+        self.assertEqual(registro.accion, RegistroActividad.ACCION_BAJA)
+        self.assertEqual(registro.usuario, self.admin)
+        self.assertEqual(registro.recurso_descripcion, 'Carla Cliente (1234567)')
+        self.assertEqual(_cambios(registro), {'is_active': ('Sí', 'No')})
+
     def test_falla_de_keycloak_al_auditar_roles_no_interrumpe_la_edicion(self):
         """Si Keycloak no responde a la auditoría, la vista sigue su curso igual que sin ella."""
         objetivo = User.objects.create_user(username='cajero2', email='cajero2@ge.com')

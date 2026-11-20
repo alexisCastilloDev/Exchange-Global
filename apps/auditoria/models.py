@@ -61,9 +61,11 @@ class RegistroActividad(models.Model):
     RECURSO_DIVISA = 'DIVISA'
     RECURSO_TASA = 'TASA'
     RECURSO_PARAMETRO = 'PARAMETRO'
+    RECURSO_CLIENTE = 'CLIENTE'
     RECURSO_CHOICES = [
         (RECURSO_USUARIO, 'Usuario'),
         (RECURSO_ROL, 'Roles de usuario'),
+        (RECURSO_CLIENTE, 'Cliente'),
         (RECURSO_DIVISA, 'Divisa'),
         (RECURSO_TASA, 'Tasa de cambio'),
         (RECURSO_PARAMETRO, 'Parámetro de operación'),
