@@ -45,7 +45,9 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 29. [Sesión 32 — 18/11/2026 — Nota de crédito](#sesión-32--18112026--nota-de-crédito)
 30. [Sesión 33 — 20/11/2026 — Monitoreo de transacciones y reportes](#sesión-33--20112026--monitoreo-de-transacciones-y-reportes)
 31. [Sesión 34 — 20/11/2026 — Reporte de ganancias](#sesión-34--20112026--reporte-de-ganancias)
-32. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+32. [Sesión 35 — 20/11/2026 — Notificaciones sobre transacciones y facturas](#sesión-35--20112026--notificaciones-sobre-transacciones-y-facturas)
+33. [Sesión 36 — 20/11/2026 — "Mis facturas electrónicas": botones visibles y consulta a SIFEN](#sesión-36--20112026--mis-facturas-electrónicas-botones-visibles-y-consulta-a-sifen)
+34. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4821,6 +4823,164 @@ reporte muestra la ganancia y la cantidad de operaciones de cada grupo, con el t
   `apps.divisas.rst`, `apps.divisas.views.rst` y `templates.rst` ampliados, y una sección nueva "Reporte de
   ganancias" en `guia.rst`. No hay advertencias nuevas (queda la preexistente de resaltado en
   `templates.rst`).
+
+## Sesión 35 — 20/11/2026 — Notificaciones sobre transacciones y facturas
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Notificaciones sobre transacciones y facturas, rama `feature/GE-53`
+**Participantes:** Ruth
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada. La HU pide que el cliente reciba una notificación:
+
+- cuando una de sus transacciones pasa a "Pagada", "Completada", "Cancelada" o a un estado que requiere
+  atención, con el número de la transacción y su nuevo estado;
+- cuando SIFEN aprueba, rechaza o cancela una de sus facturas, con el CDC y el nuevo estado.
+
+Además, al abrir la notificación se accede al detalle de la transacción o de la factura, las no leídas se
+suman al indicador, y la notificación de otro cliente no se ve.
+
+### Qué ya existía
+
+- **Notificaciones de tasas (GE-51).** `NotificacionTasa` (por usuario), `MisNotificacionesView`,
+  `MarcarNotificacionLeidaView` (solo POST) y el context processor `notificaciones_context`, que alimenta la
+  campana de la barra superior y el contador del menú.
+- **Los cambios de estado.** Todos los flujos que cambian el estado de una transacción o de una factura
+  terminan en un `save(update_fields=['estado', ...])`: `Pago.registrar_pago`, `apps.divisas.entrega`, las
+  vistas de confirmación y cancelación, `pagos_sipap` y `factura_electronica.consultar_estado_sifen`
+  (incluida la anulación de la factura cuando SIFEN aprueba una nota de crédito).
+- **El cliente activo.** `ClienteActivoMiddleware` resuelve `request.cliente_activo` a partir de
+  `Cliente.usuarios`.
+- **El detalle de la factura.** El cliente no tiene una pantalla propia por factura: el comprobante se ve en
+  la sección "Factura electrónica" del detalle de la transacción.
+
+### Decisiones
+
+- **Modelo nuevo `NotificacionCliente`.** Guarda el usuario y el cliente. Se crea una notificación por cada
+  usuario activo asociado al cliente, así que cada uno tiene su propio estado de lectura, y la pantalla
+  puede filtrar por cliente activo. El estado se guarda copiado (código y etiqueta), porque la notificación
+  informa el estado de ese momento: si la transacción vuelve a cambiar, cada cambio tiene la suya.
+- **Detección en `save` con `SeguimientoEstadoMixin`.** El mixin recuerda el estado leído (`from_db`) y,
+  después de guardar, compara. Así se cubren todos los flujos existentes sin tocar ninguno. Crear un registro
+  no notifica, y un `save` con `update_fields` sin `estado` tampoco. Durante la implementación, `from_db`
+  falló con `TypeError` porque Django 6.1 agregó el argumento `fetch_mode`; se resolvió reenviando
+  `*args, **kwargs`.
+- **Qué estados se notifican.** En transacciones: "Pagada"; "Completada" ("Acreditada" o "Retirada");
+  las cuatro cancelaciones; y como "requiere atención", "entrega fallida" y "pago fuera de plazo" (el mismo
+  criterio que el monitoreo). "Pendiente", "Confirmada" y "Vencida" no se notifican. En facturas:
+  "Aprobado", "Aprobado con observación", "Rechazado" y "Anulada" (que es la "cancelación" de la HU). La nota
+  de crédito en sí no notifica, ni tampoco una factura de ventanilla. Si la factura todavía no tiene CDC, se
+  usa el número de documento.
+- **Abrir (criterio 3).** `AbrirNotificacionClienteView` (solo POST, como la de tasas) marca la notificación
+  como leída y redirige al detalle de la transacción. Si es de una factura, redirige al ancla
+  `#factura-electronica`, que se agregó en los dos templates de detalle.
+- **Indicador (criterio 4).** `notificaciones_context` suma las de tasas sin leer y las de transacciones y
+  facturas sin leer del cliente activo. También expone cada número por separado para la pantalla.
+- **Aislamiento (criterio 5).** `notificaciones_cliente_activo` filtra siempre por usuario y por cliente
+  activo, tanto en la pantalla como en el indicador y en la apertura. Una notificación de otro usuario o de
+  otro cliente propio que no es el activo responde 404.
+
+### Archivos
+
+- `apps/divisas/models.py`: `SeguimientoEstadoMixin`, `NotificacionCliente` y el gancho `_al_cambiar_estado`
+  en `CalculoOperacion`, `CalculoTriangulacion` y `DocumentoElectronico`.
+- `apps/divisas/migrations/0032_notificacioncliente.py` (nuevo).
+- `apps/divisas/context_processors.py`: `notificaciones_cliente_activo` y el indicador sumado.
+- `apps/divisas/views.py`: `MisNotificacionesView` ampliada y `AbrirNotificacionClienteView` nueva.
+- `apps/divisas/urls.py`: `/divisas/notificaciones/operaciones/<id>/abrir/`.
+- Templates: `mis_notificaciones.html` (sección nueva "Transacciones y facturas"), el ancla en
+  `detalle_transaccion_operacion.html` y `detalle_transaccion_cambio.html`, y el título de la campana en
+  `base.html`.
+
+### Tests
+
+`tests/test_notificaciones_operaciones.py` (archivo nuevo, 39 tests):
+
+- cada estado notificable de una transacción, con su categoría, y los que no se notifican;
+- que crear un registro, guardar sin cambiar el estado o guardar otros campos no notifique;
+- cambios sucesivos, cambio entre divisas y destinatarios (solo usuarios activos del cliente);
+- integración con `Pago.registrar_pago`;
+- estados de factura, estados técnicos que no notifican, número de documento sin CDC, y que la nota de
+  crédito no notifique por sí misma;
+- integración con `consultar_estado_sifen` (aprobación, y anulación por nota de crédito aprobada);
+- `url_detalle` y lectura idempotente;
+- vistas: listado con número o CDC, apertura y redirección al detalle y a la sección de la factura, GET no
+  permitido (405), 404, el indicador sumado con las de tasas, el indicador al abrir, otro usuario, otro
+  cliente activo del mismo usuario, sin rol y anónimo.
+
+`tests/test_notificaciones_tasas.py`: se actualizó el texto del listado vacío, que ahora es "Todavía no tenés
+notificaciones de tasas."
+
+### Verificación
+
+- Suite completa: 768 tests (`pytest tests -n auto`) en verde.
+- `manage.py check`: sin problemas.
+- `makemigrations --check`: sin cambios pendientes.
+- Sphinx: `SeguimientoEstadoMixin` y `NotificacionCliente` en `apps.divisas.models.rst`,
+  `AbrirNotificacionClienteView` en `apps.divisas.views.rst`, `templates.rst` ajustado y una sección nueva en
+  `guia.rst`. No hay advertencias nuevas (queda la preexistente de `templates.rst`).
+
+## Sesión 36 — 20/11/2026 — "Mis facturas electrónicas": botones visibles y consulta a SIFEN
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** ajuste de "Consulta de facturas electrónicas", rama `feature/GE-53`
+**Participantes:** Ruth
+
+### Pedido
+
+En la pantalla "Mis facturas electrónicas" del cliente, los botones de cada fila quedaban ocultos a la
+derecha al abrir la pantalla. Se pidió que se vean dentro de la pantalla y que se agregue un botón para
+consultar a SIFEN.
+
+### Diagnóstico
+
+La tabla quedaba más ancha que la pantalla por dos motivos:
+
+- el CDC tiene 44 caracteres sin espacios y no se podía cortar;
+- los tres botones ("Ver detalle", "KuDE" y "XML") iban en una sola línea.
+
+Dentro de `table-responsive`, la columna de acciones quedaba fuera de la vista, y para verla había que
+desplazar la tabla hacia la derecha.
+
+### Decisiones
+
+- **Diseño de la tabla.** El CDC puede cortarse en varias líneas (`word-break: break-all`, ancho máximo y letra
+  más chica), y los botones van en un contenedor flexible que pasa a la línea siguiente dentro de la celda. La
+  columna "Detalle" pasó a llamarse "Acciones".
+- **Botón "Consultar SIFEN".** Llama a la vista nueva `ConsultarEstadoSifenMiFacturaView`, que solo acepta POST.
+  Reutiliza `consultar_estado_sifen`, la misma lectura que ya usaba el administrador y que nunca emite un
+  documento. Solo se muestra si la factura tiene CDC, solo funciona sobre facturas del cliente activo (una
+  ajena responde 404 sin llamar a la API) y vuelve a la misma página del listado (`next`, validado contra el
+  host). Si el estado cambia, el cliente recibe además la notificación de la Sesión 35.
+- **Documentación.** La pantalla ya no es "de solo lectura", así que se ajustaron el docstring de
+  `MisFacturasElectronicasListView` y la sección "Consulta de facturas electrónicas" de `guia.rst`.
+
+### Archivos
+
+- `apps/divisas/views.py`: `ConsultarEstadoSifenMiFacturaView` nueva y docstring de
+  `MisFacturasElectronicasListView` ajustado.
+- `apps/divisas/urls.py`: `/divisas/transacciones/mias/facturas/<id>/consultar-sifen/`.
+- `templates/divisas/mis_facturas_electronicas.html`.
+
+### Tests
+
+En `tests/test_factura_electronica.py` se agregó `ConsultarSifenMiFacturaViewTest` (9 tests):
+
+- el botón aparece dentro de las acciones, y no aparece sin CDC;
+- la consulta actualiza el estado y vuelve al listado con un mensaje;
+- sin respuesta de Factura Segura, informa el error;
+- sin CDC, no llama a la API;
+- un `next` externo se ignora;
+- una factura de otro cliente responde 404;
+- GET responde 405, y sin rol de cliente responde 403.
+
+### Verificación
+
+- Suite completa en verde y `manage.py check` sin problemas.
+- Sphinx: `ConsultarEstadoSifenMiFacturaView` en `apps.divisas.views.rst` y `guia.rst` actualizada. No hay
+  advertencias nuevas.
 
 ## Enlaces externos (conversaciones completas)
 

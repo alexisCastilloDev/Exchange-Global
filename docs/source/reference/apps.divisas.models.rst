@@ -9,6 +9,11 @@ apps.divisas.models module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.models.SeguimientoEstadoMixin
+   :members:
+   :private-members: _al_cambiar_estado
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.models.CalculoOperacion
    :members:
    :show-inheritance:
@@ -52,5 +57,9 @@ apps.divisas.models module
    :show-inheritance:
 
 .. autoclass:: apps.divisas.models.DocumentoElectronico
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.models.NotificacionCliente
    :members:
    :show-inheritance:

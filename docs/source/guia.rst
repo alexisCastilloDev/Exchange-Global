@@ -189,6 +189,57 @@ no leídas, calculada por el context processor
 ``apps.divisas.context_processors.notificaciones_context``; al marcar una
 como leída deja de contarse.
 
+Notificaciones sobre transacciones y facturas
+---------------------------------------------
+
+Implementa la HU "Notificaciones sobre transacciones y facturas". El
+cliente recibe una ``apps.divisas.models.NotificacionCliente`` cada vez que
+cambia el estado de una de sus transacciones o de una de sus facturas
+electrónicas.
+
+**Cuándo se notifica.** ``CalculoOperacion``, ``CalculoTriangulacion`` y
+``DocumentoElectronico`` heredan de ``apps.divisas.models.SeguimientoEstadoMixin``.
+Al guardar, este mixin compara el estado nuevo con el último que se leyó o
+se guardó, y si cambió avisa al modelo. Como todos los flujos que cambian un
+estado terminan en un ``save`` (pago, entrega, reintento, cancelación,
+consulta a SIFEN), ninguno necesitó cambios. Crear un registro no notifica,
+y un ``save`` con ``update_fields`` que no incluye ``estado`` tampoco.
+
+* **Transacción (Criterio 1).** Se notifica al pasar a "Pagada",
+  "Completada" ("Acreditada" o "Retirada"), cualquier cancelación, o un
+  estado que requiere atención ("Pagada, pero la entrega al cliente falló" y
+  "Pago fuera de plazo"). Ver ``NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION``.
+  La notificación lleva el número de la transacción y su nuevo estado.
+* **Factura (Criterio 2).** Se notifica cuando una factura pasa a
+  "Aprobado", "Aprobado con observación", "Rechazado por SIFEN" o "Anulada
+  por nota de crédito". La anulación es el único modo en que el sistema
+  cancela una factura aprobada: ocurre cuando SIFEN aprueba la nota de
+  crédito. La notificación lleva el CDC, o el número de documento si todavía
+  no tiene CDC. La nota de crédito en sí no notifica, ni tampoco una factura
+  de ventanilla, porque un cliente de mostrador no tiene usuario en el sistema.
+
+**Destinatarios y aislamiento (Criterio 5).** Se crea una notificación por
+cada usuario activo asociado al cliente (``Cliente.usuarios``), y cada una
+guarda el cliente al que pertenece. La pantalla y el indicador filtran
+siempre por usuario **y** por cliente activo
+(``apps.divisas.context_processors.notificaciones_cliente_activo``). Así un
+usuario con dos clientes solo ve las del cliente que tiene activo, y nadie
+ve las de un cliente ajeno.
+
+**Pantalla y apertura (Criterio 3).** ``MisNotificacionesView``
+(``/divisas/notificaciones/``) muestra arriba la sección "Transacciones y
+facturas", paginada aparte, y debajo las notificaciones de tasas. Cada
+notificación se abre con ``AbrirNotificacionClienteView`` (solo POST), que la
+marca como leída y redirige al detalle de la transacción. Si la notificación
+es de una factura, redirige a la sección "Factura electrónica" de ese mismo
+detalle (ancla ``#factura-electronica``), donde están el número, el estado,
+el CDC y las descargas. Una notificación ajena o de otro cliente responde 404.
+
+**Indicador (Criterio 4).** La campana de la barra superior y el contador
+del menú suman las notificaciones de tasas sin leer y las de transacciones y
+facturas sin leer del cliente activo. Al abrir una notificación, deja de
+contarse.
+
 Pago de una transacción confirmada
 -----------------------------------
 
@@ -834,11 +885,23 @@ cliente activo seleccionado consulta, en ``/divisas/transacciones/mias/facturas/
 **paginado** (20 por página, Criterio 1) de los ``apps.divisas.models.DocumentoElectronico``
 emitidos para sus propias transacciones (compra/venta o cambio) — el
 comprobante que la HU "Integración con API de facturación electrónica"
-genera automáticamente ante SIFEN apenas una transacción queda "Pagada". Es
-de solo lectura: a diferencia de la pantalla de administración
-(``DocumentosElectronicosListView``, con todos los clientes y acciones para
-reintentar o consultar el estado SIFEN), el cliente no puede ejecutar
-ninguna acción sobre sus propios documentos, solo consultarlos.
+genera automáticamente ante SIFEN apenas una transacción queda "Pagada". A
+diferencia de la pantalla de administración (``DocumentosElectronicosListView``,
+con todos los clientes y acciones para reintentar la emisión o emitir una
+nota de crédito), la única acción que el cliente puede hacer es consultar
+ante SIFEN el estado de una factura propia con CDC, con el botón "Consultar
+SIFEN" (``apps.divisas.views.ConsultarEstadoSifenMiFacturaView``, solo POST).
+Como ninguna tarea periódica actualiza ese estado, esta consulta le permite
+ver por su cuenta si la factura ya fue aprobada o rechazada. Es una simple
+lectura ante Factura Segura (``consultar_estado_sifen`` nunca emite un
+documento), y una factura de otro cliente responde 404. Si el estado
+cambia, el cliente recibe además la notificación correspondiente.
+
+Los botones de cada fila ("Ver detalle", "KuDE", "XML" y "Consultar SIFEN")
+se acomodan dentro de su celda y, si no entran en una línea, pasan a la
+siguiente. El CDC, de 44 caracteres sin espacios, puede cortarse en varias
+líneas: así la tabla no se ensancha más que la pantalla ni deja los botones
+ocultos a la derecha.
 
 Cada fila muestra número de documento, CDC, la transacción asociada (con su
 tipo y divisa), la fecha de emisión y el monto —tomado de

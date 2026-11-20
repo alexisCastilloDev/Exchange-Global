@@ -25,6 +25,10 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.ConsultarEstadoSifenMiFacturaView
+   :members:
+   :show-inheritance:
+
 .. autofunction:: apps.divisas.views._cliente_propio
 
 .. autoclass:: apps.divisas.views.ReporteTransaccionesClienteView
@@ -88,6 +92,10 @@ apps.divisas.views module
    :show-inheritance:
 
 .. autoclass:: apps.divisas.views.MarcarNotificacionLeidaView
+   :members:
+   :show-inheritance:
+
+.. autoclass:: apps.divisas.views.AbrirNotificacionClienteView
    :members:
    :show-inheritance:
 

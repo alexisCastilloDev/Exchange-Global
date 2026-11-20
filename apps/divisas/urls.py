@@ -45,8 +45,10 @@ from .views import (
     DetalleTransaccionCambioView,
     PagarTransaccionOperacionView,
     PagarTransaccionCambioView,
+    ConsultarEstadoSifenMiFacturaView,
     MisNotificacionesView,
     MarcarNotificacionLeidaView,
+    AbrirNotificacionClienteView,
 )
 from .pagos_stripe import (
     IniciarPagoStripeOperacionView,
@@ -127,6 +129,11 @@ urlpatterns = [
     path('transacciones/mias/',MiHistorialTransaccionesView.as_view(), name='mis_transacciones'),
     path('transacciones/mias/facturas/', MisFacturasElectronicasListView.as_view(), name='mis_facturas_electronicas'),
     path(
+        'transacciones/mias/facturas/<int:pk>/consultar-sifen/',
+        ConsultarEstadoSifenMiFacturaView.as_view(),
+        name='consultar_sifen_mi_factura',
+    ),
+    path(
         'transacciones/mias/<int:cliente_pk>/reporte/',
         ReporteTransaccionesClienteView.as_view(),
         name='reporte_transacciones',
@@ -147,6 +154,11 @@ urlpatterns = [
         name='detalle_transaccion_cambio',
     ),
     path('notificaciones/', MisNotificacionesView.as_view(), name='mis_notificaciones'),
+    path(
+        'notificaciones/operaciones/<int:pk>/abrir/',
+        AbrirNotificacionClienteView.as_view(),
+        name='abrir_notificacion_cliente',
+    ),
     path(
         'notificaciones/<int:pk>/leida/',
         MarcarNotificacionLeidaView.as_view(),

@@ -270,7 +270,65 @@ class CuentaPropia(models.Model):
             cuentas[divisa_recibir.pk].save(update_fields=['saldo'])
 
 
-class CalculoOperacion(models.Model):
+class SeguimientoEstadoMixin:
+    """Detecta, al guardar, si cambió el campo ``estado`` y avisa con ``_al_cambiar_estado``.
+
+    Lo usan los modelos cuyo cambio de estado tiene que notificarse al
+    cliente (HU "Notificaciones sobre transacciones y facturas", ver
+    ``NotificacionCliente``): ``CalculoOperacion``, ``CalculoTriangulacion``
+    y ``DocumentoElectronico``. Engancharse a ``save`` (en vez de a cada
+    vista o servicio que cambia un estado) cubre por sí solo todos los
+    caminos que ya existen —pago, entrega, reintento, cancelación,
+    consulta a SIFEN— y los que se agreguen después, porque todos
+    terminan en un ``save``.
+
+    El estado "anterior" es el último que se leyó de la base o se guardó
+    con esta misma instancia (``_estado_guardado``). Por eso:
+
+    - Crear un registro no notifica: no hubo ningún cambio, solo un
+      estado inicial.
+    - Un ``save`` con ``update_fields`` que no incluye ``estado`` no
+      notifica, porque no persistió ningún estado nuevo.
+    - Si ``estado`` llegó diferido (``.only``/``.defer``), no hay un estado
+      anterior conocido y tampoco se notifica, para no inventar un cambio.
+
+    Un ``QuerySet.update`` no pasa por ``save`` y, por lo tanto, no
+    notifica. Hoy ningún flujo del sistema cambia el estado de estos
+    modelos así; solo lo hacen dos migraciones de datos antiguas.
+    """
+
+    @classmethod
+    def from_db(cls, *args, **kwargs):
+        """Carga la instancia y recuerda el estado leído de la base.
+
+        Reenvía los argumentos tal cual llegan, porque la firma de
+        ``Model.from_db`` cambia entre versiones de Django (la 6.1 agregó
+        ``fetch_mode``).
+        """
+        instancia = super().from_db(*args, **kwargs)
+        instancia._estado_guardado = instancia.__dict__.get('estado')
+        return instancia
+
+    def save(self, *args, **kwargs):
+        """Guarda y, si el estado persistido cambió respecto del anterior, llama a ``_al_cambiar_estado``."""
+        estado_anterior = getattr(self, '_estado_guardado', None)
+        es_nuevo = self._state.adding
+        super().save(*args, **kwargs)
+
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None and 'estado' not in update_fields:
+            return
+        cambio = not es_nuevo and estado_anterior is not None and self.estado != estado_anterior
+        self._estado_guardado = self.estado
+        if cambio:
+            self._al_cambiar_estado()
+
+    def _al_cambiar_estado(self):
+        """Reacciona a un cambio de estado ya guardado. Cada modelo la implementa."""
+        raise NotImplementedError
+
+
+class CalculoOperacion(SeguimientoEstadoMixin, models.Model):
     """Representa una transacción de compra o venta iniciada por el cliente.
 
     El cálculo previo (Paso 1: "Calcular importe") es solo una previsualización
@@ -474,6 +532,10 @@ class CalculoOperacion(models.Model):
         """Etiqueta legible de ``estado_efectivo`` (equivalente a ``get_estado_display``)."""
         return dict(self.ESTADO_CHOICES).get(self.estado_efectivo, self.estado_efectivo)
 
+    def _al_cambiar_estado(self):
+        """Notifica al cliente el nuevo estado, si corresponde (ver ``NotificacionCliente.notificar_transaccion``)."""
+        NotificacionCliente.notificar_transaccion(self)
+
     def marcar_vencida_si_corresponde(self):
         """Persiste el paso a "Vencida" si la transacción pendiente ya venció.
 
@@ -650,7 +712,7 @@ class ConfiguracionVigencia(models.Model):
         return settings.PAGO_OPERACION_VIGENCIA_SEGUNDOS
 
 
-class CalculoTriangulacion(models.Model):
+class CalculoTriangulacion(SeguimientoEstadoMixin, models.Model):
     """Representa un cambio entre dos divisas extranjeras vía PYG.
 
     Igual que en ``CalculoOperacion``, el cálculo previo es solo una
@@ -806,6 +868,10 @@ class CalculoTriangulacion(models.Model):
     def get_estado_efectivo_display(self):
         """Etiqueta legible de ``estado_efectivo`` (equivalente a ``get_estado_display``)."""
         return dict(self.ESTADO_CHOICES).get(self.estado_efectivo, self.estado_efectivo)
+
+    def _al_cambiar_estado(self):
+        """Notifica al cliente el nuevo estado, si corresponde (ver ``NotificacionCliente.notificar_transaccion``)."""
+        NotificacionCliente.notificar_transaccion(self)
 
     def marcar_vencida_si_corresponde(self):
         """Persiste el paso a "Vencida" si el cambio pendiente ya venció.
@@ -1675,7 +1741,7 @@ class ContadorDocumentoElectronico(models.Model):
             return f'{siguiente:07d}'
 
 
-class DocumentoElectronico(models.Model):
+class DocumentoElectronico(SeguimientoEstadoMixin, models.Model):
     """Documento tributario electrónico (Factura) emitido ante SIFEN por una transacción pagada.
 
     Implementa la HU "Integración con API de facturación electrónica":
@@ -1907,6 +1973,10 @@ class DocumentoElectronico(models.Model):
         """Identifica el documento por tipo, número y estado actual."""
         return f'{self.get_tipo_documento_display()} {self.numero_documento} ({self.get_estado_display()})'
 
+    def _al_cambiar_estado(self):
+        """Notifica al cliente el nuevo estado ante SIFEN, si corresponde (ver ``NotificacionCliente.notificar_factura``)."""
+        NotificacionCliente.notificar_factura(self)
+
     def clean(self):
         """Valida que una factura tenga exactamente una transacción, y una nota de crédito, ninguna (y sí una factura)."""
         cantidad_transaccion = sum(
@@ -2014,3 +2084,287 @@ class DocumentoElectronico(models.Model):
             and self.estado in (self.ESTADO_APROBADO, self.ESTADO_APROBADO_OBS)
             and not self.tiene_nota_credito_vigente
         )
+
+
+
+class NotificacionCliente(models.Model):
+    """Aviso a un usuario de un cliente de que cambió el estado de una transacción o de una factura.
+
+    Implementa la HU "Notificaciones sobre transacciones y facturas". A
+    diferencia de ``NotificacionTasa`` (un aviso general, dirigido a todos
+    los usuarios clientes), cada notificación de este modelo pertenece a un
+    **cliente** puntual, el dueño de la transacción o de la factura, y se
+    crea una por cada usuario asociado a ese cliente. Así cada usuario
+    tiene su propio estado de lectura, y la pantalla puede mostrar solo las
+    del cliente activo: una notificación de otro cliente, aunque sea del
+    mismo usuario, no se ve (criterio 5; ver
+    ``apps.divisas.views.MisNotificacionesView``).
+
+    Se generan solas, al guardar un cambio de estado (ver
+    ``SeguimientoEstadoMixin``):
+
+    - **Transacción** (criterio 1): cuando una ``CalculoOperacion`` o una
+      ``CalculoTriangulacion`` pasa a uno de los estados de
+      ``ESTADOS_NOTIFICABLES_TRANSACCION``: "Pagada", "Completada"
+      (acreditada o retirada), cualquier cancelación, o un estado que
+      requiere atención (entrega fallida o pago fuera de plazo, el mismo
+      criterio que ``apps.divisas.monitoreo.MOTIVOS_ATENCION``).
+      ``referencia`` guarda el número de la transacción.
+    - **Factura** (criterio 2): cuando una factura (no una nota de
+      crédito) pasa a "Aprobada", "Aprobada con observación", "Rechazada" o
+      "Anulada por nota de crédito" (ver ``ESTADOS_NOTIFICABLES_FACTURA``).
+      ``referencia`` guarda el CDC o, si todavía no tiene uno, el número
+      de documento. Una factura de ventanilla no notifica a nadie: un
+      cliente de mostrador no tiene usuario en el sistema.
+
+    El estado se guarda copiado (``estado`` y ``estado_display``) en vez de
+    leerse de la transacción, porque la notificación informa el estado al
+    que pasó *en ese momento*: si la transacción vuelve a cambiar, cada
+    cambio tiene su propia notificación.
+    """
+
+    TIPO_TRANSACCION = 'TRANSACCION'
+    TIPO_FACTURA = 'FACTURA'
+    TIPO_CHOICES = [
+        (TIPO_TRANSACCION, 'Transacción'),
+        (TIPO_FACTURA, 'Factura electrónica'),
+    ]
+
+    CATEGORIA_PAGADA = 'pagada'
+    CATEGORIA_COMPLETADA = 'completada'
+    CATEGORIA_CANCELADA = 'cancelada'
+    CATEGORIA_ATENCION = 'atencion'
+    CATEGORIA_APROBADA = 'aprobada'
+    CATEGORIA_RECHAZADA = 'rechazada'
+    CATEGORIA_ANULADA = 'anulada'
+    CATEGORIA_ETIQUETAS = {
+        CATEGORIA_PAGADA: 'Pagada',
+        CATEGORIA_COMPLETADA: 'Completada',
+        CATEGORIA_CANCELADA: 'Cancelada',
+        CATEGORIA_ATENCION: 'Requiere atención',
+        CATEGORIA_APROBADA: 'Aprobada por SIFEN',
+        CATEGORIA_RECHAZADA: 'Rechazada por SIFEN',
+        CATEGORIA_ANULADA: 'Cancelada (anulada por nota de crédito)',
+    }
+
+    ESTADOS_NOTIFICABLES_TRANSACCION = {
+        CalculoOperacion.ESTADO_PAGADA: CATEGORIA_PAGADA,
+        CalculoOperacion.ESTADO_ACREDITADA: CATEGORIA_COMPLETADA,
+        CalculoOperacion.ESTADO_RETIRADA: CATEGORIA_COMPLETADA,
+        CalculoOperacion.ESTADO_CANCELADA: CATEGORIA_CANCELADA,
+        CalculoOperacion.ESTADO_CANCELADA_COTIZACION: CATEGORIA_CANCELADA,
+        CalculoOperacion.ESTADO_CANCELADA_SALDO_INSUFICIENTE: CATEGORIA_CANCELADA,
+        CalculoOperacion.ESTADO_CANCELADA_FONDOS_CLIENTE: CATEGORIA_CANCELADA,
+        CalculoOperacion.ESTADO_ENTREGA_FALLIDA: CATEGORIA_ATENCION,
+        CalculoOperacion.ESTADO_PAGO_EXPIRADO: CATEGORIA_ATENCION,
+    }
+    """Estado de transacción (mismo código en compra/venta y en cambio) → categoría que se le informa al cliente.
+
+    "Pendiente", "Confirmada" y "Vencida" quedan afuera: son pasos que el
+    propio cliente acaba de hacer en pantalla, o que no requieren nada de
+    él, y la HU no los pide.
+    """
+
+    ESTADOS_NOTIFICABLES_FACTURA = {
+        DocumentoElectronico.ESTADO_APROBADO: CATEGORIA_APROBADA,
+        DocumentoElectronico.ESTADO_APROBADO_OBS: CATEGORIA_APROBADA,
+        DocumentoElectronico.ESTADO_RECHAZADO: CATEGORIA_RECHAZADA,
+        DocumentoElectronico.ESTADO_ANULADA: CATEGORIA_ANULADA,
+    }
+    """Estado de factura → categoría que se le informa al cliente.
+
+    "Cancelada por SIFEN" corresponde a "Anulada por nota de crédito": es
+    el único modo en que este sistema cancela una factura ya aprobada (ver
+    ``apps.divisas.factura_electronica.consultar_estado_sifen``).
+    """
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notificaciones_cliente',
+        verbose_name='Usuario destinatario',
+    )
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name='notificaciones',
+        verbose_name='Cliente dueño de la transacción o factura',
+    )
+    tipo = models.CharField(max_length=11, choices=TIPO_CHOICES)
+    calculo_operacion = models.ForeignKey(
+        CalculoOperacion,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notificaciones',
+        verbose_name='Compra o venta',
+    )
+    calculo_triangulacion = models.ForeignKey(
+        CalculoTriangulacion,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notificaciones',
+        verbose_name='Cambio de divisas',
+    )
+    documento_electronico = models.ForeignKey(
+        DocumentoElectronico,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notificaciones',
+        verbose_name='Factura electrónica',
+    )
+    referencia = models.CharField(
+        max_length=64,
+        verbose_name='Número de transacción o CDC',
+    )
+    estado = models.CharField(max_length=30, verbose_name='Nuevo estado (código)')
+    estado_display = models.CharField(max_length=120, verbose_name='Nuevo estado')
+    creada_en = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de notificación')
+    leida = models.BooleanField(default=False, verbose_name='Leída')
+    leida_en = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de lectura')
+
+    class Meta:
+        """Ordena de la más reciente a la más antigua e indexa las no leídas de cada usuario y cliente."""
+        verbose_name = 'Notificación de transacción o factura'
+        verbose_name_plural = 'Notificaciones de transacciones y facturas'
+        ordering = ['-creada_en', '-pk']
+        indexes = [
+            models.Index(fields=['usuario', 'cliente', 'leida'], name='notif_cli_usuario_leida_idx'),
+        ]
+
+    def __str__(self):
+        """Resume la notificación con su tipo, referencia y nuevo estado."""
+        return f'{self.get_tipo_display()} {self.referencia}: {self.estado_display}'
+
+    @property
+    def es_factura(self):
+        """Indica si la notificación es sobre una factura electrónica (si no, es sobre una transacción)."""
+        return self.tipo == self.TIPO_FACTURA
+
+    @property
+    def categoria(self):
+        """Categoría del nuevo estado (pagada, completada, cancelada, atención, aprobada, rechazada o anulada)."""
+        estados = self.ESTADOS_NOTIFICABLES_FACTURA if self.es_factura else self.ESTADOS_NOTIFICABLES_TRANSACCION
+        return estados.get(self.estado, '')
+
+    @property
+    def categoria_display(self):
+        """Etiqueta legible de ``categoria``."""
+        return self.CATEGORIA_ETIQUETAS.get(self.categoria, self.estado_display)
+
+    @property
+    def mensaje(self):
+        """Texto legible de la notificación, con el número de transacción o el CDC y el nuevo estado."""
+        if self.es_factura:
+            return f'Tu factura electrónica con CDC {self.referencia} pasó a "{self.estado_display}".'
+        return f'Tu transacción N.° {self.referencia} pasó a "{self.estado_display}".'
+
+    @property
+    def url_detalle(self):
+        """URL del detalle de la transacción o, para una factura, de su sección en ese mismo detalle (criterio 3).
+
+        El cliente no tiene una pantalla propia por factura: el comprobante
+        completo (número, estado, CDC y descargas) se muestra en la sección
+        "Factura electrónica" del detalle de su transacción, a la que se
+        llega con el ancla ``#factura-electronica``.
+        """
+        from django.urls import reverse
+
+        if self.calculo_operacion_id:
+            url = reverse('divisas:detalle_transaccion_operacion', args=[self.calculo_operacion_id])
+        else:
+            url = reverse('divisas:detalle_transaccion_cambio', args=[self.calculo_triangulacion_id])
+        return f'{url}#factura-electronica' if self.es_factura else url
+
+    def marcar_como_leida(self):
+        """Marca la notificación como leída y registra cuándo; es idempotente.
+
+        Returns:
+            bool: ``True`` si la notificación pasó a leída recién ahora.
+        """
+        if self.leida:
+            return False
+        self.leida = True
+        self.leida_en = timezone.now()
+        self.save(update_fields=['leida', 'leida_en'])
+        return True
+
+    @staticmethod
+    def destinatarios(cliente):
+        """Usuarios activos asociados a ``cliente``, los que pueden tenerlo como cliente activo.
+
+        Solo se consideran los usuarios asociados (``Cliente.usuarios``):
+        es la única relación por la que
+        ``apps.clientes.middleware.ClienteActivoMiddleware`` resuelve el
+        cliente activo, así que cualquier otro usuario nunca podría ver
+        la notificación.
+        """
+        return cliente.usuarios.filter(is_active=True)
+
+    @classmethod
+    def _crear_para_cliente(cls, cliente, **campos):
+        """Crea una notificación con ``campos`` para cada destinatario de ``cliente``."""
+        notificaciones = [
+            cls(usuario_id=usuario_id, cliente=cliente, **campos)
+            for usuario_id in cls.destinatarios(cliente).values_list('pk', flat=True)
+        ]
+        return cls.objects.bulk_create(notificaciones)
+
+    @classmethod
+    def notificar_transaccion(cls, transaccion):
+        """Notifica al cliente de ``transaccion`` su nuevo estado, si es uno de los notificables (criterio 1).
+
+        Args:
+            transaccion (CalculoOperacion | CalculoTriangulacion): La
+                transacción cuyo estado acaba de cambiar y guardarse.
+
+        Returns:
+            list[NotificacionCliente]: Las notificaciones creadas (vacía si el
+            estado no se notifica o el cliente no tiene usuarios).
+        """
+        if transaccion.estado not in cls.ESTADOS_NOTIFICABLES_TRANSACCION:
+            return []
+        campo = 'calculo_operacion' if isinstance(transaccion, CalculoOperacion) else 'calculo_triangulacion'
+        return cls._crear_para_cliente(
+            transaccion.cliente,
+            tipo=cls.TIPO_TRANSACCION,
+            referencia=str(transaccion.pk),
+            estado=transaccion.estado,
+            estado_display=transaccion.get_estado_display(),
+            **{campo: transaccion},
+        )
+
+    @classmethod
+    def notificar_factura(cls, documento):
+        """Notifica al cliente de la factura ``documento`` su nuevo estado ante SIFEN (criterio 2).
+
+        Solo notifica facturas (no notas de crédito) de transacciones
+        online: una de ventanilla no tiene ningún ``Cliente`` del sistema.
+
+        Args:
+            documento (DocumentoElectronico): La factura cuyo estado acaba
+                de cambiar y guardarse.
+
+        Returns:
+            list[NotificacionCliente]: Las notificaciones creadas.
+        """
+        if documento.estado not in cls.ESTADOS_NOTIFICABLES_FACTURA:
+            return []
+        if documento.tipo_documento != ContadorDocumentoElectronico.TIPO_FACTURA:
+            return []
+        transaccion = documento.calculo_operacion or documento.calculo_triangulacion
+        if transaccion is None:
+            return []
+        campo = 'calculo_operacion' if isinstance(transaccion, CalculoOperacion) else 'calculo_triangulacion'
+        return cls._crear_para_cliente(
+            transaccion.cliente,
+            tipo=cls.TIPO_FACTURA,
+            referencia=documento.cdc or documento.numero_documento,
+            estado=documento.estado,
+            estado_display=documento.get_estado_display(),
+            documento_electronico=documento,
+            **{campo: transaccion},
+        )
+
