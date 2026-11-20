@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -67,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -445,9 +447,79 @@
             <span class="n">cuentas</span><span class="p">[</span><span class="n">divisa_recibir</span><span class="o">.</span><span class="n">pk</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'saldo'</span><span class="p">])</span>
 
 
+<div class="viewcode-block" id="SeguimientoEstadoMixin">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SeguimientoEstadoMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Detecta, al guardar, si cambió el campo ``estado`` y avisa con ``_al_cambiar_estado``.</span>
+
+<span class="sd">    Lo usan los modelos cuyo cambio de estado tiene que notificarse al</span>
+<span class="sd">    cliente (HU "Notificaciones sobre transacciones y facturas", ver</span>
+<span class="sd">    ``NotificacionCliente``): ``CalculoOperacion``, ``CalculoTriangulacion``</span>
+<span class="sd">    y ``DocumentoElectronico``. Engancharse a ``save`` (en vez de a cada</span>
+<span class="sd">    vista o servicio que cambia un estado) cubre por sí solo todos los</span>
+<span class="sd">    caminos que ya existen —pago, entrega, reintento, cancelación,</span>
+<span class="sd">    consulta a SIFEN— y los que se agreguen después, porque todos</span>
+<span class="sd">    terminan en un ``save``.</span>
+
+<span class="sd">    El estado "anterior" es el último que se leyó de la base o se guardó</span>
+<span class="sd">    con esta misma instancia (``_estado_guardado``). Por eso:</span>
+
+<span class="sd">    - Crear un registro no notifica: no hubo ningún cambio, solo un</span>
+<span class="sd">      estado inicial.</span>
+<span class="sd">    - Un ``save`` con ``update_fields`` que no incluye ``estado`` no</span>
+<span class="sd">      notifica, porque no persistió ningún estado nuevo.</span>
+<span class="sd">    - Si ``estado`` llegó diferido (``.only``/``.defer``), no hay un estado</span>
+<span class="sd">      anterior conocido y tampoco se notifica, para no inventar un cambio.</span>
+
+<span class="sd">    Un ``QuerySet.update`` no pasa por ``save`` y, por lo tanto, no</span>
+<span class="sd">    notifica. Hoy ningún flujo del sistema cambia el estado de estos</span>
+<span class="sd">    modelos así; solo lo hacen dos migraciones de datos antiguas.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="SeguimientoEstadoMixin.from_db">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin.from_db">[documentos]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_db</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Carga la instancia y recuerda el estado leído de la base.</span>
+
+<span class="sd">        Reenvía los argumentos tal cual llegan, porque la firma de</span>
+<span class="sd">        ``Model.from_db`` cambia entre versiones de Django (la 6.1 agregó</span>
+<span class="sd">        ``fetch_mode``).</span>
+<span class="sd">        """</span>
+        <span class="n">instancia</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">from_db</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">instancia</span><span class="o">.</span><span class="n">_estado_guardado</span> <span class="o">=</span> <span class="n">instancia</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'estado'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">instancia</span></div>
+
+
+<div class="viewcode-block" id="SeguimientoEstadoMixin.save">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin.save">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Guarda y, si el estado persistido cambió respecto del anterior, llama a ``_al_cambiar_estado``."""</span>
+        <span class="n">estado_anterior</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'_estado_guardado'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">es_nuevo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">update_fields</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'update_fields'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">update_fields</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">'estado'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">update_fields</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">cambio</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">es_nuevo</span> <span class="ow">and</span> <span class="n">estado_anterior</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="o">!=</span> <span class="n">estado_anterior</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_estado_guardado</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span>
+        <span class="k">if</span> <span class="n">cambio</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_al_cambiar_estado</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SeguimientoEstadoMixin._al_cambiar_estado">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin._al_cambiar_estado">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_al_cambiar_estado</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Reacciona a un cambio de estado ya guardado. Cada modelo la implementa."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
+
+
 <div class="viewcode-block" id="CalculoOperacion">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">CalculoOperacion</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CalculoOperacion</span><span class="p">(</span><span class="n">SeguimientoEstadoMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Representa una transacción de compra o venta iniciada por el cliente.</span>
 
 <span class="sd">    El cálculo previo (Paso 1: "Calcular importe") es solo una previsualización</span>
@@ -654,6 +726,10 @@
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_CHOICES</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">)</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_al_cambiar_estado</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Notifica al cliente el nuevo estado, si corresponde (ver ``NotificacionCliente.notificar_transaccion``)."""</span>
+        <span class="n">NotificacionCliente</span><span class="o">.</span><span class="n">notificar_transaccion</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
 <div class="viewcode-block" id="CalculoOperacion.marcar_vencida_si_corresponde">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoOperacion.marcar_vencida_si_corresponde">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">marcar_vencida_si_corresponde</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -842,7 +918,7 @@
 
 <div class="viewcode-block" id="CalculoTriangulacion">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">CalculoTriangulacion</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CalculoTriangulacion</span><span class="p">(</span><span class="n">SeguimientoEstadoMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Representa un cambio entre dos divisas extranjeras vía PYG.</span>
 
 <span class="sd">    Igual que en ``CalculoOperacion``, el cálculo previo es solo una</span>
@@ -1001,6 +1077,10 @@
 <span class="w">        </span><span class="sd">"""Etiqueta legible de ``estado_efectivo`` (equivalente a ``get_estado_display``)."""</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_CHOICES</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado_efectivo</span><span class="p">)</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_al_cambiar_estado</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Notifica al cliente el nuevo estado, si corresponde (ver ``NotificacionCliente.notificar_transaccion``)."""</span>
+        <span class="n">NotificacionCliente</span><span class="o">.</span><span class="n">notificar_transaccion</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CalculoTriangulacion.marcar_vencida_si_corresponde">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion.marcar_vencida_si_corresponde">[documentos]</a>
@@ -1930,7 +2010,7 @@
 
 <div class="viewcode-block" id="DocumentoElectronico">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico">[documentos]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">DocumentoElectronico</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DocumentoElectronico</span><span class="p">(</span><span class="n">SeguimientoEstadoMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Documento tributario electrónico (Factura) emitido ante SIFEN por una transacción pagada.</span>
 
 <span class="sd">    Implementa la HU "Integración con API de facturación electrónica":</span>
@@ -2162,6 +2242,10 @@
 <span class="w">        </span><span class="sd">"""Identifica el documento por tipo, número y estado actual."""</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tipo_documento_display</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">numero_documento</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">()</span><span class="si">}</span><span class="s1">)'</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_al_cambiar_estado</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Notifica al cliente el nuevo estado ante SIFEN, si corresponde (ver ``NotificacionCliente.notificar_factura``)."""</span>
+        <span class="n">NotificacionCliente</span><span class="o">.</span><span class="n">notificar_factura</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
 <div class="viewcode-block" id="DocumentoElectronico.clean">
 <a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.DocumentoElectronico.clean">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2272,6 +2356,305 @@
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_APROBADO</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADO_APROBADO_OBS</span><span class="p">)</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tiene_nota_credito_vigente</span>
         <span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="NotificacionCliente">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NotificacionCliente</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Aviso a un usuario de un cliente de que cambió el estado de una transacción o de una factura.</span>
+
+<span class="sd">    Implementa la HU "Notificaciones sobre transacciones y facturas". A</span>
+<span class="sd">    diferencia de ``NotificacionTasa`` (un aviso general, dirigido a todos</span>
+<span class="sd">    los usuarios clientes), cada notificación de este modelo pertenece a un</span>
+<span class="sd">    **cliente** puntual, el dueño de la transacción o de la factura, y se</span>
+<span class="sd">    crea una por cada usuario asociado a ese cliente. Así cada usuario</span>
+<span class="sd">    tiene su propio estado de lectura, y la pantalla puede mostrar solo las</span>
+<span class="sd">    del cliente activo: una notificación de otro cliente, aunque sea del</span>
+<span class="sd">    mismo usuario, no se ve (criterio 5; ver</span>
+<span class="sd">    ``apps.divisas.views.MisNotificacionesView``).</span>
+
+<span class="sd">    Se generan solas, al guardar un cambio de estado (ver</span>
+<span class="sd">    ``SeguimientoEstadoMixin``):</span>
+
+<span class="sd">    - **Transacción** (criterio 1): cuando una ``CalculoOperacion`` o una</span>
+<span class="sd">      ``CalculoTriangulacion`` pasa a uno de los estados de</span>
+<span class="sd">      ``ESTADOS_NOTIFICABLES_TRANSACCION``: "Pagada", "Completada"</span>
+<span class="sd">      (acreditada o retirada), cualquier cancelación, o un estado que</span>
+<span class="sd">      requiere atención (entrega fallida o pago fuera de plazo, el mismo</span>
+<span class="sd">      criterio que ``apps.divisas.monitoreo.MOTIVOS_ATENCION``).</span>
+<span class="sd">      ``referencia`` guarda el número de la transacción.</span>
+<span class="sd">    - **Factura** (criterio 2): cuando una factura (no una nota de</span>
+<span class="sd">      crédito) pasa a "Aprobada", "Aprobada con observación", "Rechazada" o</span>
+<span class="sd">      "Anulada por nota de crédito" (ver ``ESTADOS_NOTIFICABLES_FACTURA``).</span>
+<span class="sd">      ``referencia`` guarda el CDC o, si todavía no tiene uno, el número</span>
+<span class="sd">      de documento. Una factura de ventanilla no notifica a nadie: un</span>
+<span class="sd">      cliente de mostrador no tiene usuario en el sistema.</span>
+
+<span class="sd">    El estado se guarda copiado (``estado`` y ``estado_display``) en vez de</span>
+<span class="sd">    leerse de la transacción, porque la notificación informa el estado al</span>
+<span class="sd">    que pasó *en ese momento*: si la transacción vuelve a cambiar, cada</span>
+<span class="sd">    cambio tiene su propia notificación.</span>
+<span class="sd">    """</span>
+
+    <span class="n">TIPO_TRANSACCION</span> <span class="o">=</span> <span class="s1">'TRANSACCION'</span>
+    <span class="n">TIPO_FACTURA</span> <span class="o">=</span> <span class="s1">'FACTURA'</span>
+    <span class="n">TIPO_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">TIPO_TRANSACCION</span><span class="p">,</span> <span class="s1">'Transacción'</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">TIPO_FACTURA</span><span class="p">,</span> <span class="s1">'Factura electrónica'</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">CATEGORIA_PAGADA</span> <span class="o">=</span> <span class="s1">'pagada'</span>
+    <span class="n">CATEGORIA_COMPLETADA</span> <span class="o">=</span> <span class="s1">'completada'</span>
+    <span class="n">CATEGORIA_CANCELADA</span> <span class="o">=</span> <span class="s1">'cancelada'</span>
+    <span class="n">CATEGORIA_ATENCION</span> <span class="o">=</span> <span class="s1">'atencion'</span>
+    <span class="n">CATEGORIA_APROBADA</span> <span class="o">=</span> <span class="s1">'aprobada'</span>
+    <span class="n">CATEGORIA_RECHAZADA</span> <span class="o">=</span> <span class="s1">'rechazada'</span>
+    <span class="n">CATEGORIA_ANULADA</span> <span class="o">=</span> <span class="s1">'anulada'</span>
+    <span class="n">CATEGORIA_ETIQUETAS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">CATEGORIA_PAGADA</span><span class="p">:</span> <span class="s1">'Pagada'</span><span class="p">,</span>
+        <span class="n">CATEGORIA_COMPLETADA</span><span class="p">:</span> <span class="s1">'Completada'</span><span class="p">,</span>
+        <span class="n">CATEGORIA_CANCELADA</span><span class="p">:</span> <span class="s1">'Cancelada'</span><span class="p">,</span>
+        <span class="n">CATEGORIA_ATENCION</span><span class="p">:</span> <span class="s1">'Requiere atención'</span><span class="p">,</span>
+        <span class="n">CATEGORIA_APROBADA</span><span class="p">:</span> <span class="s1">'Aprobada por SIFEN'</span><span class="p">,</span>
+        <span class="n">CATEGORIA_RECHAZADA</span><span class="p">:</span> <span class="s1">'Rechazada por SIFEN'</span><span class="p">,</span>
+        <span class="n">CATEGORIA_ANULADA</span><span class="p">:</span> <span class="s1">'Cancelada (anulada por nota de crédito)'</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">ESTADOS_NOTIFICABLES_TRANSACCION</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_PAGADA</span><span class="p">:</span> <span class="n">CATEGORIA_PAGADA</span><span class="p">,</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_ACREDITADA</span><span class="p">:</span> <span class="n">CATEGORIA_COMPLETADA</span><span class="p">,</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_RETIRADA</span><span class="p">:</span> <span class="n">CATEGORIA_COMPLETADA</span><span class="p">,</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_CANCELADA</span><span class="p">:</span> <span class="n">CATEGORIA_CANCELADA</span><span class="p">,</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_CANCELADA_COTIZACION</span><span class="p">:</span> <span class="n">CATEGORIA_CANCELADA</span><span class="p">,</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_CANCELADA_SALDO_INSUFICIENTE</span><span class="p">:</span> <span class="n">CATEGORIA_CANCELADA</span><span class="p">,</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_CANCELADA_FONDOS_CLIENTE</span><span class="p">:</span> <span class="n">CATEGORIA_CANCELADA</span><span class="p">,</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_ENTREGA_FALLIDA</span><span class="p">:</span> <span class="n">CATEGORIA_ATENCION</span><span class="p">,</span>
+        <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_PAGO_EXPIRADO</span><span class="p">:</span> <span class="n">CATEGORIA_ATENCION</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="w">    </span><span class="sd">"""Estado de transacción (mismo código en compra/venta y en cambio) → categoría que se le informa al cliente.</span>
+
+<span class="sd">    "Pendiente", "Confirmada" y "Vencida" quedan afuera: son pasos que el</span>
+<span class="sd">    propio cliente acaba de hacer en pantalla, o que no requieren nada de</span>
+<span class="sd">    él, y la HU no los pide.</span>
+<span class="sd">    """</span>
+
+    <span class="n">ESTADOS_NOTIFICABLES_FACTURA</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_APROBADO</span><span class="p">:</span> <span class="n">CATEGORIA_APROBADA</span><span class="p">,</span>
+        <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_APROBADO_OBS</span><span class="p">:</span> <span class="n">CATEGORIA_APROBADA</span><span class="p">,</span>
+        <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_RECHAZADO</span><span class="p">:</span> <span class="n">CATEGORIA_RECHAZADA</span><span class="p">,</span>
+        <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ANULADA</span><span class="p">:</span> <span class="n">CATEGORIA_ANULADA</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="w">    </span><span class="sd">"""Estado de factura → categoría que se le informa al cliente.</span>
+
+<span class="sd">    "Cancelada por SIFEN" corresponde a "Anulada por nota de crédito": es</span>
+<span class="sd">    el único modo en que este sistema cancela una factura ya aprobada (ver</span>
+<span class="sd">    ``apps.divisas.factura_electronica.consultar_estado_sifen``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">usuario</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'notificaciones_cliente'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Usuario destinatario'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cliente</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Cliente</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'notificaciones'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cliente dueño de la transacción o factura'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">TIPO_CHOICES</span><span class="p">)</span>
+    <span class="n">calculo_operacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">CalculoOperacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'notificaciones'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Compra o venta'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">calculo_triangulacion</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">CalculoTriangulacion</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'notificaciones'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Cambio de divisas'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">documento_electronico</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">DocumentoElectronico</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s1">'notificaciones'</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Factura electrónica'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">referencia</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+        <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Número de transacción o CDC'</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">estado</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Nuevo estado (código)'</span><span class="p">)</span>
+    <span class="n">estado_display</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Nuevo estado'</span><span class="p">)</span>
+    <span class="n">creada_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Fecha de notificación'</span><span class="p">)</span>
+    <span class="n">leida</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Leída'</span><span class="p">)</span>
+    <span class="n">leida_en</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s1">'Fecha de lectura'</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Ordena de la más reciente a la más antigua e indexa las no leídas de cada usuario y cliente."""</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="s1">'Notificación de transacción o factura'</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s1">'Notificaciones de transacciones y facturas'</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'-creada_en'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">]</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'usuario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">,</span> <span class="s1">'leida'</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">'notif_cli_usuario_leida_idx'</span><span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resume la notificación con su tipo, referencia y nuevo estado."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">referencia</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estado_display</span><span class="si">}</span><span class="s1">'</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">es_factura</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Indica si la notificación es sobre una factura electrónica (si no, es sobre una transacción)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tipo</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">TIPO_FACTURA</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">categoria</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Categoría del nuevo estado (pagada, completada, cancelada, atención, aprobada, rechazada o anulada)."""</span>
+        <span class="n">estados</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADOS_NOTIFICABLES_FACTURA</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">es_factura</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">ESTADOS_NOTIFICABLES_TRANSACCION</span>
+        <span class="k">return</span> <span class="n">estados</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">estado</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">categoria_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Etiqueta legible de ``categoria``."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">CATEGORIA_ETIQUETAS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categoria</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">estado_display</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mensaje</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Texto legible de la notificación, con el número de transacción o el CDC y el nuevo estado."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">es_factura</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">'Tu factura electrónica con CDC </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">referencia</span><span class="si">}</span><span class="s1"> pasó a "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estado_display</span><span class="si">}</span><span class="s1">".'</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'Tu transacción N.° </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">referencia</span><span class="si">}</span><span class="s1"> pasó a "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estado_display</span><span class="si">}</span><span class="s1">".'</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">url_detalle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""URL del detalle de la transacción o, para una factura, de su sección en ese mismo detalle (criterio 3).</span>
+
+<span class="sd">        El cliente no tiene una pantalla propia por factura: el comprobante</span>
+<span class="sd">        completo (número, estado, CDC y descargas) se muestra en la sección</span>
+<span class="sd">        "Factura electrónica" del detalle de su transacción, a la que se</span>
+<span class="sd">        llega con el ancla ``#factura-electronica``.</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculo_operacion_id</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:detalle_transaccion_operacion'</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_operacion_id</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:detalle_transaccion_cambio'</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">calculo_triangulacion_id</span><span class="p">])</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">#factura-electronica'</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">es_factura</span> <span class="k">else</span> <span class="n">url</span>
+
+<div class="viewcode-block" id="NotificacionCliente.marcar_como_leida">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.marcar_como_leida">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">marcar_como_leida</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Marca la notificación como leída y registra cuándo; es idempotente.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: ``True`` si la notificación pasó a leída recién ahora.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">leida</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leida</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leida_en</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'leida'</span><span class="p">,</span> <span class="s1">'leida_en'</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="NotificacionCliente.destinatarios">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.destinatarios">[documentos]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">destinatarios</span><span class="p">(</span><span class="n">cliente</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Usuarios activos asociados a ``cliente``, los que pueden tenerlo como cliente activo.</span>
+
+<span class="sd">        Solo se consideran los usuarios asociados (``Cliente.usuarios``):</span>
+<span class="sd">        es la única relación por la que</span>
+<span class="sd">        ``apps.clientes.middleware.ClienteActivoMiddleware`` resuelve el</span>
+<span class="sd">        cliente activo, así que cualquier otro usuario nunca podría ver</span>
+<span class="sd">        la notificación.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">cliente</span><span class="o">.</span><span class="n">usuarios</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_crear_para_cliente</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cliente</span><span class="p">,</span> <span class="o">**</span><span class="n">campos</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Crea una notificación con ``campos`` para cada destinatario de ``cliente``."""</span>
+        <span class="n">notificaciones</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">cls</span><span class="p">(</span><span class="n">usuario_id</span><span class="o">=</span><span class="n">usuario_id</span><span class="p">,</span> <span class="n">cliente</span><span class="o">=</span><span class="n">cliente</span><span class="p">,</span> <span class="o">**</span><span class="n">campos</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">usuario_id</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">destinatarios</span><span class="p">(</span><span class="n">cliente</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s1">'pk'</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_create</span><span class="p">(</span><span class="n">notificaciones</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NotificacionCliente.notificar_transaccion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.notificar_transaccion">[documentos]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">notificar_transaccion</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">transaccion</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Notifica al cliente de ``transaccion`` su nuevo estado, si es uno de los notificables (criterio 1).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transaccion (CalculoOperacion | CalculoTriangulacion): La</span>
+<span class="sd">                transacción cuyo estado acaba de cambiar y guardarse.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[NotificacionCliente]: Las notificaciones creadas (vacía si el</span>
+<span class="sd">            estado no se notifica o el cliente no tiene usuarios).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">ESTADOS_NOTIFICABLES_TRANSACCION</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">campo</span> <span class="o">=</span> <span class="s1">'calculo_operacion'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'calculo_triangulacion'</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_crear_para_cliente</span><span class="p">(</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="n">tipo</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">TIPO_TRANSACCION</span><span class="p">,</span>
+            <span class="n">referencia</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+            <span class="n">estado</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span><span class="p">,</span>
+            <span class="n">estado_display</span><span class="o">=</span><span class="n">transaccion</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">(),</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">campo</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NotificacionCliente.notificar_factura">
+<a class="viewcode-back" href="../../../reference/apps.divisas.models.html#apps.divisas.models.NotificacionCliente.notificar_factura">[documentos]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">notificar_factura</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">documento</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Notifica al cliente de la factura ``documento`` su nuevo estado ante SIFEN (criterio 2).</span>
+
+<span class="sd">        Solo notifica facturas (no notas de crédito) de transacciones</span>
+<span class="sd">        online: una de ventanilla no tiene ningún ``Cliente`` del sistema.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            documento (DocumentoElectronico): La factura cuyo estado acaba</span>
+<span class="sd">                de cambiar y guardarse.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[NotificacionCliente]: Las notificaciones creadas.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">ESTADOS_NOTIFICABLES_FACTURA</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">documento</span><span class="o">.</span><span class="n">tipo_documento</span> <span class="o">!=</span> <span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_FACTURA</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">transaccion</span> <span class="o">=</span> <span class="n">documento</span><span class="o">.</span><span class="n">calculo_operacion</span> <span class="ow">or</span> <span class="n">documento</span><span class="o">.</span><span class="n">calculo_triangulacion</span>
+        <span class="k">if</span> <span class="n">transaccion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">campo</span> <span class="o">=</span> <span class="s1">'calculo_operacion'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'calculo_triangulacion'</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_crear_para_cliente</span><span class="p">(</span>
+            <span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="n">tipo</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">TIPO_FACTURA</span><span class="p">,</span>
+            <span class="n">referencia</span><span class="o">=</span><span class="n">documento</span><span class="o">.</span><span class="n">cdc</span> <span class="ow">or</span> <span class="n">documento</span><span class="o">.</span><span class="n">numero_documento</span><span class="p">,</span>
+            <span class="n">estado</span><span class="o">=</span><span class="n">documento</span><span class="o">.</span><span class="n">estado</span><span class="p">,</span>
+            <span class="n">estado_display</span><span class="o">=</span><span class="n">documento</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">(),</span>
+            <span class="n">documento_electronico</span><span class="o">=</span><span class="n">documento</span><span class="p">,</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">campo</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">},</span>
+        <span class="p">)</span></div>
+</div>
+
 
 </pre></div>
 

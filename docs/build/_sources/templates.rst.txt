@@ -202,7 +202,7 @@ Divisas
 
 .. literalinclude:: ../../templates/divisas/mis_notificaciones.html
    :language: html
-   :lines: 1-7
+   :lines: 1-8
 
 Caja
 ----

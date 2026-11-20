@@ -189,6 +189,57 @@ no leídas, calculada por el context processor
 ``apps.divisas.context_processors.notificaciones_context``; al marcar una
 como leída deja de contarse.
 
+Notificaciones sobre transacciones y facturas
+---------------------------------------------
+
+Implementa la HU "Notificaciones sobre transacciones y facturas". El
+cliente recibe una ``apps.divisas.models.NotificacionCliente`` cada vez que
+cambia el estado de una de sus transacciones o de una de sus facturas
+electrónicas.
+
+**Cuándo se notifica.** ``CalculoOperacion``, ``CalculoTriangulacion`` y
+``DocumentoElectronico`` heredan de ``apps.divisas.models.SeguimientoEstadoMixin``.
+Al guardar, este mixin compara el estado nuevo con el último que se leyó o
+se guardó, y si cambió avisa al modelo. Como todos los flujos que cambian un
+estado terminan en un ``save`` (pago, entrega, reintento, cancelación,
+consulta a SIFEN), ninguno necesitó cambios. Crear un registro no notifica,
+y un ``save`` con ``update_fields`` que no incluye ``estado`` tampoco.
+
+* **Transacción (Criterio 1).** Se notifica al pasar a "Pagada",
+  "Completada" ("Acreditada" o "Retirada"), cualquier cancelación, o un
+  estado que requiere atención ("Pagada, pero la entrega al cliente falló" y
+  "Pago fuera de plazo"). Ver ``NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION``.
+  La notificación lleva el número de la transacción y su nuevo estado.
+* **Factura (Criterio 2).** Se notifica cuando una factura pasa a
+  "Aprobado", "Aprobado con observación", "Rechazado por SIFEN" o "Anulada
+  por nota de crédito". La anulación es el único modo en que el sistema
+  cancela una factura aprobada: ocurre cuando SIFEN aprueba la nota de
+  crédito. La notificación lleva el CDC, o el número de documento si todavía
+  no tiene CDC. La nota de crédito en sí no notifica, ni tampoco una factura
+  de ventanilla, porque un cliente de mostrador no tiene usuario en el sistema.
+
+**Destinatarios y aislamiento (Criterio 5).** Se crea una notificación por
+cada usuario activo asociado al cliente (``Cliente.usuarios``), y cada una
+guarda el cliente al que pertenece. La pantalla y el indicador filtran
+siempre por usuario **y** por cliente activo
+(``apps.divisas.context_processors.notificaciones_cliente_activo``). Así un
+usuario con dos clientes solo ve las del cliente que tiene activo, y nadie
+ve las de un cliente ajeno.
+
+**Pantalla y apertura (Criterio 3).** ``MisNotificacionesView``
+(``/divisas/notificaciones/``) muestra arriba la sección "Transacciones y
+facturas", paginada aparte, y debajo las notificaciones de tasas. Cada
+notificación se abre con ``AbrirNotificacionClienteView`` (solo POST), que la
+marca como leída y redirige al detalle de la transacción. Si la notificación
+es de una factura, redirige a la sección "Factura electrónica" de ese mismo
+detalle (ancla ``#factura-electronica``), donde están el número, el estado,
+el CDC y las descargas. Una notificación ajena o de otro cliente responde 404.
+
+**Indicador (Criterio 4).** La campana de la barra superior y el contador
+del menú suman las notificaciones de tasas sin leer y las de transacciones y
+facturas sin leer del cliente activo. Al abrir una notificación, deja de
+contarse.
+
 Pago de una transacción confirmada
 -----------------------------------
 

@@ -91,6 +91,10 @@ apps.divisas.views module
    :members:
    :show-inheritance:
 
+.. autoclass:: apps.divisas.views.AbrirNotificacionClienteView
+   :members:
+   :show-inheritance:
+
 .. autoclass:: apps.divisas.views.ConfiguracionComisionListView
    :members:
    :show-inheritance:

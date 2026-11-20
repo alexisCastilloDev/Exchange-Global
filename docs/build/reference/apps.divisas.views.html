@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -988,21 +989,35 @@ ni modificar notificaciones ajenas.</p>
 <dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MisNotificacionesView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisNotificacionesView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.NotificacionesClienteMixin" title="apps.divisas.views.NotificacionesClienteMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">NotificacionesClienteMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
-<p>Lista las notificaciones de cambio de tasa del usuario autenticado.</p>
-<p>Criterio de aceptación 4 de GE-51: las notificaciones se muestran
-ordenadas de la más reciente a la más antigua. Cada una muestra la
-divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;
-las no leídas ofrecen la acción de marcarlas como leídas (ver
-<code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code>).</p>
+<p>Lista las notificaciones del usuario autenticado: transacciones y facturas, y tasas de cambio.</p>
+<p>Criterio de aceptación 4 de GE-51: las notificaciones de tasas se
+muestran ordenadas de la más reciente a la más antigua. Cada una
+muestra la divisa, el tipo de tasa, la tasa anterior, la nueva y si ya
+fue leída; las no leídas ofrecen la acción de marcarlas como leídas
+(ver <code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code>).</p>
+<p>HU «Notificaciones sobre transacciones y facturas»: arriba, en su
+propia sección con paginación independiente (parámetro
+<code class="docutils literal notranslate"><span class="pre">pagina_operaciones</span></code>), se listan las notificaciones de transacciones
+y facturas, solo las del <strong>cliente activo</strong> (criterio 5, ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.context_processors.notificaciones_cliente_activo</span></code>).
+Cada una muestra el número de transacción o el CDC y el nuevo estado, y
+se abre con <code class="docutils literal notranslate"><span class="pre">AbrirNotificacionClienteView</span></code>, que la marca como leída y
+lleva al detalle correspondiente (criterio 3).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.context_object_name">
 <span class="sig-name descname"><span class="pre">context_object_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'notificaciones'</span></span><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.context_object_name" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisNotificacionesView.get_context_data"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.get_context_data" title="Link to this definition"></a></dt>
+<dd><p>Agrega la página de notificaciones de transacciones y facturas del cliente activo.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.views.MisNotificacionesView.get_queryset">
 <span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#MisNotificacionesView.get_queryset"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.MisNotificacionesView.get_queryset" title="Link to this definition"></a></dt>
-<dd><p>Devuelve solo las notificaciones propias, de la más nueva a la más vieja.</p>
+<dd><p>Devuelve solo las notificaciones de tasas propias, de la más nueva a la más vieja.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1047,6 +1062,43 @@ revelar cuál de los dos casos es.</p>
 <dd class="field-even"><p>A la URL indicada en <code class="docutils literal notranslate"><span class="pre">next</span></code> si es segura
 (por ejemplo, para conservar la página del listado), o al
 listado de notificaciones en caso contrario.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.views.AbrirNotificacionClienteView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AbrirNotificacionClienteView</span></span><a class="reference internal" href="../_modules/apps/divisas/views.html#AbrirNotificacionClienteView"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.AbrirNotificacionClienteView" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.views.NotificacionesClienteMixin" title="apps.divisas.views.NotificacionesClienteMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">NotificacionesClienteMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>Abre una notificación de transacción o factura: la marca como leída y lleva a su detalle (criterio 3).</p>
+<p>Solo acepta POST, como <code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code>, porque modifica
+datos (protegido por CSRF). Responde 404 si la notificación no existe,
+es de otro usuario o es de un cliente que no es el activo, sin revelar
+cuál de los casos es (criterio 5). El detalle al que redirige vuelve a
+comprobar por su cuenta que la transacción sea del cliente activo.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.views.AbrirNotificacionClienteView.http_method_names">
+<span class="sig-name descname"><span class="pre">http_method_names</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['post']</span></span><a class="headerlink" href="#apps.divisas.views.AbrirNotificacionClienteView.http_method_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.views.AbrirNotificacionClienteView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/views.html#AbrirNotificacionClienteView.post"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.views.AbrirNotificacionClienteView.post" title="Link to this definition"></a></dt>
+<dd><p>Marca la notificación como leída y redirige al detalle de su transacción o factura.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – La request actual.</p></li>
+<li><p><strong>pk</strong> (<em>int</em>) – Identificador de la notificación.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">NotificacionCliente.url_detalle</span></code>.</p>
 </dd>
 <dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
 <dd class="field-odd"><p>HttpResponseRedirect</p>

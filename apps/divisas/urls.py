@@ -47,6 +47,7 @@ from .views import (
     PagarTransaccionCambioView,
     MisNotificacionesView,
     MarcarNotificacionLeidaView,
+    AbrirNotificacionClienteView,
 )
 from .pagos_stripe import (
     IniciarPagoStripeOperacionView,
@@ -147,6 +148,11 @@ urlpatterns = [
         name='detalle_transaccion_cambio',
     ),
     path('notificaciones/', MisNotificacionesView.as_view(), name='mis_notificaciones'),
+    path(
+        'notificaciones/operaciones/<int:pk>/abrir/',
+        AbrirNotificacionClienteView.as_view(),
+        name='abrir_notificacion_cliente',
+    ),
     path(
         'notificaciones/<int:pk>/leida/',
         MarcarNotificacionLeidaView.as_view(),

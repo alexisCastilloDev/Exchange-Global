@@ -30,6 +30,7 @@ from apps.divisas.casa_de_cambio import (
     consultar_saldo_casa_de_cambio,
     designar_cuenta_casa_de_cambio,
 )
+from apps.divisas.context_processors import notificaciones_cliente_activo
 from apps.divisas.entrega import reintentar_entrega
 from apps.divisas.factura_electronica import (
     consultar_estado_sifen,
@@ -2821,13 +2822,22 @@ class NotificacionesClienteMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 
 class MisNotificacionesView(NotificacionesClienteMixin, ListView):
-    """Lista las notificaciones de cambio de tasa del usuario autenticado.
+    """Lista las notificaciones del usuario autenticado: transacciones y facturas, y tasas de cambio.
 
-    Criterio de aceptación 4 de GE-51: las notificaciones se muestran
-    ordenadas de la más reciente a la más antigua. Cada una muestra la
-    divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;
-    las no leídas ofrecen la acción de marcarlas como leídas (ver
-    ``MarcarNotificacionLeidaView``).
+    Criterio de aceptación 4 de GE-51: las notificaciones de tasas se
+    muestran ordenadas de la más reciente a la más antigua. Cada una
+    muestra la divisa, el tipo de tasa, la tasa anterior, la nueva y si ya
+    fue leída; las no leídas ofrecen la acción de marcarlas como leídas
+    (ver ``MarcarNotificacionLeidaView``).
+
+    HU "Notificaciones sobre transacciones y facturas": arriba, en su
+    propia sección con paginación independiente (parámetro
+    ``pagina_operaciones``), se listan las notificaciones de transacciones
+    y facturas, solo las del **cliente activo** (criterio 5, ver
+    ``apps.divisas.context_processors.notificaciones_cliente_activo``).
+    Cada una muestra el número de transacción o el CDC y el nuevo estado, y
+    se abre con ``AbrirNotificacionClienteView``, que la marca como leída y
+    lleva al detalle correspondiente (criterio 3).
     """
 
     template_name = 'divisas/mis_notificaciones.html'
@@ -2835,12 +2845,49 @@ class MisNotificacionesView(NotificacionesClienteMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        """Devuelve solo las notificaciones propias, de la más nueva a la más vieja."""
+        """Devuelve solo las notificaciones de tasas propias, de la más nueva a la más vieja."""
         return (
             NotificacionTasa.objects.filter(usuario=self.request.user)
             .select_related('divisa')
             .order_by('-creada_en', '-pk')
         )
+
+    def get_context_data(self, **kwargs):
+        """Agrega la página de notificaciones de transacciones y facturas del cliente activo."""
+        context = super().get_context_data(**kwargs)
+        operaciones = notificaciones_cliente_activo(self.request).order_by('-creada_en', '-pk')
+        paginador = Paginator(operaciones, self.paginate_by)
+        pagina = paginador.get_page(self.request.GET.get('pagina_operaciones'))
+        context['notificaciones_operaciones'] = pagina.object_list
+        context['pagina_operaciones'] = pagina
+        return context
+
+
+class AbrirNotificacionClienteView(NotificacionesClienteMixin, View):
+    """Abre una notificación de transacción o factura: la marca como leída y lleva a su detalle (criterio 3).
+
+    Solo acepta POST, como ``MarcarNotificacionLeidaView``, porque modifica
+    datos (protegido por CSRF). Responde 404 si la notificación no existe,
+    es de otro usuario o es de un cliente que no es el activo, sin revelar
+    cuál de los casos es (criterio 5). El detalle al que redirige vuelve a
+    comprobar por su cuenta que la transacción sea del cliente activo.
+    """
+
+    http_method_names = ['post']
+
+    def post(self, request, pk):
+        """Marca la notificación como leída y redirige al detalle de su transacción o factura.
+
+        Args:
+            request (HttpRequest): La request actual.
+            pk (int): Identificador de la notificación.
+
+        Returns:
+            HttpResponseRedirect: A ``NotificacionCliente.url_detalle``.
+        """
+        notificacion = get_object_or_404(notificaciones_cliente_activo(request), pk=pk)
+        notificacion.marcar_como_leida()
+        return redirect(notificacion.url_detalle)
 
 
 class MarcarNotificacionLeidaView(NotificacionesClienteMixin, View):

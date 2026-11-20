@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -318,6 +319,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.context_processors.html">apps.divisas.context_processors module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.context_processors.html#apps.divisas.context_processors.notificaciones_cliente_activo"><code class="docutils literal notranslate"><span class="pre">notificaciones_cliente_activo()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.context_processors.html#apps.divisas.context_processors.notificaciones_context"><code class="docutils literal notranslate"><span class="pre">notificaciones_context()</span></code></a></li>
 </ul>
 </li>
@@ -397,6 +399,7 @@
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.models.html">apps.divisas.models module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Divisa"><code class="docutils literal notranslate"><span class="pre">Divisa</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.Cotizacion"><code class="docutils literal notranslate"><span class="pre">Cotizacion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.SeguimientoEstadoMixin"><code class="docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoOperacion"><code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.CalculoTriangulacion"><code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.monto_a_pagar"><code class="docutils literal notranslate"><span class="pre">monto_a_pagar()</span></code></a></li>
@@ -410,6 +413,7 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.RangoDocumentosAgotadoError"><code class="docutils literal notranslate"><span class="pre">RangoDocumentosAgotadoError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.ContadorDocumentoElectronico"><code class="docutils literal notranslate"><span class="pre">ContadorDocumentoElectronico</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.DocumentoElectronico"><code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.models.html#apps.divisas.models.NotificacionCliente"><code class="docutils literal notranslate"><span class="pre">NotificacionCliente</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="apps.divisas.monitoreo.html">apps.divisas.monitoreo module</a><ul>
@@ -525,6 +529,7 @@
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.NotificacionesClienteMixin"><code class="docutils literal notranslate"><span class="pre">NotificacionesClienteMixin</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MisNotificacionesView"><code class="docutils literal notranslate"><span class="pre">MisNotificacionesView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.MarcarNotificacionLeidaView"><code class="docutils literal notranslate"><span class="pre">MarcarNotificacionLeidaView</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView"><code class="docutils literal notranslate"><span class="pre">AbrirNotificacionClienteView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ConfiguracionComisionListView"><code class="docutils literal notranslate"><span class="pre">ConfiguracionComisionListView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.ActualizarComisionView"><code class="docutils literal notranslate"><span class="pre">ActualizarComisionView</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.divisas.views.html#apps.divisas.views.SimulacionDivisasView"><code class="docutils literal notranslate"><span class="pre">SimulacionDivisasView</span></code></a></li>

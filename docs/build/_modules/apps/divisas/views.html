@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -191,6 +192,7 @@
     <span class="n">consultar_saldo_casa_de_cambio</span><span class="p">,</span>
     <span class="n">designar_cuenta_casa_de_cambio</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.context_processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">notificaciones_cliente_activo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.entrega</span><span class="w"> </span><span class="kn">import</span> <span class="n">reintentar_entrega</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.factura_electronica</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">consultar_estado_sifen</span><span class="p">,</span>
@@ -3353,13 +3355,22 @@
 <div class="viewcode-block" id="MisNotificacionesView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MisNotificacionesView</span><span class="p">(</span><span class="n">NotificacionesClienteMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Lista las notificaciones de cambio de tasa del usuario autenticado.</span>
+<span class="w">    </span><span class="sd">"""Lista las notificaciones del usuario autenticado: transacciones y facturas, y tasas de cambio.</span>
 
-<span class="sd">    Criterio de aceptación 4 de GE-51: las notificaciones se muestran</span>
-<span class="sd">    ordenadas de la más reciente a la más antigua. Cada una muestra la</span>
-<span class="sd">    divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;</span>
-<span class="sd">    las no leídas ofrecen la acción de marcarlas como leídas (ver</span>
-<span class="sd">    ``MarcarNotificacionLeidaView``).</span>
+<span class="sd">    Criterio de aceptación 4 de GE-51: las notificaciones de tasas se</span>
+<span class="sd">    muestran ordenadas de la más reciente a la más antigua. Cada una</span>
+<span class="sd">    muestra la divisa, el tipo de tasa, la tasa anterior, la nueva y si ya</span>
+<span class="sd">    fue leída; las no leídas ofrecen la acción de marcarlas como leídas</span>
+<span class="sd">    (ver ``MarcarNotificacionLeidaView``).</span>
+
+<span class="sd">    HU "Notificaciones sobre transacciones y facturas": arriba, en su</span>
+<span class="sd">    propia sección con paginación independiente (parámetro</span>
+<span class="sd">    ``pagina_operaciones``), se listan las notificaciones de transacciones</span>
+<span class="sd">    y facturas, solo las del **cliente activo** (criterio 5, ver</span>
+<span class="sd">    ``apps.divisas.context_processors.notificaciones_cliente_activo``).</span>
+<span class="sd">    Cada una muestra el número de transacción o el CDC y el nuevo estado, y</span>
+<span class="sd">    se abre con ``AbrirNotificacionClienteView``, que la marca como leída y</span>
+<span class="sd">    lleva al detalle correspondiente (criterio 3).</span>
 <span class="sd">    """</span>
 
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/mis_notificaciones.html'</span>
@@ -3369,12 +3380,58 @@
 <div class="viewcode-block" id="MisNotificacionesView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve solo las notificaciones propias, de la más nueva a la más vieja."""</span>
+<span class="w">        </span><span class="sd">"""Devuelve solo las notificaciones de tasas propias, de la más nueva a la más vieja."""</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">NotificacionTasa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
             <span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">)</span>
             <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-creada_en'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">)</span>
         <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MisNotificacionesView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega la página de notificaciones de transacciones y facturas del cliente activo."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">operaciones</span> <span class="o">=</span> <span class="n">notificaciones_cliente_activo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-creada_en'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">)</span>
+        <span class="n">paginador</span> <span class="o">=</span> <span class="n">Paginator</span><span class="p">(</span><span class="n">operaciones</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">paginate_by</span><span class="p">)</span>
+        <span class="n">pagina</span> <span class="o">=</span> <span class="n">paginador</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'pagina_operaciones'</span><span class="p">))</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'notificaciones_operaciones'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pagina</span><span class="o">.</span><span class="n">object_list</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'pagina_operaciones'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pagina</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AbrirNotificacionClienteView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AbrirNotificacionClienteView</span><span class="p">(</span><span class="n">NotificacionesClienteMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Abre una notificación de transacción o factura: la marca como leída y lleva a su detalle (criterio 3).</span>
+
+<span class="sd">    Solo acepta POST, como ``MarcarNotificacionLeidaView``, porque modifica</span>
+<span class="sd">    datos (protegido por CSRF). Responde 404 si la notificación no existe,</span>
+<span class="sd">    es de otro usuario o es de un cliente que no es el activo, sin revelar</span>
+<span class="sd">    cuál de los casos es (criterio 5). El detalle al que redirige vuelve a</span>
+<span class="sd">    comprobar por su cuenta que la transacción sea del cliente activo.</span>
+<span class="sd">    """</span>
+
+    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'post'</span><span class="p">]</span>
+
+<div class="viewcode-block" id="AbrirNotificacionClienteView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Marca la notificación como leída y redirige al detalle de su transacción o factura.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): La request actual.</span>
+<span class="sd">            pk (int): Identificador de la notificación.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponseRedirect: A ``NotificacionCliente.url_detalle``.</span>
+<span class="sd">        """</span>
+        <span class="n">notificacion</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">notificaciones_cliente_activo</span><span class="p">(</span><span class="n">request</span><span class="p">),</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="n">notificacion</span><span class="o">.</span><span class="n">marcar_como_leida</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">notificacion</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">)</span></div>
 </div>
 
 
