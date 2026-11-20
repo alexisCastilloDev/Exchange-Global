@@ -1,0 +1,329 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.auditoria package &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" />
+    <link rel="next" title="apps.auditoria.apps module" href="apps.auditoria.apps.html" />
+    <link rel="prev" title="apps package" href="apps.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#auditoria">Auditoría</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">apps.auditoria package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Referencia API</a></li>
+          <li class="breadcrumb-item"><a href="apps.html">apps package</a></li>
+      <li class="breadcrumb-item active">apps.auditoria package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apps-auditoria-package">
+<h1>apps.auditoria package<a class="headerlink" href="#apps-auditoria-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.apps.html">apps.auditoria.apps module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig"><code class="docutils literal notranslate"><span class="pre">AuditoriaConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig.default_auto_field"><code class="docutils literal notranslate"><span class="pre">AuditoriaConfig.default_auto_field</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig.name"><code class="docutils literal notranslate"><span class="pre">AuditoriaConfig.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig.ready"><code class="docutils literal notranslate"><span class="pre">AuditoriaConfig.ready()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.apps.html#apps.auditoria.apps.AuditoriaConfig.verbose_name"><code class="docutils literal notranslate"><span class="pre">AuditoriaConfig.verbose_name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.forms.html">apps.auditoria.forms module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm"><code class="docutils literal notranslate"><span class="pre">FiltroRegistroActividadForm</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.__init__"><code class="docutils literal notranslate"><span class="pre">FiltroRegistroActividadForm.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.base_fields"><code class="docutils literal notranslate"><span class="pre">FiltroRegistroActividadForm.base_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.clean"><code class="docutils literal notranslate"><span class="pre">FiltroRegistroActividadForm.clean()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.declared_fields"><code class="docutils literal notranslate"><span class="pre">FiltroRegistroActividadForm.declared_fields</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.filtrar"><code class="docutils literal notranslate"><span class="pre">FiltroRegistroActividadForm.filtrar()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.FiltroRegistroActividadForm.media"><code class="docutils literal notranslate"><span class="pre">FiltroRegistroActividadForm.media</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.UsuarioChoiceField"><code class="docutils literal notranslate"><span class="pre">UsuarioChoiceField</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.forms.html#apps.auditoria.forms.UsuarioChoiceField.label_from_instance"><code class="docutils literal notranslate"><span class="pre">UsuarioChoiceField.label_from_instance()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.middleware.html">apps.auditoria.middleware module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.middleware.html#apps.auditoria.middleware.AuditoriaMiddleware"><code class="docutils literal notranslate"><span class="pre">AuditoriaMiddleware</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.middleware.html#apps.auditoria.middleware.AuditoriaMiddleware.__init__"><code class="docutils literal notranslate"><span class="pre">AuditoriaMiddleware.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.models.html">apps.auditoria.models module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad"><code class="docutils literal notranslate"><span class="pre">RegistroActividad</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_ALTA"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.ACCION_ALTA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_BAJA"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.ACCION_BAJA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_CHOICES"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.ACCION_CHOICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_ELIMINACION"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.ACCION_ELIMINACION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.ACCION_MODIFICACION"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.ACCION_MODIFICACION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.DoesNotExist"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.DoesNotExist</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.MultipleObjectsReturned"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.MultipleObjectsReturned</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.NotUpdated"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.NotUpdated</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_CHOICES"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.RECURSO_CHOICES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_CLIENTE"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.RECURSO_CLIENTE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_DIVISA"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.RECURSO_DIVISA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_PARAMETRO"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.RECURSO_PARAMETRO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_ROL"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.RECURSO_ROL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_TASA"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.RECURSO_TASA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.RECURSO_USUARIO"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.RECURSO_USUARIO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.accion"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.accion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.cambios"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.cambios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.delete"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.delete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.fecha"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.fecha</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.get_accion_display"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.get_accion_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.get_next_by_fecha"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.get_next_by_fecha()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.get_previous_by_fecha"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.get_previous_by_fecha()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.get_tipo_recurso_display"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.get_tipo_recurso_display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.id"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.objects"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.objects</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.recurso_descripcion"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.recurso_descripcion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.recurso_id"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.recurso_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.save"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.tipo_recurso"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.tipo_recurso</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.usuario"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.usuario</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.usuario_id"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.usuario_id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividad.usuario_nombre"><code class="docutils literal notranslate"><span class="pre">RegistroActividad.usuario_nombre</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividadQuerySet"><code class="docutils literal notranslate"><span class="pre">RegistroActividadQuerySet</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividadQuerySet.delete"><code class="docutils literal notranslate"><span class="pre">RegistroActividadQuerySet.delete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.models.html#apps.auditoria.models.RegistroActividadQuerySet.update"><code class="docutils literal notranslate"><span class="pre">RegistroActividadQuerySet.update()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.registro.html">apps.auditoria.registro module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.establecer_request_actual"><code class="docutils literal notranslate"><span class="pre">establecer_request_actual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.nombre_de_usuario"><code class="docutils literal notranslate"><span class="pre">nombre_de_usuario()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.registrar_actividad"><code class="docutils literal notranslate"><span class="pre">registrar_actividad()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.restablecer_request_actual"><code class="docutils literal notranslate"><span class="pre">restablecer_request_actual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.registro.html#apps.auditoria.registro.usuario_responsable"><code class="docutils literal notranslate"><span class="pre">usuario_responsable()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.signals.html">apps.auditoria.signals module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.__init__"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.anterior_de"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado.anterior_de</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.campo_activo"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado.campo_activo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.campos"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado.campos</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.describir"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado.describir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.etiquetas"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado.etiquetas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.modelo"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado.modelo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.ModeloAuditado.tipo_recurso"><code class="docutils literal notranslate"><span class="pre">ModeloAuditado.tipo_recurso</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.signals.html#apps.auditoria.signals.conectar_senales"><code class="docutils literal notranslate"><span class="pre">conectar_senales()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.urls.html">apps.auditoria.urls module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps.auditoria.views.html">apps.auditoria.views module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.context_object_name"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView.context_object_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.get_context_data"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView.get_context_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.get_queryset"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView.get_queryset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.http_method_names"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView.http_method_names</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.model"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.paginate_by"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView.paginate_by</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.template_name"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView.template_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.auditoria.views.html#apps.auditoria.views.RegistroActividadListView.test_func"><code class="docutils literal notranslate"><span class="pre">RegistroActividadListView.test_func()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-apps.auditoria">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-apps.auditoria" title="Link to this heading"></a></h2>
+<p>Registro y auditoría de las actividades administrativas del sistema (GE-71).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="apps.html" class="btn btn-neutral float-left" title="apps package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.auditoria.apps.html" class="btn btn-neutral float-right" title="apps.auditoria.apps module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

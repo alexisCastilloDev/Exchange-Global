@@ -25,6 +25,17 @@ si una futura operación puede confirmarse siempre queda en espejo con
 lo que realmente se transfirió, nunca adelantado a algo que todavía
 podría fallar.
 
+Antes de intentar la transferencia, se vuelve a consultar el saldo
+**real** a sipap-sim (``consultar_saldo_casa_de_cambio``, no el espejo
+local): sipap-sim no rechaza por sí solo una transferencia saliente de
+la casa de cambio sin fondos suficientes (ver
+``core.views.crear_transferencia_saliente`` del lado de sipap-sim, que
+descuenta el saldo sin chequearlo antes), así que sin este chequeo
+previo una entrega podría dejar esa cuenta en negativo. Ya hay una
+verificación equivalente al confirmar (``apps.divisas.views.
+_verificar_saldo_casa_de_cambio``), pero el saldo real puede haber
+cambiado entre que se confirmó y que se paga/entrega.
+
 Una entrega exitosa de una compra o de un cambio entre divisas (HU
 "Acreditación de fondos", GE-23) deja la transacción en "Acreditada" en
 vez de "Pagada" sin más, con la fecha, hora y referencia externa de esa
@@ -42,6 +53,7 @@ import requests
 from django.conf import settings
 from django.utils import timezone
 
+from apps.divisas.casa_de_cambio import SipapComunicacionError, consultar_saldo_casa_de_cambio
 from apps.divisas.models import (
     CalculoOperacion,
     CalculoTriangulacion,
@@ -113,11 +125,12 @@ def realizar_entrega(transaccion):
     existía de antes — ver los llamadores), o desde ``reintentar_entrega``
     si una entrega anterior quedó fallida. Si no hay un medio de
     destino elegido (no debería pasar: se exige al pagar, ver
-    ``apps.divisas.forms.PagarTransaccionForm``), la llamada a sipap-sim
-    falla, o el saldo propio de Global Exchange no alcanza (una
-    verificación ya se hizo al confirmar, pero puede haber cambiado
-    entretanto), la transacción pasa a "Entrega fallida" en vez de
-    quedar "Pagada" como si nada hubiera pasado.
+    ``apps.divisas.forms.PagarTransaccionForm``), el saldo **real** de
+    Global Exchange en sipap-sim no alcanza (una verificación ya se hizo
+    al confirmar, pero el saldo real puede haber cambiado entretanto —
+    ver el docstring del módulo), o la llamada a sipap-sim falla, la
+    transacción pasa a "Entrega fallida" en vez de quedar "Pagada" como
+    si nada hubiera pasado.
 
     Args:
         transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``
@@ -135,9 +148,23 @@ def realizar_entrega(transaccion):
         transaccion.save(update_fields=['estado'])
         return False
 
+    divisa_entrega = divisa_a_entregar(transaccion)
+    monto_entrega = monto_a_entregar(transaccion)
+    try:
+        saldo_real = consultar_saldo_casa_de_cambio(divisa_entrega.codigo)
+    except SipapComunicacionError:
+        # No se pudo confirmar el saldo real: se sigue igual con el intento
+        # de transferencia de abajo, que de por sí va a fallar con el mismo
+        # error de comunicación si sipap-sim sigue sin responder.
+        saldo_real = None
+    if saldo_real is not None and saldo_real < monto_entrega:
+        transaccion.estado = transaccion.ESTADO_ENTREGA_FALLIDA
+        transaccion.save(update_fields=['estado'])
+        return False
+
     referencia = _referencia_entrega(transaccion)
     try:
-        _enviar_transferencia_saliente(medio_destino, monto_a_entregar(transaccion), referencia)
+        _enviar_transferencia_saliente(medio_destino, monto_entrega, referencia)
     except requests.exceptions.RequestException:
         transaccion.estado = transaccion.ESTADO_ENTREGA_FALLIDA
         transaccion.save(update_fields=['estado'])
@@ -146,7 +173,7 @@ def realizar_entrega(transaccion):
     try:
         CuentaPropia.ajustar_saldos(
             divisa_recibir=divisa_a_pagar(transaccion), monto_recibir=monto_a_pagar(transaccion),
-            divisa_entregar=divisa_a_entregar(transaccion), monto_entregar=monto_a_entregar(transaccion),
+            divisa_entregar=divisa_entrega, monto_entregar=monto_entrega,
         )
     except (SaldoInsuficienteError, CuentaPropiaInexistenteError):
         # La transferencia a sipap-sim ya se hizo (es real e irreversible

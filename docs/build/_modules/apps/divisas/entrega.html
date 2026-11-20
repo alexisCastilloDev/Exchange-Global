@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -65,7 +66,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -94,6 +98,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
@@ -102,6 +107,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
@@ -184,6 +190,17 @@
 <span class="sd">lo que realmente se transfirió, nunca adelantado a algo que todavía</span>
 <span class="sd">podría fallar.</span>
 
+<span class="sd">Antes de intentar la transferencia, se vuelve a consultar el saldo</span>
+<span class="sd">**real** a sipap-sim (``consultar_saldo_casa_de_cambio``, no el espejo</span>
+<span class="sd">local): sipap-sim no rechaza por sí solo una transferencia saliente de</span>
+<span class="sd">la casa de cambio sin fondos suficientes (ver</span>
+<span class="sd">``core.views.crear_transferencia_saliente`` del lado de sipap-sim, que</span>
+<span class="sd">descuenta el saldo sin chequearlo antes), así que sin este chequeo</span>
+<span class="sd">previo una entrega podría dejar esa cuenta en negativo. Ya hay una</span>
+<span class="sd">verificación equivalente al confirmar (``apps.divisas.views.</span>
+<span class="sd">_verificar_saldo_casa_de_cambio``), pero el saldo real puede haber</span>
+<span class="sd">cambiado entre que se confirmó y que se paga/entrega.</span>
+
 <span class="sd">Una entrega exitosa de una compra o de un cambio entre divisas (HU</span>
 <span class="sd">"Acreditación de fondos", GE-23) deja la transacción en "Acreditada" en</span>
 <span class="sd">vez de "Pagada" sin más, con la fecha, hora y referencia externa de esa</span>
@@ -201,6 +218,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.casa_de_cambio</span><span class="w"> </span><span class="kn">import</span> <span class="n">SipapComunicacionError</span><span class="p">,</span> <span class="n">consultar_saldo_casa_de_cambio</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalculoOperacion</span><span class="p">,</span>
     <span class="n">CalculoTriangulacion</span><span class="p">,</span>
@@ -283,11 +301,12 @@
 <span class="sd">    existía de antes — ver los llamadores), o desde ``reintentar_entrega``</span>
 <span class="sd">    si una entrega anterior quedó fallida. Si no hay un medio de</span>
 <span class="sd">    destino elegido (no debería pasar: se exige al pagar, ver</span>
-<span class="sd">    ``apps.divisas.forms.PagarTransaccionForm``), la llamada a sipap-sim</span>
-<span class="sd">    falla, o el saldo propio de Global Exchange no alcanza (una</span>
-<span class="sd">    verificación ya se hizo al confirmar, pero puede haber cambiado</span>
-<span class="sd">    entretanto), la transacción pasa a "Entrega fallida" en vez de</span>
-<span class="sd">    quedar "Pagada" como si nada hubiera pasado.</span>
+<span class="sd">    ``apps.divisas.forms.PagarTransaccionForm``), el saldo **real** de</span>
+<span class="sd">    Global Exchange en sipap-sim no alcanza (una verificación ya se hizo</span>
+<span class="sd">    al confirmar, pero el saldo real puede haber cambiado entretanto —</span>
+<span class="sd">    ver el docstring del módulo), o la llamada a sipap-sim falla, la</span>
+<span class="sd">    transacción pasa a "Entrega fallida" en vez de quedar "Pagada" como</span>
+<span class="sd">    si nada hubiera pasado.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``</span>
@@ -305,9 +324,23 @@
         <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">False</span>
 
+    <span class="n">divisa_entrega</span> <span class="o">=</span> <span class="n">divisa_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="n">monto_entrega</span> <span class="o">=</span> <span class="n">monto_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">saldo_real</span> <span class="o">=</span> <span class="n">consultar_saldo_casa_de_cambio</span><span class="p">(</span><span class="n">divisa_entrega</span><span class="o">.</span><span class="n">codigo</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SipapComunicacionError</span><span class="p">:</span>
+        <span class="c1"># No se pudo confirmar el saldo real: se sigue igual con el intento</span>
+        <span class="c1"># de transferencia de abajo, que de por sí va a fallar con el mismo</span>
+        <span class="c1"># error de comunicación si sipap-sim sigue sin responder.</span>
+        <span class="n">saldo_real</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">saldo_real</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">saldo_real</span> <span class="o">&lt;</span> <span class="n">monto_entrega</span><span class="p">:</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_ENTREGA_FALLIDA</span>
+        <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
     <span class="n">referencia</span> <span class="o">=</span> <span class="n">_referencia_entrega</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">_enviar_transferencia_saliente</span><span class="p">(</span><span class="n">medio_destino</span><span class="p">,</span> <span class="n">monto_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">referencia</span><span class="p">)</span>
+        <span class="n">_enviar_transferencia_saliente</span><span class="p">(</span><span class="n">medio_destino</span><span class="p">,</span> <span class="n">monto_entrega</span><span class="p">,</span> <span class="n">referencia</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
         <span class="n">transaccion</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">ESTADO_ENTREGA_FALLIDA</span>
         <span class="n">transaccion</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">])</span>
@@ -316,7 +349,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">CuentaPropia</span><span class="o">.</span><span class="n">ajustar_saldos</span><span class="p">(</span>
             <span class="n">divisa_recibir</span><span class="o">=</span><span class="n">divisa_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">monto_recibir</span><span class="o">=</span><span class="n">monto_a_pagar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
-            <span class="n">divisa_entregar</span><span class="o">=</span><span class="n">divisa_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span> <span class="n">monto_entregar</span><span class="o">=</span><span class="n">monto_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+            <span class="n">divisa_entregar</span><span class="o">=</span><span class="n">divisa_entrega</span><span class="p">,</span> <span class="n">monto_entregar</span><span class="o">=</span><span class="n">monto_entrega</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="n">SaldoInsuficienteError</span><span class="p">,</span> <span class="n">CuentaPropiaInexistenteError</span><span class="p">):</span>
         <span class="c1"># La transferencia a sipap-sim ya se hizo (es real e irreversible</span>

@@ -39,7 +39,15 @@ original (enlaces a conversaciones completas en claude.ai) se resume en el
 23. [Sesión 23 — 27/10/2026 — GE-24 — Retiro de fondos](#sesión-23--27102026--ge-24--retiro-de-fondos)
 24. [Sesión 27 — 30/10/2026 — Generación de factura electrónica (HU del cliente)](#sesión-27--30102026--generación-de-factura-electrónica-hu-del-cliente)
 25. [Sesión 28 — 30/10/2026 — GE-86 — Descarga de facturas electrónicas](#sesión-28--30102026--ge-86--descarga-de-facturas-electrónicas)
-26. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
+26. [Sesión 29 — 16/11/2026 — Historial y evolución de tasas de cambio](#sesión-29--16112026--historial-y-evolución-de-tasas-de-cambio)
+27. [Sesión 30 — 18/11/2026 — GE-39 — Reporte de transacciones del cliente](#sesión-30--18112026--ge-39--reporte-de-transacciones-del-cliente)
+28. [Sesión 31 — 18/11/2026 — Tablero de control de ganancias](#sesión-31--18112026--tablero-de-control-de-ganancias)
+29. [Sesión 32 — 18/11/2026 — Nota de crédito](#sesión-32--18112026--nota-de-crédito)
+30. [Sesión 33 — 20/11/2026 — Monitoreo de transacciones y reportes](#sesión-33--20112026--monitoreo-de-transacciones-y-reportes)
+31. [Sesión 34 — 20/11/2026 — Reporte de ganancias](#sesión-34--20112026--reporte-de-ganancias)
+32. [Sesión 35 — 20/11/2026 — Notificaciones sobre transacciones y facturas](#sesión-35--20112026--notificaciones-sobre-transacciones-y-facturas)
+33. [Sesión 36 — 20/11/2026 — "Mis facturas electrónicas": botones visibles y consulta a SIFEN](#sesión-36--20112026--mis-facturas-electrónicas-botones-visibles-y-consulta-a-sifen)
+34. [Enlaces externos (conversaciones completas)](#enlaces-externos-conversaciones-completas)
 
 ---
 
@@ -4240,6 +4248,739 @@ por lo que en el KuDE se valida que sea un PDF y se confía en que Factura Segur
 del contenido. Ninguno genera una factura: los documentos se crean directo en la base de pruebas, `requests` está
 mockeado y cada test de la vista comprueba al terminar que no se llamó a `calcular_de`/`generar_de` ni se
 reservó un número del rango.
+
+## Sesión 29 — 16/11/2026 — Historial y evolución de tasas de cambio
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Historial y evolución de tasas de cambio (Epic de Divisas)
+**Participantes:** Rodrigo Mereles
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: dado una divisa y un período (7/30/90 días o un rango propio), mostrar un
+gráfico de líneas con la evolución de la tasa de compra y de venta, con tooltip al pasar el cursor, más
+una tabla de cambios de más reciente a más antigua; sin datos en el período, avisar sin romper; un rango
+inválido (fechas invertidas o futuras), rechazarlo; quién actualizó cada cotización, solo visible para
+administración y análisis, nunca para un cliente; y PYG nunca como opción.
+
+### Qué ya existía
+
+`HistorialCotizacionesView` ya listaba las cotizaciones de una divisa (`Cotizacion.Meta.ordering` ya las
+entrega de la más reciente a la más antigua, criterio 3 gratis), pero: sin período ni rango de fechas
+(traía todo el historial siempre), sin gráfico, sin validación de rango, y **solo accesible a admin/analista
+cambiario** — un cliente no tenía ninguna forma de llegar a esta pantalla, ni siquiera un link, porque el
+botón "Historial" en "Tasas vigentes" estaba atado al mismo permiso que "Actualizar".
+
+### Decisiones
+
+- **Mismos roles que "Tasas vigentes" (admin, analista cambiario o cliente)**, no solo admin/analista como
+  antes: la HU habla de "como usuario", y el propio criterio 6 distingue explícitamente qué ve un cliente
+  (nunca quién actualizó) de lo que ve admin/analista — eso solo tiene sentido si un cliente puede entrar
+  a la pantalla. Se agregó el link "Historial" también para clientes en `tasas_vigentes.html` (antes solo
+  aparecía detrás de `puede_actualizar_tasas`).
+- **El período se resuelve en `dispatch`, no en `get_queryset`**: tanto la tabla como el gráfico necesitan
+  el mismo rango ya decidido, incluido el caso de un rango inválido (criterio 5) — en vez de levantar un
+  error 500, la vista responde 200 con el motivo explicado y sin resultados, conservando el resto de la
+  pantalla. Un rango propio completo (`fecha_desde`+`fecha_hasta`) tiene prioridad sobre `periodo`; sin
+  ninguno de los dos, el valor por defecto es 30 días.
+- **El gráfico recibe los puntos en orden cronológico, la tabla no**: son dos necesidades opuestas sobre
+  el mismo queryset (la línea tiene que avanzar de izquierda a derecha; la tabla, mostrar lo último
+  primero), así que `get_context_data` arma `datos_grafico` (JSON) invirtiendo la lista ya traída, sin
+  tocar el orden que usa la tabla.
+- **Chart.js por CDN, sin backend nuevo para el gráfico**: un gráfico de líneas con tooltip (criterio 2) no
+  justifica agregar una API JSON ni una librería de build; se sirve como datos ya calculados
+  (`datos_grafico`) en el HTML, y el propio `<script>` arma el gráfico en el navegador. Paleta de colores
+  (azul `#2a78d6` para compra, naranja `#eb6834` para venta) validada con el script de la skill de dataviz
+  del propio Claude Code (separación CVD y de visión normal, piso de contraste) en vez de reutilizar los
+  colores de marca existentes (`--ge-teal` no pasó el piso de croma del validador).
+  Si Chart.js no carga (red cortada, bloqueador), un aviso de reserva (`#graficoTasasSinJs`) deja claro que
+  los mismos datos siguen disponibles en la tabla de abajo — el gráfico nunca es la única forma de leer un
+  valor (criterio de accesibilidad de la skill: la tabla es la vista alternativa obligatoria).
+- **PYG, 404 directo, no solo ausente de la lista**: `dispatch` ya excluye `Divisa.CODIGO_BASE` al resolver
+  la divisa (mismo patrón que `ActualizarCotizacionView.get_object`), así que entrar por URL directa a su
+  historial da 404 en vez de una pantalla vacía o confusa.
+
+### Tests
+
+`tests/test_divisas.py::HistorialEvolucionTasasTest` (nueva clase, 14 tests): los tres períodos fijos
+filtran correctamente (7/30/90 días, con cotizaciones sembradas en distintos momentos del último año), un
+rango propio completo tiene prioridad sobre `periodo` e incluye lo que un período fijo no alcanzaría, los
+datos del gráfico van en orden cronológico mientras la tabla sigue de más reciente a más antigua, una
+divisa sin cotizaciones en el período avisa sin mostrar el `<canvas>` ni romper, un rango con la fecha
+inicial posterior a la final o con cualquier fecha futura se rechaza con el mensaje de validación
+correspondiente, admin ve quién actualizó cada cotización y un cliente no (ni el dato ni la columna),
+PYG da 404 por URL directa, un cliente ya puede acceder (antes no podía) y un rol sin ninguno de los tres
+permitidos sigue sin poder. Suite completa: 561 tests (`pytest -n auto`) + 489 (`manage.py test --parallel
+auto --keepdb`), todos en verde.
+
+### Verificación
+
+`manage.py check` y `manage.py makemigrations --check --dry-run` limpios (no hizo falta ninguna migración:
+`Cotizacion`/`Divisa` no cambiaron). Sphinx (`python -m sphinx -b html docs/source -W`) sin advertencias
+nuevas — no hizo falta tocar ningún `.rst`: `HistorialCotizacionesView` ya estaba documentada con
+`autoclass`/`:members:`, que recoge el docstring actualizado y los métodos públicos solo (los privados,
+como `_resolver_periodo`, quedan sin exponer a propósito, mismo criterio que ya usa el resto del proyecto
+para los métodos privados de una vista — a diferencia de las funciones privadas a nivel de módulo, que sí
+se listan una por una, como en `apps.divisas.factura_electronica`).
+
+## Sesión 30 — 18/11/2026 — GE-39 — Reporte de transacciones del cliente
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** GE-39 — Reporte de transacciones del cliente (Epic "Gestión de Transacciones, Historial
+y Reportes", GE-14)
+**Participantes:** Rodrigo Mereles
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: dado un cliente activo, generar un reporte de sus transacciones con un rango de
+fechas obligatorio y, opcionalmente, tipo de operación y estado; mostrar totales por tipo y por divisa
+(cantidad y monto), calculados solo sobre las transacciones completadas; descargar el reporte en PDF y en
+Excel, ambos con los mismos datos, los filtros aplicados y la fecha de generación; sin transacciones para
+los filtros, avisar sin ofrecer ninguna descarga; un rango de fechas inválido, rechazarlo; y denegar el
+acceso a quien intente generar o descargar el reporte de un cliente que no está asociado a su usuario.
+
+### Qué ya existía
+
+`MiHistorialTransaccionesView` (HU "Consultar el historial de transacciones") ya armaba y filtraba, por
+fecha y por estado, el mismo universo de datos (`CalculoOperacion`/`CalculoTriangulacion` del cliente
+activo), pero: sin filtro por tipo de operación, sin ningún total, sin ninguna descarga, y siempre atada al
+`cliente_activo` de la sesión — nunca a un cliente explícito en la URL, así que no había ningún lugar donde
+el criterio de "cliente no asociado" pudiera manifestarse. No había ninguna librería de generación de PDF
+ni de Excel instalada en el proyecto.
+
+### Decisiones
+
+- **Lógica de negocio en un módulo nuevo (`apps/divisas/reportes.py`), no en `views.py`**: mismo patrón ya
+  establecido en el proyecto para separar reglas de negocio de las vistas (`casa_de_cambio.py`,
+  `entrega.py`, `factura_electronica.py`). `generar_reporte(cliente, parametros)` es el único punto de
+  entrada que usan tanto la pantalla como las dos descargas, para que los tres vean siempre los mismos
+  datos con los mismos filtros (criterio 3) sin poder desincronizarse.
+- **Fila normalizada propia, no reutilizada de `MiHistorialTransaccionesView`**: el reporte necesita, además
+  de lo que ya armaba el historial, el filtro por tipo de operación (ausente ahí) y un monto en PYG
+  uniforme entre compra, venta y cambio (`monto_pyg`) para poder totalizar los tres tipos sin mezclar
+  unidades — un cambio entre divisas no liquida en PYG como una compra/venta, pero sí tiene un
+  `monto_equivalente_pyg` ya calculado en el modelo. Se eligió esta pequeña duplicación (ya es el patrón que
+  usa el propio proyecto entre `HistorialTransaccionesView` y `MiHistorialTransaccionesView`) en vez de
+  forzar una abstracción compartida entre dos vistas con necesidades distintas.
+- **"Completada" = `ACREDITADA` o `RETIRADA`, no `PAGADA`**: son los dos estados en los que el dinero ya
+  llegó a destino (acreditado en una cuenta o retirado en efectivo, ver `apps.divisas.entrega`); "Pagada" es
+  un estado intermedio donde todavía no se le entregó nada al cliente, así que no cuenta para el criterio 2.
+- **Totales por divisa suman el monto operado en la moneda de origen** (`monto_origen`), igual que ya se
+  muestra en la columna "Monto" del historial; un cambio aparece agrupado bajo su propio par
+  "ORIGEN → DESTINO", igual que en esa tabla, en vez de partirlo en dos entradas por divisa.
+- **El cliente va explícito en la URL (`<int:cliente_pk>`), no implícito como `cliente_activo`**: a
+  diferencia de `MiHistorialTransaccionesView`/`MisFacturasElectronicasListView`, el criterio 6 exige poder
+  denegar el acceso a "un cliente que no está asociado a mi usuario" — algo que nunca podría probarse ni
+  dispararse si la vista solo mirara el `cliente_activo` de la sesión (que `ClienteActivoMiddleware` ya
+  acota de entrada a los clientes propios). `_cliente_propio` repite ese chequeo de pertenencia por su
+  cuenta (mismo patrón que `DescargarDocumentoElectronicoView._puede_ver`), devolviendo 404 si el cliente no
+  existe y 403 si existe pero no es propio.
+- **`reportlab` para el PDF, `openpyxl` para el Excel** (ambas nuevas en `requirements.txt`): se consultó
+  explícitamente antes de instalar nada. Para el PDF se eligió armar el documento directamente en Python
+  (tablas y texto con `reportlab`) en vez de renderizar una plantilla HTML con `xhtml2pdf`, porque da control
+  fino sobre el layout de una tabla con totales y evita cualquier dependencia de sistema en el Dockerfile de
+  producción (a diferencia de WeasyPrint, que necesita Cairo/Pango). `openpyxl` es la librería estándar para
+  Excel, pura en Python, sin alternativa que discutir.
+- **Sin las dos fechas, no es un error**: el rango es obligatorio para generar el reporte (criterio 1), pero
+  llegar a la pantalla sin haber elegido ninguna fecha todavía (primera visita) solo muestra el formulario
+  vacío — `reporte_generado=False` sin `error_rango`, para no mostrar un error antes de que el cliente pida
+  nada.
+- **Las descargas rearman el reporte en vez de recibir los datos ya calculados**: `DescargarReporteTransaccionesView`
+  vuelve a llamar `generar_reporte` con los mismos filtros de la URL, en vez de confiar en cualquier dato ya
+  calculado que hubiera viajado desde la pantalla — así nunca puede descargarse algo distinto de lo que
+  realmente corresponde a esos filtros, y un rango inválido o sin resultados nunca llega a generar ningún
+  archivo (criterios 4 y 5): la vista redirige con el mensaje de error en vez de ofrecer un PDF/Excel vacío o
+  roto.
+
+### Tests
+
+`tests/test_reporte_transacciones.py` (archivo nuevo, 24 tests):
+- `CalcularTotalesTest`: una transacción pendiente o cancelada no aporta a ningún total; `RETIRADA` cuenta
+  como completada igual que `ACREDITADA`; los totales por tipo usan el equivalente en PYG y separan
+  correctamente compra, venta y cambio; los totales por divisa agrupan dos compras en USD en una sola
+  entrada.
+- `GenerarReporteTest`: sin rango no se genera nada y no es un error; un rango invertido o con fechas
+  futuras es inválido; un rango válido sin coincidencias genera el reporte pero sin filas; el tipo de
+  operación y el estado filtran correctamente.
+- `ReporteTransaccionesClienteViewTest`: sin filtros se ve solo el formulario; con un rango válido se ven el
+  listado y los totales, con los botones de descarga; un rango inválido muestra el error sin listar nada ni
+  ofrecer descarga; sin resultados se avisa sin ofrecer descarga; un cliente no asociado al usuario da 403;
+  un `cliente_pk` inexistente da 404; un administrador no puede acceder a la pantalla.
+- `DescargarReporteTransaccionesViewTest`: la descarga en PDF devuelve un archivo `application/pdf`
+  adjunto; la de Excel devuelve un `.xlsx` legible con `openpyxl` que incluye los filtros aplicados y la
+  fecha de generación; sin resultados, con un rango inválido, o sin ningún rango, no se descarga ningún
+  archivo (redirección, no 200); un cliente ajeno da 403; un formato desconocido da 404.
+
+Suite completa: 585 tests (`pytest tests/ -n auto`) + 513 (`manage.py test tests --parallel auto --keepdb
+--noinput`), todos en verde.
+
+### Verificación
+
+`manage.py check` limpio; no hizo falta ninguna migración (el reporte solo lee `CalculoOperacion`/
+`CalculoTriangulacion`, ya existentes, sin agregar ningún campo). Sphinx (`python -m sphinx -b html
+docs/source -W`) sin advertencias nuevas: se agregó `docs/source/reference/apps.divisas.reportes.rst`
+(listando cada función del módulo nuevo, incluidas las privadas, una por una — mismo criterio que
+`apps.divisas.factura_electronica.rst`) y se referenció desde `apps.divisas.rst`; las dos vistas nuevas
+(`ReporteTransaccionesClienteView`/`DescargarReporteTransaccionesView`) y `_cliente_propio` se agregaron a
+`apps.divisas.views.rst` en el mismo estilo que el resto del archivo (`autoclass`/`:members:` para las
+vistas, `autofunction` para la función privada a nivel de módulo).
+
+## Sesión 31 — 18/11/2026 — Tablero de control de ganancias
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Tablero de control de ganancias (Epic "Gestión de Transacciones, Historial y
+Reportes", GE-14)
+**Participantes:** Rodrigo Mereles
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: un tablero solo para administración con, para el período seleccionado (hoy,
+última semana, último mes, último año o un rango propio), la ganancia total en guaraníes, la cantidad de
+operaciones completadas, el monto total operado y la ganancia promedio por operación; un gráfico con la
+evolución de la ganancia agrupada por día, semana o mes según la duración del período; la distribución de
+la ganancia por divisa, por tipo de operación y por canal; la variación porcentual contra el período
+anterior equivalente; cero indicadores y un aviso (sin error) cuando no hay operaciones completadas; y
+acceso denegado para quien no sea administrador.
+
+### Qué ya existía
+
+No había ningún concepto de "ganancia" ni de "canal" en el código. Sí había, ya resueltos y reutilizables:
+el criterio de "completada" (``apps.divisas.reportes.ESTADOS_COMPLETADOS``, de la HU anterior — "Acreditada"
+o "Retirada", no "Pagada"); la inversión de perspectiva entre el tipo de una compra/venta online
+(``CalculoOperacion``, perspectiva del cliente) y uno de ventanilla (``apps.caja.models.OperacionVentanilla``,
+perspectiva de la casa), ya resuelta una vez para ``apps.divisas.factura_electronica._tipo_transaccion``; y
+el patrón completo de período/rango con validación y variación porcentual de
+``apps.divisas.views.HistorialCotizacionesView``.
+
+### Decisiones
+
+- **La ganancia es la comisión que cobra la casa, siempre normalizada a PYG**: para una compra/venta
+  online o una operación de ventanilla la comisión ya está en PYG (ambas comparten
+  ``apps.divisas.views._calcular_importe_operacion``); para un cambio entre divisas
+  (``CalculoTriangulacion``) la comisión queda en la divisa de **destino** (ver
+  ``_calcular_triangulacion``: el monto bruto que la descuenta está en destino, no en PYG), así que se
+  reconvierte multiplicándola por ``tasa_venta_aplicada``, la misma tasa con la que se descontó del bruto
+  en destino.
+- **El "tipo de operación" del tablero está en la perspectiva de la casa (``CASA_COMPRA``/``CASA_VENTA``),
+  no en la del cliente**: agrupar literalmente por ``CalculoOperacion.tipo``/``OperacionVentanilla.tipo``
+  mezclaría operaciones económicamente opuestas bajo la misma etiqueta, porque ambos modelos usan los
+  mismos nombres (`'COMPRA'`/`'VENTA'`) con significados invertidos entre sí (ver el docstring de
+  ``OperacionVentanilla``: su "compra" ya es "la casa compra"). Es la misma inversión que ya hizo falta
+  resolver, y corregir tras un primer intento equivocado, para la factura electrónica de ventanilla —
+  documentada ahora en el docstring del módulo nuevo para no tener que re-derivarla de nuevo.
+- **Canal = origen del dato, no un campo nuevo**: "online" son ``CalculoOperacion``/``CalculoTriangulacion``;
+  "ventanilla" es ``OperacionVentanilla``. No hizo falta agregar ningún campo a ningún modelo.
+- **Una ``OperacionVentanilla`` no tiene ningún estado propio**: se liquida en efectivo en el momento del
+  registro (no hay confirmación ni entrega posterior, a diferencia de una compra/venta online), así que
+  toda fila de ventanilla cuenta como completada por definición — a diferencia de
+  ``CalculoOperacion``/``CalculoTriangulacion``, que sí se filtran por ``estado_efectivo in
+  ESTADOS_COMPLETADOS``.
+- **Períodos fijos por cantidad de días (1/7/30/365), no por mes calendario**: mismo criterio ya usado por
+  ``HistorialCotizacionesView`` (7/30/90 días) para "último mes"/"último año" — simple, consistente con el
+  resto del proyecto, y no hacía falta más precisión para la HU.
+- **El período anterior equivalente es la misma duración, inmediatamente antes**: generaliza igual para un
+  período fijo que para un rango propio de cualquier longitud (``_rango_anterior_equivalente``), en vez de
+  tener un caso especial por cada período nombrado.
+- **La variación porcentual es ``None`` (no 0% ni un error) cuando el período anterior no tiene ninguna
+  ganancia**: no hay un porcentaje que tenga sentido mostrar al dividir por cero, así que la plantilla
+  muestra "Sin datos del período anterior" en vez de inventar un número.
+- **La agrupación de la evolución (día/semana/mes) depende de la duración del rango, no del nombre del
+  período**: así también funciona correctamente sobre un rango propio de cualquier longitud, no solo sobre
+  los cuatro períodos con nombre (``_agrupacion_segun_duracion``: ≤31 días por día, ≤180 por semana, el
+  resto por mes).
+- **Gráfico de barras (no de líneas) para la evolución**: cada punto es una suma agregada por bucket, no
+  una medición puntual continua como la tasa de cambio del tablero de tasas — un bloque de barras lee mejor
+  un total discreto por período que una línea, que sugiere interpolación entre puntos. Un solo color (el
+  azul de marca ya validado, slot 1 de la paleta categórica) porque es una sola serie: la skill de dataviz
+  solo exige validar CVD/contraste entre colores de una paleta categórica multi-serie, no para un color
+  único. La distribución por tipo/canal/divisa se muestra en tablas simples, mismo criterio que ya se usó
+  para "totales por tipo"/"totales por divisa" en el reporte de transacciones del cliente (Sesión 30): no
+  son más de 2-3 categorías cada una, y una tabla ya cumple el criterio de "verla" sin forzar un gráfico que
+  la HU no pide explícitamente.
+
+### Tests
+
+`tests/test_tablero_ganancias.py` (archivo nuevo, 28 tests):
+- `FilaNormalizadaTest`: el tipo de una compra/venta online se invierte a la perspectiva de la casa; el de
+  una operación de ventanilla no (ya lo está); la ganancia de un cambio se reconvierte correctamente de la
+  divisa de destino a PYG.
+- `CalcularIndicadoresTest`/`CalcularVariacionTest`: todo en cero sin filas; el promedio es la ganancia
+  total sobre la cantidad; sin ganancia anterior la variación es indefinida; aumento y caída dan el
+  porcentaje con el signo correcto.
+- `ResolverPeriodoTest`: el período por defecto, cada período fijo, un rango propio con prioridad sobre
+  `periodo`, un rango invertido o con fecha futura es inválido.
+- `AgrupacionYEvolucionTest`: cada umbral de duración agrupa por día/semana/mes; la evolución queda en
+  orden cronológico.
+- `CalcularDistribucionTest`: agrupa correctamente por tipo, canal y divisa, con cero para un tipo sin
+  ninguna operación.
+- `GenerarTableroIntegracionTest`: pendiente/cancelada/vencida/pago expirado/pagada no suman ganancia, solo
+  acreditada; una operación de ventanilla siempre cuenta; una transacción fuera del período no se cuenta;
+  un rango inválido no calcula ningún indicador; la variación compara correctamente contra el período
+  anterior equivalente.
+- `TableroGananciasViewTest`: un administrador ve el tablero; un usuario sin ese rol recibe 403; sin
+  operaciones completadas se ven ceros con el aviso informativo, sin error; un rango inválido muestra el
+  error de validación; con datos se ven los indicadores y el gráfico.
+
+Suite completa: 613 tests (`pytest tests/ -n auto`) + 541 (`manage.py test tests --parallel auto --keepdb
+--noinput`), todos en verde.
+
+### Verificación
+
+`manage.py check` y `manage.py makemigrations --check --dry-run` limpios (no hizo falta ninguna migración:
+el tablero solo lee modelos ya existentes). Sphinx (`python -m sphinx -b html docs/source -W`) sin
+advertencias nuevas: se agregó `docs/source/reference/apps.divisas.ganancias.rst` (una entrada por función
+del módulo, incluidas las privadas, mismo criterio que `apps.divisas.factura_electronica.rst`/
+`apps.divisas.reportes.rst`) referenciado desde `apps.divisas.rst`, y `TableroGananciasView` se agregó a
+`apps.divisas.views.rst` en el mismo estilo que el resto del archivo (`autoclass`/`:members:`).
+
+## Sesión 32 — 18/11/2026 — Nota de crédito
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Nota de crédito (Epic de Facturación Electrónica / SIFEN)
+**Participantes:** Rodrigo Mereles
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: un administrador emite, para una factura aprobada por SIFEN y sin nota de
+crédito vigente, una nota de crédito por el total de la factura, con un motivo del catálogo SIFEN,
+referenciando el CDC de la factura y repitiendo su receptor e ítems; aprobada por SIFEN, pasa a
+"Aprobada" con su propio CDC y la factura asociada a "Anulada por nota de crédito"; rechazada, la
+factura sigue "Aprobada" y se puede emitir una nueva; no se puede emitir sobre una factura no aprobada,
+ya anulada, o con una nota de crédito pendiente o aprobada; un timeout o error de comunicación no se
+reintenta solo y no genera una nota de crédito duplicada; el cliente ve la nota de crédito de su factura
+anulada y la descarga en PDF/XML, solo de su cliente activo; no mueve dinero ni cambia el estado de la
+transacción; y un usuario sin rol de administrador no puede emitirla.
+
+### Qué ya existía
+
+`ContadorDocumentoElectronico.TIPO_NOTA_CREDITO` ya estaba definido (sin usar en ningún lado): la
+numeración por tipo de documento ya soportaba una nota de crédito desde que se diseñó esa HU. También
+estaban resueltos, reutilizables sin tocarlos: el envío síncrono a Factura Segura sin reintento
+automático ante un timeout (`_generar`/`ESTADO_ERROR_GENERACION`/`reintentar_emision`), el poll de estado
+ante SIFEN (`consultar_estado_sifen`), la descarga bajo demanda (`descargar_kude`/`descargar_xml`), y el
+control de acceso por cliente activo de `DescargarDocumentoElectronicoView._puede_ver`. Nada de esto se
+reescribió: la nota de crédito se diseñó para encajar en esa misma maquinaria, no en paralelo a ella.
+
+### Decisiones
+
+- **La nota de crédito es un `DocumentoElectronico` más** (`tipo_documento=TIPO_NOTA_CREDITO`), no un
+  modelo nuevo: reutiliza sin cambios sus mismos estados, su mismo CDC, su mismo poll de SIFEN y sus
+  mismas descargas. El único costo es que el modelo pasa a tener dos formas válidas: una factura (con
+  exactamente una transacción, como antes) o una nota de crédito (con `factura_anulada` y ninguna
+  transacción propia) — la `CheckConstraint` original se amplió con un cuarto caso en vez de reemplazarse.
+- **`factura_anulada` es un `ForeignKey`, no un `OneToOneField`**: a propósito, para que una factura
+  rechazada por SIFEN libere el paso para una nueva (criterio 3) sin que la base lo impida — puede haber
+  más de una fila histórica para la misma factura, nunca más de una *vigente* a la vez. Esa regla la
+  impone una `UniqueConstraint` condicional (`~Q(estado='RECHAZADO')` sobre `factura_anulada`), mismo
+  patrón ya usado en este proyecto para "una solicitud pendiente por usuario" — la base de datos lo
+  impide, no solo la vista, ni siquiera ante dos llamadas simultáneas.
+- **`DocumentoElectronico.transaccion` delega en `factura_anulada.transaccion` para una nota de
+  crédito**: en vez de copiarle su propia referencia a la transacción (que además el `OneToOneField` de
+  `calculo_operacion`/`calculo_triangulacion`/`operacion_ventanilla` jamás permitiría, porque esa
+  transacción ya está "ocupada" por la factura), la nota de crédito la resuelve indirectamente. Esto hizo
+  que **toda** la maquinaria existente (`_generar`, el control de acceso por cliente activo, `nombre_receptor`)
+  funcionara para una nota de crédito sin tocarla: solo `_armar_resumido_de` necesitó una rama nueva
+  (`iMotEmi`/`gCamDEAsoc`), condicionada por `documento.tipo_documento`.
+- **El "tipo de operación" del tablero de ganancias (sesión anterior) no tiene nada que ver con esto**:
+  un apunte para no confundir — la inversión de perspectiva de esa HU es sobre `tipo` (compra/venta), un
+  concepto distinto del tipo de documento (factura/nota de crédito) de esta.
+- **Catálogo de motivos de emisión reconstruido de memoria, no verificado campo por campo**: igual
+  criterio que ya usa el propio módulo para `iTipEmi`/`iTImp`/`iIndPres` (y que antes el campo
+  `gCamDEAsoc`/`iTipDocAso`/`dCdCDERef` del documento asociado) — ninguna prueba de este proyecto llama a
+  la API real, así que el riesgo de un nombre de campo equivocado queda contenido y documentado para
+  revisar antes de la primera emisión real.
+- **La factura anulada sigue siendo descargable**: se agregó `ESTADO_ANULADA` a `ESTADOS_DESCARGABLES` a
+  propósito — la nota de crédito anula su efecto tributario, no su existencia como comprobante histórico
+  (SIFEN tampoco la "borra"). Un cliente puede seguir viendo y descargando la factura original, además de
+  la nota de crédito que la anuló.
+- **La transición a "Anulada" vive dentro de `consultar_estado_sifen`, no en una vista aparte**: en la
+  misma llamada que ya resuelve si SIFEN aprobó o rechazó la nota de crédito, si aprueba también marca la
+  factura — sin necesidad de ningún cron ni botón adicional, y sin duplicar el poll de estado que ya existía.
+- **`DocumentoElectronico.puede_emitir_nota_credito` (property, solo booleano) vs.
+  `apps.divisas.factura_electronica.puede_emitir_nota_credito` (función, con el motivo)**: la property
+  existe solo para que la plantilla de administración decida si mostrar el botón sin importar el módulo de
+  negocio desde un template (y sin arriesgar un import circular, porque `factura_electronica` ya importa de
+  `models`). Debe mantenerse en los mismos términos que la función — documentado en ambos lados para que
+  no se desincronicen con un cambio futuro.
+
+### Tests
+
+`tests/test_nota_credito.py` (archivo nuevo, 22 tests):
+- `PuedeEmitirNotaCreditoTest`: elegible con una factura aprobada sin nota vigente; no elegible si no está
+  aprobada, si ya fue anulada, o si tiene una nota pendiente/aprobada; sí elegible con una nota rechazada
+  (criterio 3).
+- `EmitirNotaCreditoTest`: la emisión exitosa repite el total/receptor/ítems de la factura y referencia su
+  CDC (criterio 1, verificado contra el `JSON_RESUMIDO_DE` real enviado a `calcular_de`); una factura no
+  elegible o un motivo inválido no crean nada ni llaman a Factura Segura (criterio 4); un timeout deja la
+  nota de crédito en "Error al generar" sin reintentar sola, y una segunda llamada no duplica nada mientras
+  esté así (criterio 5); una carrera simultánea choca contra la `UniqueConstraint` de la base.
+- `ConsultarEstadoDeNotaCreditoTest`: aprobada (con o sin observación) anula la factura (criterio 2);
+  rechazada no la toca y libera el paso para una nueva (criterio 3).
+- `UltimaNotaCreditoTest`: sin ninguna nota de crédito, `None`; con varias, la más reciente.
+- `EmitirNotaCreditoViewTest`: un administrador la emite; sin elegibilidad no se emite nada; un usuario sin
+  rol admin recibe 403 (criterio 8).
+- `ClienteVeLaNotaDeCreditoTest`: el detalle de la transacción muestra la nota de crédito asociada; el
+  cliente la descarga en PDF y en XML; un cliente ajeno recibe 403 al intentarlo (criterio 6).
+
+Suite completa: 635 tests (`pytest tests/ -n auto`) + 563 (`manage.py test tests --keepdb --noinput`; en
+paralelo, un detalle ajeno a esta HU del runner de Django al serializar un traceback entre procesos —
+`TypeError: cannot pickle 'traceback' object` — oscurece el resultado real, así que se verificó sin
+`--parallel`), todos en verde. Un detalle de depuración durante la escritura de los tests: mockear
+`apps.divisas.views.descargar_kude`/`descargar_xml` no alcanza para `DescargarDocumentoElectronicoView`,
+porque su diccionario `FORMATOS` ya capturó esas referencias al definirse la clase (en el import del
+módulo), antes de que corra cualquier `patch()` del test — hay que mockear `apps.divisas.factura_electronica.
+requests.get`, un nivel más abajo, igual criterio que ya usa `tests/test_factura_electronica.py`.
+
+### Verificación
+
+`manage.py check` limpio. Migración nueva (`apps/divisas/migrations/0031_remove_documentoelectronico_
+documento_electronico_exactamente_una_transaccion_and_more.py`): agrega `factura_anulada`/`motivo_emision`,
+el nuevo estado `ANULADA`, y reemplaza la `CheckConstraint`/agrega la `UniqueConstraint` descriptas arriba;
+`manage.py makemigrations --check --dry-run` limpio después de aplicarla. Sphinx (`python -m sphinx -b
+html docs/source -W`) sin advertencias nuevas: `apps.divisas.factura_electronica.rst` y
+`apps.divisas.views.rst` ampliados con las funciones/vista nuevas (mismo estilo `autofunction`/`autoclass`
+que el resto del archivo); `apps.divisas.models.rst` no necesitó ningún cambio (`DocumentoElectronico` ya
+se documenta con `autoclass`/`:members:`, que recoge los campos y properties nuevos solo con actualizar
+sus docstrings).
+
+## Sesión 33 — 20/11/2026 — Monitoreo de transacciones y reportes
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Monitoreo de transacciones y reportes (Epic "Gestión de Transacciones, Historial y
+Reportes", GE-14)
+**Participantes:** Adriana Benítez
+
+### Pedido
+
+Antes de la HU, dos arreglos de entorno: un `pull` de `develop` que había dejado un merge con 15 archivos
+en conflicto (los 7 commits locales ya estaban en el remoto con parches idénticos, verificado con
+`git cherry`; se abortó el merge, se dejó la rama `backup/develop-local-pre-sync` y `develop` quedó igual
+al remoto) y un `ModuleNotFoundError: openpyxl` al correr `makemigrations` (faltaba instalar
+`requirements.txt` en el `.venv`).
+
+Luego, implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada: como analista cambiario, monitorear todas las transacciones del sistema con un
+listado paginado (cliente, tipo, divisas, montos, tasa, canal, estado y fecha), filtros (fechas, cliente,
+tipo, divisa, estado, canal), destacado y filtro de las que requieren atención (entrega pendiente,
+entrega incierta, pago fuera de plazo), detalle con pago, medios de origen/destino y factura, descarga en
+PDF y Excel del listado filtrado con totales por tipo, divisa y estado, acceso denegado sin rol de
+analista o administrador, y pantalla de solo consulta.
+
+### Qué ya existía
+
+- `HistorialTransaccionesView` (listado sin filtros, sin ventanilla, sin paginado real de filas
+  normalizadas) y `apps.divisas.reportes` (reporte de *un* cliente, con PDF/Excel): se reutilizó el patrón
+  (filas normalizadas en Python, un único `generar_*` compartido entre pantalla y descargas) pero no el
+  código, porque el monitoreo necesita todos los clientes y canales y todos los estados.
+- `apps.divisas.ganancias` ya resolvía la perspectiva de la casa para el tipo de operación y el canal
+  online/ventanilla: se importaron sus constantes (`CASA_COMPRA`/`CASA_VENTA`/`CAMBIO`, `TIPO_CHOICES`).
+- El rol `analista_cambiario` ya existía en Keycloak/sesión (`keycloak_roles`); `puede_configurar_comisiones`
+  ya agrupa admin + analista en el menú.
+
+### Decisiones
+
+- **Módulo propio `apps/divisas/monitoreo.py`**, de solo lectura, con `generar_monitoreo` como único punto
+  de entrada (pantalla, PDF y Excel ven siempre los mismos datos) y `detalle_transaccion` para el detalle.
+- **Tipo en perspectiva de la casa**, igual que el tablero de ganancias: sin invertir
+  `CalculoOperacion.TIPO_COMPRA` (el cliente compra = la casa vende), filtrar por tipo mezclaría
+  operaciones opuestas contra la ventanilla.
+- **Canales**: solo los que existen en el sistema, en línea y ventanilla. La HU menciona también
+  "terminal", pero no existe ningún canal así, por lo que se quitó del filtro (se había agregado primero
+  y Adriana pidió retirarlo).
+- **"Requiere atención"** se mapea a estados existentes (no hay un estado "incierta" propio):
+  `PAGADA` = entrega pendiente (pagó y no se entregó), `ENTREGA_FALLIDA` = entrega incierta (la transferencia
+  no respondió o fue rechazada; reintentar es seguro por la idempotencia de sipap-sim) y `PAGO_EXPIRADO` =
+  pago fuera de plazo. Documentado en `MOTIVOS_ATENCION`.
+- **Ventanilla** no tiene estado ni pago: se muestra siempre "Completada (ventanilla)", medios "Efectivo en
+  ventanilla" y sin pago electrónico. El filtro por cliente es por texto (nombre o documento, sin
+  distinguir mayúsculas) porque una operación de mostrador no tiene `Cliente` asociado.
+- **Solo consulta (criterio 7)**: las vistas fijan `http_method_names` a GET/HEAD/OPTIONS (un POST responde
+  405) y las plantillas no tienen formularios de cambio de estado ni el botón "Reintentar" del detalle del
+  cliente.
+- **Acceso (criterio 6)**: `MonitoreoMixin` autoriza solo `admin` y `analista_cambiario`; cliente, cajero o
+  sin rol reciben 403. Los totales incluyen todos los estados (el analista supervisa también lo cancelado),
+  a diferencia del reporte del cliente, que solo suma las completadas.
+
+### Archivos
+
+`apps/divisas/monitoreo.py` (nuevo), `apps/divisas/views.py` (`MonitoreoMixin`,
+`MonitoreoTransaccionesView`, `DescargarMonitoreoView`, `DetalleMonitoreoTransaccionView`),
+`apps/divisas/urls.py` (`/divisas/transacciones/monitoreo/`, `.../descargar/<formato>/`,
+`.../<tipo>/<uuid>/`), `templates/divisas/monitoreo_transacciones.html`, `monitoreo_detalle.html`, enlaces
+en `base.html` y `home.html`.
+
+### Tests
+
+`tests/test_monitoreo_transacciones.py` (archivo nuevo, 47 tests): normalización de filas por modelo;
+listado de todos los clientes/canales, paginado y acceso por rol (admin y analista sí; cliente, cajero, sin
+rol y anónimo no; descarga y detalle también denegados); cada filtro y combinaciones, rangos inválidos y
+paginación que conserva los filtros; destacado y filtro de atención; detalle con/sin pago y factura, de
+cambio y de ventanilla, 404 y solo lectura (POST → 405, sin formularios); totales por tipo/divisa/estado,
+PDF y Excel filtrados (contenido verificado con `openpyxl`) y redirección sin datos o con rango inválido.
+
+### Verificación
+
+Suite completa: 682 tests (`pytest tests -n auto`) en verde; `manage.py check` limpio; Sphinx
+(`python -m sphinx -b html docs/source docs/build`) con `apps.divisas.monitoreo.rst` nuevo,
+`apps.divisas.views.rst` y `templates.rst` ampliados y sin advertencias nuevas (queda una preexistente de
+resaltado en `templates.rst`).
+
+## Sesión 34 — 20/11/2026 — Reporte de ganancias
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Reporte de ganancias (Epic "Gestión de Transacciones, Historial y Reportes", GE-14),
+rama `feature/GE-46`
+**Participantes:** Ruth
+
+### Pedido
+
+Antes de la HU, dos tareas de entorno:
+
+- **Sincronizar `develop` con el remoto.** Había un merge con `origin/develop` a medio terminar, con
+  conflictos en unos 15 archivos, y 13 commits locales que no estaban en el remoto. Ruth eligió descartar lo
+  local: se abortó el merge, se guardaron los 13 commits en la rama `backup/develop-local` y se hizo
+  `git reset --hard origin/develop`.
+- **Instalar `requirements.txt` en el `.venv`.** Se agregaron `openpyxl`, `reportlab`, `pillow` y
+  `pytest-xdist` (y sus dependencias `et-xmlfile` y `execnet`).
+
+Luego, implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada. La HU pide que un analista cambiario o un administrador genere un reporte de
+ganancias para un rango de fechas, agrupado por día, mes, divisa, tipo de operación, canal o caja y turno. El
+reporte muestra la ganancia y la cantidad de operaciones de cada grupo, con el total general. Además:
+
+- el desglose por caja muestra cajero, apertura, cierre, operaciones de ventanilla y ganancia;
+- una caja abierta aparece "en curso" y con ganancia parcial;
+- el total coincide con el del tablero para el mismo período;
+- se descarga en PDF y Excel con los filtros y la fecha de generación;
+- sin operaciones, se avisa que no hay datos, sin error;
+- otros roles no tienen acceso.
+
+### Qué ya existía
+
+- **El tablero de ganancias.** `apps.divisas.ganancias` ya normalizaba la ganancia de los tres orígenes a PYG
+  (`_todas_las_ganancias`): compra/venta online, cambio entre divisas reconvertido con la tasa de venta y
+  ventanilla. También resolvía el tipo desde la perspectiva de la casa y el criterio de "completada", y
+  calculaba el total (`calcular_indicadores`). La vista del tablero solo la ve el administrador.
+- **El patrón de reporte con descargas.** `apps.divisas.reportes` y `apps.divisas.monitoreo` ya lo usaban: un
+  único `generar_*` compartido entre la pantalla y las descargas en PDF (reportlab) y Excel (openpyxl).
+- **Cajas y turnos.** `apps.caja.models.Caja` ya representa el turno de un cajero, con `abierta_en`,
+  `cerrada_en` y estado `ABIERTA`/`CERRADA`.
+
+### Decisiones
+
+- **Módulo propio `apps/divisas/reporte_ganancias.py` que reutiliza el cálculo del tablero.** No recalcula
+  nada: usa `_todas_las_ganancias`, `_en_rango` y `calcular_indicadores` de `ganancias`. Así el criterio 4
+  (el mismo total que el tablero) se cumple por construcción, y un test lo verifica para las seis
+  agrupaciones.
+- **Rango obligatorio.** Sin las dos fechas solo se ve el formulario. Un rango ilegible, invertido o con
+  fechas futuras se informa como error, con los mismos mensajes que el tablero. Una agrupación desconocida
+  pasa a "día".
+- **Caja y turno.** Una caja es del período si su turno se superpone con el rango (se abrió antes del fin y
+  sigue abierta o se cerró después del inicio). Solo se cuentan sus operaciones de ventanilla dentro del
+  rango. Este desglose solo cubre la ventanilla, así que muestra un "total de ventanilla" propio, marcado
+  como parcial si alguna caja está en curso. El total general sigue sumando todos los canales para seguir
+  coincidiendo con el tablero.
+- **PDF y Excel desde las mismas filas.** `_filas_tabla` y `_filas_totales` alimentan los dos formatos, así
+  que ambos tienen exactamente los mismos datos, más los filtros aplicados y la fecha de generación.
+- **Sin datos.** Si el período no tiene operaciones completadas, se muestra un aviso y no se ofrecen
+  descargas. Una descarga pedida por URL vuelve a la pantalla con el aviso.
+- **Acceso.** `ReporteGananciasMixin` autoriza solo `admin` y `analista_cambiario`. A diferencia del
+  tablero, que es solo para el administrador, la HU pide que el analista también acceda. La pantalla es de
+  solo consulta (GET).
+
+### Archivos
+
+- `apps/divisas/reporte_ganancias.py` (nuevo).
+- `apps/divisas/views.py`: `ReporteGananciasMixin`, `ReporteGananciasView` y `DescargarReporteGananciasView`.
+- `apps/divisas/urls.py`: `/divisas/administrar/reporte-ganancias/` y `.../descargar/<pdf|excel>/`.
+- `templates/divisas/reporte_ganancias.html` (nuevo).
+- Enlaces en `base.html` y `home.html`, visibles para el administrador y el analista.
+
+### Tests
+
+`tests/test_reporte_ganancias.py` (archivo nuevo, 47 tests):
+
+- agrupación por día, mes, divisa, tipo y canal (orden, etiquetas y sumas);
+- validación de fechas, agrupación por defecto y aviso sin datos;
+- suma de los tres orígenes, con solo las operaciones online completadas;
+- que la suma de los grupos sea igual al total;
+- coincidencia con el tablero para todas las agrupaciones;
+- desglose por caja: cajero, apertura y cierre, en curso y parcial, superposición con el período, orden y
+  operaciones fuera de rango;
+- acceso: analista y administrador sí; cliente, cajero, sin rol y anónimo no;
+- PDF y Excel: contenido verificado con `openpyxl`, que coincide con la pantalla; redirección sin datos, con
+  rango inválido o sin fechas; formato desconocido responde 404.
+
+### Verificación
+
+- Suite completa: 729 tests (`pytest tests -n auto`) en verde.
+- `manage.py check`: sin problemas.
+- Sphinx (`python -m sphinx -b html docs/source docs/build`): `apps.divisas.reporte_ganancias.rst` nuevo,
+  `apps.divisas.rst`, `apps.divisas.views.rst` y `templates.rst` ampliados, y una sección nueva "Reporte de
+  ganancias" en `guia.rst`. No hay advertencias nuevas (queda la preexistente de resaltado en
+  `templates.rst`).
+
+## Sesión 35 — 20/11/2026 — Notificaciones sobre transacciones y facturas
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** Notificaciones sobre transacciones y facturas, rama `feature/GE-53`
+**Participantes:** Ruth
+
+### Pedido
+
+Implementar la HU completa (pegada desde Jira) con tests, docstrings, Sphinx actualizado y esta
+conversación documentada. La HU pide que el cliente reciba una notificación:
+
+- cuando una de sus transacciones pasa a "Pagada", "Completada", "Cancelada" o a un estado que requiere
+  atención, con el número de la transacción y su nuevo estado;
+- cuando SIFEN aprueba, rechaza o cancela una de sus facturas, con el CDC y el nuevo estado.
+
+Además, al abrir la notificación se accede al detalle de la transacción o de la factura, las no leídas se
+suman al indicador, y la notificación de otro cliente no se ve.
+
+### Qué ya existía
+
+- **Notificaciones de tasas (GE-51).** `NotificacionTasa` (por usuario), `MisNotificacionesView`,
+  `MarcarNotificacionLeidaView` (solo POST) y el context processor `notificaciones_context`, que alimenta la
+  campana de la barra superior y el contador del menú.
+- **Los cambios de estado.** Todos los flujos que cambian el estado de una transacción o de una factura
+  terminan en un `save(update_fields=['estado', ...])`: `Pago.registrar_pago`, `apps.divisas.entrega`, las
+  vistas de confirmación y cancelación, `pagos_sipap` y `factura_electronica.consultar_estado_sifen`
+  (incluida la anulación de la factura cuando SIFEN aprueba una nota de crédito).
+- **El cliente activo.** `ClienteActivoMiddleware` resuelve `request.cliente_activo` a partir de
+  `Cliente.usuarios`.
+- **El detalle de la factura.** El cliente no tiene una pantalla propia por factura: el comprobante se ve en
+  la sección "Factura electrónica" del detalle de la transacción.
+
+### Decisiones
+
+- **Modelo nuevo `NotificacionCliente`.** Guarda el usuario y el cliente. Se crea una notificación por cada
+  usuario activo asociado al cliente, así que cada uno tiene su propio estado de lectura, y la pantalla
+  puede filtrar por cliente activo. El estado se guarda copiado (código y etiqueta), porque la notificación
+  informa el estado de ese momento: si la transacción vuelve a cambiar, cada cambio tiene la suya.
+- **Detección en `save` con `SeguimientoEstadoMixin`.** El mixin recuerda el estado leído (`from_db`) y,
+  después de guardar, compara. Así se cubren todos los flujos existentes sin tocar ninguno. Crear un registro
+  no notifica, y un `save` con `update_fields` sin `estado` tampoco. Durante la implementación, `from_db`
+  falló con `TypeError` porque Django 6.1 agregó el argumento `fetch_mode`; se resolvió reenviando
+  `*args, **kwargs`.
+- **Qué estados se notifican.** En transacciones: "Pagada"; "Completada" ("Acreditada" o "Retirada");
+  las cuatro cancelaciones; y como "requiere atención", "entrega fallida" y "pago fuera de plazo" (el mismo
+  criterio que el monitoreo). "Pendiente", "Confirmada" y "Vencida" no se notifican. En facturas:
+  "Aprobado", "Aprobado con observación", "Rechazado" y "Anulada" (que es la "cancelación" de la HU). La nota
+  de crédito en sí no notifica, ni tampoco una factura de ventanilla. Si la factura todavía no tiene CDC, se
+  usa el número de documento.
+- **Abrir (criterio 3).** `AbrirNotificacionClienteView` (solo POST, como la de tasas) marca la notificación
+  como leída y redirige al detalle de la transacción. Si es de una factura, redirige al ancla
+  `#factura-electronica`, que se agregó en los dos templates de detalle.
+- **Indicador (criterio 4).** `notificaciones_context` suma las de tasas sin leer y las de transacciones y
+  facturas sin leer del cliente activo. También expone cada número por separado para la pantalla.
+- **Aislamiento (criterio 5).** `notificaciones_cliente_activo` filtra siempre por usuario y por cliente
+  activo, tanto en la pantalla como en el indicador y en la apertura. Una notificación de otro usuario o de
+  otro cliente propio que no es el activo responde 404.
+
+### Archivos
+
+- `apps/divisas/models.py`: `SeguimientoEstadoMixin`, `NotificacionCliente` y el gancho `_al_cambiar_estado`
+  en `CalculoOperacion`, `CalculoTriangulacion` y `DocumentoElectronico`.
+- `apps/divisas/migrations/0032_notificacioncliente.py` (nuevo).
+- `apps/divisas/context_processors.py`: `notificaciones_cliente_activo` y el indicador sumado.
+- `apps/divisas/views.py`: `MisNotificacionesView` ampliada y `AbrirNotificacionClienteView` nueva.
+- `apps/divisas/urls.py`: `/divisas/notificaciones/operaciones/<id>/abrir/`.
+- Templates: `mis_notificaciones.html` (sección nueva "Transacciones y facturas"), el ancla en
+  `detalle_transaccion_operacion.html` y `detalle_transaccion_cambio.html`, y el título de la campana en
+  `base.html`.
+
+### Tests
+
+`tests/test_notificaciones_operaciones.py` (archivo nuevo, 39 tests):
+
+- cada estado notificable de una transacción, con su categoría, y los que no se notifican;
+- que crear un registro, guardar sin cambiar el estado o guardar otros campos no notifique;
+- cambios sucesivos, cambio entre divisas y destinatarios (solo usuarios activos del cliente);
+- integración con `Pago.registrar_pago`;
+- estados de factura, estados técnicos que no notifican, número de documento sin CDC, y que la nota de
+  crédito no notifique por sí misma;
+- integración con `consultar_estado_sifen` (aprobación, y anulación por nota de crédito aprobada);
+- `url_detalle` y lectura idempotente;
+- vistas: listado con número o CDC, apertura y redirección al detalle y a la sección de la factura, GET no
+  permitido (405), 404, el indicador sumado con las de tasas, el indicador al abrir, otro usuario, otro
+  cliente activo del mismo usuario, sin rol y anónimo.
+
+`tests/test_notificaciones_tasas.py`: se actualizó el texto del listado vacío, que ahora es "Todavía no tenés
+notificaciones de tasas."
+
+### Verificación
+
+- Suite completa: 768 tests (`pytest tests -n auto`) en verde.
+- `manage.py check`: sin problemas.
+- `makemigrations --check`: sin cambios pendientes.
+- Sphinx: `SeguimientoEstadoMixin` y `NotificacionCliente` en `apps.divisas.models.rst`,
+  `AbrirNotificacionClienteView` en `apps.divisas.views.rst`, `templates.rst` ajustado y una sección nueva en
+  `guia.rst`. No hay advertencias nuevas (queda la preexistente de `templates.rst`).
+
+## Sesión 36 — 20/11/2026 — "Mis facturas electrónicas": botones visibles y consulta a SIFEN
+
+**Herramienta:** Claude Code (Anthropic)
+**HU relacionada:** ajuste de "Consulta de facturas electrónicas", rama `feature/GE-53`
+**Participantes:** Ruth
+
+### Pedido
+
+En la pantalla "Mis facturas electrónicas" del cliente, los botones de cada fila quedaban ocultos a la
+derecha al abrir la pantalla. Se pidió que se vean dentro de la pantalla y que se agregue un botón para
+consultar a SIFEN.
+
+### Diagnóstico
+
+La tabla quedaba más ancha que la pantalla por dos motivos:
+
+- el CDC tiene 44 caracteres sin espacios y no se podía cortar;
+- los tres botones ("Ver detalle", "KuDE" y "XML") iban en una sola línea.
+
+Dentro de `table-responsive`, la columna de acciones quedaba fuera de la vista, y para verla había que
+desplazar la tabla hacia la derecha.
+
+### Decisiones
+
+- **Diseño de la tabla.** El CDC puede cortarse en varias líneas (`word-break: break-all`, ancho máximo y letra
+  más chica), y los botones van en un contenedor flexible que pasa a la línea siguiente dentro de la celda. La
+  columna "Detalle" pasó a llamarse "Acciones".
+- **Botón "Consultar SIFEN".** Llama a la vista nueva `ConsultarEstadoSifenMiFacturaView`, que solo acepta POST.
+  Reutiliza `consultar_estado_sifen`, la misma lectura que ya usaba el administrador y que nunca emite un
+  documento. Solo se muestra si la factura tiene CDC, solo funciona sobre facturas del cliente activo (una
+  ajena responde 404 sin llamar a la API) y vuelve a la misma página del listado (`next`, validado contra el
+  host). Si el estado cambia, el cliente recibe además la notificación de la Sesión 35.
+- **Documentación.** La pantalla ya no es "de solo lectura", así que se ajustaron el docstring de
+  `MisFacturasElectronicasListView` y la sección "Consulta de facturas electrónicas" de `guia.rst`.
+
+### Archivos
+
+- `apps/divisas/views.py`: `ConsultarEstadoSifenMiFacturaView` nueva y docstring de
+  `MisFacturasElectronicasListView` ajustado.
+- `apps/divisas/urls.py`: `/divisas/transacciones/mias/facturas/<id>/consultar-sifen/`.
+- `templates/divisas/mis_facturas_electronicas.html`.
+
+### Tests
+
+En `tests/test_factura_electronica.py` se agregó `ConsultarSifenMiFacturaViewTest` (9 tests):
+
+- el botón aparece dentro de las acciones, y no aparece sin CDC;
+- la consulta actualiza el estado y vuelve al listado con un mensaje;
+- sin respuesta de Factura Segura, informa el error;
+- sin CDC, no llama a la API;
+- un `next` externo se ignora;
+- una factura de otro cliente responde 404;
+- GET responde 405, y sin rol de cliente responde 403.
+
+### Verificación
+
+- Suite completa en verde y `manage.py check` sin problemas.
+- Sphinx: `ConsultarEstadoSifenMiFacturaView` en `apps.divisas.views.rst` y `guia.rst` actualizada. No hay
+  advertencias nuevas.
 
 ## Enlaces externos (conversaciones completas)
 

@@ -1,0 +1,198 @@
+<!--
+Monitoreo de solo consulta de todas las transacciones del sistema, con filtros, totales y descarga PDF/Excel.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: filtros, error_rango, transacciones, page_obj, is_paginated, totales, generado_en,
+tipos_disponibles, estados_disponibles, canales_disponibles, querystring.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Monitoreo de transacciones - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-binoculars"></i> Solo consulta</span>
+        <h1>Monitoreo de transacciones</h1>
+        <p>Supervisá las operaciones de todos los clientes y canales. El tipo se expresa desde la perspectiva de la casa de cambio.</p>
+    </div>
+</div>
+
+<div class="contenedor-filtro">
+    <form method="GET" action="" class="d-flex align-items-end gap-3 flex-wrap mb-0">
+        <div>
+            <label for="fecha_desde" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Desde</label>
+            <input type="date" name="fecha_desde" id="fecha_desde" value="{{ filtros.fecha_desde }}" class="form-control">
+        </div>
+        <div>
+            <label for="fecha_hasta" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Hasta</label>
+            <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ filtros.fecha_hasta }}" class="form-control">
+        </div>
+        <div>
+            <label for="cliente" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Cliente</label>
+            <input type="text" name="cliente" id="cliente" value="{{ filtros.cliente }}" class="form-control" placeholder="Nombre o documento">
+        </div>
+        <div>
+            <label for="tipo" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Tipo</label>
+            <select name="tipo" id="tipo" class="select-segmento">
+                <option value="">Todos</option>
+                {% for valor, etiqueta in tipos_disponibles %}
+                    <option value="{{ valor }}" {% if filtros.tipo == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="divisa" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Divisa</label>
+            <input type="text" name="divisa" id="divisa" value="{{ filtros.divisa }}" class="form-control" maxlength="3" placeholder="USD" style="width:90px;">
+        </div>
+        <div>
+            <label for="estado" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Estado</label>
+            <select name="estado" id="estado" class="select-segmento">
+                <option value="">Todos</option>
+                {% for valor, etiqueta in estados_disponibles %}
+                    <option value="{{ valor }}" {% if filtros.estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="canal" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Canal</label>
+            <select name="canal" id="canal" class="select-segmento">
+                <option value="">Todos</option>
+                {% for valor, etiqueta in canales_disponibles %}
+                    <option value="{{ valor }}" {% if filtros.canal == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-check mb-2">
+            <input type="checkbox" name="atencion" id="atencion" value="1" class="form-check-input" {% if filtros.atencion %}checked{% endif %}>
+            <label for="atencion" class="form-check-label">Solo las que requieren atención</label>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+        <a href="{% url 'divisas:monitoreo_transacciones' %}" class="btn btn-secondary">Limpiar</a>
+    </form>
+</div>
+
+{% if error_rango %}
+<div class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle me-1"></i>{{ error_rango }}
+</div>
+{% else %}
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4 mb-2">
+    <p class="mb-0 text-muted">{{ totales.cantidad }} transacción{{ totales.cantidad|pluralize:"es" }} · generado el {{ generado_en|date:"d/m/Y H:i" }}.</p>
+    {% if totales.cantidad %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'divisas:descargar_monitoreo' 'pdf' %}?{{ querystring }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
+        </a>
+        <a href="{% url 'divisas:descargar_monitoreo' 'excel' %}?{{ querystring }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i>Descargar Excel
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Canal</th>
+                    <th>Divisa</th>
+                    <th>Monto</th>
+                    <th>Tasa aplicada</th>
+                    <th>Importe final</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaccion in transacciones %}
+                <tr {% if transaccion.atencion %}class="table-warning"{% endif %}>
+                    <td>{{ transaccion.creado_en|date:"d/m/Y H:i" }}</td>
+                    <td>{{ transaccion.cliente }}</td>
+                    <td>{{ transaccion.tipo }}</td>
+                    <td>{{ transaccion.canal|capfirst }}</td>
+                    <td>{{ transaccion.divisa }}</td>
+                    <td class="ge-num">{{ transaccion.monto_origen|floatformat:2 }}</td>
+                    <td class="ge-num">{{ transaccion.tasa|floatformat:transaccion.decimales_tasa }}</td>
+                    <td class="ge-num">{{ transaccion.monto_final|floatformat:2 }} {{ transaccion.moneda_final }}</td>
+                    <td>
+                        {{ transaccion.estado }}
+                        {% if transaccion.atencion %}
+                            <br><span class="badge text-bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>{{ transaccion.atencion }}</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="{{ transaccion.url_detalle }}" class="btn btn-outline-primary btn-sm">Ver detalle</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" class="text-center py-4 text-muted">No hay transacciones para los filtros elegidos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación de transacciones">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+{% if totales.cantidad %}
+<div class="row g-4 mt-1">
+    <div class="col-md-4">
+        <div class="ge-card">
+            <div class="ge-card__header mb-2"><h2>Totales por tipo</h2></div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Tipo</th><th class="ge-num">Cant.</th><th class="ge-num">Monto (PYG)</th></tr></thead>
+                <tbody>
+                    {% for datos in totales.por_tipo.values %}
+                    <tr><td>{{ datos.etiqueta }}</td><td class="ge-num">{{ datos.cantidad }}</td><td class="ge-num">{{ datos.monto_pyg|floatformat:2 }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ge-card">
+            <div class="ge-card__header mb-2"><h2>Totales por divisa</h2></div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Divisa</th><th class="ge-num">Cant.</th><th class="ge-num">Monto operado</th></tr></thead>
+                <tbody>
+                    {% for divisa, datos in totales.por_divisa.items %}
+                    <tr><td>{{ divisa }}</td><td class="ge-num">{{ datos.cantidad }}</td><td class="ge-num">{{ datos.monto|floatformat:2 }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ge-card">
+            <div class="ge-card__header mb-2"><h2>Totales por estado</h2></div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Estado</th><th class="ge-num">Cant.</th><th class="ge-num">Monto (PYG)</th></tr></thead>
+                <tbody>
+                    {% for datos in totales.por_estado.values %}
+                    <tr><td>{{ datos.etiqueta }}</td><td class="ge-num">{{ datos.cantidad }}</td><td class="ge-num">{{ datos.monto_pyg|floatformat:2 }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

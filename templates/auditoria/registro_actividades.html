@@ -1,0 +1,135 @@
+<!--
+Registro de actividades administrativas (GE-71): listado paginado, de solo consulta, con filtros.
+Hereda de: base.html.
+Bloques definidos: title, content.
+Contexto esperado: registros, filtros, page_obj, is_paginated, paginator, querystring.
+-->
+{% extends 'base.html' %}
+
+{% block title %}Registro de actividades - Global Exchange{% endblock %}
+
+{% block content %}
+<div class="ge-page-header">
+    <div>
+        <span class="ge-eyebrow"><i class="bi bi-shield-check"></i> Solo consulta</span>
+        <h1>Registro de actividades</h1>
+        <p>Altas, modificaciones y bajas de usuarios, roles, clientes, divisas, tasas y parámetros de operación: quién, cuándo, sobre qué registro y qué cambió.</p>
+    </div>
+</div>
+
+<div class="contenedor-filtro">
+    <form method="GET" action="" class="d-flex align-items-end gap-3 flex-wrap mb-0">
+        <div>
+            <label for="{{ filtros.usuario.id_for_label }}" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Usuario</label>
+            <select name="usuario" id="{{ filtros.usuario.id_for_label }}" class="select-segmento">
+                {% for valor, etiqueta in filtros.usuario.field.choices %}
+                    <option value="{{ valor }}" {% if filtros.usuario.value|stringformat:"s" == valor|stringformat:"s" %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="{{ filtros.accion.id_for_label }}" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Acción</label>
+            <select name="accion" id="{{ filtros.accion.id_for_label }}" class="select-segmento">
+                {% for valor, etiqueta in filtros.accion.field.choices %}
+                    <option value="{{ valor }}" {% if filtros.accion.value == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="{{ filtros.tipo_recurso.id_for_label }}" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Registro</label>
+            <select name="tipo_recurso" id="{{ filtros.tipo_recurso.id_for_label }}" class="select-segmento">
+                {% for valor, etiqueta in filtros.tipo_recurso.field.choices %}
+                    <option value="{{ valor }}" {% if filtros.tipo_recurso.value == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="fecha_desde" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Desde</label>
+            <input type="date" name="fecha_desde" id="fecha_desde" value="{{ filtros.fecha_desde.value|default_if_none:'' }}" class="form-control">
+        </div>
+        <div>
+            <label for="fecha_hasta" class="form-label mb-0" style="font-weight:600; font-size:13.5px;">Hasta</label>
+            <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ filtros.fecha_hasta.value|default_if_none:'' }}" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+        <a href="{% url 'auditoria:registro_actividades' %}" class="btn btn-secondary">Limpiar</a>
+    </form>
+</div>
+
+{% if filtros.errors %}
+<div class="alert alert-danger" role="alert">
+    {% for errores in filtros.errors.values %}
+        {% for error in errores %}
+            <div><i class="bi bi-exclamation-triangle me-1"></i>{{ error }}</div>
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<p class="mt-4 mb-2 text-muted">{{ paginator.count }} actividad{{ paginator.count|pluralize:"es" }} registrada{{ paginator.count|pluralize }}.</p>
+
+<div class="ge-card p-0">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha y hora</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Registro</th>
+                    <th>Cambios</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in registros %}
+                <tr>
+                    <td class="text-nowrap">{{ registro.fecha|date:"d/m/Y H:i:s" }}</td>
+                    <td>{{ registro.usuario_nombre }}</td>
+                    <td>
+                        {% if registro.accion == 'ALTA' %}
+                            <span class="badge bg-success">{{ registro.get_accion_display }}</span>
+                        {% elif registro.accion == 'BAJA' or registro.accion == 'ELIMINACION' %}
+                            <span class="badge bg-danger">{{ registro.get_accion_display }}</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">{{ registro.get_accion_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ registro.recurso_descripcion }}
+                        <small class="d-block text-muted">{{ registro.get_tipo_recurso_display }}</small>
+                    </td>
+                    <td>
+                        <ul class="list-unstyled mb-0" style="font-size: 13px;">
+                            {% for cambio in registro.cambios %}
+                            <li>
+                                <strong>{{ cambio.etiqueta }}:</strong>
+                                {% if registro.accion != 'ALTA' %}<span class="text-muted">{{ cambio.anterior|default_if_none:"—" }}</span> &rarr;{% endif %}
+                                {{ cambio.nuevo|default_if_none:"—" }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4 text-muted">No hay actividades registradas que coincidan con los filtros.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+        <nav class="p-3" aria-label="Paginación del registro de actividades">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

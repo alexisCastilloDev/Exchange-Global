@@ -82,6 +82,45 @@ clasificación que la guía solo describe como "ver Manual SIFEN"
 plausible según la guía, no una verificación campo por campo contra el
 Manual Técnico de SIFEN 150 completo: revisar antes de la primera
 emisión real.
+
+Nota de crédito (HU "Nota de crédito"): ``emitir_nota_credito`` anula
+una factura ya aprobada, con el mismo total, receptor e ítems (porque
+``documento.transaccion``, para una nota de crédito, delega en
+``factura_anulada.transaccion`` — ver ``apps.divisas.models.
+DocumentoElectronico.transaccion``), más ``iMotEmi`` (motivo de
+emisión, elegido del catálogo) y el grupo de documento asociado
+(``gCamDEAsoc``) que referencia el CDC de la factura (ver
+``_armar_resumido_de``). Reutiliza toda la infraestructura ya existente
+para una factura —``_generar``/``_calcular``/``reintentar_emision``/
+``consultar_estado_sifen``/``descargar_kude``/``descargar_xml``— sin
+ninguna rama paralela: la única diferencia real es qué campos arma
+``_armar_resumido_de`` según ``documento.tipo_documento``. El nombre
+del campo del grupo de documento asociado (``gCamDEAsoc``/``iTipDocAso``/
+``dCdCDERef``) no está verificado contra el esquema real de Factura
+Segura (mismo criterio de "revisar antes de la primera emisión real"
+que el resto de los campos no confirmados del módulo) — ninguna prueba
+de este proyecto llama a la API real, siempre está mockeada.
+
+Cuando SIFEN aprueba una nota de crédito (``consultar_estado_sifen``),
+la factura que anula pasa a ``ESTADO_ANULADA`` en la misma llamada —
+no hace falta ninguna vista ni tarea separada para completar el
+criterio 2. Mientras tanto, no se puede emitir una segunda nota de
+crédito para la misma factura (ver ``puede_emitir_nota_credito``,
+respaldado por la ``UniqueConstraint`` del modelo): si SIFEN la
+rechaza, la anterior deja de contar como vigente y un administrador
+puede emitir una nueva (criterio 3); si falló por timeout o error de
+comunicación (``ESTADO_ERROR_GENERACION``), sigue contando como
+vigente —igual que una factura en el mismo estado— así que la única
+forma de continuar es "Reintentar" sobre esa misma fila, nunca una
+nota de crédito nueva (criterio 5).
+
+Una nota de crédito no mueve ningún dinero ni cambia el estado de la
+transacción (criterio 7): solo pasa el estado de la *factura* a
+"Anulada por nota de crédito", nunca el de ``CalculoOperacion``/
+``CalculoTriangulacion``/``OperacionVentanilla``, que siguen
+reflejando la operación real (acreditada, retirada, etc.) tal como
+quedó. La devolución de fondos, si corresponde, es un proceso
+administrativo aparte, fuera del alcance de esta HU.
 """
 
 import logging
@@ -411,6 +450,18 @@ def _grupo_pago(transaccion, monto):
     return {**base, 'iTiPago': '5'}
 
 
+def _grupo_documento_asociado(documento):
+    """Grupo ``gCamDEAsoc`` de una nota de crédito: referencia el CDC de la factura que anula.
+
+    Nombre de campo no verificado contra el esquema real de Factura
+    Segura (ver el docstring del módulo): ``iTipDocAso='1'`` (Electrónico)
+    y ``dCdCDERef`` con el CDC de ``documento.factura_anulada``, que a
+    esta altura ya tiene que estar aprobada (ver
+    ``puede_emitir_nota_credito``), así que siempre tiene un CDC.
+    """
+    return [{'iTipDocAso': '1', 'dCdCDERef': documento.factura_anulada.cdc}]
+
+
 def _armar_resumido_de(documento, transaccion, monto):
     """Arma el ``JSON_RESUMIDO_DE``: la entrada de ``calcular_de``, sin ningún campo calculado.
 
@@ -421,7 +472,14 @@ def _armar_resumido_de(documento, transaccion, monto):
     Receptor modelado siempre como "No Contribuyente"/consumidor final
     por cédula (``iNatRec='2'``), lo que a su vez implica
     ``iTiOpe='2'`` (B2C): un "No Contribuyente" nunca es la contraparte
-    de una operación B2B.
+    de una operación B2B. Para una nota de crédito
+    (``documento.tipo_documento == TIPO_NOTA_CREDITO``), ``transaccion``
+    y ``monto`` ya son los de la factura que anula (vienen de
+    ``documento.transaccion``/``_total_en_pyg`` sobre esa misma
+    transacción, ver ``emitir_nota_credito``): se agregan, además, el
+    motivo de emisión (``iMotEmi``) y el documento asociado
+    (``gCamDEAsoc``, ver ``_grupo_documento_asociado``), que una
+    factura nunca lleva.
 
     Nota: varios códigos de clasificación documentados solo como
     "ver Manual SIFEN" (``iTipEmi``, ``iTImp``, ``iIndPres``) quedan
@@ -434,6 +492,12 @@ def _armar_resumido_de(documento, transaccion, monto):
     identificador_receptor, nombre_receptor, email_receptor = _datos_receptor(transaccion)
     ahora = timezone.localtime(timezone.now())
     tipo_transaccion, descripcion_tipo_transaccion = _tipo_transaccion(transaccion)
+    campos_nota_credito = {}
+    if documento.tipo_documento == ContadorDocumentoElectronico.TIPO_NOTA_CREDITO:
+        campos_nota_credito = {
+            'iMotEmi': documento.motivo_emision,
+            'gCamDEAsoc': _grupo_documento_asociado(documento),
+        }
     return {
         'iTipEmi': '1',
         'iTiDE': documento.tipo_documento,
@@ -478,6 +542,7 @@ def _armar_resumido_de(documento, transaccion, monto):
         'dDVId': '0',
         'dSisFact': '1',
         'dInfAdic': _info_adicional(transaccion),
+        **campos_nota_credito,
     }
 
 
@@ -737,6 +802,19 @@ def consultar_estado_sifen(documento):
     documento.desc_sifen = documento.desc_sifen[:DocumentoElectronico._meta.get_field('desc_sifen').max_length]
     documento.error_sifen = documento.error_sifen[:DocumentoElectronico._meta.get_field('error_sifen').max_length]
     documento.save(update_fields=['estado', 'estado_sifen', 'desc_sifen', 'error_sifen', 'consultado_en', 'actualizado_en'])
+
+    # Criterio 2 de la HU "Nota de crédito": una nota de crédito recién
+    # aprobada anula, en esta misma consulta, la factura que referencia.
+    # Un rechazo, en cambio, no le hace nada a la factura (criterio 3):
+    # sigue "Aprobada" y el administrador puede emitir una nueva.
+    if (
+        documento.tipo_documento == ContadorDocumentoElectronico.TIPO_NOTA_CREDITO
+        and documento.estado in (DocumentoElectronico.ESTADO_APROBADO, DocumentoElectronico.ESTADO_APROBADO_OBS)
+    ):
+        factura = documento.factura_anulada
+        factura.estado = DocumentoElectronico.ESTADO_ANULADA
+        factura.save(update_fields=['estado', 'actualizado_en'])
+
     return True
 
 
@@ -767,6 +845,94 @@ def reintentar_emision(documento):
         return False
     _generar(documento, documento.transaccion)
     return documento.estado == DocumentoElectronico.ESTADO_GENERADO
+
+
+def ultima_nota_credito(transaccion):
+    """Devuelve la nota de crédito más reciente de la factura de ``transaccion``, o ``None`` si no tiene ninguna.
+
+    Para que las pantallas de detalle del cliente (criterio 6) y de
+    administración puedan mostrar siempre el estado más actual de la
+    relación factura/nota de crédito con una sola llamada, sin
+    importar si hubo una nota de crédito rechazada antes.
+    """
+    documento = getattr(transaccion, 'documento_electronico', None)
+    if documento is None:
+        return None
+    return documento.notas_credito.order_by('-creado_en').first()
+
+
+def puede_emitir_nota_credito(factura):
+    """Indica si se puede emitir una nota de crédito para ``factura``, y por qué no si no se puede (criterio 4).
+
+    Args:
+        factura (DocumentoElectronico): El documento a anular (debe ser
+            una factura, ``tipo_documento=TIPO_FACTURA``).
+
+    Returns:
+        tuple[bool, str]: ``(True, '')`` si se puede, o ``(False,
+        motivo)`` listo para mostrarle al administrador.
+    """
+    if factura.tipo_documento != ContadorDocumentoElectronico.TIPO_FACTURA:
+        return False, 'Solo se puede emitir una nota de crédito para una factura.'
+    if factura.estado == DocumentoElectronico.ESTADO_ANULADA:
+        return False, 'Esta factura ya fue anulada por una nota de crédito.'
+    if factura.estado not in (DocumentoElectronico.ESTADO_APROBADO, DocumentoElectronico.ESTADO_APROBADO_OBS):
+        return False, 'Solo se puede emitir una nota de crédito para una factura aprobada por SIFEN.'
+    if factura.tiene_nota_credito_vigente:
+        return False, 'Esta factura ya tiene una nota de crédito pendiente o aprobada.'
+    return True, ''
+
+
+def emitir_nota_credito(factura, motivo_emision):
+    """Emite una nota de crédito que anula ``factura`` por ``motivo_emision`` (criterio 1).
+
+    Repite el total, el receptor y los ítems de ``factura`` porque
+    comparte su misma transacción (``documento.transaccion``, para una
+    nota de crédito, delega en ``factura_anulada.transaccion`` — ver
+    ``apps.divisas.models.DocumentoElectronico.transaccion``): ni este
+    módulo ni ``_armar_resumido_de`` tienen que repetir ningún dato a
+    mano. Repite ``puede_emitir_nota_credito`` acá adentro (no solo en
+    la vista) para que esta función sea segura de llamar directamente,
+    incluso en una prueba o en otro punto de entrada futuro.
+
+    No mueve ningún dinero ni cambia el estado de la transacción
+    (criterio 7, ver el docstring del módulo): solo crea el
+    ``DocumentoElectronico`` de la nota de crédito y lo envía. La
+    factura pasa a "Anulada" más adelante, solo si SIFEN aprueba esta
+    nota de crédito (ver ``consultar_estado_sifen``).
+
+    Args:
+        factura (DocumentoElectronico): La factura a anular.
+        motivo_emision (str): Uno de ``DocumentoElectronico.MOTIVO_EMISION_CHOICES``.
+
+    Returns:
+        tuple[DocumentoElectronico | None, str]: El documento de la
+        nota de crédito (``None`` si no se pudo crear) y un mensaje
+        para mostrarle al administrador, de éxito o del motivo por el
+        que no se pudo.
+    """
+    puede, motivo_rechazo = puede_emitir_nota_credito(factura)
+    if not puede:
+        return None, motivo_rechazo
+    if motivo_emision not in dict(DocumentoElectronico.MOTIVO_EMISION_CHOICES):
+        return None, 'Elegí un motivo de emisión válido.'
+
+    try:
+        numero_documento = ContadorDocumentoElectronico.siguiente_numero(ContadorDocumentoElectronico.TIPO_NOTA_CREDITO)
+    except RangoDocumentosAgotadoError as exc:
+        logger.error('No se pudo emitir la nota de crédito de la factura #%s: %s', factura.pk, exc)
+        return None, str(exc)
+
+    documento = DocumentoElectronico.objects.create(
+        tipo_documento=ContadorDocumentoElectronico.TIPO_NOTA_CREDITO,
+        numero_documento=numero_documento,
+        factura_anulada=factura,
+        motivo_emision=motivo_emision,
+    )
+    _generar(documento, documento.transaccion)
+    if documento.estado == DocumentoElectronico.ESTADO_GENERADO:
+        return documento, 'La nota de crédito se envió correctamente. Queda pendiente de aprobación por SIFEN.'
+    return documento, f'La nota de crédito no se pudo generar: {documento.error_generacion}'
 
 
 def _descargar_archivo(operation, documento, es_valido):

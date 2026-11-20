@@ -21,8 +21,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Índice" href="../genindex.html" />
     <link rel="search" title="Búsqueda" href="../search.html" />
-    <link rel="next" title="apps.divisas.pagos_sipap module" href="apps.divisas.pagos_sipap.html" />
-    <link rel="prev" title="apps.divisas.forms module" href="apps.divisas.forms.html" /> 
+    <link rel="next" title="apps.divisas.monitoreo module" href="apps.divisas.monitoreo.html" />
+    <link rel="prev" title="apps.divisas.ganancias module" href="apps.divisas.ganancias.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -68,7 +69,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -97,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
@@ -105,6 +110,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
@@ -547,9 +553,58 @@ one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.models.SeguimientoEstadoMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SeguimientoEstadoMixin</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#SeguimientoEstadoMixin"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.SeguimientoEstadoMixin" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Detecta, al guardar, si cambió el campo <code class="docutils literal notranslate"><span class="pre">estado</span></code> y avisa con <code class="docutils literal notranslate"><span class="pre">_al_cambiar_estado</span></code>.</p>
+<p>Lo usan los modelos cuyo cambio de estado tiene que notificarse al
+cliente (HU «Notificaciones sobre transacciones y facturas», ver
+<code class="docutils literal notranslate"><span class="pre">NotificacionCliente</span></code>): <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>, <code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code>
+y <code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code>. Engancharse a <code class="docutils literal notranslate"><span class="pre">save</span></code> (en vez de a cada
+vista o servicio que cambia un estado) cubre por sí solo todos los
+caminos que ya existen —pago, entrega, reintento, cancelación,
+consulta a SIFEN— y los que se agreguen después, porque todos
+terminan en un <code class="docutils literal notranslate"><span class="pre">save</span></code>.</p>
+<p>El estado «anterior» es el último que se leyó de la base o se guardó
+con esta misma instancia (<code class="docutils literal notranslate"><span class="pre">_estado_guardado</span></code>). Por eso:</p>
+<ul class="simple">
+<li><p>Crear un registro no notifica: no hubo ningún cambio, solo un
+estado inicial.</p></li>
+<li><p>Un <code class="docutils literal notranslate"><span class="pre">save</span></code> con <code class="docutils literal notranslate"><span class="pre">update_fields</span></code> que no incluye <code class="docutils literal notranslate"><span class="pre">estado</span></code> no
+notifica, porque no persistió ningún estado nuevo.</p></li>
+<li><p>Si <code class="docutils literal notranslate"><span class="pre">estado</span></code> llegó diferido (<code class="docutils literal notranslate"><span class="pre">.only</span></code>/<code class="docutils literal notranslate"><span class="pre">.defer</span></code>), no hay un estado
+anterior conocido y tampoco se notifica, para no inventar un cambio.</p></li>
+</ul>
+<p>Un <code class="docutils literal notranslate"><span class="pre">QuerySet.update</span></code> no pasa por <code class="docutils literal notranslate"><span class="pre">save</span></code> y, por lo tanto, no
+notifica. Hoy ningún flujo del sistema cambia el estado de estos
+modelos así; solo lo hacen dos migraciones de datos antiguas.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.SeguimientoEstadoMixin._al_cambiar_estado">
+<span class="sig-name descname"><span class="pre">_al_cambiar_estado</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#SeguimientoEstadoMixin._al_cambiar_estado"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.SeguimientoEstadoMixin._al_cambiar_estado" title="Link to this definition"></a></dt>
+<dd><p>Reacciona a un cambio de estado ya guardado. Cada modelo la implementa.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.SeguimientoEstadoMixin.from_db">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#SeguimientoEstadoMixin.from_db"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.SeguimientoEstadoMixin.from_db" title="Link to this definition"></a></dt>
+<dd><p>Carga la instancia y recuerda el estado leído de la base.</p>
+<p>Reenvía los argumentos tal cual llegan, porque la firma de
+<code class="docutils literal notranslate"><span class="pre">Model.from_db</span></code> cambia entre versiones de Django (la 6.1 agregó
+<code class="docutils literal notranslate"><span class="pre">fetch_mode</span></code>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.SeguimientoEstadoMixin.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#SeguimientoEstadoMixin.save"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.SeguimientoEstadoMixin.save" title="Link to this definition"></a></dt>
+<dd><p>Guarda y, si el estado persistido cambió respecto del anterior, llama a <code class="docutils literal notranslate"><span class="pre">_al_cambiar_estado</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CalculoOperacion</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#CalculoOperacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.CalculoOperacion" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.models.SeguimientoEstadoMixin" title="apps.divisas.models.SeguimientoEstadoMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Representa una transacción de compra o venta iniciada por el cliente.</p>
 <p>El cálculo previo (Paso 1: «Calcular importe») es solo una previsualización
 y no se persiste; el registro se crea cuando el cliente confirma el importe
@@ -881,6 +936,21 @@ object the first time, the query is executed.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.notificaciones">
+<span class="sig-name descname"><span class="pre">notificaciones</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.notificaciones" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoOperacion.objects">
 <span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.divisas.models.CalculoOperacion.objects" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1006,7 +1076,7 @@ object the first time, the query is executed.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CalculoTriangulacion</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#CalculoTriangulacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.models.SeguimientoEstadoMixin" title="apps.divisas.models.SeguimientoEstadoMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Representa un cambio entre dos divisas extranjeras vía PYG.</p>
 <p>Igual que en <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>, el cálculo previo es solo una
 previsualización y no se persiste: el registro se crea cuando el cliente
@@ -1338,6 +1408,21 @@ object the first time, the query is executed.</p>
 <span class="sig-name descname"><span class="pre">monto_origen</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.monto_origen" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.CalculoTriangulacion.notificaciones">
+<span class="sig-name descname"><span class="pre">notificaciones</span></span><a class="headerlink" href="#apps.divisas.models.CalculoTriangulacion.notificaciones" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -2609,7 +2694,7 @@ object the first time, the query is executed.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DocumentoElectronico</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#DocumentoElectronico"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#apps.divisas.models.SeguimientoEstadoMixin" title="apps.divisas.models.SeguimientoEstadoMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Documento tributario electrónico (Factura) emitido ante SIFEN por una transacción pagada.</p>
 <p>Implementa la HU «Integración con API de facturación electrónica»:
 apenas una compra, venta o cambio queda «Pagada», Global Exchange le
@@ -2620,12 +2705,29 @@ llamada desde los mismos puntos que ya disparan
 <code class="docutils literal notranslate"><span class="pre">apps.divisas.entrega.realizar_entrega</span></code>. Es un proceso
 independiente de la entrega del dinero: una falla acá nunca bloquea
 ni revierte el pago ya confirmado, y viceversa (criterio 3).</p>
-<p>Puede asociarse tanto a una compra/venta (<code class="docutils literal notranslate"><span class="pre">calculo_operacion</span></code>)
-como a un cambio entre divisas (<code class="docutils literal notranslate"><span class="pre">calculo_triangulacion</span></code>):
-exactamente una de las dos, nunca ambas ni ninguna (mismo patrón
-que <code class="docutils literal notranslate"><span class="pre">Pago</span></code> — ver <code class="docutils literal notranslate"><span class="pre">clean</span></code>). Cada una es un <code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code>, así
-que la base de datos garantiza por sí sola que una transacción no
-puede tener más de un documento (criterio 5: nunca se duplica).</p>
+<p>Puede asociarse a una compra/venta online (<code class="docutils literal notranslate"><span class="pre">calculo_operacion</span></code>), a
+un cambio entre divisas online (<code class="docutils literal notranslate"><span class="pre">calculo_triangulacion</span></code>) o a una
+compra/venta en ventanilla (<code class="docutils literal notranslate"><span class="pre">operacion_ventanilla</span></code> —
+<code class="docutils literal notranslate"><span class="pre">apps.caja.models.OperacionVentanilla</span></code>, referenciada por string para
+evitar un import circular entre <code class="docutils literal notranslate"><span class="pre">apps.divisas</span></code> y <code class="docutils literal notranslate"><span class="pre">apps.caja</span></code>):
+exactamente una de las tres, nunca más de una ni ninguna (mismo
+patrón que <code class="docutils literal notranslate"><span class="pre">Pago</span></code> — ver <code class="docutils literal notranslate"><span class="pre">clean</span></code>). Cada una es un
+<code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code>, así que la base de datos garantiza por sí sola que
+una transacción no puede tener más de un documento (criterio 5:
+nunca se duplica).</p>
+<p>También implementa la HU «Nota de crédito» (<code class="docutils literal notranslate"><span class="pre">tipo_documento=</span>
+<span class="pre">ContadorDocumentoElectronico.TIPO_NOTA_CREDITO</span></code>, ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.factura_electronica.emitir_nota_credito</span></code>): una nota
+de crédito <strong>no</strong> tiene ninguna transacción propia (las tres de
+arriba quedan vacías) — en su lugar, referencia la factura que
+anula (<code class="docutils literal notranslate"><span class="pre">factura_anulada</span></code>) y reutiliza, a través de ella, la misma
+transacción, receptor e ítems (ver la property <code class="docutils literal notranslate"><span class="pre">transaccion</span></code>,
+que para una nota de crédito delega en
+<code class="docutils literal notranslate"><span class="pre">factura_anulada.transaccion</span></code>). Es un <code class="docutils literal notranslate"><span class="pre">ForeignKey</span></code>, no un
+<code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code>, porque una factura rechazada por SIFEN libera el
+paso para una nueva (criterio 3): puede haber más de una fila
+histórica, nunca más de una <em>vigente</em> a la vez (ver la
+<code class="docutils literal notranslate"><span class="pre">UniqueConstraint</span></code> condicional abajo y <code class="docutils literal notranslate"><span class="pre">tiene_nota_credito_vigente</span></code>).</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.DoesNotExist">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.DoesNotExist" title="Link to this definition"></a></dt>
@@ -2634,12 +2736,17 @@ puede tener más de un documento (criterio 5: nunca se duplica).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADOS_DESCARGABLES">
-<span class="sig-name descname"><span class="pre">ESTADOS_DESCARGABLES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('APROBADO',</span> <span class="pre">'APROBADO_OBS')</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADOS_DESCARGABLES" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ESTADOS_DESCARGABLES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('APROBADO',</span> <span class="pre">'APROBADO_OBS',</span> <span class="pre">'ANULADA')</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADOS_DESCARGABLES" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADOS_PENDIENTES">
 <span class="sig-name descname"><span class="pre">ESTADOS_PENDIENTES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('ERROR_GENERACION',</span> <span class="pre">'RECHAZADO',</span> <span class="pre">'ERROR_SIFEN')</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADOS_PENDIENTES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_ANULADA">
+<span class="sig-name descname"><span class="pre">ESTADO_ANULADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ANULADA'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_ANULADA" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2654,7 +2761,7 @@ puede tener más de un documento (criterio 5: nunca se duplica).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_CHOICES">
-<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('GENERADO',</span> <span class="pre">'Generado,</span> <span class="pre">esperando</span> <span class="pre">aprobación</span> <span class="pre">de</span> <span class="pre">SIFEN'),</span> <span class="pre">('APROBADO',</span> <span class="pre">'Aprobado'),</span> <span class="pre">('APROBADO_OBS',</span> <span class="pre">'Aprobado</span> <span class="pre">con</span> <span class="pre">observación'),</span> <span class="pre">('RECHAZADO',</span> <span class="pre">'Rechazado</span> <span class="pre">por</span> <span class="pre">SIFEN'),</span> <span class="pre">('ERROR_SIFEN',</span> <span class="pre">'Error</span> <span class="pre">de</span> <span class="pre">SIFEN</span> <span class="pre">al</span> <span class="pre">procesarlo'),</span> <span class="pre">('ERROR_GENERACION',</span> <span class="pre">'No</span> <span class="pre">se</span> <span class="pre">pudo</span> <span class="pre">generar</span> <span class="pre">(Factura</span> <span class="pre">Segura</span> <span class="pre">no</span> <span class="pre">respondió,</span> <span class="pre">o</span> <span class="pre">lo</span> <span class="pre">rechazó)')]</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_CHOICES" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ESTADO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('GENERADO',</span> <span class="pre">'Generado,</span> <span class="pre">esperando</span> <span class="pre">aprobación</span> <span class="pre">de</span> <span class="pre">SIFEN'),</span> <span class="pre">('APROBADO',</span> <span class="pre">'Aprobado'),</span> <span class="pre">('APROBADO_OBS',</span> <span class="pre">'Aprobado</span> <span class="pre">con</span> <span class="pre">observación'),</span> <span class="pre">('RECHAZADO',</span> <span class="pre">'Rechazado</span> <span class="pre">por</span> <span class="pre">SIFEN'),</span> <span class="pre">('ERROR_SIFEN',</span> <span class="pre">'Error</span> <span class="pre">de</span> <span class="pre">SIFEN</span> <span class="pre">al</span> <span class="pre">procesarlo'),</span> <span class="pre">('ERROR_GENERACION',</span> <span class="pre">'No</span> <span class="pre">se</span> <span class="pre">pudo</span> <span class="pre">generar</span> <span class="pre">(Factura</span> <span class="pre">Segura</span> <span class="pre">no</span> <span class="pre">respondió,</span> <span class="pre">o</span> <span class="pre">lo</span> <span class="pre">rechazó)'),</span> <span class="pre">('ANULADA',</span> <span class="pre">'Anulada</span> <span class="pre">por</span> <span class="pre">nota</span> <span class="pre">de</span> <span class="pre">crédito')]</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_CHOICES" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2675,6 +2782,51 @@ puede tener más de un documento (criterio 5: nunca se duplica).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.ESTADO_RECHAZADO">
 <span class="sig-name descname"><span class="pre">ESTADO_RECHAZADO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'RECHAZADO'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.ESTADO_RECHAZADO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_AJUSTE_DE_PRECIO">
+<span class="sig-name descname"><span class="pre">MOTIVO_AJUSTE_DE_PRECIO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'7'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_AJUSTE_DE_PRECIO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_BONIFICACION">
+<span class="sig-name descname"><span class="pre">MOTIVO_BONIFICACION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'3'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_BONIFICACION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_CREDITO_INCOBRABLE">
+<span class="sig-name descname"><span class="pre">MOTIVO_CREDITO_INCOBRABLE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'4'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_CREDITO_INCOBRABLE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_DESCUENTO">
+<span class="sig-name descname"><span class="pre">MOTIVO_DESCUENTO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_DESCUENTO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_DEVOLUCION_Y_AJUSTE">
+<span class="sig-name descname"><span class="pre">MOTIVO_DEVOLUCION_Y_AJUSTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_DEVOLUCION_Y_AJUSTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_EMISION_CHOICES">
+<span class="sig-name descname"><span class="pre">MOTIVO_EMISION_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('1',</span> <span class="pre">'Devolución</span> <span class="pre">y</span> <span class="pre">ajuste</span> <span class="pre">de</span> <span class="pre">precios'),</span> <span class="pre">('2',</span> <span class="pre">'Descuento'),</span> <span class="pre">('3',</span> <span class="pre">'Bonificación'),</span> <span class="pre">('4',</span> <span class="pre">'Crédito</span> <span class="pre">incobrable'),</span> <span class="pre">('5',</span> <span class="pre">'Recupero</span> <span class="pre">de</span> <span class="pre">costo'),</span> <span class="pre">('6',</span> <span class="pre">'Recupero</span> <span class="pre">de</span> <span class="pre">gasto'),</span> <span class="pre">('7',</span> <span class="pre">'Ajuste</span> <span class="pre">de</span> <span class="pre">precio'),</span> <span class="pre">('8',</span> <span class="pre">'Otro')]</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_EMISION_CHOICES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_OTRO">
+<span class="sig-name descname"><span class="pre">MOTIVO_OTRO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'8'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_OTRO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_RECUPERO_DE_COSTO">
+<span class="sig-name descname"><span class="pre">MOTIVO_RECUPERO_DE_COSTO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'5'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_RECUPERO_DE_COSTO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.MOTIVO_RECUPERO_DE_GASTO">
+<span class="sig-name descname"><span class="pre">MOTIVO_RECUPERO_DE_GASTO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'6'</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.MOTIVO_RECUPERO_DE_GASTO" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
@@ -2742,7 +2894,7 @@ object the first time, the query is executed.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.clean">
 <span class="sig-name descname"><span class="pre">clean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#DocumentoElectronico.clean"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.clean" title="Link to this definition"></a></dt>
-<dd><p>Valida que el documento pertenezca a exactamente una transacción.</p>
+<dd><p>Valida que una factura tenga exactamente una transacción, y una nota de crédito, ninguna (y sí una factura).</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -2818,6 +2970,24 @@ object the first time, the query is executed.</p>
 object the first time, the query is executed.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.factura_anulada">
+<span class="sig-name descname"><span class="pre">factura_anulada</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.factura_anulada" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.factura_anulada_id">
+<span class="sig-name descname"><span class="pre">factura_anulada_id</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.factura_anulada_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.factura_pendiente">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">factura_pendiente</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.factura_pendiente" title="Link to this definition"></a></dt>
@@ -2836,6 +3006,11 @@ le muestra al cliente en lugar del estado técnico.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.get_estado_display">
 <span class="sig-name descname"><span class="pre">get_estado_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">estado&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.get_estado_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.get_motivo_emision_display">
+<span class="sig-name descname"><span class="pre">get_motivo_emision_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">motivo_emision&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.get_motivo_emision_display" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -2870,6 +3045,13 @@ le muestra al cliente en lugar del estado técnico.</p>
 object the first time, the query is executed.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.motivo_emision">
+<span class="sig-name descname"><span class="pre">motivo_emision</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.motivo_emision" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.motivo_no_descargable">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">motivo_no_descargable</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.motivo_no_descargable" title="Link to this definition"></a></dt>
@@ -2885,6 +3067,48 @@ del error; vacío si la factura sí es descargable.</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.nombre_receptor">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">nombre_receptor</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.nombre_receptor" title="Link to this definition"></a></dt>
+<dd><p>Nombre a mostrar del receptor, sea un <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> del sistema o uno de mostrador (ventanilla).</p>
+<p>Pensado para plantillas: a diferencia de encadenar
+<code class="docutils literal notranslate"><span class="pre">transaccion.cliente|default:transaccion.cliente_nombre</span></code> ahí
+mismo (el argumento de un filtro no tiene la tolerancia a
+atributos inexistentes que sí tiene una variable normal, y
+truena si <code class="docutils literal notranslate"><span class="pre">transaccion</span></code> no tiene <code class="docutils literal notranslate"><span class="pre">cliente_nombre</span></code>), esta
+property resuelve la diferencia en Python, donde es seguro.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.notas_credito">
+<span class="sig-name descname"><span class="pre">notas_credito</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.notas_credito" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.notificaciones">
+<span class="sig-name descname"><span class="pre">notificaciones</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.notificaciones" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related objects manager on the reverse side of a
+many-to-one relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Parent.children</span></code> is a <code class="docutils literal notranslate"><span class="pre">ReverseManyToOneDescriptor</span></code> instance.</p>
+<p>Most of the implementation is delegated to a dynamically defined manager
+class built by <code class="docutils literal notranslate"><span class="pre">create_reverse_many_to_one_manager()</span></code> defined below.</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.numero_documento">
 <span class="sig-name descname"><span class="pre">numero_documento</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.numero_documento" title="Link to this definition"></a></dt>
@@ -2898,10 +3122,52 @@ object the first time, the query is executed.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.operacion_ventanilla">
+<span class="sig-name descname"><span class="pre">operacion_ventanilla</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.operacion_ventanilla" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a one-to-one
+relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Restaurant</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">place</span> <span class="o">=</span> <span class="n">OneToOneField</span><span class="p">(</span><span class="n">Place</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'restaurant'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Restaurant.place</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardOneToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.operacion_ventanilla_id">
+<span class="sig-name descname"><span class="pre">operacion_ventanilla_id</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.operacion_ventanilla_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.operation_id">
 <span class="sig-name descname"><span class="pre">operation_id</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.operation_id" title="Link to this definition"></a></dt>
 <dd><p>A wrapper for a deferred-loading field. When the value is read from this
 object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.puede_emitir_nota_credito">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">puede_emitir_nota_credito</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.puede_emitir_nota_credito" title="Link to this definition"></a></dt>
+<dd><p>Indica si esta factura está en condiciones de recibir una nueva nota de crédito (criterio 4).</p>
+<p>Solo el booleano (sin el mensaje de motivo que sí da
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.factura_electronica.puede_emitir_nota_credito</span></code>,
+la función que valida de verdad antes de emitir): existe acá
+para que una plantilla pueda decidir si mostrar el botón
+«Emitir nota de crédito» sin importar ese módulo desde un
+template (y sin arriesgar un import circular: ese módulo ya
+importa de este, nunca al revés). Debe mantenerse en los
+mismos términos que esa función.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.tiene_nota_credito_vigente">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">tiene_nota_credito_vigente</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.tiene_nota_credito_vigente" title="Link to this definition"></a></dt>
+<dd><p>Indica si esta factura ya tiene una nota de crédito pendiente o aprobada (criterio 4).</p>
+<p>Una nota de crédito «Rechazada» por SIFEN no cuenta como
+vigente: libera el paso para que un administrador emita una
+nueva (criterio 3). Ver la <code class="docutils literal notranslate"><span class="pre">UniqueConstraint</span></code> homónima, que
+impone esta misma regla a nivel de base de datos.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -2914,8 +3180,405 @@ object the first time, the query is executed.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="apps.divisas.models.DocumentoElectronico.transaccion">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">transaccion</span></span><a class="headerlink" href="#apps.divisas.models.DocumentoElectronico.transaccion" title="Link to this definition"></a></dt>
-<dd><p>Devuelve la compra/venta o el cambio al que pertenece este documento.</p>
+<dd><p>la propia, o —para una nota de crédito— la de su factura.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Devuelve la transacción de este documento</p>
+</dd>
+</dl>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotificacionCliente</span></span><a class="reference internal" href="../_modules/apps/divisas/models.html#NotificacionCliente"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.NotificacionCliente" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+<p>Aviso a un usuario de un cliente de que cambió el estado de una transacción o de una factura.</p>
+<p>Implementa la HU «Notificaciones sobre transacciones y facturas». A
+diferencia de <code class="docutils literal notranslate"><span class="pre">NotificacionTasa</span></code> (un aviso general, dirigido a todos
+los usuarios clientes), cada notificación de este modelo pertenece a un
+<strong>cliente</strong> puntual, el dueño de la transacción o de la factura, y se
+crea una por cada usuario asociado a ese cliente. Así cada usuario
+tiene su propio estado de lectura, y la pantalla puede mostrar solo las
+del cliente activo: una notificación de otro cliente, aunque sea del
+mismo usuario, no se ve (criterio 5; ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.MisNotificacionesView</span></code>).</p>
+<p>Se generan solas, al guardar un cambio de estado (ver
+<code class="docutils literal notranslate"><span class="pre">SeguimientoEstadoMixin</span></code>):</p>
+<ul class="simple">
+<li><p><strong>Transacción</strong> (criterio 1): cuando una <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code> o una
+<code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code> pasa a uno de los estados de
+<code class="docutils literal notranslate"><span class="pre">ESTADOS_NOTIFICABLES_TRANSACCION</span></code>: «Pagada», «Completada»
+(acreditada o retirada), cualquier cancelación, o un estado que
+requiere atención (entrega fallida o pago fuera de plazo, el mismo
+criterio que <code class="docutils literal notranslate"><span class="pre">apps.divisas.monitoreo.MOTIVOS_ATENCION</span></code>).
+<code class="docutils literal notranslate"><span class="pre">referencia</span></code> guarda el número de la transacción.</p></li>
+<li><p><strong>Factura</strong> (criterio 2): cuando una factura (no una nota de
+crédito) pasa a «Aprobada», «Aprobada con observación», «Rechazada» o
+«Anulada por nota de crédito» (ver <code class="docutils literal notranslate"><span class="pre">ESTADOS_NOTIFICABLES_FACTURA</span></code>).
+<code class="docutils literal notranslate"><span class="pre">referencia</span></code> guarda el CDC o, si todavía no tiene uno, el número
+de documento. Una factura de ventanilla no notifica a nadie: un
+cliente de mostrador no tiene usuario en el sistema.</p></li>
+</ul>
+<p>El estado se guarda copiado (<code class="docutils literal notranslate"><span class="pre">estado</span></code> y <code class="docutils literal notranslate"><span class="pre">estado_display</span></code>) en vez de
+leerse de la transacción, porque la notificación informa el estado al
+que pasó <em>en ese momento</em>: si la transacción vuelve a cambiar, cada
+cambio tiene su propia notificación.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.CATEGORIA_ANULADA">
+<span class="sig-name descname"><span class="pre">CATEGORIA_ANULADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'anulada'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.CATEGORIA_ANULADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.CATEGORIA_APROBADA">
+<span class="sig-name descname"><span class="pre">CATEGORIA_APROBADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'aprobada'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.CATEGORIA_APROBADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.CATEGORIA_ATENCION">
+<span class="sig-name descname"><span class="pre">CATEGORIA_ATENCION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'atencion'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.CATEGORIA_ATENCION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.CATEGORIA_CANCELADA">
+<span class="sig-name descname"><span class="pre">CATEGORIA_CANCELADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cancelada'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.CATEGORIA_CANCELADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.CATEGORIA_COMPLETADA">
+<span class="sig-name descname"><span class="pre">CATEGORIA_COMPLETADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'completada'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.CATEGORIA_COMPLETADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.CATEGORIA_ETIQUETAS">
+<span class="sig-name descname"><span class="pre">CATEGORIA_ETIQUETAS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'anulada':</span> <span class="pre">'Cancelada</span> <span class="pre">(anulada</span> <span class="pre">por</span> <span class="pre">nota</span> <span class="pre">de</span> <span class="pre">crédito)',</span> <span class="pre">'aprobada':</span> <span class="pre">'Aprobada</span> <span class="pre">por</span> <span class="pre">SIFEN',</span> <span class="pre">'atencion':</span> <span class="pre">'Requiere</span> <span class="pre">atención',</span> <span class="pre">'cancelada':</span> <span class="pre">'Cancelada',</span> <span class="pre">'completada':</span> <span class="pre">'Completada',</span> <span class="pre">'pagada':</span> <span class="pre">'Pagada',</span> <span class="pre">'rechazada':</span> <span class="pre">'Rechazada</span> <span class="pre">por</span> <span class="pre">SIFEN'}</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.CATEGORIA_ETIQUETAS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.CATEGORIA_PAGADA">
+<span class="sig-name descname"><span class="pre">CATEGORIA_PAGADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'pagada'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.CATEGORIA_PAGADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.CATEGORIA_RECHAZADA">
+<span class="sig-name descname"><span class="pre">CATEGORIA_RECHAZADA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'rechazada'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.CATEGORIA_RECHAZADA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.DoesNotExist" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectDoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.ESTADOS_NOTIFICABLES_FACTURA">
+<span class="sig-name descname"><span class="pre">ESTADOS_NOTIFICABLES_FACTURA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'ANULADA':</span> <span class="pre">'anulada',</span> <span class="pre">'APROBADO':</span> <span class="pre">'aprobada',</span> <span class="pre">'APROBADO_OBS':</span> <span class="pre">'aprobada',</span> <span class="pre">'RECHAZADO':</span> <span class="pre">'rechazada'}</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.ESTADOS_NOTIFICABLES_FACTURA" title="Link to this definition"></a></dt>
+<dd><p>Estado de factura → categoría que se le informa al cliente.</p>
+<p>«Cancelada por SIFEN» corresponde a «Anulada por nota de crédito»: es
+el único modo en que este sistema cancela una factura ya aprobada (ver
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.factura_electronica.consultar_estado_sifen</span></code>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION">
+<span class="sig-name descname"><span class="pre">ESTADOS_NOTIFICABLES_TRANSACCION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'ACREDITADA':</span> <span class="pre">'completada',</span> <span class="pre">'CANCELADA':</span> <span class="pre">'cancelada',</span> <span class="pre">'CANCELADA_COTIZACION':</span> <span class="pre">'cancelada',</span> <span class="pre">'CANCELADA_FONDOS_CLIENTE':</span> <span class="pre">'cancelada',</span> <span class="pre">'CANCELADA_SALDO_INSUFICIENTE':</span> <span class="pre">'cancelada',</span> <span class="pre">'ENTREGA_FALLIDA':</span> <span class="pre">'atencion',</span> <span class="pre">'PAGADA':</span> <span class="pre">'pagada',</span> <span class="pre">'PAGO_EXPIRADO':</span> <span class="pre">'atencion',</span> <span class="pre">'RETIRADA':</span> <span class="pre">'completada'}</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION" title="Link to this definition"></a></dt>
+<dd><p>Estado de transacción (mismo código en compra/venta y en cambio) → categoría que se le informa al cliente.</p>
+<p>«Pendiente», «Confirmada» y «Vencida» quedan afuera: son pasos que el
+propio cliente acaba de hacer en pantalla, o que no requieren nada de
+él, y la HU no los pide.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.MultipleObjectsReturned" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.NotUpdated">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">NotUpdated</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.NotUpdated" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectNotUpdated</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseError</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.TIPO_CHOICES">
+<span class="sig-name descname"><span class="pre">TIPO_CHOICES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('TRANSACCION',</span> <span class="pre">'Transacción'),</span> <span class="pre">('FACTURA',</span> <span class="pre">'Factura</span> <span class="pre">electrónica')]</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.TIPO_CHOICES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.TIPO_FACTURA">
+<span class="sig-name descname"><span class="pre">TIPO_FACTURA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FACTURA'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.TIPO_FACTURA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.TIPO_TRANSACCION">
+<span class="sig-name descname"><span class="pre">TIPO_TRANSACCION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'TRANSACCION'</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.TIPO_TRANSACCION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.calculo_operacion">
+<span class="sig-name descname"><span class="pre">calculo_operacion</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.calculo_operacion" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.calculo_operacion_id">
+<span class="sig-name descname"><span class="pre">calculo_operacion_id</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.calculo_operacion_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.calculo_triangulacion">
+<span class="sig-name descname"><span class="pre">calculo_triangulacion</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.calculo_triangulacion" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.calculo_triangulacion_id">
+<span class="sig-name descname"><span class="pre">calculo_triangulacion_id</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.calculo_triangulacion_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.categoria">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">categoria</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.categoria" title="Link to this definition"></a></dt>
+<dd><p>Categoría del nuevo estado (pagada, completada, cancelada, atención, aprobada, rechazada o anulada).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.categoria_display">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">categoria_display</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.categoria_display" title="Link to this definition"></a></dt>
+<dd><p>Etiqueta legible de <code class="docutils literal notranslate"><span class="pre">categoria</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.cliente">
+<span class="sig-name descname"><span class="pre">cliente</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.cliente" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.cliente_id">
+<span class="sig-name descname"><span class="pre">cliente_id</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.cliente_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.creada_en">
+<span class="sig-name descname"><span class="pre">creada_en</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.creada_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.destinatarios">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">destinatarios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cliente</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#NotificacionCliente.destinatarios"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.destinatarios" title="Link to this definition"></a></dt>
+<dd><p>Usuarios activos asociados a <code class="docutils literal notranslate"><span class="pre">cliente</span></code>, los que pueden tenerlo como cliente activo.</p>
+<p>Solo se consideran los usuarios asociados (<code class="docutils literal notranslate"><span class="pre">Cliente.usuarios</span></code>):
+es la única relación por la que
+<code class="docutils literal notranslate"><span class="pre">apps.clientes.middleware.ClienteActivoMiddleware</span></code> resuelve el
+cliente activo, así que cualquier otro usuario nunca podría ver
+la notificación.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.documento_electronico">
+<span class="sig-name descname"><span class="pre">documento_electronico</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.documento_electronico" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.documento_electronico_id">
+<span class="sig-name descname"><span class="pre">documento_electronico_id</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.documento_electronico_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.es_factura">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">es_factura</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.es_factura" title="Link to this definition"></a></dt>
+<dd><p>Indica si la notificación es sobre una factura electrónica (si no, es sobre una transacción).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.estado">
+<span class="sig-name descname"><span class="pre">estado</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.estado" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.estado_display">
+<span class="sig-name descname"><span class="pre">estado_display</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.estado_display" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.get_next_by_creada_en">
+<span class="sig-name descname"><span class="pre">get_next_by_creada_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creada_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.get_next_by_creada_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.get_previous_by_creada_en">
+<span class="sig-name descname"><span class="pre">get_previous_by_creada_en</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.DateTimeField:</span> <span class="pre">creada_en&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_next</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.get_previous_by_creada_en" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.get_tipo_display">
+<span class="sig-name descname"><span class="pre">get_tipo_display</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;django.db.models.fields.CharField:</span> <span class="pre">tipo&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.get_tipo_display" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.id" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.leida">
+<span class="sig-name descname"><span class="pre">leida</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.leida" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.leida_en">
+<span class="sig-name descname"><span class="pre">leida_en</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.leida_en" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.marcar_como_leida">
+<span class="sig-name descname"><span class="pre">marcar_como_leida</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#NotificacionCliente.marcar_como_leida"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.marcar_como_leida" title="Link to this definition"></a></dt>
+<dd><p>Marca la notificación como leída y registra cuándo; es idempotente.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> si la notificación pasó a leída recién ahora.</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.mensaje">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mensaje</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.mensaje" title="Link to this definition"></a></dt>
+<dd><p>Texto legible de la notificación, con el número de transacción o el CDC y el nuevo estado.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.notificar_factura">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">notificar_factura</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documento</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#NotificacionCliente.notificar_factura"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.notificar_factura" title="Link to this definition"></a></dt>
+<dd><p>Notifica al cliente de la factura <code class="docutils literal notranslate"><span class="pre">documento</span></code> su nuevo estado ante SIFEN (criterio 2).</p>
+<p>Solo notifica facturas (no notas de crédito) de transacciones
+online: una de ventanilla no tiene ningún <code class="docutils literal notranslate"><span class="pre">Cliente</span></code> del sistema.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>documento</strong> (<a class="reference internal" href="#apps.divisas.models.DocumentoElectronico" title="apps.divisas.models.DocumentoElectronico"><em>DocumentoElectronico</em></a>) – La factura cuyo estado acaba
+de cambiar y guardarse.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Las notificaciones creadas.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#apps.divisas.models.NotificacionCliente" title="apps.divisas.models.NotificacionCliente">NotificacionCliente</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.notificar_transaccion">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">notificar_transaccion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaccion</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/models.html#NotificacionCliente.notificar_transaccion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.notificar_transaccion" title="Link to this definition"></a></dt>
+<dd><p>Notifica al cliente de <code class="docutils literal notranslate"><span class="pre">transaccion</span></code> su nuevo estado, si es uno de los notificables (criterio 1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>transaccion</strong> (<a class="reference internal" href="#apps.divisas.models.CalculoOperacion" title="apps.divisas.models.CalculoOperacion"><em>CalculoOperacion</em></a><em> | </em><a class="reference internal" href="#apps.divisas.models.CalculoTriangulacion" title="apps.divisas.models.CalculoTriangulacion"><em>CalculoTriangulacion</em></a>) – La
+transacción cuyo estado acaba de cambiar y guardarse.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Las notificaciones creadas (vacía si el
+estado no se notifica o el cliente no tiene usuarios).</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#apps.divisas.models.NotificacionCliente" title="apps.divisas.models.NotificacionCliente">NotificacionCliente</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;django.db.models.manager.Manager</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.referencia">
+<span class="sig-name descname"><span class="pre">referencia</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.referencia" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.tipo">
+<span class="sig-name descname"><span class="pre">tipo</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.tipo" title="Link to this definition"></a></dt>
+<dd><p>A wrapper for a deferred-loading field. When the value is read from this
+object the first time, the query is executed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.url_detalle">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">url_detalle</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.url_detalle" title="Link to this definition"></a></dt>
+<dd><p>URL del detalle de la transacción o, para una factura, de su sección en ese mismo detalle (criterio 3).</p>
+<p>El cliente no tiene una pantalla propia por factura: el comprobante
+completo (número, estado, CDC y descargas) se muestra en la sección
+«Factura electrónica» del detalle de su transacción, a la que se
+llega con el ancla <code class="docutils literal notranslate"><span class="pre">#factura-electronica</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.usuario">
+<span class="sig-name descname"><span class="pre">usuario</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.usuario" title="Link to this definition"></a></dt>
+<dd><p>Accessor to the related object on the forward side of a many-to-one or
+one-to-one (via ForwardOneToOneDescriptor subclass) relation.</p>
+<p>In the example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">'children'</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Child.parent</span></code> is a <code class="docutils literal notranslate"><span class="pre">ForwardManyToOneDescriptor</span></code> instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="apps.divisas.models.NotificacionCliente.usuario_id">
+<span class="sig-name descname"><span class="pre">usuario_id</span></span><a class="headerlink" href="#apps.divisas.models.NotificacionCliente.usuario_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -2925,8 +3588,8 @@ object the first time, the query is executed.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
-        <a href="apps.divisas.forms.html" class="btn btn-neutral float-left" title="apps.divisas.forms module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
-        <a href="apps.divisas.pagos_sipap.html" class="btn btn-neutral float-right" title="apps.divisas.pagos_sipap module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="apps.divisas.ganancias.html" class="btn btn-neutral float-left" title="apps.divisas.ganancias module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="apps.divisas.monitoreo.html" class="btn btn-neutral float-right" title="apps.divisas.monitoreo module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

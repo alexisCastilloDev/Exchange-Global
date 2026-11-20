@@ -66,6 +66,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                         </a>
                     </li>
                     <li>
+                        <a href="{% url 'divisas:tablero_ganancias' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'tablero_ganancias' %}is-active{% endif %}">
+                            <i class="bi bi-graph-up-arrow"></i> Tablero de ganancias
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'divisas:configuracion_vigencia' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'configuracion_vigencia' %}is-active{% endif %}">
                             <i class="bi bi-stopwatch"></i> Tiempos de espera
                         </a>
@@ -83,6 +88,11 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                     <li>
                         <a href="{% url 'divisas:documentos_electronicos' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'documentos_electronicos' %}is-active{% endif %}">
                             <i class="bi bi-receipt"></i> Documentos electrónicos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'auditoria:registro_actividades' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'registro_actividades' %}is-active{% endif %}">
+                            <i class="bi bi-shield-check"></i> Registro de actividades
                         </a>
                     </li>
                     <li>
@@ -166,6 +176,13 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                             <i class="bi bi-receipt"></i> Mis facturas electrónicas
                         </a>
                     </li>
+                    {% if cliente_activo %}
+                    <li>
+                        <a href="{% url 'divisas:reporte_transacciones' cliente_activo.pk %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'reporte_transacciones' %}is-active{% endif %}">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Reporte de transacciones
+                        </a>
+                    </li>
+                    {% endif %}
                     {% endif %}
                     <li>
                         <a href="{% url 'divisas:simulacion_divisas' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'simulacion_divisas' %}is-active{% endif %}">
@@ -181,6 +198,16 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                     <li>
                         <a href="{% url 'divisas:historial_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'historial_transacciones' %}is-active{% endif %}">
                             <i class="bi bi-clock-history"></i> Historial de transacciones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:monitoreo_transacciones' %}" class="ge-sidebar__link {% if request.resolver_match.url_name|en_lista:'monitoreo_transacciones,monitoreo_detalle' %}is-active{% endif %}">
+                            <i class="bi bi-binoculars"></i> Monitoreo de transacciones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'divisas:reporte_ganancias' %}" class="ge-sidebar__link {% if request.resolver_match.url_name == 'reporte_ganancias' %}is-active{% endif %}">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Reporte de ganancias
                         </a>
                     </li>
                     {% endif %}
@@ -284,7 +311,7 @@ Contexto esperado: user, cliente_activo, mis_clientes, roles y permisos de UI.
                 <div class="d-flex align-items-center gap-3">
                 {% if puede_ver_notificaciones %}
                 <a href="{% url 'divisas:mis_notificaciones' %}" class="ge-notificaciones position-relative" id="geIndicadorNotificaciones"
-                   title="Notificaciones de tasas" aria-label="Notificaciones de tasas: {{ notificaciones_no_leidas }} sin leer">
+                   title="Notificaciones" aria-label="Notificaciones: {{ notificaciones_no_leidas }} sin leer">
                     <i class="bi bi-bell" style="font-size:20px"></i>
                     {% if notificaciones_no_leidas %}
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" data-no-leidas="{{ notificaciones_no_leidas }}">

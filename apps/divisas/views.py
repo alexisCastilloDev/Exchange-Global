@@ -1,5 +1,6 @@
 """Vistas para consultar, administrar y simular cotizaciones de divisas."""
 
+import json
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -8,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -28,13 +30,16 @@ from apps.divisas.casa_de_cambio import (
     consultar_saldo_casa_de_cambio,
     designar_cuenta_casa_de_cambio,
 )
+from apps.divisas.context_processors import notificaciones_cliente_activo
 from apps.divisas.entrega import reintentar_entrega
 from apps.divisas.factura_electronica import (
     consultar_estado_sifen,
+    emitir_nota_credito,
     factura_pendiente_de_generacion,
     descargar_kude,
     descargar_xml,
     reintentar_emision,
+    ultima_nota_credito,
 )
 from apps.divisas.forms import (
     CalculoOperacionForm,
@@ -48,6 +53,12 @@ from apps.divisas.forms import (
     PagarTransaccionForm,
     SimulacionDivisasForm,
     TriangulacionForm,
+)
+from apps.divisas.ganancias import (
+    CANAL_CHOICES as CANAL_CHOICES_GANANCIAS,
+    PERIODOS as PERIODOS_GANANCIAS,
+    TIPO_CHOICES as TIPO_CHOICES_GANANCIAS,
+    generar_tablero,
 )
 from apps.divisas.models import (
     CalculoOperacion,
@@ -65,6 +76,27 @@ from apps.divisas.models import (
     moneda_a_pagar,
     monto_a_entregar,
     monto_a_pagar,
+)
+from apps.divisas.monitoreo import (
+    CANAL_CHOICES as CANAL_CHOICES_MONITOREO,
+    ESTADO_CHOICES as ESTADO_CHOICES_MONITOREO,
+    detalle_transaccion as detalle_transaccion_monitoreo,
+    generar_excel as generar_excel_monitoreo,
+    generar_monitoreo,
+    generar_pdf as generar_pdf_monitoreo,
+)
+from apps.divisas.reporte_ganancias import (
+    AGRUPACIONES as AGRUPACIONES_REPORTE_GANANCIAS,
+    MENSAJE_SIN_DATOS as MENSAJE_SIN_DATOS_REPORTE_GANANCIAS,
+    generar_excel as generar_excel_reporte_ganancias,
+    generar_pdf as generar_pdf_reporte_ganancias,
+    generar_reporte_ganancias,
+)
+from apps.divisas.reportes import (
+    TIPO_CHOICES,
+    generar_excel,
+    generar_pdf,
+    generar_reporte,
 )
 
 
@@ -91,11 +123,21 @@ def _verificar_saldo_casa_de_cambio(transaccion):
 
     Se llama al confirmar, después del chequeo de cambio de cotización
     (que tiene prioridad): no tiene sentido que el cliente pague algo
-    que Global Exchange no va a poder entregarle. El saldo propio se
-    lleva en esta misma base (``CuentaPropia``, espejado contra las
-    transferencias reales que se mandan a sipap-sim al entregar, ver
-    ``apps.divisas.entrega``), así que esto es una consulta local, sin
-    red y sin depender de que sipap-sim esté arriba en este instante.
+    que Global Exchange no va a poder entregarle.
+
+    Consulta primero el saldo **real** a sipap-sim
+    (``consultar_saldo_casa_de_cambio``): el espejo local (``CuentaPropia``)
+    solo se corrige al visitar "Fondos propios" o al completar una
+    entrega, así que confiar únicamente en él arriesga confirmar contra
+    un saldo desactualizado (por ejemplo, si alguien movió fondos de esa
+    cuenta directamente en sipap-sim desde la última sincronización). De
+    paso, corrige el espejo si quedó desalineado, igual que ya hace
+    ``CuentaPropiaListView``. Si sipap-sim no responde
+    (``SipapComunicacionError``), cae al espejo local en vez de bloquear
+    la confirmación por completo — más vale una verificación algo vieja
+    que ninguna; ``apps.divisas.entrega.realizar_entrega`` vuelve a
+    chequear el saldo real, ahora sí obligatorio, justo antes de
+    transferir de verdad.
 
     Returns:
         str | None: ``None`` si hay saldo suficiente (se puede
@@ -105,8 +147,14 @@ def _verificar_saldo_casa_de_cambio(transaccion):
     """
     divisa = divisa_a_entregar(transaccion)
     monto = monto_a_entregar(transaccion)
-    cuenta = CuentaPropia.objects.filter(divisa=divisa).first()
-    if cuenta is None or cuenta.saldo < monto:
+    try:
+        saldo = consultar_saldo_casa_de_cambio(divisa.codigo)
+    except SipapComunicacionError:
+        cuenta = CuentaPropia.objects.filter(divisa=divisa).first()
+        saldo = cuenta.saldo if cuenta else None
+    else:
+        CuentaPropia.objects.update_or_create(divisa=divisa, defaults={'saldo': saldo or Decimal('0.00')})
+    if saldo is None or saldo < monto:
         return (
             f'Global Exchange no dispone de fondos suficientes en {divisa.codigo} para completar '
             'esta operación en este momento. La operación fue cancelada; intentá nuevamente más tarde.'
@@ -383,30 +431,106 @@ class ActualizarCotizacionView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
 
 
 class HistorialCotizacionesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    """Muestra cada cambio registrado para las tasas de una divisa."""
+    """Muestra la evolución de las tasas de una divisa: gráfico de líneas y tabla de cambios.
+
+    Implementa la HU "Historial y evolución de tasas de cambio". Accesible
+    a los mismos roles que ya pueden ver las tasas vigentes (ver
+    ``apps.authentication.context_processors.puede_ver_tasas``: admin,
+    analista cambiario o cliente) — antes de esta HU, solo administración y
+    análisis podían entrar acá; un cliente no tenía forma de consultar la
+    evolución de una tasa (criterio implícito de "como usuario").
+
+    El período se resuelve en ``dispatch`` (ver ``_resolver_periodo``), no
+    en ``get_queryset``, porque tanto la tabla como el gráfico (armado en
+    ``get_context_data``) necesitan el mismo rango ya decidido, incluido el
+    caso de un rango inválido (criterio 5): en vez de levantar un error, la
+    vista sigue respondiendo 200 con el motivo explicado y sin resultados,
+    para no perder el resto de la pantalla (divisa, filtros ya cargados).
+
+    Quién actualizó cada cotización (``puede_ver_usuario`` en el contexto)
+    solo se calcula para mostrarlo a administración y análisis (criterio
+    6): un cliente nunca lo ve, ni en la tabla ni en ningún dato que viaje
+    a la plantilla.
+    """
 
     model = Cotizacion
     template_name = 'divisas/historial_cotizaciones.html'
     context_object_name = 'cotizaciones'
 
+    PERIODOS_VALIDOS = ('7', '30', '90')
+    PERIODO_POR_DEFECTO = '30'
+
     def test_func(self):
-        """Autoriza la consulta del historial a administración y análisis."""
+        """Autoriza la consulta del historial a los mismos roles que ya ven las tasas vigentes."""
         roles = self.request.session.get('keycloak_roles', [])
-        return bool({'admin', 'analista_cambiario'} & set(roles))
+        return bool({'admin', 'analista_cambiario', 'cliente'} & set(roles))
 
     def dispatch(self, request, *args, **kwargs):
-        """Resuelve la divisa antes de despachar la solicitud."""
-        self.divisa = get_object_or_404(Divisa, pk=kwargs['divisa_id'])
+        """Resuelve la divisa (nunca PYG, ver ``TasasVigentesListView``) y el período antes de despachar."""
+        self.divisa = get_object_or_404(
+            Divisa.objects.exclude(codigo=Divisa.CODIGO_BASE), pk=kwargs['divisa_id'],
+        )
+        self.error_rango = None
+        self.desde, self.hasta, self.periodo = self._resolver_periodo(request)
         return super().dispatch(request, *args, **kwargs)
 
+    def _resolver_periodo(self, request):
+        """Decide el rango de fechas a partir de ``?periodo=`` o ``?fecha_desde=``/``?fecha_hasta=``.
+
+        Un rango propio (las dos fechas presentes en la URL) tiene
+        prioridad sobre ``periodo``. Si es inválido —fecha inicial
+        posterior a la final, o cualquiera de las dos en el futuro
+        (criterio 5)— lo rechaza (deja el motivo en ``self.error_rango``,
+        que ``get_queryset`` usa para no traer nada) y cae al período por
+        defecto, en vez de reventar con un error 500 o devolver un rango
+        parcialmente inválido.
+        """
+        hoy = timezone.localdate()
+        fecha_desde = _parsear_fecha(request.GET.get('fecha_desde'))
+        fecha_hasta = _parsear_fecha(request.GET.get('fecha_hasta'))
+        if fecha_desde and fecha_hasta:
+            if fecha_desde > fecha_hasta:
+                self.error_rango = 'La fecha inicial no puede ser posterior a la fecha final.'
+            elif fecha_desde > hoy or fecha_hasta > hoy:
+                self.error_rango = 'No se puede consultar un rango con fechas futuras.'
+            else:
+                return fecha_desde, fecha_hasta, 'custom'
+
+        periodo = request.GET.get('periodo', self.PERIODO_POR_DEFECTO)
+        if periodo not in self.PERIODOS_VALIDOS:
+            periodo = self.PERIODO_POR_DEFECTO
+        return hoy - timedelta(days=int(periodo)), hoy, periodo
+
     def get_queryset(self):
-        """Devuelve las cotizaciones históricas de la divisa seleccionada."""
-        return self.divisa.cotizaciones.select_related('usuario')
+        """Cotizaciones de la divisa dentro del rango ya resuelto, o ninguna si el rango era inválido."""
+        if self.error_rango:
+            return Cotizacion.objects.none()
+        return self.divisa.cotizaciones.select_related('usuario').filter(
+            fecha_actualizacion__date__gte=self.desde, fecha_actualizacion__date__lte=self.hasta,
+        )
 
     def get_context_data(self, **kwargs):
-        """Agrega la divisa consultada al contexto de la plantilla."""
+        """Agrega la divisa, el período resuelto, el error de validación y los puntos del gráfico."""
         context = super().get_context_data(**kwargs)
         context['divisa'] = self.divisa
+        context['periodo_actual'] = self.periodo
+        context['fecha_desde_actual'] = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta_actual'] = self.request.GET.get('fecha_hasta', '')
+        context['error_rango'] = self.error_rango
+        roles = self.request.session.get('keycloak_roles', [])
+        context['puede_ver_usuario'] = bool({'admin', 'analista_cambiario'} & set(roles))
+        # El gráfico necesita orden cronológico (más antigua primero) para
+        # que la línea avance de izquierda a derecha; la tabla, en cambio,
+        # mantiene el orden del modelo (más reciente primero, Cotizacion.Meta),
+        # así que no se reutiliza una lista para la otra.
+        context['datos_grafico'] = json.dumps([
+            {
+                'fecha': timezone.localtime(cotizacion.fecha_actualizacion).isoformat(),
+                'compra': str(cotizacion.tasa_compra),
+                'venta': str(cotizacion.tasa_venta),
+            }
+            for cotizacion in reversed(context['cotizaciones'])
+        ])
         return context
 
 
@@ -635,9 +759,7 @@ class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, L
 
     Simétrica a ``MiHistorialTransaccionesView``, pero para el documento
     electrónico de cada transacción (ver ``DocumentosElectronicosListView``
-    para el equivalente de administración, con todos los clientes). Es de
-    solo lectura: el cliente no puede reintentar ni consultar el estado
-    SIFEN por su cuenta, esas son acciones de administrador.
+    para el equivalente de administración, con todos los clientes).
 
     Implementa la HU "Consulta de facturas electrónicas": el listado es
     paginado (Criterio 1); cada fila muestra número, CDC, la transacción
@@ -650,6 +772,12 @@ class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, L
     electrónica" con el comprobante completo (Criterio 4); y sin ninguna
     factura emitida, la plantilla muestra un mensaje en vez de una tabla
     vacía o un error (Criterio 5).
+
+    Además, cada factura con CDC ofrece un botón "Consultar SIFEN"
+    (``ConsultarEstadoSifenMiFacturaView``) para que el cliente actualice
+    por su cuenta su estado ante SIFEN. Es la única acción que el cliente
+    puede hacer desde acá: reintentar la emisión o emitir una nota de
+    crédito siguen siendo acciones del administrador.
     """
 
     model = DocumentoElectronico
@@ -711,6 +839,331 @@ class MisFacturasElectronicasListView(LoginRequiredMixin, UserPassesTestMixin, L
         return context
 
 
+def _cliente_propio(request, cliente_pk):
+    """Devuelve el ``Cliente`` con ``cliente_pk`` si está asociado al usuario autenticado, o deniega el acceso.
+
+    Usada por las vistas del reporte de transacciones para que un cliente
+    nunca pueda generar ni descargar el reporte de otro, ni siquiera
+    manipulando el ``cliente_pk`` en la URL (criterio 6 de la HU "Reporte
+    de transacciones del cliente", GE-39) — a diferencia de
+    ``MiHistorialTransaccionesView``/``MisFacturasElectronicasListView``,
+    que solo exponen el ``cliente_activo`` de la sesión (ya acotado a los
+    propios por ``ClienteActivoMiddleware``), el reporte recibe el cliente
+    explícitamente en la URL para permitir elegirlo cuando el usuario
+    tiene más de uno asociado, así que esta vista repite ese chequeo de
+    pertenencia por su cuenta, igual que
+    ``DescargarDocumentoElectronicoView._puede_ver``.
+
+    Raises:
+        Http404: No existe ningún ``Cliente`` con ese ``pk``.
+        PermissionDenied: Existe, pero no está asociado al usuario autenticado.
+    """
+    cliente = get_object_or_404(Cliente, pk=cliente_pk)
+    if not request.user.clientes.filter(pk=cliente.pk, is_active=True).exists():
+        raise PermissionDenied
+    return cliente
+
+
+class ReporteTransaccionesClienteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Genera, con filtros, el reporte de transacciones de un cliente propio y sus totales.
+
+    Implementa la HU "Reporte de transacciones del cliente" (GE-39): a
+    partir de un rango de fechas obligatorio y, opcionalmente, el tipo de
+    operación (compra/venta/cambio) y el estado, muestra el listado de
+    transacciones que los cumplen junto con los totales por tipo y por
+    divisa, calculados solo sobre las completadas (criterios 1 y 2; ver
+    ``apps.divisas.reportes.generar_reporte``). Sin las dos fechas, solo
+    se ve el formulario vacío: no es un error, todavía no se pidió nada.
+    Un rango inválido se informa como error de validación sin listar nada
+    (criterio 5); sin resultados, se avisa que no hay datos y no se
+    ofrece ninguna descarga (criterio 4; ver la plantilla). Desde esta
+    misma pantalla se descarga el reporte en PDF o en Excel con los
+    mismos filtros aplicados (criterio 3, ver
+    ``DescargarReporteTransaccionesView``). Solo accede al cliente propio
+    (criterio 6; ver ``_cliente_propio``).
+    """
+
+    template_name = 'divisas/reporte_transacciones.html'
+
+    def test_func(self):
+        """Autoriza a los mismos roles que ``MiHistorialTransaccionesView``."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cliente' in roles and not self.request.user.is_staff
+
+    def get(self, request, cliente_pk):
+        """Resuelve el cliente propio y arma el reporte con los filtros de la URL."""
+        cliente = _cliente_propio(request, cliente_pk)
+        resultado = generar_reporte(cliente, request.GET)
+        querystring = request.GET.copy()
+        querystring.pop('page', None)
+        contexto = {
+            'cliente': cliente,
+            'tipos_disponibles': TIPO_CHOICES,
+            'estados_disponibles': CalculoOperacion.ESTADO_CHOICES,
+            'querystring': querystring.urlencode(),
+            **resultado,
+        }
+        return render(request, self.template_name, contexto)
+
+
+class DescargarReporteTransaccionesView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Descarga, en PDF o en Excel, el mismo reporte que ya se ve en pantalla (criterio 3).
+
+    Rearma el reporte con los mismos filtros de la URL (ver
+    ``apps.divisas.reportes.generar_reporte``) en vez de recibir los datos
+    ya calculados, para no poder quedar desincronizada de
+    ``ReporteTransaccionesClienteView`` ni confiar en nada que haya
+    viajado por la URL salvo los filtros. No ofrece ningún archivo sin
+    datos (criterio 4) ni para un rango inválido (criterio 5): en ambos
+    casos vuelve a la pantalla del reporte con el motivo, en vez de
+    descargar un archivo vacío o roto.
+    """
+
+    FORMATOS = {
+        'pdf': (generar_pdf, 'application/pdf', 'pdf'),
+        'excel': (generar_excel, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'),
+    }
+
+    def test_func(self):
+        """Autoriza a los mismos roles que ``ReporteTransaccionesClienteView``."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cliente' in roles and not self.request.user.is_staff
+
+    def get(self, request, cliente_pk, formato):
+        """Valida el formato, los filtros y los datos antes de generar el archivo."""
+        if formato not in self.FORMATOS:
+            raise Http404('Formato de descarga desconocido.')
+
+        cliente = _cliente_propio(request, cliente_pk)
+        resultado = generar_reporte(cliente, request.GET)
+        destino = reverse('divisas:reporte_transacciones', kwargs={'cliente_pk': cliente.pk})
+        querystring = request.GET.urlencode()
+        if querystring:
+            destino = f'{destino}?{querystring}'
+
+        if resultado['error_rango']:
+            messages.error(request, resultado['error_rango'])
+            return redirect(destino)
+        if not resultado['reporte_generado']:
+            messages.error(request, 'Indicá un rango de fechas para generar el reporte.')
+            return redirect(destino)
+        if not resultado['filas']:
+            messages.error(request, 'No hay transacciones para los filtros elegidos.')
+            return redirect(destino)
+
+        funcion, content_type, extension = self.FORMATOS[formato]
+        contenido = funcion(cliente, resultado['filas'], resultado['totales'], resultado['filtros'], resultado['generado_en'])
+        respuesta = HttpResponse(contenido, content_type=content_type)
+        respuesta['Content-Disposition'] = f'attachment; filename="reporte_transacciones_{cliente.pk}.{extension}"'
+        return respuesta
+
+
+class MonitoreoMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Control de acceso del monitoreo: solo administración y análisis cambiario (criterio 6)."""
+
+    def test_func(self):
+        """Comprueba que el rol 'admin' o 'analista_cambiario' esté en la sesión."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return bool({'admin', 'analista_cambiario'} & set(roles))
+
+
+class MonitoreoTransaccionesView(MonitoreoMixin, TemplateView):
+    """Monitoreo, de solo consulta, de todas las transacciones del sistema.
+
+    Implementa la HU "Monitoreo de transacciones y reportes" (epic
+    GE-14). Muestra un listado paginado (``paginate_by``) de las
+    transacciones de todos los clientes y de todos los canales (ver
+    ``apps.divisas.monitoreo``), filtrable por rango de fechas, cliente,
+    tipo, divisa, estado, canal y "requiere atención" (entrega
+    pendiente, entrega incierta o pago fuera de plazo), que se destacan
+    en la tabla. Es de solo consulta: no define ``post`` y no ofrece
+    ningún control que cambie el estado de una transacción (criterio 7).
+    Desde acá se descarga el mismo listado filtrado en PDF o en Excel
+    (``DescargarMonitoreoView``). Solo acceden administradores y
+    analistas cambiarios (criterio 6, ver ``MonitoreoMixin``).
+    """
+
+    template_name = 'divisas/monitoreo_transacciones.html'
+    paginate_by = 20
+    http_method_names = ['get', 'head', 'options']
+
+    def get_context_data(self, **kwargs):
+        """Arma el listado paginado, los totales y los datos del formulario de filtros."""
+        context = super().get_context_data(**kwargs)
+        resultado = generar_monitoreo(self.request.GET)
+        paginador = Paginator(resultado['filas'], self.paginate_by)
+        pagina = paginador.get_page(self.request.GET.get('page'))
+        querystring = self.request.GET.copy()
+        querystring.pop('page', None)
+        context.update({
+            **resultado,
+            'page_obj': pagina,
+            'is_paginated': paginador.num_pages > 1,
+            'transacciones': pagina.object_list,
+            'tipos_disponibles': TIPO_CHOICES_GANANCIAS,
+            'estados_disponibles': ESTADO_CHOICES_MONITOREO,
+            'canales_disponibles': CANAL_CHOICES_MONITOREO,
+            'querystring': querystring.urlencode(),
+        })
+        return context
+
+
+class DescargarMonitoreoView(MonitoreoMixin, View):
+    """Descarga, en PDF o en Excel, el mismo listado filtrado que se ve en pantalla (criterio 5).
+
+    Rearma el listado con los mismos filtros de la URL (ver
+    ``apps.divisas.monitoreo.generar_monitoreo``) en vez de recibir datos
+    ya calculados, para no poder quedar desincronizada de
+    ``MonitoreoTransaccionesView``. Con un rango inválido o sin
+    transacciones para los filtros elegidos, vuelve a la pantalla con el
+    motivo en vez de descargar un archivo vacío o roto.
+    """
+
+    FORMATOS = {
+        'pdf': (generar_pdf_monitoreo, 'application/pdf', 'pdf'),
+        'excel': (generar_excel_monitoreo, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'),
+    }
+
+    def get(self, request, formato):
+        """Valida el formato y los datos antes de generar el archivo."""
+        if formato not in self.FORMATOS:
+            raise Http404('Formato de descarga desconocido.')
+
+        resultado = generar_monitoreo(request.GET)
+        destino = reverse('divisas:monitoreo_transacciones')
+        querystring = request.GET.urlencode()
+        if querystring:
+            destino = f'{destino}?{querystring}'
+
+        if resultado['error_rango']:
+            messages.error(request, resultado['error_rango'])
+            return redirect(destino)
+        if not resultado['filas']:
+            messages.error(request, 'No hay transacciones para los filtros elegidos.')
+            return redirect(destino)
+
+        funcion, content_type, extension = self.FORMATOS[formato]
+        contenido = funcion(resultado['filas'], resultado['totales'], resultado['filtros'], resultado['generado_en'])
+        respuesta = HttpResponse(contenido, content_type=content_type)
+        respuesta['Content-Disposition'] = f'attachment; filename="monitoreo_transacciones.{extension}"'
+        return respuesta
+
+
+class ReporteGananciasMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Control de acceso del reporte de ganancias: solo administración y análisis cambiario (criterio 7)."""
+
+    def test_func(self):
+        """Comprueba que el rol 'admin' o 'analista_cambiario' esté en la sesión."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return bool({'admin', 'analista_cambiario'} & set(roles))
+
+
+class ReporteGananciasView(ReporteGananciasMixin, TemplateView):
+    """Genera el reporte de ganancias de un período, agrupado según el criterio elegido.
+
+    Implementa la HU "Reporte de ganancias". A partir de un rango de
+    fechas obligatorio y un criterio de agrupación (día, mes, divisa, tipo
+    de operación, canal o caja y turno), muestra la ganancia y la cantidad
+    de operaciones de cada grupo junto con el total general (criterios 1 y
+    2). Todo el cálculo vive en
+    ``apps.divisas.reporte_ganancias.generar_reporte_ganancias``, que
+    reutiliza las filas y el total del tablero de ganancias para que ambos
+    coincidan (criterio 4). Sin las dos fechas solo se ve el formulario;
+    un rango inválido se informa sin calcular nada; sin operaciones se
+    avisa que no hay datos, sin error y sin ofrecer descargas (criterio 6).
+    Desde esta pantalla se descarga el mismo reporte en PDF o en Excel
+    (criterio 5, ver ``DescargarReporteGananciasView``). Solo acceden
+    administradores y analistas cambiarios (criterio 7, ver
+    ``ReporteGananciasMixin``).
+    """
+
+    template_name = 'divisas/reporte_ganancias.html'
+    http_method_names = ['get', 'head', 'options']
+
+    def get_context_data(self, **kwargs):
+        """Arma el reporte con los filtros de la URL y las opciones del formulario."""
+        context = super().get_context_data(**kwargs)
+        context.update(generar_reporte_ganancias(self.request.GET))
+        context['agrupaciones_disponibles'] = AGRUPACIONES_REPORTE_GANANCIAS
+        context['mensaje_sin_datos'] = MENSAJE_SIN_DATOS_REPORTE_GANANCIAS
+        context['querystring'] = self.request.GET.urlencode()
+        return context
+
+
+class DescargarReporteGananciasView(ReporteGananciasMixin, View):
+    """Descarga, en PDF o en Excel, el mismo reporte de ganancias que se ve en pantalla (criterio 5).
+
+    Rearma el reporte con los mismos filtros de la URL (ver
+    ``apps.divisas.reporte_ganancias.generar_reporte_ganancias``) en vez
+    de recibir datos ya calculados, para no poder quedar desincronizada de
+    ``ReporteGananciasView``. Sin rango de fechas, con un rango inválido o
+    sin operaciones en el período, vuelve a la pantalla con el motivo en
+    vez de descargar un archivo vacío o roto.
+    """
+
+    FORMATOS = {
+        'pdf': (generar_pdf_reporte_ganancias, 'application/pdf', 'pdf'),
+        'excel': (
+            generar_excel_reporte_ganancias,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xlsx',
+        ),
+    }
+
+    def get(self, request, formato):
+        """Valida el formato, los filtros y los datos antes de generar el archivo."""
+        if formato not in self.FORMATOS:
+            raise Http404('Formato de descarga desconocido.')
+
+        resultado = generar_reporte_ganancias(request.GET)
+        destino = reverse('divisas:reporte_ganancias')
+        querystring = request.GET.urlencode()
+        if querystring:
+            destino = f'{destino}?{querystring}'
+
+        if resultado['error_rango']:
+            messages.error(request, resultado['error_rango'])
+            return redirect(destino)
+        if not resultado['reporte_generado']:
+            messages.error(request, 'Indicá un rango de fechas para generar el reporte.')
+            return redirect(destino)
+        if resultado['sin_datos']:
+            messages.info(request, MENSAJE_SIN_DATOS_REPORTE_GANANCIAS)
+            return redirect(destino)
+
+        funcion, content_type, extension = self.FORMATOS[formato]
+        respuesta = HttpResponse(funcion(resultado), content_type=content_type)
+        nombre = (
+            f"reporte_ganancias_{resultado['filtros']['fecha_desde']}_{resultado['filtros']['fecha_hasta']}"
+            f"_{resultado['filtros']['agrupacion']}.{extension}"
+        )
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
+class DetalleMonitoreoTransaccionView(MonitoreoMixin, TemplateView):
+    """Detalle de solo lectura de una transacción: pago, medios de origen y destino y factura (criterio 4).
+
+    No define ``post`` ni ofrece botones de reintento, confirmación o
+    cancelación (criterio 7): a diferencia de ``DetalleTransaccionOperacionView``,
+    que el cliente usa para reintentar su propia entrega, esta pantalla
+    solo consulta. ``tipo`` es ``'operacion'``, ``'cambio'`` o
+    ``'ventanilla'`` (ver ``apps.divisas.monitoreo.detalle_transaccion``).
+    """
+
+    template_name = 'divisas/monitoreo_detalle.html'
+    http_method_names = ['get', 'head', 'options']
+
+    def get_context_data(self, **kwargs):
+        """Resuelve la transacción o responde 404 si no existe."""
+        context = super().get_context_data(**kwargs)
+        detalle = detalle_transaccion_monitoreo(kwargs['tipo'], kwargs['pk'])
+        if detalle is None:
+            raise Http404('La transacción no existe.')
+        context.update(detalle)
+        return context
+
+
 class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Muestra el detalle completo, de solo lectura, de una compra o venta propia.
 
@@ -745,6 +1198,7 @@ class DetalleTransaccionOperacionView(LoginRequiredMixin, UserPassesTestMixin, V
         return render(request, 'divisas/detalle_transaccion_operacion.html', {
             'transaccion': transaccion,
             'factura_pendiente': factura_pendiente_de_generacion(transaccion),
+            'nota_credito': ultima_nota_credito(transaccion),
         })
 
     def post(self, request, *args, **kwargs):
@@ -797,6 +1251,7 @@ class DetalleTransaccionCambioView(LoginRequiredMixin, UserPassesTestMixin, View
         return render(request, 'divisas/detalle_transaccion_cambio.html', {
             'transaccion': transaccion,
             'factura_pendiente': factura_pendiente_de_generacion(transaccion),
+            'nota_credito': ultima_nota_credito(transaccion),
         })
 
     def post(self, request, *args, **kwargs):
@@ -1760,6 +2215,45 @@ class AdminDivisasMixin(LoginRequiredMixin, UserPassesTestMixin):
         return 'admin' in roles
 
 
+class TableroGananciasView(AdminDivisasMixin, TemplateView):
+    """Tablero de control de ganancias: indicadores, evolución y distribución, solo para administración.
+
+    Implementa la HU "Tablero de control de ganancias" (epic GE-14). Todo
+    el cálculo vive en ``apps.divisas.ganancias.generar_tablero`` (ver su
+    docstring de módulo para la definición exacta de "ganancia", "tipo de
+    operación" y "completada"); esta vista solo resuelve los parámetros de
+    la URL y arma el contexto, incluido el JSON que consume el gráfico de
+    evolución (criterio 3) con Chart.js, mismo patrón que
+    ``HistorialCotizacionesView``. Sin operaciones completadas en el
+    período, los indicadores quedan en cero y la plantilla muestra un
+    aviso en vez de un gráfico vacío o un error (criterio 7). Un rango de
+    fechas inválido tampoco es un error 500: la plantilla explica el
+    motivo y no calcula nada (criterio implícito de validación). Solo
+    accede un administrador (criterio 8, ver ``AdminDivisasMixin``).
+    """
+
+    template_name = 'divisas/tablero_ganancias.html'
+
+    def get_context_data(self, **kwargs):
+        """Arma el tablero con los filtros de la URL y lo serializa para la plantilla."""
+        context = super().get_context_data(**kwargs)
+        resultado = generar_tablero(self.request.GET)
+        context.update(resultado)
+        context['periodos_disponibles'] = PERIODOS_GANANCIAS
+        context['tipos_disponibles'] = TIPO_CHOICES_GANANCIAS
+        context['canales_disponibles'] = CANAL_CHOICES_GANANCIAS
+        context['fecha_desde_actual'] = self.request.GET.get('fecha_desde', '')
+        context['fecha_hasta_actual'] = self.request.GET.get('fecha_hasta', '')
+        if resultado['evolucion']:
+            context['evolucion_json'] = json.dumps(
+                [
+                    {'periodo': punto['periodo'], 'ganancia': str(punto['ganancia'])}
+                    for punto in resultado['evolucion']['puntos']
+                ]
+            )
+        return context
+
+
 class ConfiguracionVigenciaUpdateView(AdminDivisasMixin, UpdateView):
     """Permite al administrador configurar los tiempos de espera de las operaciones.
 
@@ -2003,10 +2497,16 @@ class DocumentosElectronicosListView(AdminDivisasMixin, ListView):
     context_object_name = 'documentos'
 
     def get_queryset(self):
-        """Trae de una sola vez el cliente de cada transacción facturada, para no repetir consultas."""
+        """Trae de una sola vez el cliente de cada transacción facturada y la factura de cada nota de crédito."""
         return DocumentoElectronico.objects.select_related(
-            'calculo_operacion__cliente', 'calculo_triangulacion__cliente', 'operacion_ventanilla',
+            'calculo_operacion__cliente', 'calculo_triangulacion__cliente', 'operacion_ventanilla', 'factura_anulada',
         )
+
+    def get_context_data(self, **kwargs):
+        """Agrega el catálogo de motivos de emisión para el formulario inline de "Emitir nota de crédito"."""
+        context = super().get_context_data(**kwargs)
+        context['motivos_emision'] = DocumentoElectronico.MOTIVO_EMISION_CHOICES
+        return context
 
 
 class ReintentarEmisionDocumentoElectronicoView(AdminDivisasMixin, View):
@@ -2054,6 +2554,97 @@ class ConsultarEstadoSifenDocumentoElectronicoView(AdminDivisasMixin, View):
             messages.success(request, f'Estado consultado: {documento.get_estado_display()}.')
         else:
             messages.error(request, 'No se pudo consultar el estado ante SIFEN (sin respuesta de Factura Segura).')
+        return redirect('divisas:documentos_electronicos')
+
+
+class ConsultarEstadoSifenMiFacturaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Permite al cliente consultar ante SIFEN el estado de una factura de su cliente activo.
+
+    Es la versión para el cliente de ``ConsultarEstadoSifenDocumentoElectronicoView``
+    y se usa desde "Mis facturas electrónicas". Como ninguna tarea periódica
+    actualiza el estado de una factura, sin esta consulta una factura ya
+    aprobada o rechazada seguiría figurando "esperando aprobación" hasta que
+    un administrador la consultara. ``consultar_estado_sifen`` es una simple
+    lectura ante Factura Segura (nunca emite un documento), así que es
+    seguro ofrecérsela al cliente. Si el estado cambia, el cliente recibe
+    además la notificación correspondiente (ver ``NotificacionCliente``).
+
+    Solo acepta POST y solo sobre una factura del **cliente activo**: una
+    factura de otro cliente responde 404, sin revelar si existe (mismo
+    criterio que ``DescargarDocumentoElectronicoView``).
+    """
+
+    http_method_names = ['post']
+
+    def test_func(self):
+        """Autoriza a los mismos roles que ``MisFacturasElectronicasListView``."""
+        roles = self.request.session.get('keycloak_roles', [])
+        return 'cliente' in roles and not self.request.user.is_staff
+
+    def post(self, request, pk):
+        """Consulta el estado ante SIFEN, informa el resultado y vuelve al listado.
+
+        Args:
+            request (HttpRequest): La request actual; ``next`` en el POST
+                indica a qué página del listado volver (con sus filtros).
+            pk (int): Identificador de la factura.
+
+        Returns:
+            HttpResponseRedirect: A ``next`` si es una URL segura, o a
+            "Mis facturas electrónicas".
+
+        Raises:
+            Http404: La factura no existe o no es del cliente activo.
+        """
+        cliente_activo = getattr(request, 'cliente_activo', None)
+        if cliente_activo is None:
+            raise Http404('No hay un cliente activo.')
+        documento = get_object_or_404(
+            DocumentoElectronico.objects.filter(
+                Q(calculo_operacion__cliente=cliente_activo) | Q(calculo_triangulacion__cliente=cliente_activo)
+            ),
+            pk=pk,
+        )
+
+        if not documento.cdc:
+            messages.error(request, 'Esta factura todavía no se generó, así que no se puede consultar ante SIFEN.')
+        elif consultar_estado_sifen(documento):
+            documento.refresh_from_db()
+            messages.success(
+                request, f'Factura {documento.numero_documento}: estado en SIFEN "{documento.get_estado_display()}".',
+            )
+        else:
+            messages.error(request, 'No se pudo consultar el estado ante SIFEN. Volvé a intentarlo más tarde.')
+
+        destino = request.POST.get('next')
+        if destino and url_has_allowed_host_and_scheme(
+            destino, allowed_hosts={request.get_host()}, require_https=request.is_secure(),
+        ):
+            return redirect(destino)
+        return redirect('divisas:mis_facturas_electronicas')
+
+
+class EmitirNotaCreditoView(AdminDivisasMixin, View):
+    """Emite, a pedido de un administrador, una nota de crédito que anula una factura aprobada.
+
+    Implementa la HU "Nota de crédito": ``pk`` es la factura a anular,
+    ``motivo_emision`` (del catálogo SIFEN) llega por el ``POST`` del
+    formulario inline de ``documentos_electronicos.html``. Toda la
+    validación (criterio 4) y el armado del documento (criterio 1)
+    viven en ``apps.divisas.factura_electronica.emitir_nota_credito``;
+    esta vista solo la llama y refleja el resultado. Solo accede un
+    administrador (criterio 8, ver ``AdminDivisasMixin``).
+    """
+
+    def post(self, request, pk):
+        """Llama a ``emitir_nota_credito`` y refleja el resultado en un mensaje."""
+        factura = get_object_or_404(DocumentoElectronico, pk=pk)
+        motivo_emision = request.POST.get('motivo_emision', '')
+        documento, mensaje = emitir_nota_credito(factura, motivo_emision)
+        if documento is not None and documento.estado == DocumentoElectronico.ESTADO_GENERADO:
+            messages.success(request, mensaje)
+        else:
+            messages.error(request, mensaje)
         return redirect('divisas:documentos_electronicos')
 
 
@@ -2302,13 +2893,22 @@ class NotificacionesClienteMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 
 class MisNotificacionesView(NotificacionesClienteMixin, ListView):
-    """Lista las notificaciones de cambio de tasa del usuario autenticado.
+    """Lista las notificaciones del usuario autenticado: transacciones y facturas, y tasas de cambio.
 
-    Criterio de aceptación 4 de GE-51: las notificaciones se muestran
-    ordenadas de la más reciente a la más antigua. Cada una muestra la
-    divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;
-    las no leídas ofrecen la acción de marcarlas como leídas (ver
-    ``MarcarNotificacionLeidaView``).
+    Criterio de aceptación 4 de GE-51: las notificaciones de tasas se
+    muestran ordenadas de la más reciente a la más antigua. Cada una
+    muestra la divisa, el tipo de tasa, la tasa anterior, la nueva y si ya
+    fue leída; las no leídas ofrecen la acción de marcarlas como leídas
+    (ver ``MarcarNotificacionLeidaView``).
+
+    HU "Notificaciones sobre transacciones y facturas": arriba, en su
+    propia sección con paginación independiente (parámetro
+    ``pagina_operaciones``), se listan las notificaciones de transacciones
+    y facturas, solo las del **cliente activo** (criterio 5, ver
+    ``apps.divisas.context_processors.notificaciones_cliente_activo``).
+    Cada una muestra el número de transacción o el CDC y el nuevo estado, y
+    se abre con ``AbrirNotificacionClienteView``, que la marca como leída y
+    lleva al detalle correspondiente (criterio 3).
     """
 
     template_name = 'divisas/mis_notificaciones.html'
@@ -2316,12 +2916,49 @@ class MisNotificacionesView(NotificacionesClienteMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        """Devuelve solo las notificaciones propias, de la más nueva a la más vieja."""
+        """Devuelve solo las notificaciones de tasas propias, de la más nueva a la más vieja."""
         return (
             NotificacionTasa.objects.filter(usuario=self.request.user)
             .select_related('divisa')
             .order_by('-creada_en', '-pk')
         )
+
+    def get_context_data(self, **kwargs):
+        """Agrega la página de notificaciones de transacciones y facturas del cliente activo."""
+        context = super().get_context_data(**kwargs)
+        operaciones = notificaciones_cliente_activo(self.request).order_by('-creada_en', '-pk')
+        paginador = Paginator(operaciones, self.paginate_by)
+        pagina = paginador.get_page(self.request.GET.get('pagina_operaciones'))
+        context['notificaciones_operaciones'] = pagina.object_list
+        context['pagina_operaciones'] = pagina
+        return context
+
+
+class AbrirNotificacionClienteView(NotificacionesClienteMixin, View):
+    """Abre una notificación de transacción o factura: la marca como leída y lleva a su detalle (criterio 3).
+
+    Solo acepta POST, como ``MarcarNotificacionLeidaView``, porque modifica
+    datos (protegido por CSRF). Responde 404 si la notificación no existe,
+    es de otro usuario o es de un cliente que no es el activo, sin revelar
+    cuál de los casos es (criterio 5). El detalle al que redirige vuelve a
+    comprobar por su cuenta que la transacción sea del cliente activo.
+    """
+
+    http_method_names = ['post']
+
+    def post(self, request, pk):
+        """Marca la notificación como leída y redirige al detalle de su transacción o factura.
+
+        Args:
+            request (HttpRequest): La request actual.
+            pk (int): Identificador de la notificación.
+
+        Returns:
+            HttpResponseRedirect: A ``NotificacionCliente.url_detalle``.
+        """
+        notificacion = get_object_or_404(notificaciones_cliente_activo(request), pk=pk)
+        notificacion.marcar_como_leida()
+        return redirect(notificacion.url_detalle)
 
 
 class MarcarNotificacionLeidaView(NotificacionesClienteMixin, View):

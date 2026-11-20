@@ -189,6 +189,57 @@ no leídas, calculada por el context processor
 ``apps.divisas.context_processors.notificaciones_context``; al marcar una
 como leída deja de contarse.
 
+Notificaciones sobre transacciones y facturas
+---------------------------------------------
+
+Implementa la HU "Notificaciones sobre transacciones y facturas". El
+cliente recibe una ``apps.divisas.models.NotificacionCliente`` cada vez que
+cambia el estado de una de sus transacciones o de una de sus facturas
+electrónicas.
+
+**Cuándo se notifica.** ``CalculoOperacion``, ``CalculoTriangulacion`` y
+``DocumentoElectronico`` heredan de ``apps.divisas.models.SeguimientoEstadoMixin``.
+Al guardar, este mixin compara el estado nuevo con el último que se leyó o
+se guardó, y si cambió avisa al modelo. Como todos los flujos que cambian un
+estado terminan en un ``save`` (pago, entrega, reintento, cancelación,
+consulta a SIFEN), ninguno necesitó cambios. Crear un registro no notifica,
+y un ``save`` con ``update_fields`` que no incluye ``estado`` tampoco.
+
+* **Transacción (Criterio 1).** Se notifica al pasar a "Pagada",
+  "Completada" ("Acreditada" o "Retirada"), cualquier cancelación, o un
+  estado que requiere atención ("Pagada, pero la entrega al cliente falló" y
+  "Pago fuera de plazo"). Ver ``NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION``.
+  La notificación lleva el número de la transacción y su nuevo estado.
+* **Factura (Criterio 2).** Se notifica cuando una factura pasa a
+  "Aprobado", "Aprobado con observación", "Rechazado por SIFEN" o "Anulada
+  por nota de crédito". La anulación es el único modo en que el sistema
+  cancela una factura aprobada: ocurre cuando SIFEN aprueba la nota de
+  crédito. La notificación lleva el CDC, o el número de documento si todavía
+  no tiene CDC. La nota de crédito en sí no notifica, ni tampoco una factura
+  de ventanilla, porque un cliente de mostrador no tiene usuario en el sistema.
+
+**Destinatarios y aislamiento (Criterio 5).** Se crea una notificación por
+cada usuario activo asociado al cliente (``Cliente.usuarios``), y cada una
+guarda el cliente al que pertenece. La pantalla y el indicador filtran
+siempre por usuario **y** por cliente activo
+(``apps.divisas.context_processors.notificaciones_cliente_activo``). Así un
+usuario con dos clientes solo ve las del cliente que tiene activo, y nadie
+ve las de un cliente ajeno.
+
+**Pantalla y apertura (Criterio 3).** ``MisNotificacionesView``
+(``/divisas/notificaciones/``) muestra arriba la sección "Transacciones y
+facturas", paginada aparte, y debajo las notificaciones de tasas. Cada
+notificación se abre con ``AbrirNotificacionClienteView`` (solo POST), que la
+marca como leída y redirige al detalle de la transacción. Si la notificación
+es de una factura, redirige a la sección "Factura electrónica" de ese mismo
+detalle (ancla ``#factura-electronica``), donde están el número, el estado,
+el CDC y las descargas. Una notificación ajena o de otro cliente responde 404.
+
+**Indicador (Criterio 4).** La campana de la barra superior y el contador
+del menú suman las notificaciones de tasas sin leer y las de transacciones y
+facturas sin leer del cliente activo. Al abrir una notificación, deja de
+contarse.
+
 Pago de una transacción confirmada
 -----------------------------------
 
@@ -834,11 +885,23 @@ cliente activo seleccionado consulta, en ``/divisas/transacciones/mias/facturas/
 **paginado** (20 por página, Criterio 1) de los ``apps.divisas.models.DocumentoElectronico``
 emitidos para sus propias transacciones (compra/venta o cambio) — el
 comprobante que la HU "Integración con API de facturación electrónica"
-genera automáticamente ante SIFEN apenas una transacción queda "Pagada". Es
-de solo lectura: a diferencia de la pantalla de administración
-(``DocumentosElectronicosListView``, con todos los clientes y acciones para
-reintentar o consultar el estado SIFEN), el cliente no puede ejecutar
-ninguna acción sobre sus propios documentos, solo consultarlos.
+genera automáticamente ante SIFEN apenas una transacción queda "Pagada". A
+diferencia de la pantalla de administración (``DocumentosElectronicosListView``,
+con todos los clientes y acciones para reintentar la emisión o emitir una
+nota de crédito), la única acción que el cliente puede hacer es consultar
+ante SIFEN el estado de una factura propia con CDC, con el botón "Consultar
+SIFEN" (``apps.divisas.views.ConsultarEstadoSifenMiFacturaView``, solo POST).
+Como ninguna tarea periódica actualiza ese estado, esta consulta le permite
+ver por su cuenta si la factura ya fue aprobada o rechazada. Es una simple
+lectura ante Factura Segura (``consultar_estado_sifen`` nunca emite un
+documento), y una factura de otro cliente responde 404. Si el estado
+cambia, el cliente recibe además la notificación correspondiente.
+
+Los botones de cada fila ("Ver detalle", "KuDE", "XML" y "Consultar SIFEN")
+se acomodan dentro de su celda y, si no entran en una línea, pasan a la
+siguiente. El CDC, de 44 caracteres sin espacios, puede cortarse en varias
+líneas: así la tabla no se ensancha más que la pantalla ni deja los botones
+ocultos a la derecha.
 
 Cada fila muestra número de documento, CDC, la transacción asociada (con su
 tipo y divisa), la fecha de emisión y el monto —tomado de
@@ -899,6 +962,116 @@ cada solicitud en este orden:
    entregarlo se comprueba que el XML contenga ese CDC y que el KuDE sea un PDF;
    si no pasa la comprobación, o Factura Segura no responde, se vuelve al listado
    con un aviso.
+
+Reporte de ganancias
+--------------------
+
+Implementa la HU "Reporte de ganancias". Un analista cambiario o un
+administrador genera, en ``/divisas/administrar/reporte-ganancias/``
+(``apps.divisas.views.ReporteGananciasView``), un reporte de la ganancia de
+un rango de fechas, agrupado por **día**, **mes**, **divisa**, **tipo de
+operación**, **canal** o **caja y turno**. Cada grupo muestra su ganancia y
+su cantidad de operaciones, y el reporte cierra con el total general
+(Criterio 1). Todo el cálculo vive en
+``apps.divisas.reporte_ganancias.generar_reporte_ganancias``.
+
+**Misma ganancia que el tablero (Criterio 4).** El reporte no tiene un
+cálculo propio. Toma las mismas filas, el mismo filtro de fechas y el mismo
+total que el tablero de ganancias (``apps.divisas.ganancias``). Por eso la
+ganancia es la comisión normalizada a PYG (la de un cambio entre divisas se
+reconvierte con la tasa de venta aplicada), el tipo de operación se expresa
+desde la perspectiva de la casa de cambio y solo cuentan las operaciones
+completadas: ``ACREDITADA`` o ``RETIRADA`` online, y toda operación de
+ventanilla.
+
+**Desglose por caja y turno (Criterios 2 y 3).** Cada ``apps.caja.models.Caja``
+es el turno de un cajero. Una caja pertenece al período si su turno se
+superpone con el rango, aunque se haya abierto antes. Por cada caja se ven
+el cajero, la fecha y hora de apertura y de cierre, la cantidad de
+operaciones de ventanilla registradas dentro del período y su ganancia. Una
+caja todavía abierta aparece "En curso", sin fecha de cierre, y su ganancia
+figura como parcial. Este desglose solo cubre la ventanilla, así que muestra
+su propio total de ventanilla. El total general sigue sumando todos los
+canales, para que coincida con el tablero.
+
+**Descargas (Criterio 5).** ``apps.divisas.views.DescargarReporteGananciasView``
+(``.../reporte-ganancias/descargar/<pdf|excel>/``) rearma el reporte con los
+mismos filtros de la URL. Así el PDF y el Excel tienen los mismos datos que la
+pantalla, junto con los filtros aplicados y la fecha de generación. Los dos
+formatos se arman a partir de las mismas filas (``_filas_tabla`` y
+``_filas_totales``).
+
+**Sin datos y validación (Criterio 6).** Las dos fechas son obligatorias:
+sin ellas solo se muestra el formulario. Un rango ilegible, invertido o con
+fechas futuras se informa como error y no se calcula nada. Si el período no
+tiene operaciones completadas, se muestra el aviso "No hay operaciones
+completadas en el período elegido." sin ofrecer descargas, y una descarga
+pedida por URL vuelve a la pantalla con ese mismo aviso.
+
+**Acceso (Criterio 7).** ``ReporteGananciasMixin`` solo autoriza los roles
+``admin`` y ``analista_cambiario``. Un cliente, un cajero o un usuario sin
+rol reciben un 403, tanto en la pantalla como en las descargas.
+
+Registro y auditoría de actividades
+-----------------------------------
+
+Implementa la HU "Registro y auditoría de actividades" (GE-71). Un
+administrador consulta en ``/auditoria/actividades/``
+(``apps.auditoria.views.RegistroActividadListView``) las acciones
+administrativas realizadas en el sistema. El menú lateral lo muestra como
+"Registro de actividades". Todo vive en la aplicación ``apps.auditoria``, y
+no se modificó ninguna vista ni modelo existente para implementarlo.
+
+**Qué se registra (Criterio 1).** Cada alta, modificación o baja de
+usuarios, roles, clientes, divisas, tasas de cambio y parámetros de
+operación (comisiones y tiempos de espera) genera un
+``apps.auditoria.models.RegistroActividad``. Ese registro guarda quién realizó
+la acción, cuándo, sobre qué registro y qué cambió, con el valor anterior y
+el nuevo de cada campo. Las acciones se capturan con las señales
+``pre_save``, ``post_save`` y ``post_delete`` de esos modelos
+(``apps.auditoria.signals.MODELOS_AUDITADOS``). Para saber quién realiza
+cada acción, ``apps.auditoria.middleware.AuditoriaMiddleware`` deja la
+request en curso disponible para las señales. Algunos detalles:
+
+- Desactivar una divisa, un usuario o un cliente (baja lógica) se registra
+  como "Baja".
+- Cada actualización de tasas crea una cotización nueva. Por eso se compara
+  contra la cotización que reemplaza.
+- Los roles viven en Keycloak, así que no hay ningún modelo que escuchar.
+  En un POST a ``editar_roles``, el middleware consulta los roles del
+  usuario antes y después de la vista, y registra la diferencia. Si Keycloak
+  no responde a esa consulta, la edición sigue su curso normal y solo se
+  omite su registro.
+
+Solo se registra lo que envía un usuario autenticado con un método que
+modifica datos (POST, PUT, PATCH, DELETE), y solo si cambió al menos un
+campo. Por eso no quedan en el registro:
+
+- la sincronización con Keycloak que hace el listado de usuarios en cada
+  GET;
+- los cambios hechos fuera de una request (migraciones, comandos, shell);
+- el envío de un formulario sin modificar nada.
+
+**Listado (Criterio 2).** Las actividades se muestran de la más reciente a
+la más antigua, de a 20 por página.
+
+**Filtros (Criterio 3).** Se puede filtrar por usuario, tipo de acción,
+tipo de registro y rango de fechas
+(``apps.auditoria.forms.FiltroRegistroActividadForm``). Los filtros se
+combinan entre sí. El rango incluye ambos extremos y se compara contra el
+día local (``TIME_ZONE``). El selector de usuario ofrece solo a quienes
+tienen alguna actividad registrada. Un rango invertido se informa como
+error y no muestra resultados.
+
+**Inmutabilidad (Criterio 4).** La vista solo acepta GET: un POST, PUT o
+DELETE recibe un 405. Además, el propio modelo impide volver a guardar o
+eliminar un registro, tanto por instancia como en forma masiva
+(``RegistroActividadQuerySet``). La única excepción es la que ejecuta
+Django al eliminar al usuario que realizó la acción (``SET_NULL``). En ese
+caso el registro conserva su nombre en ``usuario_nombre``.
+
+**Acceso (Criterio 5).** Solo el rol ``admin`` accede. Cualquier otro rol
+recibe un 403 y un usuario sin sesión es redirigido al login.
 
 Acceso a esta documentación desde el sistema
 ----------------------------------------------

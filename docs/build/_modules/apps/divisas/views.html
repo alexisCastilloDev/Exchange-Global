@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -65,7 +66,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -94,6 +98,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
@@ -102,6 +107,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
@@ -159,6 +165,7 @@
   <h1>Código fuente para apps.divisas.views</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Vistas para consultar, administrar y simular cotizaciones de divisas."""</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span><span class="p">,</span> <span class="n">ROUND_HALF_UP</span>
 
@@ -167,6 +174,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">login_required</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">PermissionDenied</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.paginator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Paginator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">HttpResponse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
@@ -187,13 +195,16 @@
     <span class="n">consultar_saldo_casa_de_cambio</span><span class="p">,</span>
     <span class="n">designar_cuenta_casa_de_cambio</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.context_processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">notificaciones_cliente_activo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.entrega</span><span class="w"> </span><span class="kn">import</span> <span class="n">reintentar_entrega</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.factura_electronica</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">consultar_estado_sifen</span><span class="p">,</span>
+    <span class="n">emitir_nota_credito</span><span class="p">,</span>
     <span class="n">factura_pendiente_de_generacion</span><span class="p">,</span>
     <span class="n">descargar_kude</span><span class="p">,</span>
     <span class="n">descargar_xml</span><span class="p">,</span>
     <span class="n">reintentar_emision</span><span class="p">,</span>
+    <span class="n">ultima_nota_credito</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.forms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalculoOperacionForm</span><span class="p">,</span>
@@ -207,6 +218,12 @@
     <span class="n">PagarTransaccionForm</span><span class="p">,</span>
     <span class="n">SimulacionDivisasForm</span><span class="p">,</span>
     <span class="n">TriangulacionForm</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.ganancias</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CANAL_CHOICES</span> <span class="k">as</span> <span class="n">CANAL_CHOICES_GANANCIAS</span><span class="p">,</span>
+    <span class="n">PERIODOS</span> <span class="k">as</span> <span class="n">PERIODOS_GANANCIAS</span><span class="p">,</span>
+    <span class="n">TIPO_CHOICES</span> <span class="k">as</span> <span class="n">TIPO_CHOICES_GANANCIAS</span><span class="p">,</span>
+    <span class="n">generar_tablero</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalculoOperacion</span><span class="p">,</span>
@@ -224,6 +241,27 @@
     <span class="n">moneda_a_pagar</span><span class="p">,</span>
     <span class="n">monto_a_entregar</span><span class="p">,</span>
     <span class="n">monto_a_pagar</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.monitoreo</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CANAL_CHOICES</span> <span class="k">as</span> <span class="n">CANAL_CHOICES_MONITOREO</span><span class="p">,</span>
+    <span class="n">ESTADO_CHOICES</span> <span class="k">as</span> <span class="n">ESTADO_CHOICES_MONITOREO</span><span class="p">,</span>
+    <span class="n">detalle_transaccion</span> <span class="k">as</span> <span class="n">detalle_transaccion_monitoreo</span><span class="p">,</span>
+    <span class="n">generar_excel</span> <span class="k">as</span> <span class="n">generar_excel_monitoreo</span><span class="p">,</span>
+    <span class="n">generar_monitoreo</span><span class="p">,</span>
+    <span class="n">generar_pdf</span> <span class="k">as</span> <span class="n">generar_pdf_monitoreo</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.reporte_ganancias</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AGRUPACIONES</span> <span class="k">as</span> <span class="n">AGRUPACIONES_REPORTE_GANANCIAS</span><span class="p">,</span>
+    <span class="n">MENSAJE_SIN_DATOS</span> <span class="k">as</span> <span class="n">MENSAJE_SIN_DATOS_REPORTE_GANANCIAS</span><span class="p">,</span>
+    <span class="n">generar_excel</span> <span class="k">as</span> <span class="n">generar_excel_reporte_ganancias</span><span class="p">,</span>
+    <span class="n">generar_pdf</span> <span class="k">as</span> <span class="n">generar_pdf_reporte_ganancias</span><span class="p">,</span>
+    <span class="n">generar_reporte_ganancias</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.reportes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TIPO_CHOICES</span><span class="p">,</span>
+    <span class="n">generar_excel</span><span class="p">,</span>
+    <span class="n">generar_pdf</span><span class="p">,</span>
+    <span class="n">generar_reporte</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -250,11 +288,21 @@
 
 <span class="sd">    Se llama al confirmar, después del chequeo de cambio de cotización</span>
 <span class="sd">    (que tiene prioridad): no tiene sentido que el cliente pague algo</span>
-<span class="sd">    que Global Exchange no va a poder entregarle. El saldo propio se</span>
-<span class="sd">    lleva en esta misma base (``CuentaPropia``, espejado contra las</span>
-<span class="sd">    transferencias reales que se mandan a sipap-sim al entregar, ver</span>
-<span class="sd">    ``apps.divisas.entrega``), así que esto es una consulta local, sin</span>
-<span class="sd">    red y sin depender de que sipap-sim esté arriba en este instante.</span>
+<span class="sd">    que Global Exchange no va a poder entregarle.</span>
+
+<span class="sd">    Consulta primero el saldo **real** a sipap-sim</span>
+<span class="sd">    (``consultar_saldo_casa_de_cambio``): el espejo local (``CuentaPropia``)</span>
+<span class="sd">    solo se corrige al visitar "Fondos propios" o al completar una</span>
+<span class="sd">    entrega, así que confiar únicamente en él arriesga confirmar contra</span>
+<span class="sd">    un saldo desactualizado (por ejemplo, si alguien movió fondos de esa</span>
+<span class="sd">    cuenta directamente en sipap-sim desde la última sincronización). De</span>
+<span class="sd">    paso, corrige el espejo si quedó desalineado, igual que ya hace</span>
+<span class="sd">    ``CuentaPropiaListView``. Si sipap-sim no responde</span>
+<span class="sd">    (``SipapComunicacionError``), cae al espejo local en vez de bloquear</span>
+<span class="sd">    la confirmación por completo — más vale una verificación algo vieja</span>
+<span class="sd">    que ninguna; ``apps.divisas.entrega.realizar_entrega`` vuelve a</span>
+<span class="sd">    chequear el saldo real, ahora sí obligatorio, justo antes de</span>
+<span class="sd">    transferir de verdad.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        str | None: ``None`` si hay saldo suficiente (se puede</span>
@@ -264,8 +312,14 @@
 <span class="sd">    """</span>
     <span class="n">divisa</span> <span class="o">=</span> <span class="n">divisa_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
     <span class="n">monto</span> <span class="o">=</span> <span class="n">monto_a_entregar</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
-    <span class="n">cuenta</span> <span class="o">=</span> <span class="n">CuentaPropia</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">cuenta</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">cuenta</span><span class="o">.</span><span class="n">saldo</span> <span class="o">&lt;</span> <span class="n">monto</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">saldo</span> <span class="o">=</span> <span class="n">consultar_saldo_casa_de_cambio</span><span class="p">(</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SipapComunicacionError</span><span class="p">:</span>
+        <span class="n">cuenta</span> <span class="o">=</span> <span class="n">CuentaPropia</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="n">saldo</span> <span class="o">=</span> <span class="n">cuenta</span><span class="o">.</span><span class="n">saldo</span> <span class="k">if</span> <span class="n">cuenta</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">CuentaPropia</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">update_or_create</span><span class="p">(</span><span class="n">divisa</span><span class="o">=</span><span class="n">divisa</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s1">'saldo'</span><span class="p">:</span> <span class="n">saldo</span> <span class="ow">or</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)})</span>
+    <span class="k">if</span> <span class="n">saldo</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">saldo</span> <span class="o">&lt;</span> <span class="n">monto</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s1">'Global Exchange no dispone de fondos suficientes en </span><span class="si">{</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1"> para completar '</span>
             <span class="s1">'esta operación en este momento. La operación fue cancelada; intentá nuevamente más tarde.'</span>
@@ -574,41 +628,117 @@
 <div class="viewcode-block" id="HistorialCotizacionesView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HistorialCotizacionesView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Muestra cada cambio registrado para las tasas de una divisa."""</span>
+<span class="w">    </span><span class="sd">"""Muestra la evolución de las tasas de una divisa: gráfico de líneas y tabla de cambios.</span>
+
+<span class="sd">    Implementa la HU "Historial y evolución de tasas de cambio". Accesible</span>
+<span class="sd">    a los mismos roles que ya pueden ver las tasas vigentes (ver</span>
+<span class="sd">    ``apps.authentication.context_processors.puede_ver_tasas``: admin,</span>
+<span class="sd">    analista cambiario o cliente) — antes de esta HU, solo administración y</span>
+<span class="sd">    análisis podían entrar acá; un cliente no tenía forma de consultar la</span>
+<span class="sd">    evolución de una tasa (criterio implícito de "como usuario").</span>
+
+<span class="sd">    El período se resuelve en ``dispatch`` (ver ``_resolver_periodo``), no</span>
+<span class="sd">    en ``get_queryset``, porque tanto la tabla como el gráfico (armado en</span>
+<span class="sd">    ``get_context_data``) necesitan el mismo rango ya decidido, incluido el</span>
+<span class="sd">    caso de un rango inválido (criterio 5): en vez de levantar un error, la</span>
+<span class="sd">    vista sigue respondiendo 200 con el motivo explicado y sin resultados,</span>
+<span class="sd">    para no perder el resto de la pantalla (divisa, filtros ya cargados).</span>
+
+<span class="sd">    Quién actualizó cada cotización (``puede_ver_usuario`` en el contexto)</span>
+<span class="sd">    solo se calcula para mostrarlo a administración y análisis (criterio</span>
+<span class="sd">    6): un cliente nunca lo ve, ni en la tabla ni en ningún dato que viaje</span>
+<span class="sd">    a la plantilla.</span>
+<span class="sd">    """</span>
 
     <span class="n">model</span> <span class="o">=</span> <span class="n">Cotizacion</span>
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/historial_cotizaciones.html'</span>
     <span class="n">context_object_name</span> <span class="o">=</span> <span class="s1">'cotizaciones'</span>
 
+    <span class="n">PERIODOS_VALIDOS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'7'</span><span class="p">,</span> <span class="s1">'30'</span><span class="p">,</span> <span class="s1">'90'</span><span class="p">)</span>
+    <span class="n">PERIODO_POR_DEFECTO</span> <span class="o">=</span> <span class="s1">'30'</span>
+
 <div class="viewcode-block" id="HistorialCotizacionesView.test_func">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.test_func">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Autoriza la consulta del historial a administración y análisis."""</span>
+<span class="w">        </span><span class="sd">"""Autoriza la consulta del historial a los mismos roles que ya ven las tasas vigentes."""</span>
         <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">,</span> <span class="s1">'cliente'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="HistorialCotizacionesView.dispatch">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.dispatch">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Resuelve la divisa antes de despachar la solicitud."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Divisa</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'divisa_id'</span><span class="p">])</span>
+<span class="w">        </span><span class="sd">"""Resuelve la divisa (nunca PYG, ver ``TasasVigentesListView``) y el período antes de despachar."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span>
+            <span class="n">Divisa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">codigo</span><span class="o">=</span><span class="n">Divisa</span><span class="o">.</span><span class="n">CODIGO_BASE</span><span class="p">),</span> <span class="n">pk</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'divisa_id'</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_rango</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">desde</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hasta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver_periodo</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolver_periodo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Decide el rango de fechas a partir de ``?periodo=`` o ``?fecha_desde=``/``?fecha_hasta=``.</span>
+
+<span class="sd">        Un rango propio (las dos fechas presentes en la URL) tiene</span>
+<span class="sd">        prioridad sobre ``periodo``. Si es inválido —fecha inicial</span>
+<span class="sd">        posterior a la final, o cualquiera de las dos en el futuro</span>
+<span class="sd">        (criterio 5)— lo rechaza (deja el motivo en ``self.error_rango``,</span>
+<span class="sd">        que ``get_queryset`` usa para no traer nada) y cae al período por</span>
+<span class="sd">        defecto, en vez de reventar con un error 500 o devolver un rango</span>
+<span class="sd">        parcialmente inválido.</span>
+<span class="sd">        """</span>
+        <span class="n">hoy</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localdate</span><span class="p">()</span>
+        <span class="n">fecha_desde</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">))</span>
+        <span class="n">fecha_hasta</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">fecha_desde</span> <span class="ow">and</span> <span class="n">fecha_hasta</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&gt;</span> <span class="n">fecha_hasta</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error_rango</span> <span class="o">=</span> <span class="s1">'La fecha inicial no puede ser posterior a la fecha final.'</span>
+            <span class="k">elif</span> <span class="n">fecha_desde</span> <span class="o">&gt;</span> <span class="n">hoy</span> <span class="ow">or</span> <span class="n">fecha_hasta</span> <span class="o">&gt;</span> <span class="n">hoy</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error_rango</span> <span class="o">=</span> <span class="s1">'No se puede consultar un rango con fechas futuras.'</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">,</span> <span class="s1">'custom'</span>
+
+        <span class="n">periodo</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'periodo'</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PERIODO_POR_DEFECTO</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">periodo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PERIODOS_VALIDOS</span><span class="p">:</span>
+            <span class="n">periodo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PERIODO_POR_DEFECTO</span>
+        <span class="k">return</span> <span class="n">hoy</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">periodo</span><span class="p">)),</span> <span class="n">hoy</span><span class="p">,</span> <span class="n">periodo</span>
 
 <div class="viewcode-block" id="HistorialCotizacionesView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve las cotizaciones históricas de la divisa seleccionada."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">cotizaciones</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""Cotizaciones de la divisa dentro del rango ya resuelto, o ninguna si el rango era inválido."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_rango</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Cotizacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">cotizaciones</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'usuario'</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">fecha_actualizacion__date__gte</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">desde</span><span class="p">,</span> <span class="n">fecha_actualizacion__date__lte</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hasta</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="HistorialCotizacionesView.get_context_data">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.HistorialCotizacionesView.get_context_data">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Agrega la divisa consultada al contexto de la plantilla."""</span>
+<span class="w">        </span><span class="sd">"""Agrega la divisa, el período resuelto, el error de validación y los puntos del gráfico."""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">context</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">divisa</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'periodo_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">periodo</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'fecha_desde_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'fecha_hasta_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_rango</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'puede_ver_usuario'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span>
+        <span class="c1"># El gráfico necesita orden cronológico (más antigua primero) para</span>
+        <span class="c1"># que la línea avance de izquierda a derecha; la tabla, en cambio,</span>
+        <span class="c1"># mantiene el orden del modelo (más reciente primero, Cotizacion.Meta),</span>
+        <span class="c1"># así que no se reutiliza una lista para la otra.</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'datos_grafico'</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span>
+            <span class="p">{</span>
+                <span class="s1">'fecha'</span><span class="p">:</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">cotizacion</span><span class="o">.</span><span class="n">fecha_actualizacion</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+                <span class="s1">'compra'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">cotizacion</span><span class="o">.</span><span class="n">tasa_compra</span><span class="p">),</span>
+                <span class="s1">'venta'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">cotizacion</span><span class="o">.</span><span class="n">tasa_venta</span><span class="p">),</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">cotizacion</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s1">'cotizaciones'</span><span class="p">])</span>
+        <span class="p">])</span>
         <span class="k">return</span> <span class="n">context</span></div>
 </div>
 
@@ -692,6 +822,20 @@
         <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">fila</span><span class="p">:</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 </div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parsear_fecha</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convierte ``'YYYY-MM-DD'`` a ``date``, o ``None`` si falta o no es válido.</span>
+
+<span class="sd">    Usada por los filtros de rango de fechas de ``MiHistorialTransaccionesView``</span>
+<span class="sd">    y ``MisFacturasElectronicasListView`` para no duplicar el mismo parseo.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">valor</span><span class="p">,</span> <span class="s1">'%Y-%m-</span><span class="si">%d</span><span class="s1">'</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
 
 <div class="viewcode-block" id="MiHistorialTransaccionesView">
@@ -780,16 +924,6 @@
             <span class="s1">'moneda_final'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="p">,</span>
         <span class="p">}</span>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_parsear_fecha</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Convierte ``'YYYY-MM-DD'`` a ``date``, o ``None`` si falta o no es válido."""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">valor</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">valor</span><span class="p">,</span> <span class="s1">'%Y-%m-</span><span class="si">%d</span><span class="s1">'</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_filtrar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filas</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Aplica sobre las filas normalizadas los filtros de fecha y estado de la URL.</span>
 
@@ -803,11 +937,11 @@
         <span class="k">if</span> <span class="n">estado</span><span class="p">:</span>
             <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span> <span class="k">if</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'estado_codigo'</span><span class="p">]</span> <span class="o">==</span> <span class="n">estado</span><span class="p">]</span>
 
-        <span class="n">desde</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsear_fecha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">))</span>
+        <span class="n">desde</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">desde</span><span class="p">:</span>
             <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span> <span class="k">if</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">desde</span><span class="p">]</span>
 
-        <span class="n">hasta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsear_fecha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">))</span>
+        <span class="n">hasta</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">hasta</span><span class="p">:</span>
             <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span> <span class="k">if</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">hasta</span><span class="p">]</span>
 
@@ -861,9 +995,25 @@
 
 <span class="sd">    Simétrica a ``MiHistorialTransaccionesView``, pero para el documento</span>
 <span class="sd">    electrónico de cada transacción (ver ``DocumentosElectronicosListView``</span>
-<span class="sd">    para el equivalente de administración, con todos los clientes). Es de</span>
-<span class="sd">    solo lectura: el cliente no puede reintentar ni consultar el estado</span>
-<span class="sd">    SIFEN por su cuenta, esas son acciones de administrador.</span>
+<span class="sd">    para el equivalente de administración, con todos los clientes).</span>
+
+<span class="sd">    Implementa la HU "Consulta de facturas electrónicas": el listado es</span>
+<span class="sd">    paginado (Criterio 1); cada fila muestra número, CDC, la transacción</span>
+<span class="sd">    asociada, la fecha de emisión y el monto —de ``documento.transaccion``,</span>
+<span class="sd">    ya que el documento no duplica ese dato— junto con el estado</span>
+<span class="sd">    (Criterio 2); admite filtrar por rango de fechas de emisión mediante</span>
+<span class="sd">    ``fecha_desde``/``fecha_hasta`` en la URL, mismo patrón que</span>
+<span class="sd">    ``MiHistorialTransaccionesView`` (Criterio 3); cada fila enlaza al</span>
+<span class="sd">    detalle de su transacción, que ya incluye la sección "Factura</span>
+<span class="sd">    electrónica" con el comprobante completo (Criterio 4); y sin ninguna</span>
+<span class="sd">    factura emitida, la plantilla muestra un mensaje en vez de una tabla</span>
+<span class="sd">    vacía o un error (Criterio 5).</span>
+
+<span class="sd">    Además, cada factura con CDC ofrece un botón "Consultar SIFEN"</span>
+<span class="sd">    (``ConsultarEstadoSifenMiFacturaView``) para que el cliente actualice</span>
+<span class="sd">    por su cuenta su estado ante SIFEN. Es la única acción que el cliente</span>
+<span class="sd">    puede hacer desde acá: reintentar la emisión o emitir una nota de</span>
+<span class="sd">    crédito siguen siendo acciones del administrador.</span>
 <span class="sd">    """</span>
 
     <span class="n">model</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span>
@@ -898,10 +1048,430 @@
 <div class="viewcode-block" id="MisFacturasElectronicasListView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Documentos de las transacciones (compra/venta o cambio) del cliente activo, el más reciente primero."""</span>
-        <span class="k">return</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+<span class="w">        </span><span class="sd">"""Documentos del cliente activo, filtrados por fecha de emisión y ordenados del más reciente al más antiguo.</span>
+
+<span class="sd">        Un documento sin ``emitida_en`` (todavía no generado, o rechazado)</span>
+<span class="sd">        nunca coincide con un filtro de fecha: no hay ninguna fecha de</span>
+<span class="sd">        emisión real contra la que comparar, así que solo aparece en el</span>
+<span class="sd">        listado sin filtrar (Criterio 1).</span>
+<span class="sd">        """</span>
+        <span class="n">queryset</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
             <span class="n">Q</span><span class="p">(</span><span class="n">calculo_operacion__cliente</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente_activo</span><span class="p">)</span> <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">calculo_triangulacion__cliente</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente_activo</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'calculo_operacion'</span><span class="p">,</span> <span class="s1">'calculo_triangulacion'</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-creado_en'</span><span class="p">)</span></div>
+        <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'calculo_operacion'</span><span class="p">,</span> <span class="s1">'calculo_triangulacion'</span><span class="p">)</span>
+
+        <span class="n">desde</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">desde</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">emitida_en__date__gte</span><span class="o">=</span><span class="n">desde</span><span class="p">)</span>
+
+        <span class="n">hasta</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">hasta</span><span class="p">:</span>
+            <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">emitida_en__date__lte</span><span class="o">=</span><span class="n">hasta</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-creado_en'</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MisFacturasElectronicasListView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisFacturasElectronicasListView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega si el cliente tiene alguna factura sin filtrar y el estado de los filtros de fecha (Criterio 3)."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'tiene_facturas'</span><span class="p">]</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">Q</span><span class="p">(</span><span class="n">calculo_operacion__cliente</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente_activo</span><span class="p">)</span> <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">calculo_triangulacion__cliente</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente_activo</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'fecha_desde_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'fecha_hasta_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="n">querystring</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">querystring</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'page'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'querystring'</span><span class="p">]</span> <span class="o">=</span> <span class="n">querystring</span><span class="o">.</span><span class="n">urlencode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="_cliente_propio">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views._cliente_propio">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_cliente_propio</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">cliente_pk</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve el ``Cliente`` con ``cliente_pk`` si está asociado al usuario autenticado, o deniega el acceso.</span>
+
+<span class="sd">    Usada por las vistas del reporte de transacciones para que un cliente</span>
+<span class="sd">    nunca pueda generar ni descargar el reporte de otro, ni siquiera</span>
+<span class="sd">    manipulando el ``cliente_pk`` en la URL (criterio 6 de la HU "Reporte</span>
+<span class="sd">    de transacciones del cliente", GE-39) — a diferencia de</span>
+<span class="sd">    ``MiHistorialTransaccionesView``/``MisFacturasElectronicasListView``,</span>
+<span class="sd">    que solo exponen el ``cliente_activo`` de la sesión (ya acotado a los</span>
+<span class="sd">    propios por ``ClienteActivoMiddleware``), el reporte recibe el cliente</span>
+<span class="sd">    explícitamente en la URL para permitir elegirlo cuando el usuario</span>
+<span class="sd">    tiene más de uno asociado, así que esta vista repite ese chequeo de</span>
+<span class="sd">    pertenencia por su cuenta, igual que</span>
+<span class="sd">    ``DescargarDocumentoElectronicoView._puede_ver``.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Http404: No existe ningún ``Cliente`` con ese ``pk``.</span>
+<span class="sd">        PermissionDenied: Existe, pero no está asociado al usuario autenticado.</span>
+<span class="sd">    """</span>
+    <span class="n">cliente</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Cliente</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">cliente_pk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">cliente</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">PermissionDenied</span>
+    <span class="k">return</span> <span class="n">cliente</span></div>
+
+
+
+<div class="viewcode-block" id="ReporteTransaccionesClienteView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReporteTransaccionesClienteView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Genera, con filtros, el reporte de transacciones de un cliente propio y sus totales.</span>
+
+<span class="sd">    Implementa la HU "Reporte de transacciones del cliente" (GE-39): a</span>
+<span class="sd">    partir de un rango de fechas obligatorio y, opcionalmente, el tipo de</span>
+<span class="sd">    operación (compra/venta/cambio) y el estado, muestra el listado de</span>
+<span class="sd">    transacciones que los cumplen junto con los totales por tipo y por</span>
+<span class="sd">    divisa, calculados solo sobre las completadas (criterios 1 y 2; ver</span>
+<span class="sd">    ``apps.divisas.reportes.generar_reporte``). Sin las dos fechas, solo</span>
+<span class="sd">    se ve el formulario vacío: no es un error, todavía no se pidió nada.</span>
+<span class="sd">    Un rango inválido se informa como error de validación sin listar nada</span>
+<span class="sd">    (criterio 5); sin resultados, se avisa que no hay datos y no se</span>
+<span class="sd">    ofrece ninguna descarga (criterio 4; ver la plantilla). Desde esta</span>
+<span class="sd">    misma pantalla se descarga el reporte en PDF o en Excel con los</span>
+<span class="sd">    mismos filtros aplicados (criterio 3, ver</span>
+<span class="sd">    ``DescargarReporteTransaccionesView``). Solo accede al cliente propio</span>
+<span class="sd">    (criterio 6; ver ``_cliente_propio``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/reporte_transacciones.html'</span>
+
+<div class="viewcode-block" id="ReporteTransaccionesClienteView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Autoriza a los mismos roles que ``MiHistorialTransaccionesView``."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span></div>
+
+
+<div class="viewcode-block" id="ReporteTransaccionesClienteView.get">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteTransaccionesClienteView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">cliente_pk</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve el cliente propio y arma el reporte con los filtros de la URL."""</span>
+        <span class="n">cliente</span> <span class="o">=</span> <span class="n">_cliente_propio</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">cliente_pk</span><span class="p">)</span>
+        <span class="n">resultado</span> <span class="o">=</span> <span class="n">generar_reporte</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">)</span>
+        <span class="n">querystring</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">querystring</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'page'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">contexto</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'cliente'</span><span class="p">:</span> <span class="n">cliente</span><span class="p">,</span>
+            <span class="s1">'tipos_disponibles'</span><span class="p">:</span> <span class="n">TIPO_CHOICES</span><span class="p">,</span>
+            <span class="s1">'estados_disponibles'</span><span class="p">:</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">ESTADO_CHOICES</span><span class="p">,</span>
+            <span class="s1">'querystring'</span><span class="p">:</span> <span class="n">querystring</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(),</span>
+            <span class="o">**</span><span class="n">resultado</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">template_name</span><span class="p">,</span> <span class="n">contexto</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DescargarReporteTransaccionesView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DescargarReporteTransaccionesView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Descarga, en PDF o en Excel, el mismo reporte que ya se ve en pantalla (criterio 3).</span>
+
+<span class="sd">    Rearma el reporte con los mismos filtros de la URL (ver</span>
+<span class="sd">    ``apps.divisas.reportes.generar_reporte``) en vez de recibir los datos</span>
+<span class="sd">    ya calculados, para no poder quedar desincronizada de</span>
+<span class="sd">    ``ReporteTransaccionesClienteView`` ni confiar en nada que haya</span>
+<span class="sd">    viajado por la URL salvo los filtros. No ofrece ningún archivo sin</span>
+<span class="sd">    datos (criterio 4) ni para un rango inválido (criterio 5): en ambos</span>
+<span class="sd">    casos vuelve a la pantalla del reporte con el motivo, en vez de</span>
+<span class="sd">    descargar un archivo vacío o roto.</span>
+<span class="sd">    """</span>
+
+    <span class="n">FORMATOS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'pdf'</span><span class="p">:</span> <span class="p">(</span><span class="n">generar_pdf</span><span class="p">,</span> <span class="s1">'application/pdf'</span><span class="p">,</span> <span class="s1">'pdf'</span><span class="p">),</span>
+        <span class="s1">'excel'</span><span class="p">:</span> <span class="p">(</span><span class="n">generar_excel</span><span class="p">,</span> <span class="s1">'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'</span><span class="p">,</span> <span class="s1">'xlsx'</span><span class="p">),</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="DescargarReporteTransaccionesView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Autoriza a los mismos roles que ``ReporteTransaccionesClienteView``."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span></div>
+
+
+<div class="viewcode-block" id="DescargarReporteTransaccionesView.get">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteTransaccionesView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">cliente_pk</span><span class="p">,</span> <span class="n">formato</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida el formato, los filtros y los datos antes de generar el archivo."""</span>
+        <span class="k">if</span> <span class="n">formato</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">FORMATOS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'Formato de descarga desconocido.'</span><span class="p">)</span>
+
+        <span class="n">cliente</span> <span class="o">=</span> <span class="n">_cliente_propio</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">cliente_pk</span><span class="p">)</span>
+        <span class="n">resultado</span> <span class="o">=</span> <span class="n">generar_reporte</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">)</span>
+        <span class="n">destino</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:reporte_transacciones'</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">'cliente_pk'</span><span class="p">:</span> <span class="n">cliente</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
+        <span class="n">querystring</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">urlencode</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">querystring</span><span class="p">:</span>
+            <span class="n">destino</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">destino</span><span class="si">}</span><span class="s1">?</span><span class="si">{</span><span class="n">querystring</span><span class="si">}</span><span class="s1">'</span>
+
+        <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'reporte_generado'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Indicá un rango de fechas para generar el reporte.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'filas'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No hay transacciones para los filtros elegidos.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+
+        <span class="n">funcion</span><span class="p">,</span> <span class="n">content_type</span><span class="p">,</span> <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FORMATOS</span><span class="p">[</span><span class="n">formato</span><span class="p">]</span>
+        <span class="n">contenido</span> <span class="o">=</span> <span class="n">funcion</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'filas'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'totales'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'generado_en'</span><span class="p">])</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">contenido</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
+        <span class="n">respuesta</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'attachment; filename="reporte_transacciones_</span><span class="si">{</span><span class="n">cliente</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s1">"'</span>
+        <span class="k">return</span> <span class="n">respuesta</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MonitoreoMixin">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MonitoreoMixin">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MonitoreoMixin</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Control de acceso del monitoreo: solo administración y análisis cambiario (criterio 6)."""</span>
+
+<div class="viewcode-block" id="MonitoreoMixin.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MonitoreoMixin.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el rol 'admin' o 'analista_cambiario' esté en la sesión."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MonitoreoTransaccionesView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MonitoreoTransaccionesView</span><span class="p">(</span><span class="n">MonitoreoMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Monitoreo, de solo consulta, de todas las transacciones del sistema.</span>
+
+<span class="sd">    Implementa la HU "Monitoreo de transacciones y reportes" (epic</span>
+<span class="sd">    GE-14). Muestra un listado paginado (``paginate_by``) de las</span>
+<span class="sd">    transacciones de todos los clientes y de todos los canales (ver</span>
+<span class="sd">    ``apps.divisas.monitoreo``), filtrable por rango de fechas, cliente,</span>
+<span class="sd">    tipo, divisa, estado, canal y "requiere atención" (entrega</span>
+<span class="sd">    pendiente, entrega incierta o pago fuera de plazo), que se destacan</span>
+<span class="sd">    en la tabla. Es de solo consulta: no define ``post`` y no ofrece</span>
+<span class="sd">    ningún control que cambie el estado de una transacción (criterio 7).</span>
+<span class="sd">    Desde acá se descarga el mismo listado filtrado en PDF o en Excel</span>
+<span class="sd">    (``DescargarMonitoreoView``). Solo acceden administradores y</span>
+<span class="sd">    analistas cambiarios (criterio 6, ver ``MonitoreoMixin``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/monitoreo_transacciones.html'</span>
+    <span class="n">paginate_by</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'get'</span><span class="p">,</span> <span class="s1">'head'</span><span class="p">,</span> <span class="s1">'options'</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MonitoreoTransaccionesView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MonitoreoTransaccionesView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Arma el listado paginado, los totales y los datos del formulario de filtros."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">resultado</span> <span class="o">=</span> <span class="n">generar_monitoreo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">)</span>
+        <span class="n">paginador</span> <span class="o">=</span> <span class="n">Paginator</span><span class="p">(</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filas'</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">paginate_by</span><span class="p">)</span>
+        <span class="n">pagina</span> <span class="o">=</span> <span class="n">paginador</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'page'</span><span class="p">))</span>
+        <span class="n">querystring</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">querystring</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'page'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="o">**</span><span class="n">resultado</span><span class="p">,</span>
+            <span class="s1">'page_obj'</span><span class="p">:</span> <span class="n">pagina</span><span class="p">,</span>
+            <span class="s1">'is_paginated'</span><span class="p">:</span> <span class="n">paginador</span><span class="o">.</span><span class="n">num_pages</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s1">'transacciones'</span><span class="p">:</span> <span class="n">pagina</span><span class="o">.</span><span class="n">object_list</span><span class="p">,</span>
+            <span class="s1">'tipos_disponibles'</span><span class="p">:</span> <span class="n">TIPO_CHOICES_GANANCIAS</span><span class="p">,</span>
+            <span class="s1">'estados_disponibles'</span><span class="p">:</span> <span class="n">ESTADO_CHOICES_MONITOREO</span><span class="p">,</span>
+            <span class="s1">'canales_disponibles'</span><span class="p">:</span> <span class="n">CANAL_CHOICES_MONITOREO</span><span class="p">,</span>
+            <span class="s1">'querystring'</span><span class="p">:</span> <span class="n">querystring</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(),</span>
+        <span class="p">})</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DescargarMonitoreoView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DescargarMonitoreoView</span><span class="p">(</span><span class="n">MonitoreoMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Descarga, en PDF o en Excel, el mismo listado filtrado que se ve en pantalla (criterio 5).</span>
+
+<span class="sd">    Rearma el listado con los mismos filtros de la URL (ver</span>
+<span class="sd">    ``apps.divisas.monitoreo.generar_monitoreo``) en vez de recibir datos</span>
+<span class="sd">    ya calculados, para no poder quedar desincronizada de</span>
+<span class="sd">    ``MonitoreoTransaccionesView``. Con un rango inválido o sin</span>
+<span class="sd">    transacciones para los filtros elegidos, vuelve a la pantalla con el</span>
+<span class="sd">    motivo en vez de descargar un archivo vacío o roto.</span>
+<span class="sd">    """</span>
+
+    <span class="n">FORMATOS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'pdf'</span><span class="p">:</span> <span class="p">(</span><span class="n">generar_pdf_monitoreo</span><span class="p">,</span> <span class="s1">'application/pdf'</span><span class="p">,</span> <span class="s1">'pdf'</span><span class="p">),</span>
+        <span class="s1">'excel'</span><span class="p">:</span> <span class="p">(</span><span class="n">generar_excel_monitoreo</span><span class="p">,</span> <span class="s1">'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'</span><span class="p">,</span> <span class="s1">'xlsx'</span><span class="p">),</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="DescargarMonitoreoView.get">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarMonitoreoView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">formato</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida el formato y los datos antes de generar el archivo."""</span>
+        <span class="k">if</span> <span class="n">formato</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">FORMATOS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'Formato de descarga desconocido.'</span><span class="p">)</span>
+
+        <span class="n">resultado</span> <span class="o">=</span> <span class="n">generar_monitoreo</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">)</span>
+        <span class="n">destino</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:monitoreo_transacciones'</span><span class="p">)</span>
+        <span class="n">querystring</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">urlencode</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">querystring</span><span class="p">:</span>
+            <span class="n">destino</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">destino</span><span class="si">}</span><span class="s1">?</span><span class="si">{</span><span class="n">querystring</span><span class="si">}</span><span class="s1">'</span>
+
+        <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'filas'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No hay transacciones para los filtros elegidos.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+
+        <span class="n">funcion</span><span class="p">,</span> <span class="n">content_type</span><span class="p">,</span> <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FORMATOS</span><span class="p">[</span><span class="n">formato</span><span class="p">]</span>
+        <span class="n">contenido</span> <span class="o">=</span> <span class="n">funcion</span><span class="p">(</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filas'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'totales'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">],</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'generado_en'</span><span class="p">])</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">contenido</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
+        <span class="n">respuesta</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'attachment; filename="monitoreo_transacciones.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s1">"'</span>
+        <span class="k">return</span> <span class="n">respuesta</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ReporteGananciasMixin">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReporteGananciasMixin</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Control de acceso del reporte de ganancias: solo administración y análisis cambiario (criterio 7)."""</span>
+
+<div class="viewcode-block" id="ReporteGananciasMixin.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasMixin.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Comprueba que el rol 'admin' o 'analista_cambiario' esté en la sesión."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">({</span><span class="s1">'admin'</span><span class="p">,</span> <span class="s1">'analista_cambiario'</span><span class="p">}</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">roles</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ReporteGananciasView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReporteGananciasView</span><span class="p">(</span><span class="n">ReporteGananciasMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Genera el reporte de ganancias de un período, agrupado según el criterio elegido.</span>
+
+<span class="sd">    Implementa la HU "Reporte de ganancias". A partir de un rango de</span>
+<span class="sd">    fechas obligatorio y un criterio de agrupación (día, mes, divisa, tipo</span>
+<span class="sd">    de operación, canal o caja y turno), muestra la ganancia y la cantidad</span>
+<span class="sd">    de operaciones de cada grupo junto con el total general (criterios 1 y</span>
+<span class="sd">    2). Todo el cálculo vive en</span>
+<span class="sd">    ``apps.divisas.reporte_ganancias.generar_reporte_ganancias``, que</span>
+<span class="sd">    reutiliza las filas y el total del tablero de ganancias para que ambos</span>
+<span class="sd">    coincidan (criterio 4). Sin las dos fechas solo se ve el formulario;</span>
+<span class="sd">    un rango inválido se informa sin calcular nada; sin operaciones se</span>
+<span class="sd">    avisa que no hay datos, sin error y sin ofrecer descargas (criterio 6).</span>
+<span class="sd">    Desde esta pantalla se descarga el mismo reporte en PDF o en Excel</span>
+<span class="sd">    (criterio 5, ver ``DescargarReporteGananciasView``). Solo acceden</span>
+<span class="sd">    administradores y analistas cambiarios (criterio 7, ver</span>
+<span class="sd">    ``ReporteGananciasMixin``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/reporte_ganancias.html'</span>
+    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'get'</span><span class="p">,</span> <span class="s1">'head'</span><span class="p">,</span> <span class="s1">'options'</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ReporteGananciasView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ReporteGananciasView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Arma el reporte con los filtros de la URL y las opciones del formulario."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">generar_reporte_ganancias</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">))</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'agrupaciones_disponibles'</span><span class="p">]</span> <span class="o">=</span> <span class="n">AGRUPACIONES_REPORTE_GANANCIAS</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'mensaje_sin_datos'</span><span class="p">]</span> <span class="o">=</span> <span class="n">MENSAJE_SIN_DATOS_REPORTE_GANANCIAS</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'querystring'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">urlencode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DescargarReporteGananciasView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DescargarReporteGananciasView</span><span class="p">(</span><span class="n">ReporteGananciasMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Descarga, en PDF o en Excel, el mismo reporte de ganancias que se ve en pantalla (criterio 5).</span>
+
+<span class="sd">    Rearma el reporte con los mismos filtros de la URL (ver</span>
+<span class="sd">    ``apps.divisas.reporte_ganancias.generar_reporte_ganancias``) en vez</span>
+<span class="sd">    de recibir datos ya calculados, para no poder quedar desincronizada de</span>
+<span class="sd">    ``ReporteGananciasView``. Sin rango de fechas, con un rango inválido o</span>
+<span class="sd">    sin operaciones en el período, vuelve a la pantalla con el motivo en</span>
+<span class="sd">    vez de descargar un archivo vacío o roto.</span>
+<span class="sd">    """</span>
+
+    <span class="n">FORMATOS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'pdf'</span><span class="p">:</span> <span class="p">(</span><span class="n">generar_pdf_reporte_ganancias</span><span class="p">,</span> <span class="s1">'application/pdf'</span><span class="p">,</span> <span class="s1">'pdf'</span><span class="p">),</span>
+        <span class="s1">'excel'</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">generar_excel_reporte_ganancias</span><span class="p">,</span>
+            <span class="s1">'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'</span><span class="p">,</span>
+            <span class="s1">'xlsx'</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="DescargarReporteGananciasView.get">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DescargarReporteGananciasView.get">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">formato</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Valida el formato, los filtros y los datos antes de generar el archivo."""</span>
+        <span class="k">if</span> <span class="n">formato</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">FORMATOS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'Formato de descarga desconocido.'</span><span class="p">)</span>
+
+        <span class="n">resultado</span> <span class="o">=</span> <span class="n">generar_reporte_ganancias</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">)</span>
+        <span class="n">destino</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span><span class="s1">'divisas:reporte_ganancias'</span><span class="p">)</span>
+        <span class="n">querystring</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">urlencode</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">querystring</span><span class="p">:</span>
+            <span class="n">destino</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">destino</span><span class="si">}</span><span class="s1">?</span><span class="si">{</span><span class="n">querystring</span><span class="si">}</span><span class="s1">'</span>
+
+        <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'error_rango'</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'reporte_generado'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Indicá un rango de fechas para generar el reporte.'</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'sin_datos'</span><span class="p">]:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">MENSAJE_SIN_DATOS_REPORTE_GANANCIAS</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+
+        <span class="n">funcion</span><span class="p">,</span> <span class="n">content_type</span><span class="p">,</span> <span class="n">extension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FORMATOS</span><span class="p">[</span><span class="n">formato</span><span class="p">]</span>
+        <span class="n">respuesta</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">funcion</span><span class="p">(</span><span class="n">resultado</span><span class="p">),</span> <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
+        <span class="n">nombre</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"reporte_ganancias_</span><span class="si">{</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">][</span><span class="s1">'fecha_desde'</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">][</span><span class="s1">'fecha_hasta'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"_</span><span class="si">{</span><span class="n">resultado</span><span class="p">[</span><span class="s1">'filtros'</span><span class="p">][</span><span class="s1">'agrupacion'</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="n">respuesta</span><span class="p">[</span><span class="s1">'Content-Disposition'</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'attachment; filename="</span><span class="si">{</span><span class="n">nombre</span><span class="si">}</span><span class="s1">"'</span>
+        <span class="k">return</span> <span class="n">respuesta</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DetalleMonitoreoTransaccionView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DetalleMonitoreoTransaccionView</span><span class="p">(</span><span class="n">MonitoreoMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Detalle de solo lectura de una transacción: pago, medios de origen y destino y factura (criterio 4).</span>
+
+<span class="sd">    No define ``post`` ni ofrece botones de reintento, confirmación o</span>
+<span class="sd">    cancelación (criterio 7): a diferencia de ``DetalleTransaccionOperacionView``,</span>
+<span class="sd">    que el cliente usa para reintentar su propia entrega, esta pantalla</span>
+<span class="sd">    solo consulta. ``tipo`` es ``'operacion'``, ``'cambio'`` o</span>
+<span class="sd">    ``'ventanilla'`` (ver ``apps.divisas.monitoreo.detalle_transaccion``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/monitoreo_detalle.html'</span>
+    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'get'</span><span class="p">,</span> <span class="s1">'head'</span><span class="p">,</span> <span class="s1">'options'</span><span class="p">]</span>
+
+<div class="viewcode-block" id="DetalleMonitoreoTransaccionView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DetalleMonitoreoTransaccionView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Resuelve la transacción o responde 404 si no existe."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">detalle</span> <span class="o">=</span> <span class="n">detalle_transaccion_monitoreo</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'tipo'</span><span class="p">],</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">'pk'</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">detalle</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'La transacción no existe.'</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">detalle</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">context</span></div>
 </div>
 
 
@@ -947,6 +1517,7 @@
         <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'divisas/detalle_transaccion_operacion.html'</span><span class="p">,</span> <span class="p">{</span>
             <span class="s1">'transaccion'</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">,</span>
             <span class="s1">'factura_pendiente'</span><span class="p">:</span> <span class="n">factura_pendiente_de_generacion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+            <span class="s1">'nota_credito'</span><span class="p">:</span> <span class="n">ultima_nota_credito</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
         <span class="p">})</span></div>
 
 
@@ -1011,6 +1582,7 @@
         <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'divisas/detalle_transaccion_cambio.html'</span><span class="p">,</span> <span class="p">{</span>
             <span class="s1">'transaccion'</span><span class="p">:</span> <span class="n">transaccion</span><span class="p">,</span>
             <span class="s1">'factura_pendiente'</span><span class="p">:</span> <span class="n">factura_pendiente_de_generacion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+            <span class="s1">'nota_credito'</span><span class="p">:</span> <span class="n">ultima_nota_credito</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
         <span class="p">})</span></div>
 
 
@@ -2099,6 +2671,51 @@
 
 
 
+<div class="viewcode-block" id="TableroGananciasView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TableroGananciasView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TableroGananciasView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">TemplateView</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Tablero de control de ganancias: indicadores, evolución y distribución, solo para administración.</span>
+
+<span class="sd">    Implementa la HU "Tablero de control de ganancias" (epic GE-14). Todo</span>
+<span class="sd">    el cálculo vive en ``apps.divisas.ganancias.generar_tablero`` (ver su</span>
+<span class="sd">    docstring de módulo para la definición exacta de "ganancia", "tipo de</span>
+<span class="sd">    operación" y "completada"); esta vista solo resuelve los parámetros de</span>
+<span class="sd">    la URL y arma el contexto, incluido el JSON que consume el gráfico de</span>
+<span class="sd">    evolución (criterio 3) con Chart.js, mismo patrón que</span>
+<span class="sd">    ``HistorialCotizacionesView``. Sin operaciones completadas en el</span>
+<span class="sd">    período, los indicadores quedan en cero y la plantilla muestra un</span>
+<span class="sd">    aviso en vez de un gráfico vacío o un error (criterio 7). Un rango de</span>
+<span class="sd">    fechas inválido tampoco es un error 500: la plantilla explica el</span>
+<span class="sd">    motivo y no calcula nada (criterio implícito de validación). Solo</span>
+<span class="sd">    accede un administrador (criterio 8, ver ``AdminDivisasMixin``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/tablero_ganancias.html'</span>
+
+<div class="viewcode-block" id="TableroGananciasView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.TableroGananciasView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Arma el tablero con los filtros de la URL y lo serializa para la plantilla."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">resultado</span> <span class="o">=</span> <span class="n">generar_tablero</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">resultado</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'periodos_disponibles'</span><span class="p">]</span> <span class="o">=</span> <span class="n">PERIODOS_GANANCIAS</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'tipos_disponibles'</span><span class="p">]</span> <span class="o">=</span> <span class="n">TIPO_CHOICES_GANANCIAS</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'canales_disponibles'</span><span class="p">]</span> <span class="o">=</span> <span class="n">CANAL_CHOICES_GANANCIAS</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'fecha_desde_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'fecha_hasta_actual'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'evolucion'</span><span class="p">]:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s1">'evolucion_json'</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">{</span><span class="s1">'periodo'</span><span class="p">:</span> <span class="n">punto</span><span class="p">[</span><span class="s1">'periodo'</span><span class="p">],</span> <span class="s1">'ganancia'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">punto</span><span class="p">[</span><span class="s1">'ganancia'</span><span class="p">])}</span>
+                    <span class="k">for</span> <span class="n">punto</span> <span class="ow">in</span> <span class="n">resultado</span><span class="p">[</span><span class="s1">'evolucion'</span><span class="p">][</span><span class="s1">'puntos'</span><span class="p">]</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">ConfiguracionVigenciaUpdateView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">UpdateView</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Permite al administrador configurar los tiempos de espera de las operaciones.</span>
 
@@ -2352,10 +2969,19 @@
 <div class="viewcode-block" id="DocumentosElectronicosListView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Trae de una sola vez el cliente de cada transacción facturada, para no repetir consultas."""</span>
+<span class="w">        </span><span class="sd">"""Trae de una sola vez el cliente de cada transacción facturada y la factura de cada nota de crédito."""</span>
         <span class="k">return</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
-            <span class="s1">'calculo_operacion__cliente'</span><span class="p">,</span> <span class="s1">'calculo_triangulacion__cliente'</span><span class="p">,</span>
+            <span class="s1">'calculo_operacion__cliente'</span><span class="p">,</span> <span class="s1">'calculo_triangulacion__cliente'</span><span class="p">,</span> <span class="s1">'operacion_ventanilla'</span><span class="p">,</span> <span class="s1">'factura_anulada'</span><span class="p">,</span>
         <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DocumentosElectronicosListView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.DocumentosElectronicosListView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega el catálogo de motivos de emisión para el formulario inline de "Emitir nota de crédito"."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'motivos_emision'</span><span class="p">]</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">MOTIVO_EMISION_CHOICES</span>
+        <span class="k">return</span> <span class="n">context</span></div>
 </div>
 
 
@@ -2415,6 +3041,112 @@
             <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'Estado consultado: </span><span class="si">{</span><span class="n">documento</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">()</span><span class="si">}</span><span class="s1">.'</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No se pudo consultar el estado ante SIFEN (sin respuesta de Factura Segura).'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:documentos_electronicos'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConsultarEstadoSifenMiFacturaView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConsultarEstadoSifenMiFacturaView</span><span class="p">(</span><span class="n">LoginRequiredMixin</span><span class="p">,</span> <span class="n">UserPassesTestMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Permite al cliente consultar ante SIFEN el estado de una factura de su cliente activo.</span>
+
+<span class="sd">    Es la versión para el cliente de ``ConsultarEstadoSifenDocumentoElectronicoView``</span>
+<span class="sd">    y se usa desde "Mis facturas electrónicas". Como ninguna tarea periódica</span>
+<span class="sd">    actualiza el estado de una factura, sin esta consulta una factura ya</span>
+<span class="sd">    aprobada o rechazada seguiría figurando "esperando aprobación" hasta que</span>
+<span class="sd">    un administrador la consultara. ``consultar_estado_sifen`` es una simple</span>
+<span class="sd">    lectura ante Factura Segura (nunca emite un documento), así que es</span>
+<span class="sd">    seguro ofrecérsela al cliente. Si el estado cambia, el cliente recibe</span>
+<span class="sd">    además la notificación correspondiente (ver ``NotificacionCliente``).</span>
+
+<span class="sd">    Solo acepta POST y solo sobre una factura del **cliente activo**: una</span>
+<span class="sd">    factura de otro cliente responde 404, sin revelar si existe (mismo</span>
+<span class="sd">    criterio que ``DescargarDocumentoElectronicoView``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'post'</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ConsultarEstadoSifenMiFacturaView.test_func">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.test_func">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Autoriza a los mismos roles que ``MisFacturasElectronicasListView``."""</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'keycloak_roles'</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">return</span> <span class="s1">'cliente'</span> <span class="ow">in</span> <span class="n">roles</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span></div>
+
+
+<div class="viewcode-block" id="ConsultarEstadoSifenMiFacturaView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.ConsultarEstadoSifenMiFacturaView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Consulta el estado ante SIFEN, informa el resultado y vuelve al listado.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): La request actual; ``next`` en el POST</span>
+<span class="sd">                indica a qué página del listado volver (con sus filtros).</span>
+<span class="sd">            pk (int): Identificador de la factura.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponseRedirect: A ``next`` si es una URL segura, o a</span>
+<span class="sd">            "Mis facturas electrónicas".</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Http404: La factura no existe o no es del cliente activo.</span>
+<span class="sd">        """</span>
+        <span class="n">cliente_activo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'cliente_activo'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Http404</span><span class="p">(</span><span class="s1">'No hay un cliente activo.'</span><span class="p">)</span>
+        <span class="n">documento</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span>
+            <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">Q</span><span class="p">(</span><span class="n">calculo_operacion__cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">)</span> <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">calculo_triangulacion__cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">documento</span><span class="o">.</span><span class="n">cdc</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'Esta factura todavía no se generó, así que no se puede consultar ante SIFEN.'</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">consultar_estado_sifen</span><span class="p">(</span><span class="n">documento</span><span class="p">):</span>
+            <span class="n">documento</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span>
+                <span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'Factura </span><span class="si">{</span><span class="n">documento</span><span class="o">.</span><span class="n">numero_documento</span><span class="si">}</span><span class="s1">: estado en SIFEN "</span><span class="si">{</span><span class="n">documento</span><span class="o">.</span><span class="n">get_estado_display</span><span class="p">()</span><span class="si">}</span><span class="s1">".'</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">'No se pudo consultar el estado ante SIFEN. Volvé a intentarlo más tarde.'</span><span class="p">)</span>
+
+        <span class="n">destino</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'next'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">destino</span> <span class="ow">and</span> <span class="n">url_has_allowed_host_and_scheme</span><span class="p">(</span>
+            <span class="n">destino</span><span class="p">,</span> <span class="n">allowed_hosts</span><span class="o">=</span><span class="p">{</span><span class="n">request</span><span class="o">.</span><span class="n">get_host</span><span class="p">()},</span> <span class="n">require_https</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">is_secure</span><span class="p">(),</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">destino</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:mis_facturas_electronicas'</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="EmitirNotaCreditoView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.EmitirNotaCreditoView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmitirNotaCreditoView</span><span class="p">(</span><span class="n">AdminDivisasMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Emite, a pedido de un administrador, una nota de crédito que anula una factura aprobada.</span>
+
+<span class="sd">    Implementa la HU "Nota de crédito": ``pk`` es la factura a anular,</span>
+<span class="sd">    ``motivo_emision`` (del catálogo SIFEN) llega por el ``POST`` del</span>
+<span class="sd">    formulario inline de ``documentos_electronicos.html``. Toda la</span>
+<span class="sd">    validación (criterio 4) y el armado del documento (criterio 1)</span>
+<span class="sd">    viven en ``apps.divisas.factura_electronica.emitir_nota_credito``;</span>
+<span class="sd">    esta vista solo la llama y refleja el resultado. Solo accede un</span>
+<span class="sd">    administrador (criterio 8, ver ``AdminDivisasMixin``).</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="EmitirNotaCreditoView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.EmitirNotaCreditoView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Llama a ``emitir_nota_credito`` y refleja el resultado en un mensaje."""</span>
+        <span class="n">factura</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">DocumentoElectronico</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="n">motivo_emision</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'motivo_emision'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="n">documento</span><span class="p">,</span> <span class="n">mensaje</span> <span class="o">=</span> <span class="n">emitir_nota_credito</span><span class="p">(</span><span class="n">factura</span><span class="p">,</span> <span class="n">motivo_emision</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">documento</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_GENERADO</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">mensaje</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">mensaje</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">'divisas:documentos_electronicos'</span><span class="p">)</span></div>
 </div>
 
@@ -2706,13 +3438,22 @@
 <div class="viewcode-block" id="MisNotificacionesView">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView">[documentos]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MisNotificacionesView</span><span class="p">(</span><span class="n">NotificacionesClienteMixin</span><span class="p">,</span> <span class="n">ListView</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Lista las notificaciones de cambio de tasa del usuario autenticado.</span>
+<span class="w">    </span><span class="sd">"""Lista las notificaciones del usuario autenticado: transacciones y facturas, y tasas de cambio.</span>
 
-<span class="sd">    Criterio de aceptación 4 de GE-51: las notificaciones se muestran</span>
-<span class="sd">    ordenadas de la más reciente a la más antigua. Cada una muestra la</span>
-<span class="sd">    divisa, el tipo de tasa, la tasa anterior, la nueva y si ya fue leída;</span>
-<span class="sd">    las no leídas ofrecen la acción de marcarlas como leídas (ver</span>
-<span class="sd">    ``MarcarNotificacionLeidaView``).</span>
+<span class="sd">    Criterio de aceptación 4 de GE-51: las notificaciones de tasas se</span>
+<span class="sd">    muestran ordenadas de la más reciente a la más antigua. Cada una</span>
+<span class="sd">    muestra la divisa, el tipo de tasa, la tasa anterior, la nueva y si ya</span>
+<span class="sd">    fue leída; las no leídas ofrecen la acción de marcarlas como leídas</span>
+<span class="sd">    (ver ``MarcarNotificacionLeidaView``).</span>
+
+<span class="sd">    HU "Notificaciones sobre transacciones y facturas": arriba, en su</span>
+<span class="sd">    propia sección con paginación independiente (parámetro</span>
+<span class="sd">    ``pagina_operaciones``), se listan las notificaciones de transacciones</span>
+<span class="sd">    y facturas, solo las del **cliente activo** (criterio 5, ver</span>
+<span class="sd">    ``apps.divisas.context_processors.notificaciones_cliente_activo``).</span>
+<span class="sd">    Cada una muestra el número de transacción o el CDC y el nuevo estado, y</span>
+<span class="sd">    se abre con ``AbrirNotificacionClienteView``, que la marca como leída y</span>
+<span class="sd">    lleva al detalle correspondiente (criterio 3).</span>
 <span class="sd">    """</span>
 
     <span class="n">template_name</span> <span class="o">=</span> <span class="s1">'divisas/mis_notificaciones.html'</span>
@@ -2722,12 +3463,58 @@
 <div class="viewcode-block" id="MisNotificacionesView.get_queryset">
 <a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_queryset">[documentos]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Devuelve solo las notificaciones propias, de la más nueva a la más vieja."""</span>
+<span class="w">        </span><span class="sd">"""Devuelve solo las notificaciones de tasas propias, de la más nueva a la más vieja."""</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">NotificacionTasa</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">usuario</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
             <span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">)</span>
             <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-creada_en'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">)</span>
         <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MisNotificacionesView.get_context_data">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.MisNotificacionesView.get_context_data">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_context_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Agrega la página de notificaciones de transacciones y facturas del cliente activo."""</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_context_data</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">operaciones</span> <span class="o">=</span> <span class="n">notificaciones_cliente_activo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-creada_en'</span><span class="p">,</span> <span class="s1">'-pk'</span><span class="p">)</span>
+        <span class="n">paginador</span> <span class="o">=</span> <span class="n">Paginator</span><span class="p">(</span><span class="n">operaciones</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">paginate_by</span><span class="p">)</span>
+        <span class="n">pagina</span> <span class="o">=</span> <span class="n">paginador</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'pagina_operaciones'</span><span class="p">))</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'notificaciones_operaciones'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pagina</span><span class="o">.</span><span class="n">object_list</span>
+        <span class="n">context</span><span class="p">[</span><span class="s1">'pagina_operaciones'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pagina</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AbrirNotificacionClienteView">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView">[documentos]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AbrirNotificacionClienteView</span><span class="p">(</span><span class="n">NotificacionesClienteMixin</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Abre una notificación de transacción o factura: la marca como leída y lleva a su detalle (criterio 3).</span>
+
+<span class="sd">    Solo acepta POST, como ``MarcarNotificacionLeidaView``, porque modifica</span>
+<span class="sd">    datos (protegido por CSRF). Responde 404 si la notificación no existe,</span>
+<span class="sd">    es de otro usuario o es de un cliente que no es el activo, sin revelar</span>
+<span class="sd">    cuál de los casos es (criterio 5). El detalle al que redirige vuelve a</span>
+<span class="sd">    comprobar por su cuenta que la transacción sea del cliente activo.</span>
+<span class="sd">    """</span>
+
+    <span class="n">http_method_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'post'</span><span class="p">]</span>
+
+<div class="viewcode-block" id="AbrirNotificacionClienteView.post">
+<a class="viewcode-back" href="../../../reference/apps.divisas.views.html#apps.divisas.views.AbrirNotificacionClienteView.post">[documentos]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Marca la notificación como leída y redirige al detalle de su transacción o factura.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (HttpRequest): La request actual.</span>
+<span class="sd">            pk (int): Identificador de la notificación.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HttpResponseRedirect: A ``NotificacionCliente.url_detalle``.</span>
+<span class="sd">        """</span>
+        <span class="n">notificacion</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">notificaciones_cliente_activo</span><span class="p">(</span><span class="n">request</span><span class="p">),</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="n">notificacion</span><span class="o">.</span><span class="n">marcar_como_leida</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">notificacion</span><span class="o">.</span><span class="n">url_detalle</span><span class="p">)</span></div>
 </div>
 
 

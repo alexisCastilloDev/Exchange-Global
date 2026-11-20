@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -65,7 +66,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -94,6 +98,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
@@ -102,6 +107,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
@@ -171,6 +177,17 @@
 <span class="sd">siempre ``intentar_emitir_documento_electronico``, que no relanza nada</span>
 <span class="sd">hacia quien la llama.</span>
 
+<span class="sd">También factura una compra/venta registrada en ventanilla</span>
+<span class="sd">(``apps.caja.models.OperacionVentanilla`` — ver</span>
+<span class="sd">``apps.caja.views.RegistrarOperacionVentanillaView``): a diferencia de</span>
+<span class="sd">una transacción online, se la considera "pagada" de inmediato (se cobra</span>
+<span class="sd">en efectivo, en el momento), así que ahí se llama a</span>
+<span class="sd">``intentar_emitir_documento_electronico`` apenas se registra la</span>
+<span class="sd">operación, no desde un webhook/confirmación de pago. El receptor de la</span>
+<span class="sd">factura (``_datos_receptor``) se arma distinto en ese caso: una</span>
+<span class="sd">``OperacionVentanilla`` no tiene ningún ``Cliente`` del sistema, así que</span>
+<span class="sd">usa sus propios datos de mostrador en vez de los del ``Cliente``.</span>
+
 <span class="sd">Autenticación: vía un ``Authentication-Token`` de larga duración</span>
 <span class="sd">(``settings.FACTURASEGURA_AUTH_TOKEN``), obtenido una sola vez por un</span>
 <span class="sd">administrador contra ``POST /login?include_auth_token`` y válido hasta</span>
@@ -230,6 +247,45 @@
 <span class="sd">plausible según la guía, no una verificación campo por campo contra el</span>
 <span class="sd">Manual Técnico de SIFEN 150 completo: revisar antes de la primera</span>
 <span class="sd">emisión real.</span>
+
+<span class="sd">Nota de crédito (HU "Nota de crédito"): ``emitir_nota_credito`` anula</span>
+<span class="sd">una factura ya aprobada, con el mismo total, receptor e ítems (porque</span>
+<span class="sd">``documento.transaccion``, para una nota de crédito, delega en</span>
+<span class="sd">``factura_anulada.transaccion`` — ver ``apps.divisas.models.</span>
+<span class="sd">DocumentoElectronico.transaccion``), más ``iMotEmi`` (motivo de</span>
+<span class="sd">emisión, elegido del catálogo) y el grupo de documento asociado</span>
+<span class="sd">(``gCamDEAsoc``) que referencia el CDC de la factura (ver</span>
+<span class="sd">``_armar_resumido_de``). Reutiliza toda la infraestructura ya existente</span>
+<span class="sd">para una factura —``_generar``/``_calcular``/``reintentar_emision``/</span>
+<span class="sd">``consultar_estado_sifen``/``descargar_kude``/``descargar_xml``— sin</span>
+<span class="sd">ninguna rama paralela: la única diferencia real es qué campos arma</span>
+<span class="sd">``_armar_resumido_de`` según ``documento.tipo_documento``. El nombre</span>
+<span class="sd">del campo del grupo de documento asociado (``gCamDEAsoc``/``iTipDocAso``/</span>
+<span class="sd">``dCdCDERef``) no está verificado contra el esquema real de Factura</span>
+<span class="sd">Segura (mismo criterio de "revisar antes de la primera emisión real"</span>
+<span class="sd">que el resto de los campos no confirmados del módulo) — ninguna prueba</span>
+<span class="sd">de este proyecto llama a la API real, siempre está mockeada.</span>
+
+<span class="sd">Cuando SIFEN aprueba una nota de crédito (``consultar_estado_sifen``),</span>
+<span class="sd">la factura que anula pasa a ``ESTADO_ANULADA`` en la misma llamada —</span>
+<span class="sd">no hace falta ninguna vista ni tarea separada para completar el</span>
+<span class="sd">criterio 2. Mientras tanto, no se puede emitir una segunda nota de</span>
+<span class="sd">crédito para la misma factura (ver ``puede_emitir_nota_credito``,</span>
+<span class="sd">respaldado por la ``UniqueConstraint`` del modelo): si SIFEN la</span>
+<span class="sd">rechaza, la anterior deja de contar como vigente y un administrador</span>
+<span class="sd">puede emitir una nueva (criterio 3); si falló por timeout o error de</span>
+<span class="sd">comunicación (``ESTADO_ERROR_GENERACION``), sigue contando como</span>
+<span class="sd">vigente —igual que una factura en el mismo estado— así que la única</span>
+<span class="sd">forma de continuar es "Reintentar" sobre esa misma fila, nunca una</span>
+<span class="sd">nota de crédito nueva (criterio 5).</span>
+
+<span class="sd">Una nota de crédito no mueve ningún dinero ni cambia el estado de la</span>
+<span class="sd">transacción (criterio 7): solo pasa el estado de la *factura* a</span>
+<span class="sd">"Anulada por nota de crédito", nunca el de ``CalculoOperacion``/</span>
+<span class="sd">``CalculoTriangulacion``/``OperacionVentanilla``, que siguen</span>
+<span class="sd">reflejando la operación real (acreditada, retirada, etc.) tal como</span>
+<span class="sd">quedó. La devolución de fondos, si corresponde, es un proceso</span>
+<span class="sd">administrativo aparte, fuera del alcance de esta HU.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -240,6 +296,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrityError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.caja.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperacionVentanilla</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetodoPago</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalculoOperacion</span><span class="p">,</span>
@@ -345,10 +402,17 @@
 <span class="sd">    hacía ``monto_final`` para una compra/venta (bug corregido).</span>
 <span class="sd">    El redondeo a entero reutiliza el mismo criterio que</span>
 <span class="sd">    ``apps.divisas.pagos_stripe`` ya usa para cobrar en PYG (moneda sin</span>
-<span class="sd">    decimales, tanto en Stripe como en SIFEN).</span>
+<span class="sd">    decimales, tanto en Stripe como en SIFEN). Una ``OperacionVentanilla``</span>
+<span class="sd">    (compra/venta en ventanilla, nunca un cambio entre divisas: ver</span>
+<span class="sd">    ``apps.caja.models.OperacionVentanilla``) ya trae su propio total en</span>
+<span class="sd">    PYG en ``monto_pyg``, calculado por la misma</span>
+<span class="sd">    ``apps.divisas.views._calcular_importe_operacion`` que usa el flujo</span>
+<span class="sd">    online — ninguna conversión adicional hace falta.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
         <span class="n">monto</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_final</span> <span class="o">*</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_venta_aplicada</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">OperacionVentanilla</span><span class="p">):</span>
+        <span class="n">monto</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_pyg</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">monto</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">monto_final</span>
     <span class="k">return</span> <span class="n">monto</span><span class="o">.</span><span class="n">to_integral_value</span><span class="p">(</span><span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span><span class="p">)</span></div>
@@ -365,7 +429,9 @@
 <span class="sd">    En un cambio, ``comision`` se calculó en la divisa de **destino**</span>
 <span class="sd">    (Paso B de ``_calcular_triangulacion``): se convierte a PYG con la</span>
 <span class="sd">    misma tasa usada en ese paso (``tasa_venta_aplicada``), igual que</span>
-<span class="sd">    ``_total_en_pyg``.</span>
+<span class="sd">    ``_total_en_pyg``. Una ``OperacionVentanilla`` también trae su</span>
+<span class="sd">    ``comision`` ya en PYG, igual que una compra/venta online: comparte</span>
+<span class="sd">    la rama "else".</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
         <span class="n">comision</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">comision</span> <span class="o">*</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_venta_aplicada</span>
@@ -456,10 +522,29 @@
 
 <span class="sd">    ``dDesTipTra`` es obligatorio siempre que se envíe ``iTipTra``: no</span>
 <span class="sd">    alcanza con mandar el código solo, hay que mandar también su texto.</span>
+
+<span class="sd">    Una ``OperacionVentanilla`` no tiene un ``tipo`` directamente</span>
+<span class="sd">    comparable: el suyo está escrito desde la perspectiva de la casa de</span>
+<span class="sd">    cambio ("Compra" es la casa comprándole al cliente), mientras que</span>
+<span class="sd">    ``CalculoOperacion.tipo`` (contra el que se compara arriba) está</span>
+<span class="sd">    escrito desde la perspectiva del cliente. Por eso se traduce primero</span>
+<span class="sd">    a su equivalente de ``CalculoOperacion`` con la misma inversión que ya</span>
+<span class="sd">    usa ``apps.caja.views.RegistrarOperacionVentanillaView`` para calcular</span>
+<span class="sd">    el monto ("Compra" de ventanilla ≡ "Venta" de ``CalculoOperacion``, y</span>
+<span class="sd">    viceversa — ver el docstring de ``apps.caja.models.OperacionVentanilla``),</span>
+<span class="sd">    en vez de reinterpretar el código SIFEN de cero para un modelo</span>
+<span class="sd">    distinto.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">'5'</span><span class="p">,</span> <span class="s1">'Venta de divisas'</span>
-    <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tipo</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">OperacionVentanilla</span><span class="p">):</span>
+        <span class="n">tipo_equivalente</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_VENTA</span> <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tipo</span> <span class="o">==</span> <span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_COMPRA</span>
+            <span class="k">else</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tipo_equivalente</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">tipo</span>
+    <span class="k">if</span> <span class="n">tipo_equivalente</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span><span class="p">:</span>
         <span class="k">return</span> <span class="s1">'6'</span><span class="p">,</span> <span class="s1">'Compra de divisas'</span>
     <span class="k">return</span> <span class="s1">'5'</span><span class="p">,</span> <span class="s1">'Venta de divisas'</span></div>
 
@@ -468,9 +553,11 @@
 <div class="viewcode-block" id="_descripcion_operacion">
 <a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._descripcion_operacion">[documentos]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_descripcion_operacion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Descripción legible del ítem, distinta para una compra/venta o un cambio entre divisas."""</span>
+<span class="w">    </span><span class="sd">"""Descripción legible del ítem, distinta para una compra/venta, un cambio, o una operación de ventanilla."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s1">'Cambio de </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_origen</span><span class="si">}</span><span class="s1"> a </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="si">}</span><span class="s1">'</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">OperacionVentanilla</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">()</span><span class="si">}</span><span class="s1"> de </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">'</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">get_tipo_display</span><span class="p">()</span><span class="si">}</span><span class="s1"> de </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa</span><span class="si">}</span><span class="s1">'</span></div>
 
 
@@ -501,6 +588,22 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_datos_receptor</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""CI/RUC, nombre y email del receptor, sea el ``Cliente`` de una transacción online o uno de ventanilla.</span>
+
+<span class="sd">    Una ``OperacionVentanilla`` no tiene ningún ``apps.clientes.models.</span>
+<span class="sd">    Cliente`` del sistema asociado (es un cliente de mostrador, sin</span>
+<span class="sd">    cuenta): sus propios ``cliente_identificador``/``cliente_nombre``/</span>
+<span class="sd">    ``cliente_email``, cargados por el cajero al registrar la operación</span>
+<span class="sd">    (ver ``apps.caja.forms.OperacionVentanillaForm``), hacen ese mismo</span>
+<span class="sd">    papel de receptor.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">OperacionVentanilla</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">cliente_identificador</span><span class="p">,</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">cliente_nombre</span><span class="p">,</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">cliente_email</span>
+    <span class="n">cliente</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span>
+    <span class="k">return</span> <span class="n">cliente</span><span class="o">.</span><span class="n">identificador</span><span class="p">,</span> <span class="n">cliente</span><span class="o">.</span><span class="n">nombre_completo</span><span class="p">,</span> <span class="n">_email_receptor</span><span class="p">(</span><span class="n">cliente</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="_info_adicional">
 <a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._info_adicional">[documentos]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_info_adicional</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
@@ -521,6 +624,8 @@
             <span class="sa">f</span><span class="s1">'Tasa aplicada: </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_cruzada</span><span class="si">}</span><span class="s1"> '</span>
             <span class="sa">f</span><span class="s1">'(</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_origen</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="si">}</span><span class="s1">)'</span>
         <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">OperacionVentanilla</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">'Tasa aplicada: </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_aplicada</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">/PYG)'</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s1">'Tasa aplicada: </span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">tasa_aplicada</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">transaccion</span><span class="o">.</span><span class="n">codigo_divisa</span><span class="si">}</span><span class="s1">/PYG)'</span></div>
 
 
@@ -528,15 +633,36 @@
 <div class="viewcode-block" id="_grupo_pago">
 <a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupo_pago">[documentos]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_grupo_pago</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Mapea el medio de pago real (``Pago.medio_pago``) al tipo de pago que espera la API.</span>
+<span class="w">    </span><span class="sd">"""Mapea el medio de pago real al tipo de pago que espera la API.</span>
 
 <span class="sd">    Un único pago por el total de la operación, ya en PYG (ver</span>
 <span class="sd">    ``_total_en_pyg``): esta HU no reparte el cobro en más de un medio.</span>
+<span class="sd">    Una ``OperacionVentanilla`` no tiene ningún ``Pago`` (se cobra en</span>
+<span class="sd">    efectivo, en el momento, en la propia ventanilla): se mapea directo</span>
+<span class="sd">    a ``iTiPago='1'`` (Efectivo), sin mirar ``transaccion.pago`` en</span>
+<span class="sd">    absoluto.</span>
 <span class="sd">    """</span>
     <span class="n">base</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'dMonTiPag'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">monto</span><span class="p">),</span> <span class="s1">'cMoneTiPag'</span><span class="p">:</span> <span class="s1">'PYG'</span><span class="p">,</span> <span class="s1">'dTiCamTiPag'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">OperacionVentanilla</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="s1">'iTiPago'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">pago</span><span class="o">.</span><span class="n">medio_pago</span> <span class="o">==</span> <span class="n">MetodoPago</span><span class="o">.</span><span class="n">TIPO_TARJETA</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="s1">'iTiPago'</span><span class="p">:</span> <span class="s1">'3'</span><span class="p">,</span> <span class="s1">'iDenTarj'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span> <span class="s1">'iForProPa'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">}</span>
     <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="p">,</span> <span class="s1">'iTiPago'</span><span class="p">:</span> <span class="s1">'5'</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_grupo_documento_asociado">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica._grupo_documento_asociado">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_grupo_documento_asociado</span><span class="p">(</span><span class="n">documento</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Grupo ``gCamDEAsoc`` de una nota de crédito: referencia el CDC de la factura que anula.</span>
+
+<span class="sd">    Nombre de campo no verificado contra el esquema real de Factura</span>
+<span class="sd">    Segura (ver el docstring del módulo): ``iTipDocAso='1'`` (Electrónico)</span>
+<span class="sd">    y ``dCdCDERef`` con el CDC de ``documento.factura_anulada``, que a</span>
+<span class="sd">    esta altura ya tiene que estar aprobada (ver</span>
+<span class="sd">    ``puede_emitir_nota_credito``), así que siempre tiene un CDC.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">[{</span><span class="s1">'iTipDocAso'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span> <span class="s1">'dCdCDERef'</span><span class="p">:</span> <span class="n">documento</span><span class="o">.</span><span class="n">factura_anulada</span><span class="o">.</span><span class="n">cdc</span><span class="p">}]</span></div>
 
 
 
@@ -552,7 +678,14 @@
 <span class="sd">    Receptor modelado siempre como "No Contribuyente"/consumidor final</span>
 <span class="sd">    por cédula (``iNatRec='2'``), lo que a su vez implica</span>
 <span class="sd">    ``iTiOpe='2'`` (B2C): un "No Contribuyente" nunca es la contraparte</span>
-<span class="sd">    de una operación B2B.</span>
+<span class="sd">    de una operación B2B. Para una nota de crédito</span>
+<span class="sd">    (``documento.tipo_documento == TIPO_NOTA_CREDITO``), ``transaccion``</span>
+<span class="sd">    y ``monto`` ya son los de la factura que anula (vienen de</span>
+<span class="sd">    ``documento.transaccion``/``_total_en_pyg`` sobre esa misma</span>
+<span class="sd">    transacción, ver ``emitir_nota_credito``): se agregan, además, el</span>
+<span class="sd">    motivo de emisión (``iMotEmi``) y el documento asociado</span>
+<span class="sd">    (``gCamDEAsoc``, ver ``_grupo_documento_asociado``), que una</span>
+<span class="sd">    factura nunca lleva.</span>
 
 <span class="sd">    Nota: varios códigos de clasificación documentados solo como</span>
 <span class="sd">    "ver Manual SIFEN" (``iTipEmi``, ``iTImp``, ``iIndPres``) quedan</span>
@@ -562,9 +695,15 @@
 <span class="sd">    ``dDesTipTra`` (ver ``_tipo_transaccion``) sí están verificados</span>
 <span class="sd">    contra la tabla real del manual.</span>
 <span class="sd">    """</span>
-    <span class="n">cliente</span> <span class="o">=</span> <span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span>
+    <span class="n">identificador_receptor</span><span class="p">,</span> <span class="n">nombre_receptor</span><span class="p">,</span> <span class="n">email_receptor</span> <span class="o">=</span> <span class="n">_datos_receptor</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
     <span class="n">ahora</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
     <span class="n">tipo_transaccion</span><span class="p">,</span> <span class="n">descripcion_tipo_transaccion</span> <span class="o">=</span> <span class="n">_tipo_transaccion</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="n">campos_nota_credito</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">documento</span><span class="o">.</span><span class="n">tipo_documento</span> <span class="o">==</span> <span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_NOTA_CREDITO</span><span class="p">:</span>
+        <span class="n">campos_nota_credito</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">'iMotEmi'</span><span class="p">:</span> <span class="n">documento</span><span class="o">.</span><span class="n">motivo_emision</span><span class="p">,</span>
+            <span class="s1">'gCamDEAsoc'</span><span class="p">:</span> <span class="n">_grupo_documento_asociado</span><span class="p">(</span><span class="n">documento</span><span class="p">),</span>
+        <span class="p">}</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s1">'iTipEmi'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
         <span class="s1">'iTiDE'</span><span class="p">:</span> <span class="n">documento</span><span class="o">.</span><span class="n">tipo_documento</span><span class="p">,</span>
@@ -595,9 +734,9 @@
         <span class="s1">'iTiOpe'</span><span class="p">:</span> <span class="s1">'2'</span><span class="p">,</span>
         <span class="s1">'cPaisRec'</span><span class="p">:</span> <span class="s1">'PRY'</span><span class="p">,</span>
         <span class="s1">'iTipIDRec'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
-        <span class="s1">'dNumIDRec'</span><span class="p">:</span> <span class="n">cliente</span><span class="o">.</span><span class="n">identificador</span><span class="p">,</span>
-        <span class="s1">'dNomRec'</span><span class="p">:</span> <span class="n">cliente</span><span class="o">.</span><span class="n">nombre_completo</span><span class="p">,</span>
-        <span class="s1">'dEmailRec'</span><span class="p">:</span> <span class="n">_email_receptor</span><span class="p">(</span><span class="n">cliente</span><span class="p">),</span>
+        <span class="s1">'dNumIDRec'</span><span class="p">:</span> <span class="n">identificador_receptor</span><span class="p">,</span>
+        <span class="s1">'dNomRec'</span><span class="p">:</span> <span class="n">nombre_receptor</span><span class="p">,</span>
+        <span class="s1">'dEmailRec'</span><span class="p">:</span> <span class="n">email_receptor</span><span class="p">,</span>
         <span class="s1">'iIndPres'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
         <span class="s1">'iCondOpe'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
         <span class="s1">'gPaConEIni'</span><span class="p">:</span> <span class="p">[</span><span class="n">_grupo_pago</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">monto</span><span class="p">)],</span>
@@ -609,6 +748,7 @@
         <span class="s1">'dDVId'</span><span class="p">:</span> <span class="s1">'0'</span><span class="p">,</span>
         <span class="s1">'dSisFact'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span>
         <span class="s1">'dInfAdic'</span><span class="p">:</span> <span class="n">_info_adicional</span><span class="p">(</span><span class="n">transaccion</span><span class="p">),</span>
+        <span class="o">**</span><span class="n">campos_nota_credito</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
@@ -651,19 +791,20 @@
 <span class="sd">    y el número ya reservado queda igual de "quemado" por diseño (ver</span>
 <span class="sd">    el docstring del módulo).</span>
 
-<span class="sd">    Antes de llamar a la API, valida que el cliente tenga un email</span>
-<span class="sd">    cargado (``_email_receptor``): ``dEmailRec`` es obligatorio para</span>
+<span class="sd">    Antes de llamar a la API, valida que el receptor tenga un email</span>
+<span class="sd">    cargado (``_datos_receptor``): ``dEmailRec`` es obligatorio para</span>
 <span class="sd">    Factura Segura (lo confirmó un rechazo real, ``code=-10009``,</span>
 <span class="sd">    durante las pruebas de esta HU). Si falta, no se llama a la API en</span>
 <span class="sd">    absoluto: es un dato que nunca va a cambiar solo reintentando</span>
 <span class="sd">    contra el mismo número.</span>
 <span class="sd">    """</span>
     <span class="n">limite</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s1">'error_generacion'</span><span class="p">)</span><span class="o">.</span><span class="n">max_length</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_email_receptor</span><span class="p">(</span><span class="n">transaccion</span><span class="o">.</span><span class="n">cliente</span><span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">email_receptor</span> <span class="o">=</span> <span class="n">_datos_receptor</span><span class="p">(</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">email_receptor</span><span class="p">:</span>
         <span class="n">documento</span><span class="o">.</span><span class="n">error_generacion</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s1">'El cliente no tiene un email cargado (ni en su usuario de Keycloak ni en el '</span>
-            <span class="s1">'campo legado). dEmailRec es obligatorio para Factura Segura: cargar el email '</span>
-            <span class="s1">'del cliente y reintentar.'</span>
+            <span class="s1">'El cliente no tiene un email cargado (ni en su usuario de Keycloak, ni en el '</span>
+            <span class="s1">'campo legado, ni cargado a mano en ventanilla). dEmailRec es obligatorio para '</span>
+            <span class="s1">'Factura Segura: cargar el email del cliente y reintentar.'</span>
         <span class="p">)[:</span><span class="n">limite</span><span class="p">]</span>
         <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ERROR_GENERACION</span>
         <span class="n">documento</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'error_generacion'</span><span class="p">,</span> <span class="s1">'actualizado_en'</span><span class="p">])</span>
@@ -743,8 +884,10 @@
 <span class="sd">    (exitoso o no), lo devuelve sin volver a llamar a Factura Segura.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        transaccion: Una ``CalculoOperacion`` o ``CalculoTriangulacion``</span>
-<span class="sd">            recién marcada "Pagada".</span>
+<span class="sd">        transaccion: Una ``CalculoOperacion``/``CalculoTriangulacion``</span>
+<span class="sd">            recién marcada "Pagada", o una ``OperacionVentanilla`` recién</span>
+<span class="sd">            registrada (siempre "pagada" en los hechos: se cobra en</span>
+<span class="sd">            efectivo en el momento).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        DocumentoElectronico | None: El documento (nuevo o ya</span>
@@ -758,7 +901,12 @@
     <span class="k">if</span> <span class="n">documento_existente</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">documento_existente</span>
 
-    <span class="n">campo</span> <span class="o">=</span> <span class="s1">'calculo_operacion'</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">)</span> <span class="k">else</span> <span class="s1">'calculo_triangulacion'</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">CalculoOperacion</span><span class="p">):</span>
+        <span class="n">campo</span> <span class="o">=</span> <span class="s1">'calculo_operacion'</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="n">OperacionVentanilla</span><span class="p">):</span>
+        <span class="n">campo</span> <span class="o">=</span> <span class="s1">'operacion_ventanilla'</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">campo</span> <span class="o">=</span> <span class="s1">'calculo_triangulacion'</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">numero_documento</span> <span class="o">=</span> <span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">siguiente_numero</span><span class="p">(</span><span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_FACTURA</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">RangoDocumentosAgotadoError</span><span class="p">:</span>
@@ -878,6 +1026,19 @@
     <span class="n">documento</span><span class="o">.</span><span class="n">desc_sifen</span> <span class="o">=</span> <span class="n">documento</span><span class="o">.</span><span class="n">desc_sifen</span><span class="p">[:</span><span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s1">'desc_sifen'</span><span class="p">)</span><span class="o">.</span><span class="n">max_length</span><span class="p">]</span>
     <span class="n">documento</span><span class="o">.</span><span class="n">error_sifen</span> <span class="o">=</span> <span class="n">documento</span><span class="o">.</span><span class="n">error_sifen</span><span class="p">[:</span><span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="s1">'error_sifen'</span><span class="p">)</span><span class="o">.</span><span class="n">max_length</span><span class="p">]</span>
     <span class="n">documento</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'estado_sifen'</span><span class="p">,</span> <span class="s1">'desc_sifen'</span><span class="p">,</span> <span class="s1">'error_sifen'</span><span class="p">,</span> <span class="s1">'consultado_en'</span><span class="p">,</span> <span class="s1">'actualizado_en'</span><span class="p">])</span>
+
+    <span class="c1"># Criterio 2 de la HU "Nota de crédito": una nota de crédito recién</span>
+    <span class="c1"># aprobada anula, en esta misma consulta, la factura que referencia.</span>
+    <span class="c1"># Un rechazo, en cambio, no le hace nada a la factura (criterio 3):</span>
+    <span class="c1"># sigue "Aprobada" y el administrador puede emitir una nueva.</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">documento</span><span class="o">.</span><span class="n">tipo_documento</span> <span class="o">==</span> <span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_NOTA_CREDITO</span>
+        <span class="ow">and</span> <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="ow">in</span> <span class="p">(</span><span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_APROBADO</span><span class="p">,</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_APROBADO_OBS</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="n">factura</span> <span class="o">=</span> <span class="n">documento</span><span class="o">.</span><span class="n">factura_anulada</span>
+        <span class="n">factura</span><span class="o">.</span><span class="n">estado</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ANULADA</span>
+        <span class="n">factura</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">'estado'</span><span class="p">,</span> <span class="s1">'actualizado_en'</span><span class="p">])</span>
+
     <span class="k">return</span> <span class="kc">True</span></div>
 
 
@@ -911,6 +1072,103 @@
         <span class="k">return</span> <span class="kc">False</span>
     <span class="n">_generar</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">documento</span><span class="o">.</span><span class="n">transaccion</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_GENERADO</span></div>
+
+
+
+<div class="viewcode-block" id="ultima_nota_credito">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.ultima_nota_credito">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ultima_nota_credito</span><span class="p">(</span><span class="n">transaccion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Devuelve la nota de crédito más reciente de la factura de ``transaccion``, o ``None`` si no tiene ninguna.</span>
+
+<span class="sd">    Para que las pantallas de detalle del cliente (criterio 6) y de</span>
+<span class="sd">    administración puedan mostrar siempre el estado más actual de la</span>
+<span class="sd">    relación factura/nota de crédito con una sola llamada, sin</span>
+<span class="sd">    importar si hubo una nota de crédito rechazada antes.</span>
+<span class="sd">    """</span>
+    <span class="n">documento</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">transaccion</span><span class="p">,</span> <span class="s1">'documento_electronico'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">documento</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">documento</span><span class="o">.</span><span class="n">notas_credito</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">'-creado_en'</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="puede_emitir_nota_credito">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.puede_emitir_nota_credito">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">puede_emitir_nota_credito</span><span class="p">(</span><span class="n">factura</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Indica si se puede emitir una nota de crédito para ``factura``, y por qué no si no se puede (criterio 4).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        factura (DocumentoElectronico): El documento a anular (debe ser</span>
+<span class="sd">            una factura, ``tipo_documento=TIPO_FACTURA``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[bool, str]: ``(True, '')`` si se puede, o ``(False,</span>
+<span class="sd">        motivo)`` listo para mostrarle al administrador.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">factura</span><span class="o">.</span><span class="n">tipo_documento</span> <span class="o">!=</span> <span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_FACTURA</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">'Solo se puede emitir una nota de crédito para una factura.'</span>
+    <span class="k">if</span> <span class="n">factura</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_ANULADA</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">'Esta factura ya fue anulada por una nota de crédito.'</span>
+    <span class="k">if</span> <span class="n">factura</span><span class="o">.</span><span class="n">estado</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_APROBADO</span><span class="p">,</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_APROBADO_OBS</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">'Solo se puede emitir una nota de crédito para una factura aprobada por SIFEN.'</span>
+    <span class="k">if</span> <span class="n">factura</span><span class="o">.</span><span class="n">tiene_nota_credito_vigente</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">'Esta factura ya tiene una nota de crédito pendiente o aprobada.'</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">''</span></div>
+
+
+
+<div class="viewcode-block" id="emitir_nota_credito">
+<a class="viewcode-back" href="../../../reference/apps.divisas.factura_electronica.html#apps.divisas.factura_electronica.emitir_nota_credito">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">emitir_nota_credito</span><span class="p">(</span><span class="n">factura</span><span class="p">,</span> <span class="n">motivo_emision</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Emite una nota de crédito que anula ``factura`` por ``motivo_emision`` (criterio 1).</span>
+
+<span class="sd">    Repite el total, el receptor y los ítems de ``factura`` porque</span>
+<span class="sd">    comparte su misma transacción (``documento.transaccion``, para una</span>
+<span class="sd">    nota de crédito, delega en ``factura_anulada.transaccion`` — ver</span>
+<span class="sd">    ``apps.divisas.models.DocumentoElectronico.transaccion``): ni este</span>
+<span class="sd">    módulo ni ``_armar_resumido_de`` tienen que repetir ningún dato a</span>
+<span class="sd">    mano. Repite ``puede_emitir_nota_credito`` acá adentro (no solo en</span>
+<span class="sd">    la vista) para que esta función sea segura de llamar directamente,</span>
+<span class="sd">    incluso en una prueba o en otro punto de entrada futuro.</span>
+
+<span class="sd">    No mueve ningún dinero ni cambia el estado de la transacción</span>
+<span class="sd">    (criterio 7, ver el docstring del módulo): solo crea el</span>
+<span class="sd">    ``DocumentoElectronico`` de la nota de crédito y lo envía. La</span>
+<span class="sd">    factura pasa a "Anulada" más adelante, solo si SIFEN aprueba esta</span>
+<span class="sd">    nota de crédito (ver ``consultar_estado_sifen``).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        factura (DocumentoElectronico): La factura a anular.</span>
+<span class="sd">        motivo_emision (str): Uno de ``DocumentoElectronico.MOTIVO_EMISION_CHOICES``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[DocumentoElectronico | None, str]: El documento de la</span>
+<span class="sd">        nota de crédito (``None`` si no se pudo crear) y un mensaje</span>
+<span class="sd">        para mostrarle al administrador, de éxito o del motivo por el</span>
+<span class="sd">        que no se pudo.</span>
+<span class="sd">    """</span>
+    <span class="n">puede</span><span class="p">,</span> <span class="n">motivo_rechazo</span> <span class="o">=</span> <span class="n">puede_emitir_nota_credito</span><span class="p">(</span><span class="n">factura</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">puede</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">motivo_rechazo</span>
+    <span class="k">if</span> <span class="n">motivo_emision</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">MOTIVO_EMISION_CHOICES</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">'Elegí un motivo de emisión válido.'</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">numero_documento</span> <span class="o">=</span> <span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">siguiente_numero</span><span class="p">(</span><span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_NOTA_CREDITO</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">RangoDocumentosAgotadoError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">'No se pudo emitir la nota de crédito de la factura #</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">'</span><span class="p">,</span> <span class="n">factura</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+
+    <span class="n">documento</span> <span class="o">=</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">tipo_documento</span><span class="o">=</span><span class="n">ContadorDocumentoElectronico</span><span class="o">.</span><span class="n">TIPO_NOTA_CREDITO</span><span class="p">,</span>
+        <span class="n">numero_documento</span><span class="o">=</span><span class="n">numero_documento</span><span class="p">,</span>
+        <span class="n">factura_anulada</span><span class="o">=</span><span class="n">factura</span><span class="p">,</span>
+        <span class="n">motivo_emision</span><span class="o">=</span><span class="n">motivo_emision</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">_generar</span><span class="p">(</span><span class="n">documento</span><span class="p">,</span> <span class="n">documento</span><span class="o">.</span><span class="n">transaccion</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">documento</span><span class="o">.</span><span class="n">estado</span> <span class="o">==</span> <span class="n">DocumentoElectronico</span><span class="o">.</span><span class="n">ESTADO_GENERADO</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">documento</span><span class="p">,</span> <span class="s1">'La nota de crédito se envió correctamente. Queda pendiente de aprobación por SIFEN.'</span>
+    <span class="k">return</span> <span class="n">documento</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'La nota de crédito no se pudo generar: </span><span class="si">{</span><span class="n">documento</span><span class="o">.</span><span class="n">error_generacion</span><span class="si">}</span><span class="s1">'</span></div>
 
 
 

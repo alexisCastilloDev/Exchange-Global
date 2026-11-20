@@ -1,0 +1,588 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>apps.divisas.ganancias &mdash; Global Exchange | Documentación técnica</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=6ed61967" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9c9b61ad"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Global Exchange
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenidos:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia.html">Guía del sistema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#formato-numerico">Formato numérico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-de-autenticacion">Flujo de autenticación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guia.html#tarjeta-guardada-alta-via-stripe-cobro-directo-sin-pasar-por-stripe">Tarjeta guardada: alta vía Stripe, cobro directo sin pasar por Stripe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#pago-por-transferencia-bancaria-o-billetera-digital-via-sipap">Pago por transferencia bancaria o billetera digital vía SIPAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#venta-de-divisas">Venta de divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#comision-configurable">Comisión configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#tiempos-de-espera-configurables">Tiempos de espera configurables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#apertura-de-caja">Apertura de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#operaciones-en-ventanilla">Operaciones en ventanilla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../base-datos-roles.html">Guía de base de datos y roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#resumen-de-responsabilidades">Resumen de responsabilidades</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#base-de-datos-utilizada">Base de datos utilizada</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-de-negocio">Tablas de negocio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#auth-user"><code class="docutils literal notranslate"><span class="pre">auth_user</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente"><code class="docutils literal notranslate"><span class="pre">clientes_cliente</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-cliente-usuarios"><code class="docutils literal notranslate"><span class="pre">clientes_cliente_usuarios</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#clientes-metodopago"><code class="docutils literal notranslate"><span class="pre">clientes_metodopago</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-divisa"><code class="docutils literal notranslate"><span class="pre">divisas_divisa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-cotizacion"><code class="docutils literal notranslate"><span class="pre">divisas_cotizacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#divisas-calculooperacion"><code class="docutils literal notranslate"><span class="pre">divisas_calculooperacion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../base-datos-roles.html#authentication-historialbaja"><code class="docutils literal notranslate"><span class="pre">authentication_historialbaja</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#tablas-tecnicas-de-django">Tablas técnicas de Django</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#roles-de-negocio-actuales">Roles de negocio actuales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#mecanismo-de-autorizacion">Mecanismo de autorización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../base-datos-roles.html#que-debe-existir-y-que-no-debe-modificarse">Qué debe existir y qué no debe modificarse</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../templates.html">Referencia de templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#template-base">Template base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#paginas-generales">Páginas generales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#divisas">Divisas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#caja">Caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../templates.html#parciales">Parciales</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/modules.html">Referencia API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/apps.html">apps package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.authentication.html">apps.authentication package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.caja.html">apps.caja package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.clientes.html">apps.clientes package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.divisas.html">apps.divisas package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/apps.users.html">apps.users package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/apps.html#module-apps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reference/global_exchange.html">global_exchange package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.settings.html">global_exchange.settings package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.asgi.html">global_exchange.asgi module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.auth.html">global_exchange.auth module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.urls.html">global_exchange.urls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.views.html">global_exchange.views module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/global_exchange.wsgi.html">global_exchange.wsgi module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reference/global_exchange.html#module-global_exchange">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Global Exchange</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">apps.divisas.ganancias</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para apps.divisas.ganancias</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Tablero de control de ganancias: indicadores, evolución y distribución (HU GE, epic GE-14).</span>
+
+<span class="sd">La ganancia de cada transacción completada es la comisión que cobra Global</span>
+<span class="sd">Exchange, siempre normalizada a guaraníes:</span>
+
+<span class="sd">- Una compra o venta online (``CalculoOperacion``) y una operación de</span>
+<span class="sd">  ventanilla (``apps.caja.models.OperacionVentanilla``) ya cobran su</span>
+<span class="sd">  comisión en PYG (ver ``apps.divisas.views._calcular_importe_operacion``,</span>
+<span class="sd">  que calculan ambas).</span>
+<span class="sd">- Un cambio entre divisas (``CalculoTriangulacion``) cobra su comisión en</span>
+<span class="sd">  la divisa de **destino**, no en PYG (ver</span>
+<span class="sd">  ``apps.divisas.views._calcular_triangulacion``): se reconvierte</span>
+<span class="sd">  multiplicándola por ``tasa_venta_aplicada``, la misma tasa con la que esa</span>
+<span class="sd">  comisión se descontó del monto bruto en destino.</span>
+
+<span class="sd">El "tipo de operación" del tablero (``CASA_COMPRA``/``CASA_VENTA``/``CAMBIO``)</span>
+<span class="sd">está siempre en la perspectiva de la **casa de cambio**, no del cliente: es</span>
+<span class="sd">la misma inversión, ya resuelta una vez para ``apps.divisas.factura_electronica.</span>
+<span class="sd">_tipo_transaccion``, entre ``CalculoOperacion`` (perspectiva del cliente: su</span>
+<span class="sd">``TIPO_COMPRA`` es el cliente comprando, es decir, la casa *vendiendo*) y</span>
+<span class="sd">``OperacionVentanilla`` (perspectiva de la casa de entrada: su ``TIPO_COMPRA``</span>
+<span class="sd">ya significa "la casa compra"). Sin esta inversión, agrupar por tipo</span>
+<span class="sd">mezclaría operaciones económicamente opuestas bajo la misma etiqueta.</span>
+
+<span class="sd">Solo cuentan las transacciones *completadas* (criterio 6): ``ACREDITADA`` o</span>
+<span class="sd">``RETIRADA`` para ``CalculoOperacion``/``CalculoTriangulacion`` (ver</span>
+<span class="sd">``apps.divisas.reportes.ESTADOS_COMPLETADOS``, el mismo criterio que ya usa</span>
+<span class="sd">el reporte de transacciones del cliente); una ``OperacionVentanilla`` no</span>
+<span class="sd">tiene ningún estado propio — se liquida en efectivo en el momento, así que</span>
+<span class="sd">toda fila ya está completada por definición.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROUND_HALF_UP</span><span class="p">,</span> <span class="n">Decimal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.caja.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperacionVentanilla</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalculoOperacion</span><span class="p">,</span> <span class="n">CalculoTriangulacion</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.reportes</span><span class="w"> </span><span class="kn">import</span> <span class="n">ESTADOS_COMPLETADOS</span>
+
+<span class="n">CASA_COMPRA</span> <span class="o">=</span> <span class="s1">'CASA_COMPRA'</span>
+<span class="n">CASA_VENTA</span> <span class="o">=</span> <span class="s1">'CASA_VENTA'</span>
+<span class="n">CAMBIO</span> <span class="o">=</span> <span class="s1">'CAMBIO'</span>
+<span class="n">TIPO_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="n">CASA_COMPRA</span><span class="p">,</span> <span class="s1">'Compra'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">CASA_VENTA</span><span class="p">,</span> <span class="s1">'Venta'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">CAMBIO</span><span class="p">,</span> <span class="s1">'Cambio'</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">CANAL_ONLINE</span> <span class="o">=</span> <span class="s1">'online'</span>
+<span class="n">CANAL_VENTANILLA</span> <span class="o">=</span> <span class="s1">'ventanilla'</span>
+<span class="n">CANAL_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="n">CANAL_ONLINE</span><span class="p">,</span> <span class="s1">'Online'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">CANAL_VENTANILLA</span><span class="p">,</span> <span class="s1">'Ventanilla'</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">PERIODO_HOY</span> <span class="o">=</span> <span class="s1">'hoy'</span>
+<span class="n">PERIODO_SEMANA</span> <span class="o">=</span> <span class="s1">'semana'</span>
+<span class="n">PERIODO_MES</span> <span class="o">=</span> <span class="s1">'mes'</span>
+<span class="n">PERIODO_ANIO</span> <span class="o">=</span> <span class="s1">'anio'</span>
+<span class="n">PERIODOS</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([</span>
+    <span class="p">(</span><span class="n">PERIODO_HOY</span><span class="p">,</span> <span class="s1">'Hoy'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">PERIODO_SEMANA</span><span class="p">,</span> <span class="s1">'Última semana'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">PERIODO_MES</span><span class="p">,</span> <span class="s1">'Último mes'</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">PERIODO_ANIO</span><span class="p">,</span> <span class="s1">'Último año'</span><span class="p">),</span>
+<span class="p">])</span>
+<span class="n">PERIODO_POR_DEFECTO</span> <span class="o">=</span> <span class="n">PERIODO_MES</span>
+
+<span class="n">_DURACION_DIAS_POR_PERIODO</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">PERIODO_HOY</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">PERIODO_SEMANA</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+    <span class="n">PERIODO_MES</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="n">PERIODO_ANIO</span><span class="p">:</span> <span class="mi">365</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="_parsear_fecha">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._parsear_fecha">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_parsear_fecha</span><span class="p">(</span><span class="n">valor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convierte ``'YYYY-MM-DD'`` a ``date``, o ``None`` si falta o no es válido."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">valor</span><span class="p">,</span> <span class="s1">'%Y-%m-</span><span class="si">%d</span><span class="s1">'</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="_fila_operacion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._fila_operacion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fila_operacion</span><span class="p">(</span><span class="n">operacion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Normaliza una compra o venta online para el tablero de ganancias."""</span>
+    <span class="n">casa_compra_o_venta</span> <span class="o">=</span> <span class="n">CASA_VENTA</span> <span class="k">if</span> <span class="n">operacion</span><span class="o">.</span><span class="n">tipo</span> <span class="o">==</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">TIPO_COMPRA</span> <span class="k">else</span> <span class="n">CASA_COMPRA</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'canal'</span><span class="p">:</span> <span class="n">CANAL_ONLINE</span><span class="p">,</span>
+        <span class="s1">'tipo_codigo'</span><span class="p">:</span> <span class="n">casa_compra_o_venta</span><span class="p">,</span>
+        <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
+        <span class="s1">'divisa'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">codigo_divisa</span><span class="p">,</span>
+        <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">comision</span><span class="p">,</span>
+        <span class="s1">'monto_pyg'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">monto_final</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_fila_cambio">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._fila_cambio">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fila_cambio</span><span class="p">(</span><span class="n">cambio</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Normaliza un cambio entre divisas online para el tablero de ganancias.</span>
+
+<span class="sd">    Ver el docstring del módulo: la comisión de un cambio está en la divisa</span>
+<span class="sd">    de destino, así que se reconvierte a PYG con la misma tasa de venta con</span>
+<span class="sd">    la que se descontó del monto bruto en destino.</span>
+<span class="sd">    """</span>
+    <span class="n">ganancia_pyg</span> <span class="o">=</span> <span class="p">(</span><span class="n">cambio</span><span class="o">.</span><span class="n">comision</span> <span class="o">*</span> <span class="n">cambio</span><span class="o">.</span><span class="n">tasa_venta_aplicada</span><span class="p">)</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span>
+        <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.01'</span><span class="p">),</span> <span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'canal'</span><span class="p">:</span> <span class="n">CANAL_ONLINE</span><span class="p">,</span>
+        <span class="s1">'tipo_codigo'</span><span class="p">:</span> <span class="n">CAMBIO</span><span class="p">,</span>
+        <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
+        <span class="s1">'divisa'</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_origen</span><span class="si">}</span><span class="s1"> → </span><span class="si">{</span><span class="n">cambio</span><span class="o">.</span><span class="n">codigo_divisa_destino</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+        <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">ganancia_pyg</span><span class="p">,</span>
+        <span class="s1">'monto_pyg'</span><span class="p">:</span> <span class="n">cambio</span><span class="o">.</span><span class="n">monto_equivalente_pyg</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_fila_ventanilla">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._fila_ventanilla">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fila_ventanilla</span><span class="p">(</span><span class="n">operacion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Normaliza una operación de ventanilla para el tablero de ganancias.</span>
+
+<span class="sd">    A diferencia de ``_fila_operacion``, no hace falta invertir el tipo:</span>
+<span class="sd">    ``OperacionVentanilla.TIPO_COMPRA``/``TIPO_VENTA`` ya están escritos en</span>
+<span class="sd">    la perspectiva de la casa (ver el docstring de ese modelo).</span>
+<span class="sd">    """</span>
+    <span class="n">tipo_codigo</span> <span class="o">=</span> <span class="n">CASA_COMPRA</span> <span class="k">if</span> <span class="n">operacion</span><span class="o">.</span><span class="n">tipo</span> <span class="o">==</span> <span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">TIPO_COMPRA</span> <span class="k">else</span> <span class="n">CASA_VENTA</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'canal'</span><span class="p">:</span> <span class="n">CANAL_VENTANILLA</span><span class="p">,</span>
+        <span class="s1">'tipo_codigo'</span><span class="p">:</span> <span class="n">tipo_codigo</span><span class="p">,</span>
+        <span class="s1">'creado_en'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">creado_en</span><span class="p">,</span>
+        <span class="s1">'divisa'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">divisa</span><span class="o">.</span><span class="n">codigo</span><span class="p">,</span>
+        <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">comision</span><span class="p">,</span>
+        <span class="s1">'monto_pyg'</span><span class="p">:</span> <span class="n">operacion</span><span class="o">.</span><span class="n">monto_pyg</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_todas_las_ganancias">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._todas_las_ganancias">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_todas_las_ganancias</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Todas las transacciones completadas de ambos canales, normalizadas (criterio 6)."""</span>
+    <span class="n">filas</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_fila_operacion</span><span class="p">(</span><span class="n">operacion</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">operacion</span> <span class="ow">in</span> <span class="n">CalculoOperacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">operacion</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="ow">in</span> <span class="n">ESTADOS_COMPLETADOS</span>
+    <span class="p">]</span>
+    <span class="n">filas</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">_fila_cambio</span><span class="p">(</span><span class="n">cambio</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">cambio</span> <span class="ow">in</span> <span class="n">CalculoTriangulacion</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cambio</span><span class="o">.</span><span class="n">estado_efectivo</span> <span class="ow">in</span> <span class="n">ESTADOS_COMPLETADOS</span>
+    <span class="p">)</span>
+    <span class="n">filas</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">_fila_ventanilla</span><span class="p">(</span><span class="n">operacion</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">operacion</span> <span class="ow">in</span> <span class="n">OperacionVentanilla</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">'divisa'</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">filas</span></div>
+
+
+
+<div class="viewcode-block" id="_en_rango">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._en_rango">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_en_rango</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Filtra las filas cuya fecha de creación (hora local) cae dentro del rango, ambos límites inclusive."""</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span>
+        <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&lt;=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">fecha_hasta</span>
+    <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="_rango_por_periodo">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._rango_por_periodo">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_rango_por_periodo</span><span class="p">(</span><span class="n">periodo</span><span class="p">,</span> <span class="n">hoy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Traduce un período fijo (hoy/semana/mes/año) a un rango de fechas terminado hoy."""</span>
+    <span class="n">dias</span> <span class="o">=</span> <span class="n">_DURACION_DIAS_POR_PERIODO</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">periodo</span><span class="p">,</span> <span class="n">_DURACION_DIAS_POR_PERIODO</span><span class="p">[</span><span class="n">PERIODO_POR_DEFECTO</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">hoy</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">dias</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">hoy</span></div>
+
+
+
+<div class="viewcode-block" id="resolver_periodo">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias.resolver_periodo">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolver_periodo</span><span class="p">(</span><span class="n">parametros</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Decide el rango de fechas a partir de ``?periodo=`` o ``?fecha_desde=``/``?fecha_hasta=``.</span>
+
+<span class="sd">    Un rango propio (las dos fechas presentes) tiene prioridad sobre</span>
+<span class="sd">    ``periodo``. Si es inválido —fecha inicial posterior a la final, o</span>
+<span class="sd">    cualquiera de las dos en el futuro (criterio implícito de validación,</span>
+<span class="sd">    mismo criterio que ya usa ``apps.divisas.views.HistorialCotizacionesView``)—</span>
+<span class="sd">    se devuelve el motivo en vez de un rango, para no calcular nada sobre</span>
+<span class="sd">    fechas que no tienen sentido.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: ``(fecha_desde, fecha_hasta, periodo, error)``. ``periodo``</span>
+<span class="sd">        es ``'custom'`` para un rango propio; ``error`` es ``None`` si el</span>
+<span class="sd">        rango es válido.</span>
+<span class="sd">    """</span>
+    <span class="n">hoy</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">localdate</span><span class="p">()</span>
+    <span class="n">fecha_desde</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_desde'</span><span class="p">))</span>
+    <span class="n">fecha_hasta</span> <span class="o">=</span> <span class="n">_parsear_fecha</span><span class="p">(</span><span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'fecha_hasta'</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">fecha_desde</span> <span class="ow">and</span> <span class="n">fecha_hasta</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&gt;</span> <span class="n">fecha_hasta</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">'La fecha inicial no puede ser posterior a la fecha final.'</span>
+        <span class="k">if</span> <span class="n">fecha_desde</span> <span class="o">&gt;</span> <span class="n">hoy</span> <span class="ow">or</span> <span class="n">fecha_hasta</span> <span class="o">&gt;</span> <span class="n">hoy</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">'No se puede consultar un rango con fechas futuras.'</span>
+        <span class="k">return</span> <span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">,</span> <span class="s1">'custom'</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="n">periodo</span> <span class="o">=</span> <span class="n">parametros</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'periodo'</span><span class="p">,</span> <span class="n">PERIODO_POR_DEFECTO</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">periodo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">PERIODOS</span><span class="p">:</span>
+        <span class="n">periodo</span> <span class="o">=</span> <span class="n">PERIODO_POR_DEFECTO</span>
+    <span class="n">desde</span><span class="p">,</span> <span class="n">hasta</span> <span class="o">=</span> <span class="n">_rango_por_periodo</span><span class="p">(</span><span class="n">periodo</span><span class="p">,</span> <span class="n">hoy</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">desde</span><span class="p">,</span> <span class="n">hasta</span><span class="p">,</span> <span class="n">periodo</span><span class="p">,</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="_rango_anterior_equivalente">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._rango_anterior_equivalente">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_rango_anterior_equivalente</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Rango de la misma duración, inmediatamente anterior al rango dado (criterio 5)."""</span>
+    <span class="n">duracion</span> <span class="o">=</span> <span class="p">(</span><span class="n">fecha_hasta</span> <span class="o">-</span> <span class="n">fecha_desde</span><span class="p">)</span><span class="o">.</span><span class="n">days</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">fecha_desde</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">duracion</span><span class="p">),</span> <span class="n">fecha_desde</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="calcular_indicadores">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_indicadores">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calcular_indicadores</span><span class="p">(</span><span class="n">filas</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Ganancia total, cantidad de operaciones, monto total operado y ganancia promedio (criterio 1).</span>
+
+<span class="sd">    Todo en guaraníes: ``monto_pyg`` es el volumen de negocio (el principal</span>
+<span class="sd">    operado, no la ganancia), para distinguirlo de ``ganancia_total``.</span>
+<span class="sd">    """</span>
+    <span class="n">cantidad</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">filas</span><span class="p">)</span>
+    <span class="n">ganancia_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">fila</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">]</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">),</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">))</span>
+    <span class="n">monto_total_operado</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">fila</span><span class="p">[</span><span class="s1">'monto_pyg'</span><span class="p">]</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">),</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">))</span>
+    <span class="n">ganancia_promedio</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">ganancia_total</span> <span class="o">/</span> <span class="n">cantidad</span><span class="p">)</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.01'</span><span class="p">),</span> <span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cantidad</span> <span class="k">else</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'ganancia_total'</span><span class="p">:</span> <span class="n">ganancia_total</span><span class="p">,</span>
+        <span class="s1">'cantidad_operaciones'</span><span class="p">:</span> <span class="n">cantidad</span><span class="p">,</span>
+        <span class="s1">'monto_total_operado'</span><span class="p">:</span> <span class="n">monto_total_operado</span><span class="p">,</span>
+        <span class="s1">'ganancia_promedio'</span><span class="p">:</span> <span class="n">ganancia_promedio</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="calcular_variacion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_variacion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calcular_variacion</span><span class="p">(</span><span class="n">ganancia_actual</span><span class="p">,</span> <span class="n">ganancia_anterior</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Variación porcentual de ``ganancia_actual`` respecto de ``ganancia_anterior`` (criterio 5).</span>
+
+<span class="sd">    ``None`` si el período anterior no tiene ninguna ganancia contra la que</span>
+<span class="sd">    comparar (división por cero): no hay un porcentaje que tenga sentido</span>
+<span class="sd">    mostrar en ese caso, ni siquiera "0%" ni "100%".</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">ganancia_anterior</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">ganancia_actual</span> <span class="o">-</span> <span class="n">ganancia_anterior</span><span class="p">)</span> <span class="o">/</span> <span class="n">ganancia_anterior</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span>
+        <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.01'</span><span class="p">),</span> <span class="n">rounding</span><span class="o">=</span><span class="n">ROUND_HALF_UP</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_agrupacion_segun_duracion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._agrupacion_segun_duracion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_agrupacion_segun_duracion</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Decide si la evolución se agrupa por día, semana o mes, según la duración del rango (criterio 3)."""</span>
+    <span class="n">dias</span> <span class="o">=</span> <span class="p">(</span><span class="n">fecha_hasta</span> <span class="o">-</span> <span class="n">fecha_desde</span><span class="p">)</span><span class="o">.</span><span class="n">days</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">dias</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">'dia'</span>
+    <span class="k">if</span> <span class="n">dias</span> <span class="o">&lt;=</span> <span class="mi">180</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">'semana'</span>
+    <span class="k">return</span> <span class="s1">'mes'</span></div>
+
+
+
+<div class="viewcode-block" id="_clave_periodo">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._clave_periodo">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_clave_periodo</span><span class="p">(</span><span class="n">fecha</span><span class="p">,</span> <span class="n">agrupacion</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Clave ordenable del bucket al que pertenece ``fecha``, según la agrupación elegida."""</span>
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="o">==</span> <span class="s1">'dia'</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fecha</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">agrupacion</span> <span class="o">==</span> <span class="s1">'semana'</span><span class="p">:</span>
+        <span class="n">inicio_semana</span> <span class="o">=</span> <span class="n">fecha</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">fecha</span><span class="o">.</span><span class="n">weekday</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">inicio_semana</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">fecha</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%Y-%m-01'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="calcular_evolucion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_evolucion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calcular_evolucion</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Ganancia agrupada por día, semana o mes dentro del rango, en orden cronológico (criterio 3)."""</span>
+    <span class="n">agrupacion</span> <span class="o">=</span> <span class="n">_agrupacion_segun_duracion</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">)</span>
+    <span class="n">acumulado</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">:</span>
+        <span class="n">clave</span> <span class="o">=</span> <span class="n">_clave_periodo</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">fila</span><span class="p">[</span><span class="s1">'creado_en'</span><span class="p">])</span><span class="o">.</span><span class="n">date</span><span class="p">(),</span> <span class="n">agrupacion</span><span class="p">)</span>
+        <span class="n">acumulado</span><span class="p">[</span><span class="n">clave</span><span class="p">]</span> <span class="o">=</span> <span class="n">acumulado</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clave</span><span class="p">,</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">))</span> <span class="o">+</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">]</span>
+
+    <span class="n">puntos</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">'periodo'</span><span class="p">:</span> <span class="n">clave</span><span class="p">,</span> <span class="s1">'ganancia'</span><span class="p">:</span> <span class="n">monto</span><span class="p">}</span> <span class="k">for</span> <span class="n">clave</span><span class="p">,</span> <span class="n">monto</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">acumulado</span><span class="o">.</span><span class="n">items</span><span class="p">())]</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'agrupacion'</span><span class="p">:</span> <span class="n">agrupacion</span><span class="p">,</span> <span class="s1">'puntos'</span><span class="p">:</span> <span class="n">puntos</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_agrupar_por">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias._agrupar_por">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_agrupar_por</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">obtener_clave</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Cantidad y ganancia total por cada valor distinto que devuelve ``obtener_clave``."""</span>
+    <span class="n">agrupado</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span><span class="p">:</span>
+        <span class="n">clave</span> <span class="o">=</span> <span class="n">obtener_clave</span><span class="p">(</span><span class="n">fila</span><span class="p">)</span>
+        <span class="n">entrada</span> <span class="o">=</span> <span class="n">agrupado</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">clave</span><span class="p">,</span> <span class="p">{</span><span class="s1">'cantidad'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)})</span>
+        <span class="n">entrada</span><span class="p">[</span><span class="s1">'cantidad'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">entrada</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'ganancia_pyg'</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">agrupado</span></div>
+
+
+
+<div class="viewcode-block" id="calcular_distribucion">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias.calcular_distribucion">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calcular_distribucion</span><span class="p">(</span><span class="n">filas</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Ganancia distribuida por divisa, por tipo de operación y por canal (criterio 4)."""</span>
+    <span class="n">por_tipo</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">codigo</span><span class="p">,</span> <span class="n">etiqueta</span> <span class="ow">in</span> <span class="n">TIPO_CHOICES</span><span class="p">:</span>
+        <span class="n">subconjunto</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span> <span class="k">if</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'tipo_codigo'</span><span class="p">]</span> <span class="o">==</span> <span class="n">codigo</span><span class="p">]</span>
+        <span class="n">agrupado</span> <span class="o">=</span> <span class="n">_agrupar_por</span><span class="p">(</span><span class="n">subconjunto</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">fila</span><span class="p">:</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'tipo_codigo'</span><span class="p">])</span>
+        <span class="n">datos</span> <span class="o">=</span> <span class="n">agrupado</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">codigo</span><span class="p">,</span> <span class="p">{</span><span class="s1">'cantidad'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)})</span>
+        <span class="n">por_tipo</span><span class="p">[</span><span class="n">codigo</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'etiqueta'</span><span class="p">:</span> <span class="n">etiqueta</span><span class="p">,</span> <span class="o">**</span><span class="n">datos</span><span class="p">}</span>
+
+    <span class="n">por_canal</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">codigo</span><span class="p">,</span> <span class="n">etiqueta</span> <span class="ow">in</span> <span class="n">CANAL_CHOICES</span><span class="p">:</span>
+        <span class="n">subconjunto</span> <span class="o">=</span> <span class="p">[</span><span class="n">fila</span> <span class="k">for</span> <span class="n">fila</span> <span class="ow">in</span> <span class="n">filas</span> <span class="k">if</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'canal'</span><span class="p">]</span> <span class="o">==</span> <span class="n">codigo</span><span class="p">]</span>
+        <span class="n">agrupado</span> <span class="o">=</span> <span class="n">_agrupar_por</span><span class="p">(</span><span class="n">subconjunto</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">fila</span><span class="p">:</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'canal'</span><span class="p">])</span>
+        <span class="n">datos</span> <span class="o">=</span> <span class="n">agrupado</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">codigo</span><span class="p">,</span> <span class="p">{</span><span class="s1">'cantidad'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'ganancia_pyg'</span><span class="p">:</span> <span class="n">Decimal</span><span class="p">(</span><span class="s1">'0.00'</span><span class="p">)})</span>
+        <span class="n">por_canal</span><span class="p">[</span><span class="n">codigo</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'etiqueta'</span><span class="p">:</span> <span class="n">etiqueta</span><span class="p">,</span> <span class="o">**</span><span class="n">datos</span><span class="p">}</span>
+
+    <span class="n">por_divisa</span> <span class="o">=</span> <span class="n">_agrupar_por</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">fila</span><span class="p">:</span> <span class="n">fila</span><span class="p">[</span><span class="s1">'divisa'</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'por_tipo'</span><span class="p">:</span> <span class="n">por_tipo</span><span class="p">,</span> <span class="s1">'por_canal'</span><span class="p">:</span> <span class="n">por_canal</span><span class="p">,</span> <span class="s1">'por_divisa'</span><span class="p">:</span> <span class="n">por_divisa</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="generar_tablero">
+<a class="viewcode-back" href="../../../reference/apps.divisas.ganancias.html#apps.divisas.ganancias.generar_tablero">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generar_tablero</span><span class="p">(</span><span class="n">parametros</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Resuelve el período y arma el tablero completo: indicadores, variación, evolución y distribución.</span>
+
+<span class="sd">    Punto de entrada único de ``apps.divisas.views.TableroGananciasView``.</span>
+<span class="sd">    ``parametros`` es cualquier mapeo tipo ``QueryDict`` con las claves</span>
+<span class="sd">    ``periodo``, ``fecha_desde`` y ``fecha_hasta`` (las de ``request.GET``).</span>
+<span class="sd">    """</span>
+    <span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">,</span> <span class="n">periodo</span><span class="p">,</span> <span class="n">error_rango</span> <span class="o">=</span> <span class="n">resolver_periodo</span><span class="p">(</span><span class="n">parametros</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">error_rango</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">'error_rango'</span><span class="p">:</span> <span class="n">error_rango</span><span class="p">,</span>
+            <span class="s1">'periodo'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">'fecha_desde'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">'fecha_hasta'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">'indicadores'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">'variacion_ganancia'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">'evolucion'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">'distribucion'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="n">todas</span> <span class="o">=</span> <span class="n">_todas_las_ganancias</span><span class="p">()</span>
+    <span class="n">filas</span> <span class="o">=</span> <span class="n">_en_rango</span><span class="p">(</span><span class="n">todas</span><span class="p">,</span> <span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">)</span>
+    <span class="n">indicadores</span> <span class="o">=</span> <span class="n">calcular_indicadores</span><span class="p">(</span><span class="n">filas</span><span class="p">)</span>
+
+    <span class="n">anterior_desde</span><span class="p">,</span> <span class="n">anterior_hasta</span> <span class="o">=</span> <span class="n">_rango_anterior_equivalente</span><span class="p">(</span><span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">)</span>
+    <span class="n">ganancia_anterior</span> <span class="o">=</span> <span class="n">calcular_indicadores</span><span class="p">(</span><span class="n">_en_rango</span><span class="p">(</span><span class="n">todas</span><span class="p">,</span> <span class="n">anterior_desde</span><span class="p">,</span> <span class="n">anterior_hasta</span><span class="p">))[</span><span class="s1">'ganancia_total'</span><span class="p">]</span>
+    <span class="n">variacion_ganancia</span> <span class="o">=</span> <span class="n">calcular_variacion</span><span class="p">(</span><span class="n">indicadores</span><span class="p">[</span><span class="s1">'ganancia_total'</span><span class="p">],</span> <span class="n">ganancia_anterior</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">'error_rango'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">'periodo'</span><span class="p">:</span> <span class="n">periodo</span><span class="p">,</span>
+        <span class="s1">'fecha_desde'</span><span class="p">:</span> <span class="n">fecha_desde</span><span class="p">,</span>
+        <span class="s1">'fecha_hasta'</span><span class="p">:</span> <span class="n">fecha_hasta</span><span class="p">,</span>
+        <span class="s1">'indicadores'</span><span class="p">:</span> <span class="n">indicadores</span><span class="p">,</span>
+        <span class="s1">'variacion_ganancia'</span><span class="p">:</span> <span class="n">variacion_ganancia</span><span class="p">,</span>
+        <span class="s1">'evolucion'</span><span class="p">:</span> <span class="n">calcular_evolucion</span><span class="p">(</span><span class="n">filas</span><span class="p">,</span> <span class="n">fecha_desde</span><span class="p">,</span> <span class="n">fecha_hasta</span><span class="p">),</span>
+        <span class="s1">'distribucion'</span><span class="p">:</span> <span class="n">calcular_distribucion</span><span class="p">(</span><span class="n">filas</span><span class="p">),</span>
+    <span class="p">}</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Equipo 11.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

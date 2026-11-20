@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -68,7 +69,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -97,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
@@ -105,6 +110,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4 current"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
@@ -222,13 +228,23 @@ poder manejarlas en una caja.</p>
 <dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">OperacionVentanillaForm</span></span><a class="reference internal" href="../_modules/apps/caja/forms.html#OperacionVentanillaForm"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Form</span></code></p>
-<p>Valida la divisa y el monto de una compra o venta de divisas en ventanilla.</p>
+<p>Valida la divisa, el monto y los datos del cliente de una compra o venta de divisas en ventanilla.</p>
 <p>Mismo criterio de validación que <code class="docutils literal notranslate"><span class="pre">apps.divisas.forms.CalculoOperacionForm</span></code>
 usa para el flujo online del cliente: rechaza un monto negativo, en cero
 o no numérico, con mensajes en español. PYG no se ofrece como divisa
 operable (es la moneda contra la que siempre se opera, nunca la que se
 compra o vende), y tampoco una divisa sin cotización vigente, porque no
 hay con qué calcular la tasa aplicada.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cliente_identificador</span></code>/<code class="docutils literal notranslate"><span class="pre">cliente_nombre</span></code>/<code class="docutils literal notranslate"><span class="pre">cliente_email</span></code> son el
+receptor de la Factura Electrónica que se le emite al cliente de
+mostrador (ver <code class="docutils literal notranslate"><span class="pre">apps.divisas.factura_electronica</span></code>): a diferencia de
+<code class="docutils literal notranslate"><span class="pre">apps.caja.models.OperacionVentanilla</span></code>, donde quedan en blanco a
+nivel de modelo, acá CI/RUC y nombre son obligatorios — sin esos dos
+datos no hay forma de facturar la operación. El email es el único
+opcional: Factura Segura lo exige para aprobar la factura, pero si el
+cliente no lo tiene a mano la operación en sí igual se registra (la
+factura queda «pendiente de generación», visible para un
+administrador, en vez de bloquear el cobro en caja).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/caja/forms.html#OperacionVentanillaForm.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.__init__" title="Link to this definition"></a></dt>
@@ -237,12 +253,12 @@ hay con qué calcular la tasa aplicada.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm.base_fields">
-<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'divisa':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.base_fields" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">base_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cliente_email':</span> <span class="pre">&lt;django.forms.fields.EmailField</span> <span class="pre">object&gt;,</span> <span class="pre">'cliente_identificador':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'cliente_nombre':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'divisa':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.base_fields" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="apps.caja.forms.OperacionVentanillaForm.declared_fields">
-<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'divisa':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.declared_fields" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">declared_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cliente_email':</span> <span class="pre">&lt;django.forms.fields.EmailField</span> <span class="pre">object&gt;,</span> <span class="pre">'cliente_identificador':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'cliente_nombre':</span> <span class="pre">&lt;django.forms.fields.CharField</span> <span class="pre">object&gt;,</span> <span class="pre">'divisa':</span> <span class="pre">&lt;django.forms.fields.ChoiceField</span> <span class="pre">object&gt;,</span> <span class="pre">'monto':</span> <span class="pre">&lt;django.forms.fields.DecimalField</span> <span class="pre">object&gt;}</span></span><a class="headerlink" href="#apps.caja.forms.OperacionVentanillaForm.declared_fields" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">

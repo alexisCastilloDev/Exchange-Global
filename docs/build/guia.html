@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -68,7 +69,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -97,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="templates.html#parciales">Parciales</a></li>
@@ -105,6 +110,7 @@
 <li class="toctree-l1"><a class="reference internal" href="reference/modules.html">Referencia API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="reference/apps.html">apps package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="reference/apps.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/apps.clientes.html">apps.clientes package</a></li>
@@ -337,6 +343,53 @@ de todas las pantallas, una campana muestra la cantidad de notificaciones
 no leídas, calculada por el context processor
 <code class="docutils literal notranslate"><span class="pre">apps.divisas.context_processors.notificaciones_context</span></code>; al marcar una
 como leída deja de contarse.</p>
+</section>
+<section id="notificaciones-sobre-transacciones-y-facturas">
+<h2>Notificaciones sobre transacciones y facturas<a class="headerlink" href="#notificaciones-sobre-transacciones-y-facturas" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Notificaciones sobre transacciones y facturas». El
+cliente recibe una <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.NotificacionCliente</span></code> cada vez que
+cambia el estado de una de sus transacciones o de una de sus facturas
+electrónicas.</p>
+<p><strong>Cuándo se notifica.</strong> <code class="docutils literal notranslate"><span class="pre">CalculoOperacion</span></code>, <code class="docutils literal notranslate"><span class="pre">CalculoTriangulacion</span></code> y
+<code class="docutils literal notranslate"><span class="pre">DocumentoElectronico</span></code> heredan de <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.SeguimientoEstadoMixin</span></code>.
+Al guardar, este mixin compara el estado nuevo con el último que se leyó o
+se guardó, y si cambió avisa al modelo. Como todos los flujos que cambian un
+estado terminan en un <code class="docutils literal notranslate"><span class="pre">save</span></code> (pago, entrega, reintento, cancelación,
+consulta a SIFEN), ninguno necesitó cambios. Crear un registro no notifica,
+y un <code class="docutils literal notranslate"><span class="pre">save</span></code> con <code class="docutils literal notranslate"><span class="pre">update_fields</span></code> que no incluye <code class="docutils literal notranslate"><span class="pre">estado</span></code> tampoco.</p>
+<ul class="simple">
+<li><p><strong>Transacción (Criterio 1).</strong> Se notifica al pasar a «Pagada»,
+«Completada» («Acreditada» o «Retirada»), cualquier cancelación, o un
+estado que requiere atención («Pagada, pero la entrega al cliente falló» y
+«Pago fuera de plazo»). Ver <code class="docutils literal notranslate"><span class="pre">NotificacionCliente.ESTADOS_NOTIFICABLES_TRANSACCION</span></code>.
+La notificación lleva el número de la transacción y su nuevo estado.</p></li>
+<li><p><strong>Factura (Criterio 2).</strong> Se notifica cuando una factura pasa a
+«Aprobado», «Aprobado con observación», «Rechazado por SIFEN» o «Anulada
+por nota de crédito». La anulación es el único modo en que el sistema
+cancela una factura aprobada: ocurre cuando SIFEN aprueba la nota de
+crédito. La notificación lleva el CDC, o el número de documento si todavía
+no tiene CDC. La nota de crédito en sí no notifica, ni tampoco una factura
+de ventanilla, porque un cliente de mostrador no tiene usuario en el sistema.</p></li>
+</ul>
+<p><strong>Destinatarios y aislamiento (Criterio 5).</strong> Se crea una notificación por
+cada usuario activo asociado al cliente (<code class="docutils literal notranslate"><span class="pre">Cliente.usuarios</span></code>), y cada una
+guarda el cliente al que pertenece. La pantalla y el indicador filtran
+siempre por usuario <strong>y</strong> por cliente activo
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.context_processors.notificaciones_cliente_activo</span></code>). Así un
+usuario con dos clientes solo ve las del cliente que tiene activo, y nadie
+ve las de un cliente ajeno.</p>
+<p><strong>Pantalla y apertura (Criterio 3).</strong> <code class="docutils literal notranslate"><span class="pre">MisNotificacionesView</span></code>
+(<code class="docutils literal notranslate"><span class="pre">/divisas/notificaciones/</span></code>) muestra arriba la sección «Transacciones y
+facturas», paginada aparte, y debajo las notificaciones de tasas. Cada
+notificación se abre con <code class="docutils literal notranslate"><span class="pre">AbrirNotificacionClienteView</span></code> (solo POST), que la
+marca como leída y redirige al detalle de la transacción. Si la notificación
+es de una factura, redirige a la sección «Factura electrónica» de ese mismo
+detalle (ancla <code class="docutils literal notranslate"><span class="pre">#factura-electronica</span></code>), donde están el número, el estado,
+el CDC y las descargas. Una notificación ajena o de otro cliente responde 404.</p>
+<p><strong>Indicador (Criterio 4).</strong> La campana de la barra superior y el contador
+del menú suman las notificaciones de tasas sin leer y las de transacciones y
+facturas sin leer del cliente activo. Al abrir una notificación, deja de
+contarse.</p>
 </section>
 <section id="pago-de-una-transaccion-confirmada">
 <h2>Pago de una transacción confirmada<a class="headerlink" href="#pago-de-una-transaccion-confirmada" title="Link to this heading"></a></h2>
@@ -940,6 +993,58 @@ cerradas, con el período en que cada una estuvo abierta y su balance por
 moneda (Criterio 4); es una pantalla de solo lectura, sin ninguna acción
 para modificar lo ya registrado.</p>
 </section>
+<section id="consulta-de-facturas-electronicas">
+<h2>Consulta de facturas electrónicas<a class="headerlink" href="#consulta-de-facturas-electronicas" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Consulta de facturas electrónicas»: un cliente con un
+cliente activo seleccionado consulta, en <code class="docutils literal notranslate"><span class="pre">/divisas/transacciones/mias/facturas/</span></code>
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.MisFacturasElectronicasListView</span></code>), el listado
+<strong>paginado</strong> (20 por página, Criterio 1) de los <code class="docutils literal notranslate"><span class="pre">apps.divisas.models.DocumentoElectronico</span></code>
+emitidos para sus propias transacciones (compra/venta o cambio) — el
+comprobante que la HU «Integración con API de facturación electrónica»
+genera automáticamente ante SIFEN apenas una transacción queda «Pagada». A
+diferencia de la pantalla de administración (<code class="docutils literal notranslate"><span class="pre">DocumentosElectronicosListView</span></code>,
+con todos los clientes y acciones para reintentar la emisión o emitir una
+nota de crédito), la única acción que el cliente puede hacer es consultar
+ante SIFEN el estado de una factura propia con CDC, con el botón «Consultar
+SIFEN» (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.ConsultarEstadoSifenMiFacturaView</span></code>, solo POST).
+Como ninguna tarea periódica actualiza ese estado, esta consulta le permite
+ver por su cuenta si la factura ya fue aprobada o rechazada. Es una simple
+lectura ante Factura Segura (<code class="docutils literal notranslate"><span class="pre">consultar_estado_sifen</span></code> nunca emite un
+documento), y una factura de otro cliente responde 404. Si el estado
+cambia, el cliente recibe además la notificación correspondiente.</p>
+<p>Los botones de cada fila («Ver detalle», «KuDE», «XML» y «Consultar SIFEN»)
+se acomodan dentro de su celda y, si no entran en una línea, pasan a la
+siguiente. El CDC, de 44 caracteres sin espacios, puede cortarse en varias
+líneas: así la tabla no se ensancha más que la pantalla ni deja los botones
+ocultos a la derecha.</p>
+<p>Cada fila muestra número de documento, CDC, la transacción asociada (con su
+tipo y divisa), la fecha de emisión y el monto —tomado de
+<code class="docutils literal notranslate"><span class="pre">documento.transaccion.monto_final</span></code>, porque el documento en sí no lo
+duplica— junto con el estado (Criterio 2). El estado se simplifica para el
+cliente con el mismo criterio que ya usa el detalle de una transacción:
+<code class="docutils literal notranslate"><span class="pre">DocumentoElectronico.factura_pendiente</span></code> agrupa cualquier falla técnica
+(de generación o de SIFEN) bajo «Pendiente de generación», en vez de
+mostrarle un código de error interno.</p>
+<p>El listado admite filtrar por rango de fechas de emisión con
+<code class="docutils literal notranslate"><span class="pre">fecha_desde</span></code>/<code class="docutils literal notranslate"><span class="pre">fecha_hasta</span></code> en la URL (Criterio 3), mismo patrón y mismo
+parseo (<code class="docutils literal notranslate"><span class="pre">apps.divisas.views._parsear_fecha</span></code>) que
+<code class="docutils literal notranslate"><span class="pre">MiHistorialTransaccionesView</span></code> ya usa para su propio filtro de fechas. Un
+documento sin <code class="docutils literal notranslate"><span class="pre">emitida_en</span></code> todavía (pendiente de generación, o rechazado)
+nunca coincide con ningún filtro de fecha —no hay ninguna fecha de emisión
+real contra la que comparar— así que solo aparece en el listado sin
+filtrar.</p>
+<p>Cada fila enlaza, con un botón «Ver detalle», a la pantalla de detalle de su
+transacción (<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionOperacionView</span></code>/<code class="docutils literal notranslate"><span class="pre">DetalleTransaccionCambioView</span></code>),
+que ya incluye una sección «Factura electrónica» con el comprobante completo
+—número, estado, fecha de emisión y CDC— y, si el documento ya tiene CDC,
+los enlaces de descarga del KuDE y el XML (Criterio 4). Sin ninguna factura
+emitida para el cliente activo, la plantilla muestra un mensaje explícito
+(«Todavía no tenés ninguna factura electrónica emitida.») en vez de una
+tabla vacía o un error (Criterio 5); si el cliente sí tiene facturas pero el
+rango de fechas filtrado no encuentra ninguna, el mensaje lo distingue
+(«No se encontraron facturas para el rango de fechas seleccionado.») para no
+confundir «no tengo ninguna» con «no hay ninguna con este filtro».</p>
+</section>
 <section id="descarga-de-facturas-electronicas">
 <h2>Descarga de facturas electrónicas<a class="headerlink" href="#descarga-de-facturas-electronicas" title="Link to this heading"></a></h2>
 <p>Implementa la HU «Descarga de facturas electrónicas» (GE-86). El cliente
@@ -969,6 +1074,105 @@ entregarlo se comprueba que el XML contenga ese CDC y que el KuDE sea un PDF;
 si no pasa la comprobación, o Factura Segura no responde, se vuelve al listado
 con un aviso.</p></li>
 </ol>
+</section>
+<section id="reporte-de-ganancias">
+<h2>Reporte de ganancias<a class="headerlink" href="#reporte-de-ganancias" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Reporte de ganancias». Un analista cambiario o un
+administrador genera, en <code class="docutils literal notranslate"><span class="pre">/divisas/administrar/reporte-ganancias/</span></code>
+(<code class="docutils literal notranslate"><span class="pre">apps.divisas.views.ReporteGananciasView</span></code>), un reporte de la ganancia de
+un rango de fechas, agrupado por <strong>día</strong>, <strong>mes</strong>, <strong>divisa</strong>, <strong>tipo de
+operación</strong>, <strong>canal</strong> o <strong>caja y turno</strong>. Cada grupo muestra su ganancia y
+su cantidad de operaciones, y el reporte cierra con el total general
+(Criterio 1). Todo el cálculo vive en
+<code class="docutils literal notranslate"><span class="pre">apps.divisas.reporte_ganancias.generar_reporte_ganancias</span></code>.</p>
+<p><strong>Misma ganancia que el tablero (Criterio 4).</strong> El reporte no tiene un
+cálculo propio. Toma las mismas filas, el mismo filtro de fechas y el mismo
+total que el tablero de ganancias (<code class="docutils literal notranslate"><span class="pre">apps.divisas.ganancias</span></code>). Por eso la
+ganancia es la comisión normalizada a PYG (la de un cambio entre divisas se
+reconvierte con la tasa de venta aplicada), el tipo de operación se expresa
+desde la perspectiva de la casa de cambio y solo cuentan las operaciones
+completadas: <code class="docutils literal notranslate"><span class="pre">ACREDITADA</span></code> o <code class="docutils literal notranslate"><span class="pre">RETIRADA</span></code> online, y toda operación de
+ventanilla.</p>
+<p><strong>Desglose por caja y turno (Criterios 2 y 3).</strong> Cada <code class="docutils literal notranslate"><span class="pre">apps.caja.models.Caja</span></code>
+es el turno de un cajero. Una caja pertenece al período si su turno se
+superpone con el rango, aunque se haya abierto antes. Por cada caja se ven
+el cajero, la fecha y hora de apertura y de cierre, la cantidad de
+operaciones de ventanilla registradas dentro del período y su ganancia. Una
+caja todavía abierta aparece «En curso», sin fecha de cierre, y su ganancia
+figura como parcial. Este desglose solo cubre la ventanilla, así que muestra
+su propio total de ventanilla. El total general sigue sumando todos los
+canales, para que coincida con el tablero.</p>
+<p><strong>Descargas (Criterio 5).</strong> <code class="docutils literal notranslate"><span class="pre">apps.divisas.views.DescargarReporteGananciasView</span></code>
+(<code class="docutils literal notranslate"><span class="pre">.../reporte-ganancias/descargar/&lt;pdf|excel&gt;/</span></code>) rearma el reporte con los
+mismos filtros de la URL. Así el PDF y el Excel tienen los mismos datos que la
+pantalla, junto con los filtros aplicados y la fecha de generación. Los dos
+formatos se arman a partir de las mismas filas (<code class="docutils literal notranslate"><span class="pre">_filas_tabla</span></code> y
+<code class="docutils literal notranslate"><span class="pre">_filas_totales</span></code>).</p>
+<p><strong>Sin datos y validación (Criterio 6).</strong> Las dos fechas son obligatorias:
+sin ellas solo se muestra el formulario. Un rango ilegible, invertido o con
+fechas futuras se informa como error y no se calcula nada. Si el período no
+tiene operaciones completadas, se muestra el aviso «No hay operaciones
+completadas en el período elegido.» sin ofrecer descargas, y una descarga
+pedida por URL vuelve a la pantalla con ese mismo aviso.</p>
+<p><strong>Acceso (Criterio 7).</strong> <code class="docutils literal notranslate"><span class="pre">ReporteGananciasMixin</span></code> solo autoriza los roles
+<code class="docutils literal notranslate"><span class="pre">admin</span></code> y <code class="docutils literal notranslate"><span class="pre">analista_cambiario</span></code>. Un cliente, un cajero o un usuario sin
+rol reciben un 403, tanto en la pantalla como en las descargas.</p>
+</section>
+<section id="registro-y-auditoria-de-actividades">
+<h2>Registro y auditoría de actividades<a class="headerlink" href="#registro-y-auditoria-de-actividades" title="Link to this heading"></a></h2>
+<p>Implementa la HU «Registro y auditoría de actividades» (GE-71). Un
+administrador consulta en <code class="docutils literal notranslate"><span class="pre">/auditoria/actividades/</span></code>
+(<code class="docutils literal notranslate"><span class="pre">apps.auditoria.views.RegistroActividadListView</span></code>) las acciones
+administrativas realizadas en el sistema. El menú lateral lo muestra como
+«Registro de actividades». Todo vive en la aplicación <code class="docutils literal notranslate"><span class="pre">apps.auditoria</span></code>, y
+no se modificó ninguna vista ni modelo existente para implementarlo.</p>
+<p><strong>Qué se registra (Criterio 1).</strong> Cada alta, modificación o baja de
+usuarios, roles, clientes, divisas, tasas de cambio y parámetros de
+operación (comisiones y tiempos de espera) genera un
+<code class="docutils literal notranslate"><span class="pre">apps.auditoria.models.RegistroActividad</span></code>. Ese registro guarda quién realizó
+la acción, cuándo, sobre qué registro y qué cambió, con el valor anterior y
+el nuevo de cada campo. Las acciones se capturan con las señales
+<code class="docutils literal notranslate"><span class="pre">pre_save</span></code>, <code class="docutils literal notranslate"><span class="pre">post_save</span></code> y <code class="docutils literal notranslate"><span class="pre">post_delete</span></code> de esos modelos
+(<code class="docutils literal notranslate"><span class="pre">apps.auditoria.signals.MODELOS_AUDITADOS</span></code>). Para saber quién realiza
+cada acción, <code class="docutils literal notranslate"><span class="pre">apps.auditoria.middleware.AuditoriaMiddleware</span></code> deja la
+request en curso disponible para las señales. Algunos detalles:</p>
+<ul class="simple">
+<li><p>Desactivar una divisa, un usuario o un cliente (baja lógica) se registra
+como «Baja».</p></li>
+<li><p>Cada actualización de tasas crea una cotización nueva. Por eso se compara
+contra la cotización que reemplaza.</p></li>
+<li><p>Los roles viven en Keycloak, así que no hay ningún modelo que escuchar.
+En un POST a <code class="docutils literal notranslate"><span class="pre">editar_roles</span></code>, el middleware consulta los roles del
+usuario antes y después de la vista, y registra la diferencia. Si Keycloak
+no responde a esa consulta, la edición sigue su curso normal y solo se
+omite su registro.</p></li>
+</ul>
+<p>Solo se registra lo que envía un usuario autenticado con un método que
+modifica datos (POST, PUT, PATCH, DELETE), y solo si cambió al menos un
+campo. Por eso no quedan en el registro:</p>
+<ul class="simple">
+<li><p>la sincronización con Keycloak que hace el listado de usuarios en cada
+GET;</p></li>
+<li><p>los cambios hechos fuera de una request (migraciones, comandos, shell);</p></li>
+<li><p>el envío de un formulario sin modificar nada.</p></li>
+</ul>
+<p><strong>Listado (Criterio 2).</strong> Las actividades se muestran de la más reciente a
+la más antigua, de a 20 por página.</p>
+<p><strong>Filtros (Criterio 3).</strong> Se puede filtrar por usuario, tipo de acción,
+tipo de registro y rango de fechas
+(<code class="docutils literal notranslate"><span class="pre">apps.auditoria.forms.FiltroRegistroActividadForm</span></code>). Los filtros se
+combinan entre sí. El rango incluye ambos extremos y se compara contra el
+día local (<code class="docutils literal notranslate"><span class="pre">TIME_ZONE</span></code>). El selector de usuario ofrece solo a quienes
+tienen alguna actividad registrada. Un rango invertido se informa como
+error y no muestra resultados.</p>
+<p><strong>Inmutabilidad (Criterio 4).</strong> La vista solo acepta GET: un POST, PUT o
+DELETE recibe un 405. Además, el propio modelo impide volver a guardar o
+eliminar un registro, tanto por instancia como en forma masiva
+(<code class="docutils literal notranslate"><span class="pre">RegistroActividadQuerySet</span></code>). La única excepción es la que ejecuta
+Django al eliminar al usuario que realizó la acción (<code class="docutils literal notranslate"><span class="pre">SET_NULL</span></code>). En ese
+caso el registro conserva su nombre en <code class="docutils literal notranslate"><span class="pre">usuario_nombre</span></code>.</p>
+<p><strong>Acceso (Criterio 5).</strong> Solo el rol <code class="docutils literal notranslate"><span class="pre">admin</span></code> accede. Cualquier otro rol
+recibe un 403 y un usuario sin sesión es redirigido al login.</p>
 </section>
 <section id="acceso-a-esta-documentacion-desde-el-sistema">
 <h2>Acceso a esta documentación desde el sistema<a class="headerlink" href="#acceso-a-esta-documentacion-desde-el-sistema" title="Link to this heading"></a></h2>

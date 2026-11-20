@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#administracion-de-usuarios-y-roles-via-keycloak">Administración de usuarios y roles vía Keycloak</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#flujo-operativo-de-divisas">Flujo operativo de divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-de-cambio-de-tasas">Notificaciones de cambio de tasas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#notificaciones-sobre-transacciones-y-facturas">Notificaciones sobre transacciones y facturas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-de-una-transaccion-confirmada">Pago de una transacción confirmada</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#pago-con-tarjeta-via-stripe">Pago con tarjeta vía Stripe</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guia.html#que-paga-y-que-recibe-el-cliente-en-un-cambio-entre-divisas">Qué paga y qué recibe el cliente en un cambio entre divisas</a></li>
@@ -68,7 +69,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#movimientos-extraordinarios-de-caja">Movimientos extraordinarios de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#arqueo-de-caja">Arqueo de caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#cierre-de-caja">Cierre de caja</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#consulta-de-facturas-electronicas">Consulta de facturas electrónicas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#descarga-de-facturas-electronicas">Descarga de facturas electrónicas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#reporte-de-ganancias">Reporte de ganancias</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guia.html#registro-y-auditoria-de-actividades">Registro y auditoría de actividades</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#acceso-a-esta-documentacion-desde-el-sistema">Acceso a esta documentación desde el sistema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guia.html#como-leer-la-referencia">Cómo leer la referencia</a></li>
 </ul>
@@ -97,6 +101,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#template-base">Template base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#paginas-generales">Páginas generales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#clientes-y-bajas">Clientes y bajas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../templates.html#auditoria">Auditoría</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#divisas">Divisas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#caja">Caja</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../templates.html#parciales">Parciales</a></li>
@@ -105,6 +110,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">Referencia API</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="apps.html">apps package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="apps.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="apps.auditoria.html">apps.auditoria package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.authentication.html">apps.authentication package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.caja.html">apps.caja package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="apps.clientes.html">apps.clientes package</a></li>
@@ -164,25 +170,52 @@
   <section id="module-apps.divisas.context_processors">
 <span id="apps-divisas-context-processors-module"></span><h1>apps.divisas.context_processors module<a class="headerlink" href="#module-apps.divisas.context_processors" title="Link to this heading"></a></h1>
 <p>Context processor que expone en todos los templates el indicador de
-notificaciones de cambio de tasas (HU GE-51), para que el usuario
-cliente vea en la barra superior cuántas notificaciones tiene sin leer
-mientras navega por cualquier pantalla del sistema.</p>
+notificaciones no leídas, para que el usuario cliente vea en la barra
+superior cuántas tiene mientras navega por cualquier pantalla del sistema.</p>
+<p>Suma dos orígenes: las notificaciones de cambio de tasas (HU GE-51,
+<code class="docutils literal notranslate"><span class="pre">NotificacionTasa</span></code>) y las de transacciones y facturas del cliente activo
+(HU «Notificaciones sobre transacciones y facturas», <code class="docutils literal notranslate"><span class="pre">NotificacionCliente</span></code>).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="apps.divisas.context_processors.notificaciones_cliente_activo">
+<span class="sig-name descname"><span class="pre">notificaciones_cliente_activo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/context_processors.html#notificaciones_cliente_activo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.context_processors.notificaciones_cliente_activo" title="Link to this definition"></a></dt>
+<dd><p>Notificaciones de transacciones y facturas del usuario para su cliente activo.</p>
+<p>Filtra siempre por el usuario <strong>y</strong> por el cliente activo, así que una
+notificación de otro cliente, aunque sea del mismo usuario, nunca
+aparece ni se cuenta (criterio 5). Sin cliente activo (por ejemplo, un
+usuario que todavía no eligió uno), no devuelve ninguna.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – La request actual, con <code class="docutils literal notranslate"><span class="pre">cliente_activo</span></code> ya
+resuelto por <code class="docutils literal notranslate"><span class="pre">apps.clientes.middleware.ClienteActivoMiddleware</span></code>.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Las notificaciones de <code class="docutils literal notranslate"><span class="pre">NotificacionCliente</span></code> que le
+corresponden al usuario en este momento.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QuerySet</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="apps.divisas.context_processors.notificaciones_context">
 <span class="sig-name descname"><span class="pre">notificaciones_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/apps/divisas/context_processors.html#notificaciones_context"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.divisas.context_processors.notificaciones_context" title="Link to this definition"></a></dt>
 <dd><p>Expone si el usuario ve notificaciones y cuántas tiene sin leer.</p>
-<p>Las notificaciones de tasas están dirigidas a usuarios clientes, así
-que el indicador solo se habilita para quienes tienen el rol
-<code class="docutils literal notranslate"><span class="pre">cliente</span></code> en su sesión de Keycloak (el mismo criterio que protege
-<code class="docutils literal notranslate"><span class="pre">MisNotificacionesView</span></code>). La cantidad sale de una única consulta de
-conteo sobre el índice <code class="docutils literal notranslate"><span class="pre">(usuario,</span> <span class="pre">leida)</span></code>.</p>
+<p>Las notificaciones están dirigidas a usuarios clientes, así que el
+indicador solo se habilita para quienes tienen el rol <code class="docutils literal notranslate"><span class="pre">cliente</span></code> en su
+sesión de Keycloak (el mismo criterio que protege
+<code class="docutils literal notranslate"><span class="pre">MisNotificacionesView</span></code>). El total suma las de tasas sin leer y las
+de transacciones y facturas sin leer del cliente activo (criterio 4),
+con una consulta de conteo para cada una sobre sus índices.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parámetros<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – La request actual.</p>
 </dd>
 <dt class="field-even">Devuelve<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">puede_ver_notificaciones</span></code> (bool) y
-<code class="docutils literal notranslate"><span class="pre">notificaciones_no_leidas</span></code> (int).</p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">puede_ver_notificaciones</span></code> (bool), <code class="docutils literal notranslate"><span class="pre">notificaciones_no_leidas</span></code>
+(int, el total), <code class="docutils literal notranslate"><span class="pre">notificaciones_tasa_no_leidas</span></code> (int) y
+<code class="docutils literal notranslate"><span class="pre">notificaciones_operaciones_no_leidas</span></code> (int).</p>
 </dd>
 <dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict</p>

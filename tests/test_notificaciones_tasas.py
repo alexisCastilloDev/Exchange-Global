@@ -315,7 +315,7 @@ class ListadoNotificacionesTest(NotificacionesTasasBaseTest):
 
         response = self.client.get(self.url)
 
-        self.assertContains(response, 'Todavía no tenés notificaciones.')
+        self.assertContains(response, 'Todavía no tenés notificaciones de tasas.')
 
     def test_requiere_autenticacion_y_rol_cliente(self):
         """Un anónimo es redirigido al login; un autenticado sin rol de cliente, rechazado."""
